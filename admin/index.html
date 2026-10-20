@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Rukik 管理后台</title>
+<style>
+  :root { --ivory:#F7F3EC; --navy:#142235; --ink:#202020; --gray:#8B857D; --gold:#B58A58; --line:#E3DCCF; --bad:#B3261E; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 16px 64px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; padding:8px 0 20px; border-bottom:2px solid var(--navy); }
+  .brand { font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.5px; }
+  .brand small { display:block; font-size:12px; font-weight:400; color:var(--gray); margin-top:2px; }
+  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--navy); }
+  .btn.gold { background:var(--gold); border-color:var(--gold); }
+  .btn.small { padding:5px 12px; font-size:13px; border-radius:8px; }
+  .btn:disabled { opacity:.5; cursor:wait; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; }
+  .card h2 { margin:0 0 14px; font-size:17px; color:var(--navy); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; }
+  .stat b { display:block; font-size:26px; color:var(--navy); }
+  .stat span { font-size:12px; color:var(--gray); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--gray); font-weight:500; font-size:12px; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:var(--gold); }
+  .tag.ok { background:var(--gold); color:#fff; }
+  .tag.no { border-color:var(--gray); color:var(--gray); }
+  .cred { font-size:12px; color:#555; margin-top:4px; }
+  input[type=email], input[type=text] { width:100%; padding:12px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  .login { max-width:400px; margin:60px auto 0; }
+  .muted { color:var(--gray); font-size:13px; }
+  .err { color:var(--bad); font-size:14px; min-height:20px; margin-top:8px; }
+  .row { display:flex; gap:10px; align-items:center; }
+  .mt { margin-top:14px; }
+  a { color:var(--navy); }
+  .empty { color:var(--gray); padding:14px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Rukik 管理后台<small>认证审核 · 用户与咨询数据 · 仅限管理员</small></div>
+    <div class="row">
+      <span id="who" class="muted"></span>
+      <button id="refreshBtn" class="btn ghost small" style="display:none">刷新</button>
+      <button id="logoutBtn" class="btn ghost small" style="display:none">退出</button>
+    </div>
+  </header>
+
+  <!-- 登录 -->
+  <div id="loginView" class="card login">
+    <h2>管理员登录</h2>
+    <p class="muted">使用管理员邮箱接收验证码登录。非管理员账号登录后也看不到任何数据。</p>
+    <input id="email" type="email" placeholder="邮箱" autocomplete="email">
+    <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
+    <div id="codeRow" style="display:none">
+      <div class="mt"><input id="code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码"></div>
+      <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
+    </div>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <!-- 无权限 -->
+  <div id="deniedView" class="card login" style="display:none">
+    <h2>没有管理员权限</h2>
+    <p class="muted">这个账号不在管理员名单里，数据接口已拒绝访问。</p>
+    <div class="mt"><button id="deniedLogout" class="btn ghost" style="width:100%">退出并换账号</button></div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="appView" style="display:none">
+    <div class="stats mt" id="stats"></div>
+
+    <div class="card">
+      <h2>专业人士认证审核</h2>
+      <div id="pros"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>注册用户</h2>
+      <div id="users"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>最近咨询动态</h2>
+      <div id="consults"><div class="empty">加载中…</div></div>
+    </div>
+    <div id="appErr" class="err"></div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PROF = { lawyer: '律师', cpa: '税务师 / CPA', advisor: '理财顾问', realtor: '房产经纪', insurance: '保险', trust: '信托', immigration: '移民顾问', education: '教育', other: '其他' };
+const ACTION = { ask: '发起咨询', book: '预约', contact: '转人工' };
+const fmtDate = (t) => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '';
+
+function show(view) {
+  $('loginView').style.display = view === 'login' ? '' : 'none';
+  $('deniedView').style.display = view === 'denied' ? '' : 'none';
+  $('appView').style.display = view === 'app' ? '' : 'none';
+  const inApp = view === 'app';
+  $('logoutBtn').style.display = inApp || view === 'denied' ? '' : 'none';
+  $('refreshBtn').style.display = inApp ? '' : 'none';
+}
+
+$('sendCodeBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  $('loginErr').textContent = '';
+  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  $('sendCodeBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  $('sendCodeBtn').disabled = false;
+  if (error) { $('loginErr').textContent = '发送失败：' + error.message; return; }
+  $('codeRow').style.display = '';
+  $('loginErr').textContent = '验证码已发到邮箱，填上面登录。';
+};
+
+$('verifyBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  const token = $('code').value.trim();
+  $('loginErr').textContent = '';
+  if (!token) { $('loginErr').textContent = '先填验证码。'; return; }
+  $('verifyBtn').disabled = true;
+  const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  $('verifyBtn').disabled = false;
+  if (error) { $('loginErr').textContent = '验证码不对或已过期：' + error.message; return; }
+  enterApp();
+};
+
+$('logoutBtn').onclick = $('deniedLogout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+$('refreshBtn').onclick = () => loadAll();
+
+async function enterApp() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { show('login'); return; }
+  $('who').textContent = user.email || '';
+  const { data: isAdmin, error } = await sb.rpc('is_admin');
+  if (error || !isAdmin) { show('denied'); return; }
+  show('app');
+  loadAll();
+}
+
+async function rpc(name, args) {
+  const { data, error } = await sb.rpc(name, args);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function loadAll() {
+  $('appErr').textContent = '';
+  try {
+    const [ov, pros, users, consults] = await Promise.all([
+      rpc('admin_overview'), rpc('admin_list_professionals'), rpc('admin_list_users', { p_limit: 100 }), rpc('admin_recent_consults', { p_limit: 50 }),
+    ]);
+    renderStats(ov); renderPros(pros); renderUsers(users); renderConsults(consults);
+  } catch (e) {
+    $('appErr').textContent = '加载失败：' + e.message;
+  }
+}
+
+function renderStats(ov) {
+  const items = [
+    [ov.users, '注册用户'], [ov.families, '家庭'], [ov.professionals, '专业人士'],
+    [ov.pros_unverified, '待审核认证'], [ov.pros_verified, '已认证'],
+    [ov.asks_today, '今日咨询'], [ov.consult_events, '咨询事件总数'], [ov.signups_7d, '近 7 天注册'],
+  ];
+  $('stats').innerHTML = items.map(([n, label]) => `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
+}
+
+function renderPros(list) {
+  if (!list || list.length === 0) { $('pros').innerHTML = '<div class="empty">暂无专业人士。</div>'; return; }
+  $('pros').innerHTML = '<table><tr><th>姓名 / 职业</th><th>机构 · 地区 · 语言</th><th>资质</th><th>状态</th><th></th></tr>' +
+    list.map((p) => {
+      const creds = (p.credentials || []).map((c) =>
+        `<div class="cred">${esc(c.kind)} · ${esc(c.jurisdiction)}${c.license_no ? ' · ' + esc(c.license_no) : ''}${c.verified ? ' · 已核验' : ''}${c.doc_url ? ` · <a href="${esc(c.doc_url)}" target="_blank" rel="noopener">证件</a>` : ''}</div>`).join('');
+      return `<tr>
+        <td><b>${esc(p.name)}</b><br><span class="muted">${esc(PROF[p.profession] || p.profession)} · ${esc(p.email || '')}</span></td>
+        <td>${esc(p.firm || '—')}<br><span class="muted">${esc((p.regions || []).join('、') || '—')} · ${esc((p.languages || []).join('、'))}</span></td>
+        <td>${creds || '<span class="muted">未提交</span>'}</td>
+        <td>${p.verified ? '<span class="tag ok">已认证</span>' : '<span class="tag no">待审核</span>'}</td>
+        <td><button class="btn small ${p.verified ? 'ghost' : 'gold'}" data-pro="${p.id}" data-v="${p.verified ? '0' : '1'}">${p.verified ? '取消认证' : '通过认证'}</button></td>
+      </tr>`;
+    }).join('') + '</table>';
+  $('pros').querySelectorAll('button[data-pro]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await rpc('admin_set_pro_verified', { p_pro_id: btn.dataset.pro, p_verified: btn.dataset.v === '1' });
+        loadAll();
+      } catch (e) { $('appErr').textContent = '操作失败：' + e.message; btn.disabled = false; }
+    };
+  });
+}
+
+function renderUsers(list) {
+  if (!list || list.length === 0) { $('users').innerHTML = '<div class="empty">暂无用户。</div>'; return; }
+  $('users').innerHTML = '<table><tr><th>用户</th><th>登录方式</th><th>家庭数</th><th>身份</th><th>注册时间</th></tr>' +
+    list.map((u) => `<tr>
+      <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
+      <td>${esc(u.login_method || '—')}</td>
+      <td>${u.family_count ?? 0}</td>
+      <td>${u.is_professional ? '<span class="tag">专业人士</span>' : '<span class="muted">家庭用户</span>'}</td>
+      <td class="muted">${fmtDate(u.created_at)}</td>
+    </tr>`).join('') + '</table>';
+}
+
+function renderConsults(list) {
+  if (!list || list.length === 0) { $('consults').innerHTML = '<div class="empty">暂无咨询记录。</div>'; return; }
+  $('consults').innerHTML = '<table><tr><th>时间</th><th>动作</th><th>专业人士</th><th>访客状态</th></tr>' +
+    list.map((c) => `<tr>
+      <td class="muted">${fmtDate(c.created_at)}</td>
+      <td>${esc(ACTION[c.action] || c.action)}</td>
+      <td>${esc(c.pro_name || '—')}</td>
+      <td>${c.registered ? '已注册' : '<span class="muted">未注册</span>'}</td>
+    </tr>`).join('') + '</table>';
+}
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) enterApp(); else show('login');
+})();
+</script>
+</body>
+</html>
