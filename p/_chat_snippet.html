@@ -1,0 +1,177 @@
+<!-- ============================================================
+  Rukik 专业人士落地页 · 网页直接咨询聊天区（可复用片段）
+  用法（给某位专业人士生成 /p/{id}/index.html 时套用）：
+    1. 把下面 <style> 里的 .chat 相关样式并入页面 <style>。
+    2. 把 .chat 的 HTML 块放进页面正文（建议放在介绍卡片之后、下载按钮之前）。
+    3. 把 <script> 块放在 </body> 之前。
+    4. 替换两处占位符：
+       __PROFESSIONAL_ID__  → 该专业人士在 professionals 表的 id
+       __SUPABASE_ANON_KEY__ → Rukik Supabase 项目的 anon key（公开客户端 key，可出现在网页）
+  规则：网页端最多 3 轮（客户端计数 + 后端 pro-chat 服务端兜底），
+        满 3 轮后禁用输入并显示下载 App 引导卡。
+  ============================================================ -->
+
+<style>
+  .chat { background:#fff; border-radius:16px; padding:20px; margin-top:28px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .chat-title { font-size:16px; font-weight:600; color:#142235; margin-bottom:12px; text-align:center; }
+  .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .msg.user { align-self:flex-end; background:#142235; color:#F7F3EC; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:#F7F3EC; color:#202020; border-bottom-left-radius:4px; }
+  .chat-row { display:flex; gap:8px; margin-top:14px; }
+  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; }
+  .chat-row input:disabled { background:#f1ede4; color:#8B857D; }
+  .chat-row button { background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .chat-row button:disabled { opacity:.55; cursor:default; }
+  .chat-note { margin-top:10px; font-size:12px; color:#8B857D; text-align:center; }
+  .dl { margin-top:16px; background:#F7F3EC; border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
+  .dl .btn { margin-top:10px; }
+</style>
+
+<div class="chat">
+  <div class="chat-title">直接向我的 AI 助理提问</div>
+  <div class="msgs" id="chatMsgs"></div>
+  <div class="chat-row">
+    <input id="chatInput" type="text" placeholder="输入你的问题……" maxlength="2000" autocomplete="off">
+    <button id="chatSend" type="button">发送</button>
+  </div>
+  <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
+  <div class="dl" id="chatDownload" hidden>
+    网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
+    <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
+  </div>
+</div>
+
+<script>
+(function () {
+  var API_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/pro-chat';
+  var ANON_KEY = '__SUPABASE_ANON_KEY__';
+  var PROFESSIONAL_ID = '__PROFESSIONAL_ID__';
+  var MAX_ROUNDS = 3;
+
+  var msgsEl = document.getElementById('chatMsgs');
+  var inputEl = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('chatSend');
+  var dlEl = document.getElementById('chatDownload');
+  if (!msgsEl || !inputEl || !sendBtn) return;
+
+  var history = [];
+  var rounds = 0;
+  var busy = false;
+
+  function addMsg(role, text) {
+    var div = document.createElement('div');
+    div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+    div.textContent = text;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return div;
+  }
+
+  function lockWithGuide() {
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+    inputEl.placeholder = '网页咨询已达 3 轮上限';
+    if (dlEl) dlEl.hidden = false;
+  }
+
+  function friendlyError(code) {
+    if (code === 'not_configured') return '助理正在开通中，暂时还不能回答。请稍后再来，或点下方按钮在 Rukik App 里联系我本人。';
+    if (code === 'round_limit') { lockWithGuide(); return '网页端的 3 轮免费咨询已用完，下载 Rukik App 可以继续咨询。'; }
+    return '暂时无法回答，请检查网络后重试。';
+  }
+
+  async function send() {
+    if (busy) return;
+    if (rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
+    var text = inputEl.value.trim();
+    if (!text) return;
+    busy = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    addMsg('user', text);
+    history.push({ role: 'user', content: text });
+    var thinking = addMsg('ai', '正在思考…');
+    var reply = '';
+    try {
+      var res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': ANON_KEY,
+          'Authorization': 'Bearer ' + ANON_KEY
+        },
+        body: JSON.stringify({ professional_id: PROFESSIONAL_ID, mode: 'web', stream: true, messages: history })
+      });
+      if (!res.ok) {
+        var errData = {};
+        try { errData = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+        history.pop();
+        thinking.textContent = friendlyError(errData.error || '');
+      } else if (res.body && typeof res.body.getReader === 'function' && (res.headers.get('Content-Type') || '').indexOf('event-stream') >= 0) {
+        // 流式接收：逐段追加显示，不再等整段生成完
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder('utf-8');
+        var buffer = '';
+        for (;;) {
+          var chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          var lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (line.indexOf('data:') !== 0) continue;
+            var payload = line.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+              var delta = JSON.parse(payload).choices[0].delta.content || '';
+              if (delta) {
+                reply += delta;
+                thinking.textContent = reply;
+                msgsEl.scrollTop = msgsEl.scrollHeight;
+              }
+            } catch (e) { /* 非数据行忽略 */ }
+          }
+        }
+        if (!reply) {
+          history.pop();
+          thinking.textContent = friendlyError('');
+        } else {
+          history.push({ role: 'assistant', content: reply });
+          rounds += 1;
+          if (rounds >= MAX_ROUNDS) lockWithGuide();
+        }
+      } else {
+        var data = {};
+        try { data = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+        if (!data.reply) {
+          history.pop();
+          thinking.textContent = friendlyError(data.error || '');
+        } else {
+          thinking.textContent = data.reply;
+          history.push({ role: 'assistant', content: data.reply });
+          rounds += 1;
+          if (rounds >= MAX_ROUNDS) lockWithGuide();
+        }
+      }
+    } catch (e) {
+      if (reply) {
+        // 已流出部分内容后断线：保留已显示的部分作为本轮回答
+        history.push({ role: 'assistant', content: reply });
+        rounds += 1;
+        if (rounds >= MAX_ROUNDS) lockWithGuide();
+      } else {
+        history.pop();
+        thinking.textContent = friendlyError('');
+      }
+    } finally {
+      busy = false;
+      if (rounds < MAX_ROUNDS) { sendBtn.disabled = false; inputEl.focus(); }
+    }
+  }
+
+  sendBtn.addEventListener('click', send);
+  inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+})();
+</script>
