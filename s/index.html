@@ -82,6 +82,17 @@ fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(code) + "&se
   }
   app.innerHTML = html;
   track(row.id, "open");
+  if (row.content_type === "ARTICLE") {
+    fetch(SB_URL + "/rest/v1/share_assets?content_type=eq.ARTICLE&content_id=eq." + encodeURIComponent(row.content_id || "") + "&kind=eq.og&select=image_url&limit=1",
+      { headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY } })
+    .then(function(r){ return r.json(); })
+    .then(function(a){
+      if (a && a.length) {
+        var ogi = document.createElement("meta"); ogi.setAttribute("property","og:image"); ogi.content = a[0].image_url; document.head.appendChild(ogi);
+        var tw = document.createElement("meta"); tw.setAttribute("name","twitter:card"); tw.content = "summary_large_image"; document.head.appendChild(tw);
+      }
+    }).catch(function(){});
+  }
   document.getElementById("openApp").addEventListener("click", function(){ track(row.id, "app_open"); });
 })
 .catch(function(){ document.getElementById("app").innerHTML = '<div class="missing">打开失败，请稍后再试。</div>'; });
