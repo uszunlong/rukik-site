@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rukik</title>
+<meta property="og:site_name" content="Rukik">
+<meta property="og:type" content="article">
+<style>
+  :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 56px; }
+  .brand { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+  .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
+  .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
+  h1 { font-size:26px; line-height:1.45; margin-bottom:14px; }
+  .meta { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:20px; }
+  .date { font-size:12px; color:var(--gray); margin-bottom:16px; letter-spacing:1px; }
+  .body p { font-size:16.5px; line-height:1.95; margin-bottom:16px; white-space:pre-wrap; }
+  .letter-body { font-size:20px; line-height:1.9; font-weight:500; white-space:pre-wrap; }
+  .attr { text-align:right; color:var(--gray); font-size:14px; margin-top:14px; }
+  .points { margin:8px 0 4px 0; }
+  .points div { display:flex; gap:10px; margin-bottom:12px; font-size:16px; line-height:1.7; }
+  .points b { color:var(--gold); }
+  .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
+  .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
+  .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
+  .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
+  .missing { text-align:center; color:var(--gray); padding:80px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="logo">RUKIK</span><span class="kind" id="kind"></span></div>
+  <div id="app"><div class="missing">正在打开…</div></div>
+  <div class="cta">
+    <a class="btn" id="openApp" href="#">打开 Rukik</a>
+    <a class="btn ghost" href="https://rukik.com/">了解 Rukik</a>
+  </div>
+  <div class="foot">
+    <div class="b">R U K I K</div>
+    Know You · Anticipate You · Support You · Empower You
+  </div>
+</div>
+<script>
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var KINDS = { DAILY_LETTER:"今日家书", ARTICLE:"专业文章", SUMMARY:"文章总结", AI_ANSWER:"Rukik 回答", PROFESSIONAL_INSIGHT:"专业观点", KNOWLEDGE_CARD:"知识卡片" };
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+var code = new URLSearchParams(location.search).get("c") || "";
+function track(shareId, event){
+  try { fetch(SB_URL + "/rest/v1/share_events", { method:"POST",
+    headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" },
+    body: JSON.stringify({ share_id: shareId, event: event }) }); } catch(e){}
+}
+fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(code) + "&select=id,content_type,meta",
+  { headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY } })
+.then(function(r){ return r.json(); })
+.then(function(rows){
+  var app = document.getElementById("app");
+  if (!rows || !rows.length) { app.innerHTML = '<div class="missing">这条分享不存在或已失效。</div>'; return; }
+  var row = rows[0], m = row.meta || {};
+  document.getElementById("kind").textContent = KINDS[row.content_type] || "";
+  document.title = (m.title || "Rukik") + " · Rukik";
+  var og = document.createElement("meta"); og.setAttribute("property","og:title"); og.content = m.title || "Rukik"; document.head.appendChild(og);
+  var ogd = document.createElement("meta"); ogd.setAttribute("property","og:description"); ogd.content = m.summary || ""; document.head.appendChild(ogd);
+  var html = "";
+  if (row.content_type === "DAILY_LETTER") {
+    if (m.date) html += '<div class="date">' + esc(m.date) + '</div>';
+    html += '<div class="letter-body">' + esc(m.body || m.title) + '</div>';
+    html += '<div class="attr">—— ' + esc(m.authorName || "Rukik · 今日家书") + '</div>';
+  } else {
+    html += "<h1>" + esc(m.title) + "</h1>";
+    if (m.authorName) html += '<div class="meta">' + esc(m.authorName) + (m.authorRole ? " · " + esc(m.authorRole) : "") + " · Rukik Verified</div>";
+    if (m.keyPoints && m.keyPoints.length) {
+      html += '<div class="points">' + m.keyPoints.map(function(p,i){ return "<div><b>0" + (i+1) + "</b><span>" + esc(p) + "</span></div>"; }).join("") + "</div>";
+    }
+    if (m.body) html += '<div class="body"><p>' + esc(m.body) + "</p></div>";
+    else if (m.summary) html += '<div class="body"><p>' + esc(m.summary) + "</p></div>";
+  }
+  app.innerHTML = html;
+  track(row.id, "open");
+  document.getElementById("openApp").addEventListener("click", function(){ track(row.id, "app_open"); });
+})
+.catch(function(){ document.getElementById("app").innerHTML = '<div class="missing">打开失败，请稍后再试。</div>'; });
+document.getElementById("openApp").setAttribute("href", "rukik://s/" + encodeURIComponent(code));
+</script>
+</body>
+</html>
