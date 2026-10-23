@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>邀请您认识 Rukik</title>
+<meta name="description" content="邀请您认识 Rukik。一个会慢慢了解您、记得您，也愿意替您多想一步的个人 AI。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="邀请您认识 Rukik">
+<meta property="og:description" content="一个会慢慢了解您、记得您，也愿意替您多想一步的个人 AI。">
+<meta property="og:image" content="https://rukik.com/assets/seal.png">
+<style>
+  :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:640px; margin:0 auto; padding:56px 24px 64px; text-align:center; }
+  img.seal { width:104px; height:104px; border-radius:22px; }
+  .from { margin-top:26px; color:var(--gold); font-size:14px; letter-spacing:1px; }
+  h1 { font-size:27px; line-height:1.5; margin:14px 0 12px; }
+  p.desc { color:#5c574f; line-height:1.9; font-size:15.5px; }
+  .codebox { margin:30px auto 8px; max-width:420px; border:1px solid var(--line); border-radius:14px; background:#fff; padding:18px 16px; }
+  .codebox .label { font-size:12px; color:var(--gray); letter-spacing:2px; margin-bottom:8px; }
+  .codebox .code { font-size:26px; font-weight:700; letter-spacing:4px; color:var(--navy); }
+  .codebox .hint { font-size:12.5px; color:var(--gray); margin-top:8px; line-height:1.7; }
+  .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; border:none; cursor:pointer;
+         padding:13px 32px; border-radius:999px; font-size:15.5px; margin:6px 4px; }
+  .btn.gold { background:var(--gold); }
+  .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  .row { margin-top:22px; }
+  .foot { margin-top:52px; color:var(--gray); font-size:11px; letter-spacing:.4px; }
+  .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
+  .missing { color:var(--gray); padding:60px 0; line-height:2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="seal" src="/assets/seal.png" alt="Rukik">
+  <div id="app">
+    <div class="missing">正在为您打开邀请…</div>
+  </div>
+  <div class="foot">
+    <div class="b">R U K I K</div>
+    Know You · Anticipate You · Support You · Empower You
+  </div>
+</div>
+<script>
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var APP_STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+var params = new URLSearchParams(location.search);
+var code = (params.get("c") || params.get("code") || location.hash.replace("#","") || "").toUpperCase();
+var app = document.getElementById("app");
+
+function rpc(name, body){
+  return fetch(SB_URL + "/rest/v1/rpc/" + name, { method:"POST",
+    headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" },
+    body: JSON.stringify(body) }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+}
+if (code) rpc("record_invite_event", { p_code: code, p_event: "CLICKED" });
+
+function render(inviterDisplay){
+  if (!code) {
+    app.innerHTML = '<div class="missing">邀请链接不完整。<br><a href="https://rukik.com/">前往了解 Rukik</a></div>';
+    return;
+  }
+  var fromLine = inviterDisplay
+    ? '<div class="from">' + esc(inviterDisplay) + ' 邀请您加入</div>' : '';
+  app.innerHTML =
+    fromLine +
+    '<h1>邀请您认识 Rukik</h1>' +
+    '<p class="desc">一个会慢慢了解您、记得您，<br>也愿意替您多想一步的个人 AI。</p>' +
+    '<div class="codebox"><div class="label">您的专属邀请码</div>' +
+    '<div class="code">' + esc(code) + '</div>' +
+    '<div class="hint">安装并注册 Rukik 时填入此邀请码（或注册后在「我的邀请」中补填），' +
+    '邀请关系即可建立。</div></div>' +
+    '<div class="row">' +
+    '<button class="btn gold" id="copyBtn">复制邀请码</button>' +
+    '<a class="btn" id="openBtn" href="rukik://invite/' + encodeURIComponent(code) + '">已安装？打开 Rukik</a>' +
+    '</div><div class="row">' +
+    '<a class="btn ghost" id="storeBtn" href="' + APP_STORE_URL + '">前往 App Store 下载</a>' +
+    '</div>';
+  document.getElementById("copyBtn").addEventListener("click", function(){
+    var btn = this;
+    function done(){ btn.textContent = "已复制 ✓"; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done).catch(done);
+    } else { done(); }
+  });
+  document.getElementById("storeBtn").addEventListener("click", function(){
+    rpc("record_invite_event", { p_code: code, p_event: "STORE_REDIRECT" });
+  });
+}
+
+if (code) {
+  rpc("public_invite_preview", { p_code: code }).then(function(res){
+    render(res && res.ok ? res.inviter_display : null);
+  });
+} else {
+  render(null);
+}
+</script>
+</body>
+</html>
