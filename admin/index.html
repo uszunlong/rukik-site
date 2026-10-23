@@ -90,6 +90,32 @@
       <h2>最近咨询动态</h2>
       <div id="consults"><div class="empty">加载中…</div></div>
     </div>
+    <div class="card">
+      <h2>专业人士入驻申请</h2>
+      <div id="applications"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Relationship Network（邀请关系网络）</h2>
+      <div id="networkStats"><div class="empty">加载中…</div></div>
+      <div class="mt" style="display:flex;gap:8px">
+        <input id="networkQuery" type="text" placeholder="搜索用户（姓名或邮箱）" style="flex:1">
+        <button id="networkSearchBtn" class="btn">搜索</button>
+      </div>
+      <div id="networkUsers" class="mt"></div>
+      <div id="networkTree" class="mt"></div>
+    </div>
+
+    <div class="card">
+      <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
+      <div id="personas"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Reward Ledger（奖励台账 · 只读）</h2>
+      <p class="muted">本阶段只建数据基础，不自动发放任何奖励。奖励规则与台账如下。</p>
+      <div id="rewards"><div class="empty">加载中…</div></div>
+    </div>
     <div id="appErr" class="err"></div>
   </div>
 </div>
@@ -166,6 +192,7 @@ async function loadAll() {
       rpc('admin_overview'), rpc('admin_list_professionals'), rpc('admin_list_users', { p_limit: 100 }), rpc('admin_recent_consults', { p_limit: 50 }),
     ]);
     renderStats(ov); renderPros(pros); renderUsers(users); renderConsults(consults);
+    loadNetwork();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -226,6 +253,137 @@ function renderConsults(list) {
       <td>${esc(c.pro_name || '—')}</td>
       <td>${c.registered ? '已注册' : '<span class="muted">未注册</span>'}</td>
     </tr>`).join('') + '</table>';
+}
+
+async function loadNetwork() {
+  try {
+    const [ov, apps, personas, rewards] = await Promise.all([
+      rpc('admin_network_overview'),
+      rpc('admin_list_applications', { p_status: null, p_limit: 100 }),
+      rpc('admin_persona_list'),
+      rpc('admin_reward_ledger_list', { p_limit: 100 }),
+    ]);
+    renderNetworkStats(ov); renderApplications(apps); renderPersonas(personas); renderRewards(rewards);
+  } catch (e) {
+    $('networkStats').innerHTML = '<div class="empty">关系网络加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+const APP_STATUS = { NOT_SUBMITTED: '未提交', PENDING: '审核中', VERIFIED: '已认证', REJECTED: '未通过', NEEDS_MORE_INFORMATION: '需补充信息' };
+
+function renderApplications(list) {
+  if (!list || list.length === 0) { $('applications').innerHTML = '<div class="empty">暂无入驻申请。</div>'; return; }
+  $('applications').innerHTML = '<table><tr><th>申请人</th><th>类别 · 城市</th><th>邀请来源</th><th>状态</th><th></th></tr>' +
+    list.map((a) => `<tr>
+      <td><b>${esc(a.full_name)}</b><br><span class="muted">${esc(a.email || '')}</span></td>
+      <td>${esc(PROF[a.category] || a.category)}<br><span class="muted">${esc(a.city || '—')} · ${esc(a.country_region || '')}</span></td>
+      <td>${a.invite_code ? esc(a.invite_code) : '<span class="muted">自然申请</span>'}</td>
+      <td>${esc(APP_STATUS[a.verification_status] || a.verification_status)}</td>
+      <td>${a.verification_status === 'PENDING' ? `<button class="btn small gold" data-app="${a.id}" data-s="VERIFIED">通过</button>
+        <button class="btn small ghost" data-app="${a.id}" data-s="NEEDS_MORE_INFORMATION">需补充</button>
+        <button class="btn small ghost" data-app="${a.id}" data-s="REJECTED">拒绝</button>` : ''}</td>
+    </tr>`).join('') + '</table>';
+  $('applications').querySelectorAll('button[data-app]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try { await rpc('admin_set_application_status', { p_application_id: btn.dataset.app, p_status: btn.dataset.s }); loadNetwork(); }
+      catch (e) { $('appErr').textContent = '操作失败：' + e.message; btn.disabled = false; }
+    };
+  });
+}
+
+function renderNetworkStats(ov) {
+  const items = [
+    [ov.real_users, '真实用户'], [ov.attributed_users, '经邀请加入'], [ov.organic_users, '自然加入'],
+    [ov.relationships, '邀请关系'], [ov.max_depth, '网络最大深度'], [ov.invite_clicks, '邀请点击'],
+    [ov.applications_pending, '待审申请'], [ov.personas_active, 'AI Persona（启用）'],
+    [ov.reward_pending, '奖励待审'], [ov.fraud_open, '欺诈信号（未处理）'],
+  ];
+  $('networkStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+}
+
+$('networkSearchBtn').onclick = async () => {
+  const q = $('networkQuery').value.trim();
+  $('networkUsers').innerHTML = '<div class="empty">搜索中…</div>';
+  try {
+    const list = await rpc('admin_search_network_users', { p_query: q, p_limit: 50 });
+    if (!list || list.length === 0) { $('networkUsers').innerHTML = '<div class="empty">没有匹配的用户。</div>'; return; }
+    $('networkUsers').innerHTML = '<table><tr><th>用户</th><th>身份</th><th>邀请人</th><th>直接邀请</th><th>网络规模</th><th>深度</th><th></th></tr>' +
+      list.map((u) => `<tr>
+        <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
+        <td>${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</td>
+        <td class="muted">${u.original_inviter_user_id ? esc(String(u.original_inviter_user_id).slice(0, 8)) + '…' : '无（自然加入）'}</td>
+        <td>${u.direct_invites ?? 0}</td><td>${u.network_size ?? 0}</td><td>${u.depth ?? '—'}</td>
+        <td><button class="btn small" data-tree="${u.id}">查看关系树</button></td>
+      </tr>`).join('') + '</table>';
+    $('networkUsers').querySelectorAll('button[data-tree]').forEach((btn) => {
+      btn.onclick = () => loadTree(btn.dataset.tree);
+    });
+  } catch (e) { $('networkUsers').innerHTML = '<div class="empty">搜索失败：' + esc(e.message) + '</div>'; }
+};
+
+async function loadTree(userId) {
+  $('networkTree').innerHTML = '<div class="empty">加载关系树…</div>';
+  try {
+    const t = await rpc('admin_relationship_tree', { p_user_id: userId });
+    const root = t.root || {};
+    let html = `<div class="cred">根用户：<b>${esc(root.display_name || '（未设称呼）')}</b> · ${esc(root.email || '')} · 注册 ${fmtDate(root.created_at)} · 来源 ${esc(root.acquisition_source || 'ORGANIC')} · 直接邀请 ${t.direct_invites} · 网络共 ${t.network_size} 人</div>`;
+    const ds = t.descendants || [];
+    if (ds.length === 0) html += '<div class="empty">该用户还没有邀请任何人。</div>';
+    else html += ds.map((d) => `<div style="padding:3px 0 3px ${12 + (d.level - 1) * 22}px;border-left:1px solid var(--line)">
+      ${'└ '.repeat(1)}<b>${esc(d.display_name || '（未设称呼）')}</b>
+      <span class="muted">${esc(d.email || '')} · ${d.is_professional ? (d.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'} · 第 ${d.level} 层 · 直接邀请 ${d.direct_invites} · ${fmtDate(d.registered_at)}</span>
+    </div>`).join('');
+    $('networkTree').innerHTML = html;
+  } catch (e) { $('networkTree').innerHTML = '<div class="empty">关系树加载失败：' + esc(e.message) + '</div>'; }
+}
+
+const PERSONA_STATUS = { ACTIVE: '启用中', HIDDEN: '已隐藏', ARCHIVED: '已归档', DELETED: '已删除' };
+
+function renderPersonas(list) {
+  if (!list || list.length === 0) { $('personas').innerHTML = '<div class="empty">暂无 AI Persona。</div>'; return; }
+  $('personas').innerHTML =
+    '<div class="mt" style="margin-bottom:10px"><button class="btn small" id="personaShowAll">批量启用</button> ' +
+    '<button class="btn small ghost" id="personaHideAll">批量隐藏</button> ' +
+    '<button class="btn small ghost" id="personaArchiveAll">批量归档</button></div>' +
+    '<table><tr><th></th><th>角色</th><th>领域</th><th>地区 · 语言</th><th>状态</th><th></th></tr>' +
+    list.map((p) => `<tr>
+      <td><input type="checkbox" class="personaCheck" value="${p.id}"></td>
+      <td><b>${esc(p.name)}</b>${p.is_seed_profile ? ' <span class="tag">Seed</span>' : ''}</td>
+      <td>${esc(PROF[p.profession] || p.profession)}</td>
+      <td class="muted">${esc((p.service_regions || []).join('、') || p.city || '—')} · ${esc((p.languages || []).join('、'))}</td>
+      <td>${esc(PERSONA_STATUS[p.persona_status] || p.persona_status)}</td>
+      <td><button class="btn small ghost" data-persona="${p.id}" data-s="${p.persona_status === 'ACTIVE' ? 'HIDDEN' : 'ACTIVE'}">${p.persona_status === 'ACTIVE' ? '隐藏' : '启用'}</button></td>
+    </tr>`).join('') + '</table>';
+  async function setStatus(ids, status) {
+    if (!ids.length) { $('appErr').textContent = '先勾选要操作的 AI Persona。'; return; }
+    try { await rpc('admin_persona_set_status', { p_ids: ids, p_status: status }); loadNetwork(); }
+    catch (e) { $('appErr').textContent = '操作失败：' + e.message; }
+  }
+  const checked = () => [...$('personas').querySelectorAll('.personaCheck:checked')].map((c) => c.value);
+  $('personaShowAll').onclick = () => setStatus(checked(), 'ACTIVE');
+  $('personaHideAll').onclick = () => setStatus(checked(), 'HIDDEN');
+  $('personaArchiveAll').onclick = () => setStatus(checked(), 'ARCHIVED');
+  $('personas').querySelectorAll('button[data-persona]').forEach((btn) => {
+    btn.onclick = () => setStatus([btn.dataset.persona], btn.dataset.s);
+  });
+}
+
+function renderRewards(r) {
+  const rules = (r && r.rules) || [];
+  const entries = (r && r.entries) || [];
+  let html = '';
+  html += '<div class="cred">奖励规则：' + (rules.length
+    ? rules.map((x) => `${esc(x.name)}（${esc(x.event_type)} · ${esc(x.reward_kind)} · ${x.enabled ? '启用' : '未启用'}${x.depth_limit != null ? ' · 层数上限 ' + x.depth_limit : ''}）`).join('；')
+    : '尚未配置任何奖励规则。') + '</div>';
+  if (!entries.length) html += '<div class="empty">暂无奖励记录。本阶段只建台账结构，不产生、不发放任何奖励。</div>';
+  else html += '<table><tr><th>时间</th><th>受益人</th><th>类型</th><th>金额 / 积分</th><th>状态</th><th>来源事件</th></tr>' +
+    entries.map((e) => `<tr><td class="muted">${fmtDate(e.created_at)}</td>
+      <td class="muted">${esc(String(e.beneficiary_user_id || '').slice(0, 8))}…</td>
+      <td>${esc(e.reward_type)}</td><td>${e.amount ?? e.points ?? '—'}</td>
+      <td>${esc(e.status)}</td><td>${esc(e.source_event || '—')}</td></tr>`).join('') + '</table>';
+  $('rewards').innerHTML = html;
 }
 
 (async () => {
