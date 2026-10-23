@@ -9,7 +9,10 @@
   var path = location.pathname;
   var m = path.match(/^\/invite\/([A-Za-z0-9]+)\/?$/);
   if (m) {
-    location.replace("/invite/?c=" + encodeURIComponent(m[1].toUpperCase()));
+    // 路径式链接保留 Campaign 标记（?from=pro），落地页据此呈现 Professional 板块
+    var from = new URLSearchParams(location.search).get("from");
+    var extra = from === "pro" ? "&from=pro" : "";
+    location.replace("/invite/?c=" + encodeURIComponent(m[1].toUpperCase()) + extra);
     return;
   }
   document.addEventListener("DOMContentLoaded", function () {
