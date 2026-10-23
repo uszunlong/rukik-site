@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>mengqi Huang 的专业 AI 助理 — Rukik 家办</title>
+<title>mengqi Huang 的专业 AI 助理 — Rukik</title>
 <meta name="description" content="有法律问题，先问问我的24小时专业助理！">
 <meta property="og:type" content="website">
 <meta property="og:title" content="mengqi Huang · 律师">
-<meta property="og:description" content="有法律问题，先问问我的24小时专业助理！这是我本人训练的 AI，在 Rukik 家办为你服务。">
+<meta property="og:description" content="有法律问题，先问问我的24小时专业助理！这是我本人训练的 AI，在 Rukik 为您服务。">
 <meta property="og:image" content="https://rukik.com/assets/avatar.jpg">
 <meta property="og:url" content="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">
 <style>
@@ -53,14 +53,14 @@
   <div class="role">律师 · 美国</div>
   <div class="line">有法律问题，先问问我的24小时专业助理！</div>
   <div class="card">
-    这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：你先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。
+    这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。
   </div>
   <div class="chat">
   <div id="authBox">
     <div class="chat-title">注册后即可向我的 AI 助理提问</div>
     <p class="auth-hint">用邮箱注册一次，网页和 Rukik App 都能登录咨询。复杂问题还可以直接联系我本人。</p>
     <div class="auth-row">
-      <input id="authName" type="text" placeholder="你的称呼（选填）" maxlength="40" autocomplete="name">
+      <input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name">
     </div>
     <div class="auth-row">
       <input id="authEmail" type="email" placeholder="邮箱地址" maxlength="120" autocomplete="email">
@@ -77,7 +77,7 @@
     <div class="chat-title">直接向我的 AI 助理提问</div>
     <div class="msgs" id="chatMsgs"></div>
     <div class="chat-row">
-      <input id="chatInput" type="text" placeholder="输入你的问题……" maxlength="2000" autocomplete="off">
+      <input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off">
       <button id="chatSend" type="button">发送</button>
     </div>
     <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
@@ -162,7 +162,7 @@
         if (r.error) { authMsg.textContent = '发送失败，请检查邮箱地址后重试。'; }
         else {
           codeRow.hidden = false;
-          authMsg.textContent = '验证码已发送到你的邮箱，请查收（也可能在垃圾邮件里），然后填入验证码登录。';
+          authMsg.textContent = '验证码已发送到您的邮箱，请查收（也可能在垃圾邮件里），然后填入验证码登录。';
           codeEl.focus();
         }
       } catch (e) {

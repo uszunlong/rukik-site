@@ -3,30 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rukik 家办 — 家业长青，传承有道</title>
-<meta name="description" content="Rukik 家办：长期陪伴家庭的智能家办。懂你 · 想你 · 帮你 · 成就你。">
+<title>Rukik — AI懂很多，但 Rukik 更懂您</title>
+<meta name="description" content="AI懂很多，但 Rukik 更懂您。懂您的生活，也成就更专业的您。慢慢了解您，记住您在意的人和事，在需要的时候，替您多想一步。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Rukik 家办">
-<meta property="og:description" content="家业长青，传承有道。长期陪伴家庭的智能家办。">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="Rukik">
+<meta property="og:description" content="AI懂很多，但 Rukik 更懂您。懂您的生活，也成就更专业的您。">
 <meta property="og:image" content="https://rukik.com/assets/seal.png">
 <meta property="og:url" content="https://rukik.com/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Rukik">
+<meta name="twitter:description" content="AI懂很多，但 Rukik 更懂您。懂您的生活，也成就更专业的您。">
+<meta name="twitter:image" content="https://rukik.com/assets/seal.png">
 <style>
   body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#F7F3EC; color:#202020; }
   .wrap { max-width:640px; margin:0 auto; padding:64px 24px; text-align:center; }
   img.seal { width:120px; height:120px; border-radius:24px; }
   h1 { color:#142235; font-size:30px; margin:24px 0 8px; letter-spacing:2px; }
-  .slogan { color:#B58A58; font-size:17px; letter-spacing:4px; margin-bottom:28px; }
+  .slogan { color:#B58A58; font-size:17px; letter-spacing:2px; margin-bottom:28px; line-height:1.7; }
   p.desc { color:#5c574f; line-height:1.9; font-size:15px; }
+  .btn { display:inline-block; background:#142235; color:#fff; text-decoration:none;
+         padding:13px 36px; border-radius:999px; font-size:16px; margin-top:30px; }
   .foot { margin-top:56px; color:#8B857D; font-size:12px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <img class="seal" src="/assets/seal.png" alt="Rukik 家办">
-  <h1>Rukik 家办</h1>
-  <div class="slogan">家业长青 · 传承有道</div>
-  <p class="desc">长期陪伴家庭的智能家办。<br>懂你 · 想你 · 帮你 · 成就你。<br><br>Rukik App 正在 App Store 审核中，即将上线。</p>
+  <img class="seal" src="/assets/seal.png" alt="Rukik">
+  <h1>Rukik</h1>
+  <div class="slogan">AI懂很多，但 Rukik 更懂您。</div>
+  <p class="desc">懂您的生活，也成就更专业的您。<br><br>慢慢了解您，记住您在意的人和事，<br>在需要的时候，替您多想一步。</p>
+  <a class="btn" id="openApp" href="https://apps.apple.com/us/app/rukik/id6824554988">打开 Rukik</a>
   <div class="foot">© 2026 Rukik</div>
 </div>
+<script>
+// CTA「打开 Rukik」：移动端先尝试以 rukik:// 唤起 App，未唤起则延时跳 App Store；
+// 桌面端直接前往 App Store（按钮文案随之改为「在 App Store 下载」）。站点未托管 AASA，暂不走 Universal Link。
+(function () {
+  var STORE = "https://apps.apple.com/us/app/rukik/id6824554988";
+  var btn = document.getElementById("openApp");
+  var mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
+  if (!mobile) { btn.textContent = "在 App Store 下载"; return; }
+  btn.addEventListener("click", function (e) {
+    e.preventDefault();
+    var start = Date.now();
+    var timer = setTimeout(function () {
+      if (!document.hidden && Date.now() - start < 2500) location.href = STORE;
+    }, 1200);
+    window.addEventListener("pagehide", function () { clearTimeout(timer); }, { once: true });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) clearTimeout(timer);
+    });
+    location.href = "rukik://";
+  });
+})();
+</script>
 </body>
 </html>
