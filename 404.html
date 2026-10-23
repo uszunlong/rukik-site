@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Rukik</title>
+<script>
+// GitHub Pages 静态托管无动态路由：/invite/CODE 形式的链接在此统一转到 /invite/?c=CODE
+(function () {
+  var path = location.pathname;
+  var m = path.match(/^\/invite\/([A-Za-z0-9]+)\/?$/);
+  if (m) {
+    location.replace("/invite/?c=" + encodeURIComponent(m[1].toUpperCase()));
+    return;
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    document.body.innerHTML = '<div style="font-family:-apple-system,\'PingFang SC\',sans-serif;text-align:center;padding:80px 24px;color:#8A8378;">页面不存在。<br><br><a href="https://rukik.com/" style="color:#142235;">前往 Rukik 首页</a></div>';
+  });
+})();
+</script>
+</head>
+<body></body>
+</html>
