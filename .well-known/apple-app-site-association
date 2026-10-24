@@ -17,6 +17,10 @@
           {
             "/": "/news/*",
             "comment": "News detail pages open in the Rukik app when installed."
+          },
+          {
+            "/": "/s/*",
+            "comment": "Shared content links (query form /s/?c=...) open in the Rukik app when installed."
           }
         ]
       }
