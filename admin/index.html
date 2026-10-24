@@ -122,6 +122,20 @@
     </div>
 
     <div class="card">
+      <h2>新闻生产状态（News 6.0）</h2>
+      <p class="muted">口径说明：analysis_status 管专业解读就绪（ready＝解读 ≥450 汉字可展示；insufficient＝材料不足存草稿不展示；pending＝待生产）。research_status 管公开研究流程：done＝流程已执行（同事件语料交叉＋官方源优先＋内部知识检索）且产出可追溯来源；insufficient＝流程已跑但材料太薄（语料单一且无内部命中）。外部 Web 检索为 P2 可选增强、默认禁用，仅无搜索 Key 不判 insufficient。</p>
+      <div id="newsProdStats"><div class="empty">加载中…</div></div>
+      <div id="newsProdDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
+      <h2>专家知识（Research Intelligence P0）</h2>
+      <p class="muted">口径说明：内部专家知识全文检索（knowledge_chunks）＋专家知识沉淀索引（expert_material_index）。可检索资格＝专业人士授权（ai_usable 且 visibility 允许）或已发布文章；撤销授权后检索即刻不命中、沉淀标 revoked。沉淀只存来源/原创归纳/≤300 字短片段，不存全文。向量检索为 P1，本板块数字不含向量口径。</p>
+      <div id="knowledgeStats"><div class="empty">加载中…</div></div>
+      <div id="knowledgeDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -306,6 +320,64 @@ async function loadCover() {
   } catch (e) {
     $('coverStats').innerHTML = '<div class="empty">封面统计加载失败：' + esc(e.message) + '</div>';
   }
+  loadNewsProd();
+}
+
+async function loadNewsProd() {
+  try {
+    const ov = await rpc('admin_news_production');
+    renderNewsProd(ov);
+  } catch (e) {
+    $('newsProdStats').innerHTML = '<div class="empty">生产状态加载失败：' + esc(e.message) + '</div>';
+  }
+  loadKnowledge();
+}
+
+async function loadKnowledge() {
+  try {
+    const ov = await rpc('admin_knowledge_overview');
+    renderKnowledge(ov);
+  } catch (e) {
+    $('knowledgeStats').innerHTML = '<div class="empty">专家知识加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderKnowledge(ov) {
+  const byStatus = (ov.materials_by_status || []).map((t) => `${esc(t.status)} ${t.count}`).join(' · ') || '暂无';
+  const byKind = (ov.materials_by_kind || []).map((t) => `${esc(t.kind)} ${t.count}`).join(' · ') || '暂无';
+  const items = [
+    [ov.pk_items ?? 0, '知识条目（pk）'],
+    [ov.pk_eligible_rows ?? 0, '可检索知识段'],
+    [ov.articles_published ?? 0, '已发布文章'],
+    [ov.chunks_active ?? 0, '索引分段（active）'],
+    [ov.chunks_superseded ?? 0, '已替代分段'],
+    [ov.materials_total ?? 0, '沉淀记录'],
+    [ov.pros_with_knowledge ?? 0, '有知识的专家'],
+  ];
+  $('knowledgeStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  $('knowledgeDetail').innerHTML =
+    `<div class="cred">沉淀按状态：${byStatus}</div>` +
+    `<div class="cred">沉淀按来源：${byKind}（internal_doc＝内部授权文档；analysis_citation＝解读实际引用且带专家归属）</div>` +
+    `<div class="cred">最近索引时间：${ov.last_indexed_at ? esc(String(ov.last_indexed_at)) : '尚未索引'}</div>`;
+}
+
+function renderNewsProd(ov) {
+  const ins = ov.insufficient_24h || {};
+  const items = [
+    [ov.today_new, '今日新增'],
+    [ov.today_released, '今日释放'],
+    [ov.released_total, '已释放总量'],
+    [ins.analysis ?? 0, '近 24h 解读 insufficient'],
+    [ins.research ?? 0, '近 24h 研究 insufficient'],
+  ];
+  $('newsProdStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  const fmt = (arr) => (arr || []).map((t) => `${esc(t.status ?? t.image_type)} ${t.count}`).join(' · ') || '暂无';
+  $('newsProdDetail').innerHTML =
+    `<div class="cred">专业解读分布（已释放）：${fmt(ov.analysis_status)}</div>` +
+    `<div class="cred">外部研究分布（已释放）：${fmt(ov.research_status)}</div>` +
+    `<div class="cred">图片类型分布（已释放）：${fmt(ov.image_types)}</div>`;
 }
 
 function renderCover(ov) {
