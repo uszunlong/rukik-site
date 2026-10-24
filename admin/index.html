@@ -136,6 +136,13 @@
     </div>
 
     <div class="card">
+      <h2>配图生产（Image Engine）</h2>
+      <p class="muted">口径说明：三级取图——①原文页自带配图 / 官方图 ②开放许可网络图（公共领域 / CC，仅 cc0 / pdm / by / by-sa，记作者·来源·许可）③Cloudflare Workers AI 免费生图（FLUX-1-schnell，免费额度 10,000 Neurons / 日、UTC 日界，代码内每日上限 57 张，达限即停、条目留待补图）。OpenAI / Gemini 付费腿受开关门控、默认关闭。尝试统计来自 image_gen_log 近 7 天逐次记录；供图方为系统原始标识。</p>
+      <div id="imageStats"><div class="empty">加载中…</div></div>
+      <div id="imageDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -340,6 +347,16 @@ async function loadKnowledge() {
   } catch (e) {
     $('knowledgeStats').innerHTML = '<div class="empty">专家知识加载失败：' + esc(e.message) + '</div>';
   }
+  loadImageStats();
+}
+
+async function loadImageStats() {
+  try {
+    const ov = await rpc('admin_image_stats');
+    renderImageStats(ov);
+  } catch (e) {
+    $('imageStats').innerHTML = '<div class="empty">配图生产加载失败：' + esc(e.message) + '</div>';
+  }
 }
 
 function renderKnowledge(ov) {
@@ -360,6 +377,41 @@ function renderKnowledge(ov) {
     `<div class="cred">沉淀按状态：${byStatus}</div>` +
     `<div class="cred">沉淀按来源：${byKind}（internal_doc＝内部授权文档；analysis_citation＝解读实际引用且带专家归属）</div>` +
     `<div class="cred">最近索引时间：${ov.last_indexed_at ? esc(String(ov.last_indexed_at)) : '尚未索引'}</div>`;
+}
+
+const IMG_TYPE_LABEL = { original: '来源原图', official: '官方图', licensed: '开放许可图', ai_generated: 'AI 示意图', pending: '待补图', branded_fallback: '品牌卡回落（旧）', '(null)': '未设置', '(unset)': '未记录供图方' };
+const IMG_TIER_LABEL = { 1: '一级 · 原文 / 官方图', 2: '二级 · 开放许可图', 3: '三级 · AI 生图' };
+
+function renderImageStats(ov) {
+  const byType = ov.by_image_type || [];
+  const byProv = ov.by_provider || [];
+  const attempts = ov.attempts_7d || [];
+  const cf = ov.cloudflare_today || {};
+  const countOf = (arr, key, val) => { const r = arr.find((t) => String(t[key]) === String(val)); return r ? r.count : 0; };
+  const items = [
+    [cf.generated_ok ?? 0, '今日 CF 生成成功'],
+    [cf.neurons_est_today ?? 0, 'CF 今日 Neurons（估算）'],
+    [cf.neurons_est_7d ?? 0, 'CF 近 7 天 Neurons（估算）'],
+    [countOf(byType, 'image_type', 'pending'), '待补图'],
+    [countOf(byType, 'image_type', 'ai_generated'), 'AI 示意图'],
+    [countOf(byType, 'image_type', 'licensed'), '开放许可图'],
+  ];
+  $('imageStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  const typeLine = byType.map((t) => `${esc(IMG_TYPE_LABEL[t.image_type] || t.image_type)} ${t.count}`).join(' · ') || '暂无';
+  const provLine = byProv.map((t) => `${esc(IMG_TYPE_LABEL[t.provider] || t.provider)} ${t.count}`).join(' · ') || '暂无';
+  let attHtml;
+  if (attempts.length) {
+    attHtml = '<table><tr><th>级别</th><th>供图方</th><th>尝试</th><th>成功</th><th>失败</th><th>失败率</th><th>Neurons（估算）</th></tr>' +
+      attempts.map((a) => `<tr><td>${esc(IMG_TIER_LABEL[a.tier] || ('第 ' + a.tier + ' 级'))}</td><td>${esc(a.provider)}</td><td>${a.attempts}</td><td>${a.success}</td><td>${a.errors}</td><td>${a.failure_rate_pct}%</td><td>${a.neurons}</td></tr>`).join('') + '</table>';
+  } else {
+    attHtml = '<div class="cred">近 7 天暂无取图尝试记录。</div>';
+  }
+  $('imageDetail').innerHTML =
+    `<div class="cred">封面构成（全量）：${typeLine}</div>` +
+    `<div class="cred">最终供图方（有图条目）：${provLine}</div>` +
+    '<div class="cred" style="margin-top:10px">近 7 天取图尝试（级别 × 供图方）：</div>' + attHtml +
+    `<div class="cred">数据生成时间：${ov.generated_at ? esc(fmtDate(ov.generated_at)) : '—'}</div>`;
 }
 
 function renderNewsProd(ov) {
