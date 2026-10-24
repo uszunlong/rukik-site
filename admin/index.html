@@ -115,6 +115,13 @@
     </div>
 
     <div class="card">
+      <h2>新闻封面覆盖（News 5.0）</h2>
+      <p class="muted">口径说明：真实图＝来源原图 / 授权图 / 官方图；AI 示意图＝无源图条目由服务端按内容生成的概念图（均标注「AI 示意图」）；缺图＝封面为空或待生成；生成失败＝缺图且已尝试 3 次。封面禁止使用 Rukik Logo / 品牌卡。</p>
+      <div id="coverStats"><div class="empty">加载中…</div></div>
+      <div id="coverDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -289,6 +296,34 @@ async function loadShare() {
   } catch (e) {
     $('shareStats').innerHTML = '<div class="empty">分享统计加载失败：' + esc(e.message) + '</div>';
   }
+  loadCover();
+}
+
+async function loadCover() {
+  try {
+    const ov = await rpc('admin_news_cover_overview');
+    renderCover(ov);
+  } catch (e) {
+    $('coverStats').innerHTML = '<div class="empty">封面统计加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderCover(ov) {
+  const items = [
+    [ov.total, '新闻总量'],
+    [ov.released_total, '已释放'],
+    [ov.real_images, '真实图（原图/授权/官方）'],
+    [ov.ai_images, 'AI 示意图'],
+    [ov.missing, '缺图（待生成）'],
+    [ov.failed, '生成失败（已试 3 次）'],
+    [(ov.released_coverage_pct ?? 0) + '%', '已释放封面覆盖率'],
+  ];
+  $('coverStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  const byType = (ov.by_type || []).map((t) => `${esc(t.image_type)} ${t.count}`).join(' · ') || '暂无';
+  $('coverDetail').innerHTML =
+    `<div class="cred">按图片类型分布：${byType}</div>` +
+    `<div class="cred">已释放中仍缺图：${ov.released_missing ?? 0} 条</div>`;
 }
 
 function renderShare(ov) {
