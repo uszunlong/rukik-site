@@ -50,8 +50,17 @@
   .bc-code { border-top:1px dashed var(--line); padding-top:14px; margin-bottom:16px; text-align:center; }
   .bc-codet { font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:8px; }
   .bc-coderow { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
-  .bc-codev { font-size:22px; font-weight:700; letter-spacing:3px; color:var(--navy); }
-  .bc-copy { background:var(--gold); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; }
+  .bc-codev { font-size:22px; font-weight:700; letter-spacing:3px; color:var(--navy); white-space:nowrap; max-width:100%; }
+  .bc-copy { background:var(--gold); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; flex:none; }
+  @media (max-width:480px) {
+    .bc-coderow { flex-direction:column; gap:10px; }
+    .bc-codev { font-size:19px; letter-spacing:2px; }
+  }
+  .wxguide { position:fixed; inset:0; background:rgba(20,34,53,.9); z-index:99; display:none; color:#fff; }
+  .wxguide.show { display:block; }
+  .wxguide .wx-arrow { position:absolute; top:2px; right:14px; font-size:46px; line-height:1; color:var(--gold); }
+  .wxguide .wx-tip { position:absolute; top:62px; right:20px; left:20px; text-align:right; font-size:16.5px; line-height:1.9; }
+  .wxguide .wx-close { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); background:transparent; color:#fff; border:1px solid #fff; border-radius:999px; padding:10px 36px; font-size:15px; font-family:inherit; cursor:pointer; }
   .bc-btns { display:flex; gap:10px; flex-wrap:wrap; }
   .bc-btns .btn { flex:1 1 150px; text-align:center; margin:0; cursor:pointer; font-family:inherit; }
   button.btn { border:none; }
@@ -102,22 +111,31 @@
     Know You · Anticipate You · Support You · Empower You
   </div>
 </div>
+<div class="wxguide" id="wxGuide">
+  <div class="wx-arrow">↗</div>
+  <div class="wx-tip">点右上角 ···<br>选择「在浏览器中打开」<br>就能开启 Rukik</div>
+  <button class="wx-close" id="wxGuideClose" type="button">知道了</button>
+</div>
 <script>
 // RUKIK-SHARE-TRACK v2: 分享打开/下载点击归因（share_events）+ 品牌邀请卡片
 // 事件 kind（share_events.event 为 text、无 CHECK 约束，沿用现行写入纪律）：
 // open / store_redirect 沿用；card_view（品牌卡曝光）/ copy_code（复制邀请码）/
 // cta_open（开启我的 RUKIK 点击）为 News Sharing 3.0 新增文本值。
+// cta_open 在微信内置浏览器里表示"已展示去浏览器打开的引导层"，kind 不变、
+// 以 meta.branch="wechat_guide" 区分；其余浏览器表示真实拉起/跳商店尝试。
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var NEWS_ID = "8c6e9ce6-209f-49e0-89ca-40bfaefd244b";
 var q = new URLSearchParams(location.search);
 var sParam = q.get("s") || "";
 var refParam = q.get("ref") || "";
-function postShareEvent(shareId, ev, refCode) {
+function postShareEvent(shareId, ev, refCode, branch) {
+  var meta = { via: "news", news_id: NEWS_ID, ref_code: refCode || null };
+  if (branch) meta.branch = branch;
   try {
     fetch(SB_URL + "/rest/v1/share_events", { method: "POST", keepalive: true,
       headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ share_id: shareId || null, event: ev, meta: { via: "news", news_id: NEWS_ID, ref_code: refCode || null } }) }).catch(function(){});
+      body: JSON.stringify({ share_id: shareId || null, event: ev, meta: meta }) }).catch(function(){});
   } catch (e) {}
 }
 var shareIdPromise = null;
@@ -163,13 +181,49 @@ if (refParam) {
     }
   });
 }
+var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
 var openBtn = document.getElementById("openBtn");
+var wxGuide = document.getElementById("wxGuide");
+if (wxGuide) {
+  wxGuide.addEventListener("click", function(){ wxGuide.classList.remove("show"); });
+}
+function buildParamQuery() {
+  var p = [];
+  if (refParam) p.push("ref=" + encodeURIComponent(refParam));
+  if (sParam) p.push("s=" + encodeURIComponent(sParam));
+  return p.length ? "?" + p.join("&") : "";
+}
 if (openBtn) {
   openBtn.addEventListener("click", function(e){
     e.preventDefault();
-    var url = openBtn.getAttribute("href");
+    var ua = navigator.userAgent || "";
+    // 微信内置浏览器拦截一切网页唤醒 App（Universal Link 与 scheme 均不放行），
+    // 不硬闯：记 cta_open（meta.branch=wechat_guide）并弹页面内引导层，
+    // 指引用户走右上角「··· → 在浏览器中打开」。
+    if (/MicroMessenger/i.test(ua)) {
+      resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam, "wechat_guide"); });
+      if (wxGuide) wxGuide.classList.add("show");
+      return;
+    }
     resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam); });
-    setTimeout(function(){ location.href = url; }, 180);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (!isIOS) {
+      // 桌面/Android 无本机 App 可唤起：直达 App Store 页（与页脚下载按钮同目标）。
+      setTimeout(function(){ location.href = STORE_URL; }, 180);
+      return;
+    }
+    // iOS 普通浏览器：页内点同域 Universal Link 按 iOS 规则不会被当作 UL
+    // 触发（同域导航只重载页面，这正是旧版按钮"没反应"的原因），故用 App
+    // 已注册的 rukik:// scheme 拉起同一路由（news/{id}，带 ref/s 归因参数）；
+    // 1.5s 内页面未切走（未装 App）则兜底跳 App Store。
+    var gone = false;
+    function markGone(){ gone = true; }
+    document.addEventListener("visibilitychange", function(){ if (document.hidden) markGone(); });
+    window.addEventListener("pagehide", markGone);
+    location.href = "rukik://news/" + NEWS_ID + buildParamQuery();
+    setTimeout(function(){
+      if (!gone && !document.hidden) location.href = STORE_URL;
+    }, 1500);
   });
 }
 var shareBtn = document.getElementById("shareBtn");
