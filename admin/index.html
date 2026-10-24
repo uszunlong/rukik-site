@@ -307,7 +307,7 @@ async function loadNetwork() {
 }
 
 const SHARE_TYPE = { NEWS: '新闻', DAILY_LETTER: '今日家书', ARTICLE: '文章', SUMMARY: '摘要', AI_ANSWER: 'AI 回答', PROFESSIONAL_INSIGHT: '专业见解', KNOWLEDGE_CARD: '知识卡片' };
-const SHARE_EVENT = { created: '生成链接', open: '落地页访问', app_open: 'App 内打开', store_redirect: '下载按钮点击', ask_ai: '问 RUKIK', register: '完成注册' };
+const SHARE_EVENT = { created: '生成链接', open: '落地页访问', app_open: 'App 内打开', store_redirect: '下载按钮点击', ask_ai: '问 RUKIK', register: '完成注册', card_view: '品牌卡曝光', copy_code: '复制邀请码', cta_open: '开启 Rukik 点击' };
 const FRAUD_TYPE = { SELF_REFERRAL: '自我推荐', DUPLICATE_ACCOUNT: '重复账号', DUPLICATE_DEVICE: '同设备多账号', BULK_REGISTRATION: '批量注册', RAPID_INVITES: '短时大量邀请', ABNORMAL_IP: '异常 IP', REFUND: '退款', REVOKED: '已撤销', BANNED: '已封禁', FAKE_PROFESSIONAL_APPLICATION: '虚假专业申请', OTHER: '其他' };
 
 async function loadShare() {
@@ -451,11 +451,15 @@ function renderCover(ov) {
 }
 
 function renderShare(ov) {
+  const evCount = (name) => { const r = (ov.events_by_type || []).find((t) => t.event === name); return r ? r.count : 0; };
   const items = [
     [ov.links_total, '分享链接生成量'],
     [ov.links_30d, '近 30 天生成'],
     [ov.landing_opens, '落地页访问量'],
     [ov.app_opens, 'App 内打开量'],
+    [evCount('card_view'), '品牌卡曝光'],
+    [evCount('copy_code'), '邀请码复制'],
+    [evCount('cta_open'), '开启 Rukik 点击'],
     [ov.download_clicks, '下载按钮点击量'],
     [ov.content_share_registrations, '内容分享带来注册（已确认推荐）'],
     [ov.fraud_open, '归因异常（未处理）'],
