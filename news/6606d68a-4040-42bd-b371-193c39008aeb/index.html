@@ -37,6 +37,11 @@
   .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
   .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
   .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  .refbox { margin-top:28px; border:1px solid var(--gold); border-radius:12px; padding:16px 18px; text-align:center; background:#FFFDF8; }
+  .refbox .rt { font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:6px; }
+  .refbox .rc { font-size:22px; font-weight:700; letter-spacing:3px; color:var(--navy); }
+  .refbox .rb { margin-left:10px; background:var(--gold); color:#fff; border:none; border-radius:999px; padding:5px 16px; font-size:13px; cursor:pointer; vertical-align:middle; }
+  .refbox .rn { font-size:13px; color:#5A5348; margin-top:8px; line-height:1.7; }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
 </style>
@@ -47,21 +52,80 @@
   <img class="cover" src="https://rukik.com/assets/og-share.png" alt="">
   
   <h1>《1974年隐私法》下有关国籍与身份信息记录系统的公告</h1>
-  <div class="meta">Federal Register · Immigration · 2026-10-23 · 单一来源</div>
+  <div class="meta">Federal Register · 2026-10-23 · 单一来源</div>
   
   <h2>RUKIK AI 整合摘要</h2><p>该公告介绍了一套记录系统，用于保存可证明个人美国国籍和身份的信息。相关信息将被用于多种法律用途，包括护照申请及相关服务的审理、社会保障福利、选民资格、就业申请、遗产结算，以及联邦和州层面的执法与反恐工作。</p>
   <h2>为什么与您有关</h2><p>这类记录系统关系到政府如何收集和使用个人身份与国籍信息，并影响公共服务办理、资格认定及执法等多个领域。</p>
   <h2>重要事实</h2><ul><li>该记录系统保存用于确认个人美国国籍和身份的信息。</li><li>这些信息可用于护照申请及相关服务请求的审理。</li><li>该系统也涉及社会保障福利、选民资格、就业申请和遗产结算等法律用途。</li><li>相关信息还可用于联邦和州执法以及反恐目的。</li></ul>
   
   <p style="margin-top:24px;"><a href="https://www.federalregister.gov/documents/2026/10/23/2026-21695/privacy-act-of-1974-system-of-records">查看来源 ›</a></p>
+  <div class="refbox" id="refbox" style="display:none">
+    <div class="rt">朋友推荐码</div>
+    <div><span class="rc" id="refcode"></span><button class="rb" id="refcopy" type="button">复制</button></div>
+    <div class="rn" id="refnote"></div>
+  </div>
   <div class="cta">
     <a class="btn" href="https://rukik.com/news/6606d68a-4040-42bd-b371-193c39008aeb">在 Rukik App 中打开</a>
-    <a class="btn ghost" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+    <a class="btn ghost" id="dlBtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
   </div>
   <div class="foot">
     <div class="b">R U K I K</div>
     Know You · Anticipate You · Support You · Empower You
   </div>
 </div>
+<script>
+// RUKIK-SHARE-TRACK v1: 分享打开/下载点击归因（share_events）+ 推荐码展示
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var q = new URLSearchParams(location.search);
+var sParam = q.get("s") || "";
+var refParam = q.get("ref") || "";
+function postShareEvent(shareId, ev, refCode) {
+  try {
+    fetch(SB_URL + "/rest/v1/share_events", { method: "POST", keepalive: true,
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ share_id: shareId, event: ev, meta: { via: "news", ref_code: refCode || null } }) }).catch(function(){});
+  } catch (e) {}
+}
+var shareIdPromise = null;
+function resolveShareId() {
+  if (!sParam) return Promise.resolve(null);
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sParam)) return Promise.resolve(sParam);
+  if (!shareIdPromise) {
+    shareIdPromise = fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(sParam) + "&select=id",
+      { headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){ return rows && rows.length ? rows[0].id : null; })
+      .catch(function(){ return null; });
+  }
+  return shareIdPromise;
+}
+if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
+if (refParam) {
+  var rb = document.getElementById("refbox");
+  document.getElementById("refcode").textContent = refParam;
+  document.getElementById("refnote").textContent = "安装后注册时填入此推荐码，" + refParam + " 将成为您的推荐人。";
+  rb.style.display = "block";
+  document.getElementById("refcopy").addEventListener("click", function(){
+    var btn = this;
+    function done(){ btn.textContent = "已复制"; setTimeout(function(){ btn.textContent = "复制"; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(refParam).then(done).catch(done); }
+    else {
+      var ta = document.createElement("textarea"); ta.value = refParam; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); done();
+    }
+  });
+}
+var dlBtn = document.getElementById("dlBtn");
+if (dlBtn) {
+  dlBtn.addEventListener("click", function(e){
+    var url = dlBtn.getAttribute("href");
+    if (!sParam) return;
+    e.preventDefault();
+    resolveShareId().then(function(id){ if (id) postShareEvent(id, "store_redirect", refParam); });
+    setTimeout(function(){ location.href = url; }, 180);
+  });
+}
+</script>
 </body>
 </html>

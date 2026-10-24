@@ -37,6 +37,11 @@
   .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
   .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
   .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  .refbox { margin-top:28px; border:1px solid var(--gold); border-radius:12px; padding:16px 18px; text-align:center; background:#FFFDF8; }
+  .refbox .rt { font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:6px; }
+  .refbox .rc { font-size:22px; font-weight:700; letter-spacing:3px; color:var(--navy); }
+  .refbox .rb { margin-left:10px; background:var(--gold); color:#fff; border:none; border-radius:999px; padding:5px 16px; font-size:13px; cursor:pointer; vertical-align:middle; }
+  .refbox .rn { font-size:13px; color:#5A5348; margin-top:8px; line-height:1.7; }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
 </style>
@@ -54,14 +59,73 @@
   <h2>重要事实</h2><ul><li>傅聪在联大全会审议安理会改革问题时发言，强调改革最终目的是改变发达国家代表性过剩的局面。</li><li>傅聪表示，当前国际形势动荡变革，地缘冲突延宕升级，危机挑战层出不穷。</li><li>中方称，会员国普遍期待联合国发挥更大作用，并希望安理会肩负起维护国际和平与安全的首要责任。</li><li>中方支持安理会通过必要、合理改革提高权威和效率，更好应对危机和挑战。</li></ul>
   
   <p style="margin-top:24px;"><a href="https://wallstreetcn.com/livenews/3183949">查看来源 ›</a></p>
+  <div class="refbox" id="refbox" style="display:none">
+    <div class="rt">朋友推荐码</div>
+    <div><span class="rc" id="refcode"></span><button class="rb" id="refcopy" type="button">复制</button></div>
+    <div class="rn" id="refnote"></div>
+  </div>
   <div class="cta">
     <a class="btn" href="https://rukik.com/news/68c0c941-0220-4c51-bec2-4b8bd5daecc1">在 Rukik App 中打开</a>
-    <a class="btn ghost" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+    <a class="btn ghost" id="dlBtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
   </div>
   <div class="foot">
     <div class="b">R U K I K</div>
     Know You · Anticipate You · Support You · Empower You
   </div>
 </div>
+<script>
+// RUKIK-SHARE-TRACK v1: 分享打开/下载点击归因（share_events）+ 推荐码展示
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var q = new URLSearchParams(location.search);
+var sParam = q.get("s") || "";
+var refParam = q.get("ref") || "";
+function postShareEvent(shareId, ev, refCode) {
+  try {
+    fetch(SB_URL + "/rest/v1/share_events", { method: "POST", keepalive: true,
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ share_id: shareId, event: ev, meta: { via: "news", ref_code: refCode || null } }) }).catch(function(){});
+  } catch (e) {}
+}
+var shareIdPromise = null;
+function resolveShareId() {
+  if (!sParam) return Promise.resolve(null);
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sParam)) return Promise.resolve(sParam);
+  if (!shareIdPromise) {
+    shareIdPromise = fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(sParam) + "&select=id",
+      { headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){ return rows && rows.length ? rows[0].id : null; })
+      .catch(function(){ return null; });
+  }
+  return shareIdPromise;
+}
+if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
+if (refParam) {
+  var rb = document.getElementById("refbox");
+  document.getElementById("refcode").textContent = refParam;
+  document.getElementById("refnote").textContent = "安装后注册时填入此推荐码，" + refParam + " 将成为您的推荐人。";
+  rb.style.display = "block";
+  document.getElementById("refcopy").addEventListener("click", function(){
+    var btn = this;
+    function done(){ btn.textContent = "已复制"; setTimeout(function(){ btn.textContent = "复制"; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(refParam).then(done).catch(done); }
+    else {
+      var ta = document.createElement("textarea"); ta.value = refParam; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); done();
+    }
+  });
+}
+var dlBtn = document.getElementById("dlBtn");
+if (dlBtn) {
+  dlBtn.addEventListener("click", function(e){
+    var url = dlBtn.getAttribute("href");
+    if (!sParam) return;
+    e.preventDefault();
+    resolveShareId().then(function(id){ if (id) postShareEvent(id, "store_redirect", refParam); });
+    setTimeout(function(){ location.href = url; }, 180);
+  });
+}
+</script>
 </body>
 </html>
