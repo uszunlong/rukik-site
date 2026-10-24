@@ -2,10 +2,22 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["G89YJ35776.com.rukik.familyoffice"],
+        "appIDs": [
+          "G89YJ35776.com.rukik.familyoffice"
+        ],
         "components": [
-          { "/": "/invite/*", "comment": "Platform invitation landing pages open in the Rukik app when installed." },
-          { "/": "/invite/family*", "comment": "Family-space invitation landing page." }
+          {
+            "/": "/invite/*",
+            "comment": "Platform invitation landing pages open in the Rukik app when installed."
+          },
+          {
+            "/": "/invite/family*",
+            "comment": "Family-space invitation landing page."
+          },
+          {
+            "/": "/news/*",
+            "comment": "News detail pages open in the Rukik app when installed."
+          }
         ]
       }
     ]
