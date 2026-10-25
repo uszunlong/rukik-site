@@ -19,6 +19,10 @@
             "comment": "News detail pages open in the Rukik app when installed."
           },
           {
+            "/": "/event/*",
+            "comment": "Event detail pages (RUKIK Event share landing pages) open in the Rukik app when installed; the app routes /event/<id> to the canonical events/<id> detail screen."
+          },
+          {
             "/": "/s/*",
             "comment": "Shared content links (query form /s/?c=...) open in the Rukik app when installed."
           }
