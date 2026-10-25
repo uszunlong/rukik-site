@@ -143,6 +143,13 @@
     </div>
 
     <div class="card">
+      <h2>通知健康（Push Health）</h2>
+      <p class="muted">口径说明：权限状态与设备令牌状态分开统计（push_devices：客户端上报状态、reminder-dispatch 按 Expo 真实票据回写最后成功推送与最近错误）。没有令牌 ≠ 用户拒绝授权，也可能是未注册设备或同步失败。推送成功数来自 push_log（只记已发送）；发送失败看 reminder_objects 的 expo_error 暂缓行；App 内通知为 notifications 账本行数，不代表已送达或已读。</p>
+      <div id="pushHealthStats"><div class="empty">加载中…</div></div>
+      <div id="pushHealthDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -357,6 +364,37 @@ async function loadImageStats() {
   } catch (e) {
     $('imageStats').innerHTML = '<div class="empty">配图生产加载失败：' + esc(e.message) + '</div>';
   }
+  loadPushHealth();
+}
+
+async function loadPushHealth() {
+  try {
+    const ov = await rpc('admin_push_health');
+    renderPushHealth(ov);
+  } catch (e) {
+    $('pushHealthStats').innerHTML = '<div class="empty">通知健康加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderPushHealth(ov) {
+  const items = [
+    [ov.devices_token_registered ?? 0, '已注册设备（令牌在）'],
+    [ov.devices_authorized_active ?? 0, '已授权活跃设备（30 天内同步）'],
+    [ov.devices_token_missing ?? 0, '缺令牌设备'],
+    [ov.devices_sync_failed ?? 0, '令牌同步失败设备'],
+    [ov.devices_permission_denied ?? 0, '权限被拒设备'],
+    [ov.token_rows ?? 0, '令牌行（发送事实源）'],
+    [ov.push_sent_7d ?? 0, '近 7 天推送成功'],
+    [ov.send_error_rows ?? 0, '发送错误行（expo_error）'],
+    [ov.no_token_rows ?? 0, '无令牌暂缓行'],
+    [ov.in_app_notifications ?? 0, 'App 内通知（账本）'],
+    [ov.notifications_push_sent ?? 0, '通知已推送行'],
+  ];
+  $('pushHealthStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  $('pushHealthDetail').innerHTML =
+    `<div class="cred">设备跟踪总数：${ov.devices_tracked ?? 0} · 持有令牌的用户：${ov.token_users ?? 0} · 设备错误报告：${ov.device_error_reports ?? 0}</div>` +
+    `<div class="cred">推送成功总计（push_log）：${ov.push_sent_total ?? 0}。统计时间：${ov.generated_at ? esc(String(ov.generated_at)) : ''}</div>`;
 }
 
 function renderKnowledge(ov) {
