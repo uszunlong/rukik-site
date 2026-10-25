@@ -63,6 +63,8 @@
   .wxguide .wx-arrow { position:absolute; top:2px; right:14px; font-size:46px; line-height:1; color:var(--gold); }
   .wxguide .wx-tip { position:absolute; top:62px; right:20px; left:20px; text-align:right; font-size:16.5px; line-height:1.9; }
   .wxguide .wx-close { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); background:transparent; color:#fff; border:1px solid #fff; border-radius:999px; padding:10px 36px; font-size:15px; font-family:inherit; cursor:pointer; }
+  .jocta { margin-top:30px; text-align:center; }
+  .jocta .btn { cursor:pointer; font-family:inherit; border:none; padding:13px 44px; }
   .bc-btns { display:flex; gap:10px; flex-wrap:wrap; }
   .bc-btns .btn { flex:1 1 150px; text-align:center; margin:0; cursor:pointer; font-family:inherit; }
   button.btn { border:none; }
@@ -89,6 +91,10 @@
   <h2>主办</h2><p>Irvine Park Railroad</p>
   <p style="margin-top:24px;"><a href="https://www.irvineparkrailroad.com/events/pumpkin-patch/">查看官方页面 ›</a></p>
   <p class="note">信息核实于 2026-10-25，具体安排以官方公布为准。</p>
+  <div class="jocta">
+    <button class="btn" id="joinBtn" type="button">参加活动</button>
+    <p class="note">在 Rukik App 内选择场次并确认参加；加入的是您的参加计划，官方购票 / 预约请以主办方为准。</p>
+  </div>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
       <img class="bc-seal" src="/assets/seal.png" alt="RUKIK">
@@ -130,6 +136,7 @@
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var EVENT_ID = "aa6d6c65-9da1-498b-8059-84388d59c41b";
+var SHARE_TEXT = "上Rukik 找惊喜\n\n发现一个值得去的活动！\n\nIrvine Park Railroad Pumpkin Patch\n10月25日 周日 08:00 – 18:00（指定周末入场须预约） · Irvine Park Railroad (Irvine Regional Park) · 1 Irvine Park Rd, Orange, CA 92869 · Orange\n\n点击查看活动详情。";
 var q = new URLSearchParams(location.search);
 var sParam = q.get("s") || "";
 var refParam = q.get("ref") || "";
@@ -196,9 +203,10 @@ function buildParamQuery() {
   if (sParam) p.push("s=" + encodeURIComponent(sParam));
   return p.length ? "?" + p.join("&") : "";
 }
-if (openBtn) {
-  openBtn.addEventListener("click", function(e){
-    e.preventDefault();
+// 「开启我的 RUKIK」与「参加活动」共用同一唤醒流程：进 App 后落在
+// 同一 event_id 的活动详情，由接收者在 App 内主动选场次确认参加——
+// 落地页绝不自动把活动加入任何人的安排（Event 1.1 §7.7）。
+function openInApp() {
     var ua = navigator.userAgent || "";
     // 微信内置浏览器：不硬闯唤醒，记 cta_open（branch=wechat_guide）
     // 并弹引导层（与新闻页 2026-10-24 修复同一逻辑）。
@@ -221,13 +229,19 @@ if (openBtn) {
     setTimeout(function(){
       if (!gone && !document.hidden) location.href = STORE_URL;
     }, 1500);
-  });
+}
+if (openBtn) {
+  openBtn.addEventListener("click", function(e){ e.preventDefault(); openInApp(); });
+}
+var joinBtn = document.getElementById("joinBtn");
+if (joinBtn) {
+  joinBtn.addEventListener("click", function(){ openInApp(); });
 }
 var shareBtn = document.getElementById("shareBtn");
 if (shareBtn) {
   shareBtn.addEventListener("click", function(){
     var btn = this;
-    var shareData = { title: document.title, text: document.title + " · AI懂很多，Rukik更懂您。", url: location.href };
+    var shareData = { title: document.title, text: SHARE_TEXT, url: location.href };
     if (navigator.share) { navigator.share(shareData).catch(function(){}); return; }
     function done(){ btn.textContent = "链接已复制"; setTimeout(function(){ btn.textContent = "分享给朋友"; }, 1600); }
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(location.href).then(done).catch(done); }
