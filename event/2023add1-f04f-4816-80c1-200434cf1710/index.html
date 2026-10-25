@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dreamforce 2027 · Rukik Event</title>
+<meta name="description" content="Salesforce 生态的年度旗舰大会，价值在于一站了解 CRM 与企业 AI 的最新产品和客户实践，适合企业数字化、销售运营与营销从业者。线下在旧金山举行并同步线上直播；注册尚未开放，可先加入官网通知名单。可加入我的安排，Rukik 会提前提醒您。">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dreamforce 2027">
+<meta property="og:description" content="Salesforce 生态的年度旗舰大会，价值在于一站了解 CRM 与企业 AI 的最新产品和客户实践，适合企业数字化、销售运营与营销从业者。线下在旧金山举行并同步线上直播；注册尚未开放，可先加入官网通知名单。可加入我的安排，Rukik 会提前提醒您。">
+<meta property="og:image" content="https://rukik.com/assets/og-share.png">
+<meta property="og:url" content="https://rukik.com/event/2023add1-f04f-4816-80c1-200434cf1710">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dreamforce 2027">
+<meta name="twitter:description" content="Salesforce 生态的年度旗舰大会，价值在于一站了解 CRM 与企业 AI 的最新产品和客户实践，适合企业数字化、销售运营与营销从业者。线下在旧金山举行并同步线上直播；注册尚未开放，可先加入官网通知名单。可加入我的安排，Rukik 会提前提醒您。">
+<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
+<style>
+  :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 56px; }
+  .brand { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+  .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
+  .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
+  .cover { width:100%; border-radius:12px; margin-bottom:14px; }
+  .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
+  .statusbad { background:#B3261E; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
+  .statusend { background:#5A5348; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
+  h1 { font-size:26px; line-height:1.45; margin-bottom:14px; }
+  .meta { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:20px; }
+  .credit { font-size:12px; color:var(--gray); margin-bottom:16px; }
+  h2 { font-size:17px; margin:24px 0 10px; }
+  p, li { font-size:16.5px; line-height:1.9; }
+  p { margin-bottom:14px; }
+  ul { padding-left:20px; }
+  li { margin-bottom:10px; }
+  .note { font-size:13px; color:var(--gray); margin-top:8px; }
+  .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
+  .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
+  .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  .brandcard { margin-top:32px; border:1px solid var(--gold); border-radius:16px; padding:22px 20px 20px; background:#FFFDF8; box-shadow:0 6px 24px rgba(181,138,88,.12); }
+  .bc-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .bc-seal { width:44px; height:44px; border-radius:10px; flex:none; }
+  .bc-logo { font-weight:700; letter-spacing:4px; color:var(--navy); font-size:17px; line-height:1.2; }
+  .bc-slogan { font-size:13px; color:var(--gold); font-weight:600; margin-top:2px; }
+  .bc-title { font-size:20px; font-weight:700; line-height:1.5; margin-bottom:10px; }
+  .bc-poem { font-size:15px; color:#5A5348; line-height:1.9; margin-bottom:12px; }
+  .bc-value { font-size:14.5px; color:#5A5348; line-height:1.8; margin-bottom:14px; }
+  .bc-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .bc-tags span { font-size:12.5px; color:var(--navy); border:1px solid var(--gold); border-radius:999px; padding:4px 12px; background:#FAF3E7; }
+  .bc-code { border-top:1px dashed var(--line); padding-top:14px; margin-bottom:16px; text-align:center; }
+  .bc-codet { font-size:13px; color:var(--gray); letter-spacing:1px; margin-bottom:8px; }
+  .bc-coderow { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .bc-codev { font-size:22px; font-weight:700; letter-spacing:3px; color:var(--navy); white-space:nowrap; max-width:100%; }
+  .bc-copy { background:var(--gold); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; flex:none; }
+  @media (max-width:480px) {
+    .bc-coderow { flex-direction:column; gap:10px; }
+    .bc-codev { font-size:19px; letter-spacing:2px; }
+  }
+  .wxguide { position:fixed; inset:0; background:rgba(20,34,53,.9); z-index:99; display:none; color:#fff; }
+  .wxguide.show { display:block; }
+  .wxguide .wx-arrow { position:absolute; top:2px; right:14px; font-size:46px; line-height:1; color:var(--gold); }
+  .wxguide .wx-tip { position:absolute; top:62px; right:20px; left:20px; text-align:right; font-size:16.5px; line-height:1.9; }
+  .wxguide .wx-close { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); background:transparent; color:#fff; border:1px solid #fff; border-radius:999px; padding:10px 36px; font-size:15px; font-family:inherit; cursor:pointer; }
+  .jocta { margin-top:30px; text-align:center; }
+  .jocta .btn { cursor:pointer; font-family:inherit; border:none; padding:13px 44px; }
+  .bc-btns { display:flex; gap:10px; flex-wrap:wrap; }
+  .bc-btns .btn { flex:1 1 150px; text-align:center; margin:0; cursor:pointer; font-family:inherit; }
+  button.btn { border:none; }
+  button.btn.ghost { border:1px solid var(--navy); }
+  .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
+  .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK Event</span></div>
+  
+  <img class="cover" src="https://wp.sfdcdigital.com/en-us/wp-content/uploads/sites/4/2026/04/og-featured-image-1440x810-df.png?w=1024" alt="">
+  
+  <h1>Dreamforce 2027</h1>
+  
+  <div class="meta">商业 · San Francisco</div>
+  <div class="credit">图片来源：Salesforce</div>
+  <h2>时间</h2><ul><li>9月21日 周二 00:00</li><li>9月22日 周三 00:00</li><li>9月23日 周四 00:00</li></ul>
+  <h2>地点</h2><p>Moscone Center 及旧金山市中心园区，另设 Salesforce+ 线上直播 · San Francisco</p>
+  
+  <h2>适合人群</h2><p>商务专业</p>
+  <h2>RUKIK 想对您说</h2><p>Salesforce 生态的年度旗舰大会，价值在于一站了解 CRM 与企业 AI 的最新产品和客户实践，适合企业数字化、销售运营与营销从业者。线下在旧金山举行并同步线上直播；注册尚未开放，可先加入官网通知名单。可加入我的安排，Rukik 会提前提醒您。</p>
+  <h2>活动介绍</h2><p>Dreamforce 2027将于 2027-09-21 至 2027-09-23 在San Francisco, CA举行，场馆：Moscone Center 及旧金山市中心园区，另设 Salesforce+ 线上直播，主办方：Salesforce。全球最大 CRM/AI 企业软件大会，适合企业数字化、销售运营、营销与 Salesforce 生态从业者。参会注册尚未开放，可先在官网登记通知。线下主会＋Salesforce+ 在线同步。</p>
+  <h2>主办</h2><p>Salesforce</p>
+  <p style="margin-top:24px;"><a href="https://www.salesforce.com/dreamforce/">查看官方页面 ›</a></p>
+  <p class="note">信息核实于 2026-10-25，具体安排以官方公布为准。</p>
+  <div class="jocta">
+    <button class="btn" id="joinBtn" type="button">参加活动</button>
+    <p class="note">在 Rukik App 内选择场次并确认参加；加入的是您的参加计划，官方购票 / 预约请以主办方为准。</p>
+  </div>
+  <div class="brandcard" id="brandcard">
+    <div class="bc-head">
+      <img class="bc-seal" src="/assets/seal.png" alt="RUKIK">
+      <div>
+        <div class="bc-logo">RUKIK</div>
+        <div class="bc-slogan">AI懂很多，Rukik更懂您。</div>
+      </div>
+    </div>
+    <div class="bc-title">遇见 RUKIK，遇见更好的您。</div>
+    <div class="bc-poem">一花一世界，一叶一菩提。<br>每一场相遇，都自有因缘。</div>
+    <p class="bc-value">为您打造专属 AI 智能体，懂您的需求，记得重要的事，提前想到下一步。</p>
+    <div class="bc-tags"><span>专属 AI 智能体</span><span>千人千面的智慧资讯</span><span>重要事项主动关怀</span><span>专业知识与资源连接</span></div>
+    <div class="bc-code" id="bccode" style="display:none">
+      <div class="bc-codet">您的专属邀请码</div>
+      <div class="bc-coderow"><span class="bc-codev" id="brandcode"></span><button class="bc-copy" id="brandcopy" type="button">复制邀请码</button></div>
+    </div>
+    <div class="bc-btns">
+      <button class="btn ghost" id="shareBtn" type="button">分享给朋友</button>
+      <a class="btn" id="openBtn" href="https://rukik.com/event/2023add1-f04f-4816-80c1-200434cf1710">开启我的 RUKIK</a>
+    </div>
+  </div>
+  <div class="cta">
+    <a class="btn ghost" id="dlBtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+  </div>
+  <div class="foot">
+    <div class="b">R U K I K</div>
+    Know You · Anticipate You · Support You · Empower You
+  </div>
+</div>
+<div class="wxguide" id="wxGuide">
+  <div class="wx-arrow">↗</div>
+  <div class="wx-tip">点右上角 ···<br>选择「在浏览器中打开」<br>就能开启 Rukik</div>
+  <button class="wx-close" id="wxGuideClose" type="button">知道了</button>
+</div>
+<script>
+// RUKIK-SHARE-TRACK v2（Event 版，与新闻页同一套归因纪律）：
+// share_events 事件 kind 沿用 open / store_redirect / card_view /
+// copy_code / cta_open；meta.via="event"、meta.event_id 区分来源。
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var EVENT_ID = "2023add1-f04f-4816-80c1-200434cf1710";
+var SHARE_TEXT = "上Rukik 找惊喜\n\n发现一个值得去的活动！\n\nDreamforce 2027\n9月21日 周二 00:00 · Moscone Center 及旧金山市中心园区，另设 Salesforce+ 线上直播 · San Francisco\n\n点击查看活动详情。";
+var q = new URLSearchParams(location.search);
+var sParam = q.get("s") || "";
+var refParam = q.get("ref") || "";
+function postShareEvent(shareId, ev2, refCode, branch) {
+  var meta = { via: "event", event_id: EVENT_ID, ref_code: refCode || null };
+  if (branch) meta.branch = branch;
+  try {
+    fetch(SB_URL + "/rest/v1/share_events", { method: "POST", keepalive: true,
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ share_id: shareId || null, event: ev2, meta: meta }) }).catch(function(){});
+  } catch (e) {}
+}
+var shareIdPromise = null;
+function resolveShareId() {
+  if (!sParam) return Promise.resolve(null);
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sParam)) return Promise.resolve(sParam);
+  if (!shareIdPromise) {
+    shareIdPromise = fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(sParam) + "&select=id",
+      { headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){ return rows && rows.length ? rows[0].id : null; })
+      .catch(function(){ return null; });
+  }
+  return shareIdPromise;
+}
+if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
+(function(){
+  var card = document.getElementById("brandcard");
+  if (!card) return;
+  var sent = false;
+  function fire(){ if (sent) return; sent = true; resolveShareId().then(function(id){ postShareEvent(id, "card_view", refParam); }); }
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function(es){ for (var i = 0; i < es.length; i++) { if (es[i].isIntersecting) { fire(); io.disconnect(); } } }, { threshold: 0.25 });
+    io.observe(card);
+  } else { fire(); }
+})();
+if (refParam) {
+  var bc = document.getElementById("bccode");
+  document.getElementById("brandcode").textContent = refParam;
+  bc.style.display = "block";
+  document.getElementById("brandcopy").addEventListener("click", function(){
+    var btn = this;
+    function done(){
+      btn.textContent = "已复制";
+      setTimeout(function(){ btn.textContent = "复制邀请码"; }, 1600);
+      resolveShareId().then(function(id){ postShareEvent(id, "copy_code", refParam); });
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(refParam).then(done).catch(done); }
+    else {
+      var ta = document.createElement("textarea"); ta.value = refParam; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); done();
+    }
+  });
+}
+var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
+var openBtn = document.getElementById("openBtn");
+var wxGuide = document.getElementById("wxGuide");
+if (wxGuide) {
+  wxGuide.addEventListener("click", function(){ wxGuide.classList.remove("show"); });
+}
+function buildParamQuery() {
+  var p = [];
+  if (refParam) p.push("ref=" + encodeURIComponent(refParam));
+  if (sParam) p.push("s=" + encodeURIComponent(sParam));
+  return p.length ? "?" + p.join("&") : "";
+}
+// 「开启我的 RUKIK」与「参加活动」共用同一唤醒流程：进 App 后落在
+// 同一 event_id 的活动详情，由接收者在 App 内主动选场次确认参加——
+// 落地页绝不自动把活动加入任何人的安排（Event 1.1 §7.7）。
+function openInApp() {
+    var ua = navigator.userAgent || "";
+    // 微信内置浏览器：不硬闯唤醒，记 cta_open（branch=wechat_guide）
+    // 并弹引导层（与新闻页 2026-10-24 修复同一逻辑）。
+    if (/MicroMessenger/i.test(ua)) {
+      resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam, "wechat_guide"); });
+      if (wxGuide) wxGuide.classList.add("show");
+      return;
+    }
+    resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam); });
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (!isIOS) {
+      setTimeout(function(){ location.href = STORE_URL; }, 180);
+      return;
+    }
+    var gone = false;
+    function markGone(){ gone = true; }
+    document.addEventListener("visibilitychange", function(){ if (document.hidden) markGone(); });
+    window.addEventListener("pagehide", markGone);
+    location.href = "rukik://events/" + EVENT_ID + buildParamQuery();
+    setTimeout(function(){
+      if (!gone && !document.hidden) location.href = STORE_URL;
+    }, 1500);
+}
+if (openBtn) {
+  openBtn.addEventListener("click", function(e){ e.preventDefault(); openInApp(); });
+}
+var joinBtn = document.getElementById("joinBtn");
+if (joinBtn) {
+  joinBtn.addEventListener("click", function(){ openInApp(); });
+}
+var shareBtn = document.getElementById("shareBtn");
+if (shareBtn) {
+  shareBtn.addEventListener("click", function(){
+    var btn = this;
+    var shareData = { title: document.title, text: SHARE_TEXT, url: location.href };
+    if (navigator.share) { navigator.share(shareData).catch(function(){}); return; }
+    function done(){ btn.textContent = "链接已复制"; setTimeout(function(){ btn.textContent = "分享给朋友"; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(location.href).then(done).catch(done); }
+  });
+}
+var dlBtn = document.getElementById("dlBtn");
+if (dlBtn) {
+  dlBtn.addEventListener("click", function(e){
+    var url = dlBtn.getAttribute("href");
+    if (!sParam) return;
+    e.preventDefault();
+    resolveShareId().then(function(id){ if (id) postShareEvent(id, "store_redirect", refParam); });
+    setTimeout(function(){ location.href = url; }, 180);
+  });
+}
+</script>
+</body>
+</html>
