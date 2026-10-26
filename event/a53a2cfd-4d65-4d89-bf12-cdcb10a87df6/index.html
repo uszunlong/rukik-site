@@ -112,6 +112,11 @@
       <div class="bc-codet">您的专属邀请码</div>
       <div class="bc-coderow"><span class="bc-codev" id="brandcode"></span><button class="bc-copy" id="brandcopy" type="button">复制邀请码</button></div>
     </div>
+    <div class="bc-code" id="accode" style="display:none">
+      <div class="bc-codet">活动码</div>
+      <div class="bc-coderow"><span class="bc-codev" id="actcode"></span><button class="bc-copy" id="actcopy" type="button">复制活动码</button></div>
+      <p class="note" style="margin-top:10px">安装 Rukik 后，注册时填入这个活动码，即可把这次注册记到本场活动名下。</p>
+    </div>
     <div class="bc-btns">
       <button class="btn ghost" id="shareBtn" type="button">分享给朋友</button>
       <a class="btn" id="openBtn" href="https://rukik.com/event/a53a2cfd-4d65-4d89-bf12-cdcb10a87df6">开启我的 RUKIK</a>
@@ -190,6 +195,44 @@ if (refParam) {
       var ta = document.createElement("textarea"); ta.value = refParam; document.body.appendChild(ta);
       ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); done();
     }
+  });
+}
+// 活动码（注册回填，用户 2026-10-25 拍板）：展示本页 share code 并
+// 一键复制，供未安装用户安装 Rukik 后在注册页回填，注册即归因到本
+// 场活动。s 为链接 id（UUID）形态时先解析回短码再展示——用户要填
+// 的是 share_links.code。剪贴板只写不读（与全站归因纪律一致）。
+var codeTextPromise = null;
+function resolveCodeText() {
+  if (!sParam) return Promise.resolve("");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sParam)) return Promise.resolve(sParam);
+  if (!codeTextPromise) {
+    codeTextPromise = fetch(SB_URL + "/rest/v1/share_links?id=eq." + encodeURIComponent(sParam) + "&select=code",
+      { headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){ return rows && rows.length ? rows[0].code : sParam; })
+      .catch(function(){ return sParam; });
+  }
+  return codeTextPromise;
+}
+if (sParam) {
+  resolveCodeText().then(function(codeText){
+    if (!codeText) return;
+    var ac = document.getElementById("accode");
+    document.getElementById("actcode").textContent = codeText;
+    ac.style.display = "block";
+    document.getElementById("actcopy").addEventListener("click", function(){
+      var btn = this;
+      function done(){
+        btn.textContent = "已复制";
+        setTimeout(function(){ btn.textContent = "复制活动码"; }, 1600);
+        resolveShareId().then(function(id){ postShareEvent(id, "copy_code", refParam, "event_code"); });
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(codeText).then(done).catch(done); }
+      else {
+        var ta = document.createElement("textarea"); ta.value = codeText; document.body.appendChild(ta);
+        ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); done();
+      }
+    });
   });
 }
 var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
