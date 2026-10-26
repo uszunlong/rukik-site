@@ -30,6 +30,8 @@
   .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:var(--gold); }
   .tag.ok { background:var(--gold); color:#fff; }
   .tag.no { border-color:var(--gray); color:var(--gray); }
+  .tag.warn { border-color:var(--bad); color:var(--bad); font-weight:600; }
+  .sess { font-size:13px; margin:3px 0; line-height:1.5; }
   .cred { font-size:12px; color:#555; margin-top:4px; }
   input[type=email], input[type=text] { width:100%; padding:12px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fff; }
   .login { max-width:400px; margin:60px auto 0; }
@@ -166,6 +168,10 @@
       <div id="eventInviterTable"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">待核实活动（PENDING）</div>
       <div id="eventPending"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">场次时区核实（P5 · 时区诚实化）</div>
+      <p class="muted">口径说明：场次时区为该场次所在地的 IANA 时区。来源：explicit＝来源 / 提交者显式给出；inferred_city＝按城市推断（需优先复核）；submitter＝用户发布时按提交者时区；official＝管理员核实通道写入；存量未知＝0154 前入库、无来源记录。时区未经官方核实流程确认的一律标「⚠ 时区未核实」。「修正时区」按官方核实落账：写入新时区、来源记 official、标记已核实；如官方页的当地钟点与显示不符，可在修正时一并改当地开始时间（系统按新时区重算绝对时刻、保持原时长）。</p>
+      <div id="eventTzStats"></div>
+      <div id="eventTzList"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
       <div id="eventReports"><div class="empty">加载中…</div></div>
     </div>
@@ -414,7 +420,9 @@ async function loadEventOps() {
       rpc('admin_event_attribution_by_inviter', { p_touch: eventTouch, p_limit: 100 }),
       rpc('admin_event_open_heat', { p_limit: 100 }),
     ]);
+    await loadPendingSessions(pending);
     renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr); renderEventInviter(inviters); renderEventOpenHeat(openHeat);
+    loadEventTz();
     $('eventTouchLabel').textContent = eventTouch === 'first' ? '首次来源（first_touch）' : '最近一次来源（last_touch）';
     $('eventTouchLast').className = 'btn small ' + (eventTouch === 'last' ? 'gold' : 'ghost');
     $('eventTouchFirst').className = 'btn small ' + (eventTouch === 'first' ? 'gold' : 'ghost');
@@ -494,13 +502,47 @@ function renderEventOps(ov) {
       `<div class="stat"><b>${n === null ? '<span class="tag no">未采集</span>' : n}</b><span>${label}<br>${esc(sub)}</span></div>`).join('') + '</div>';
 }
 
+const TZ_SOURCE = { explicit: '显式给出', inferred_city: '城市推断', submitter: '提交者时区', official: '官方核实' };
+let pendingTzMap = {};
+
+function fmtInTz(t, tz) {
+  try {
+    return new Intl.DateTimeFormat('zh-CN', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(t));
+  } catch { return fmtDate(t); }
+}
+
+function sessWhenHtml(s) {
+  if (s.timezone) return esc(fmtInTz(s.start_at, s.timezone)) + ` <span class="muted">（${esc(s.timezone)}）</span>`;
+  return esc(fmtDate(s.start_at)) + ' <span class="muted">（时区待定 · 按 UTC 显示）</span>';
+}
+
+function sessLine(s) {
+  const src = s.tz_source ? (TZ_SOURCE[s.tz_source] || s.tz_source) : '存量未知';
+  const ver = s.tz_verified ? '<span class="tag ok">时区已核实</span>' : '<span class="tag warn">⚠ 时区未核实</span>';
+  return `<div class="sess">${sessWhenHtml(s)}<br><span class="muted">来源：${esc(src)}</span> ${ver}</div>`;
+}
+
+// 待核实活动的场次经 RLS 直读 event_sessions（管理员会话可见）；
+// admin_event_list_pending 本身不返回场次，故此处补读。
+async function loadPendingSessions(pending) {
+  pendingTzMap = {};
+  const ids = (pending || []).map((e) => e.event_id).filter(Boolean);
+  if (!ids.length) return;
+  const { data, error } = await sb.from('event_sessions')
+    .select('id,event_id,start_at,end_at,timezone,tz_verified,tz_source')
+    .in('event_id', ids).order('start_at', { ascending: true });
+  if (error) return;
+  (data || []).forEach((s) => { (pendingTzMap[s.event_id] = pendingTzMap[s.event_id] || []).push(s); });
+}
+
 function renderEventPending(list) {
   if (!list || list.length === 0) { $('eventPending').innerHTML = '<div class="empty">暂无待核实活动。</div>'; return; }
-  $('eventPending').innerHTML = '<table><tr><th>活动</th><th>类目 · 城市</th><th>质量层</th><th>核验信号（最新一轮）</th><th>首次发现</th><th></th></tr>' +
+  $('eventPending').innerHTML = '<table><tr><th>活动</th><th>类目 · 城市</th><th>质量层</th><th>场次 · 时区</th><th>核验信号（最新一轮）</th><th>首次发现</th><th></th></tr>' +
     list.map((e) => `<tr>
       <td><b>${esc(e.title || '')}</b>${e.official_url ? `<br><a href="${esc(e.official_url)}" target="_blank" rel="noopener">官方页</a>` : ''}</td>
       <td>${esc(EV_CAT[e.category] || e.category || '')}<br><span class="muted">${esc(e.city || '—')}</span></td>
       <td>${esc(e.quality_tier || '—')}</td>
+      <td>${(pendingTzMap[e.event_id] || []).length ? (pendingTzMap[e.event_id] || []).map(sessLine).join('') : '<span class="muted">暂无场次</span>'}</td>
       <td>${e.signal_kind ? `<span class="tag">${esc(SIG_KIND[e.signal_kind] || e.signal_kind)}</span><div class="cred">${esc(e.signal_detail || '')} · ${fmtDate(e.signal_at)}</div>` : '<span class="muted">暂无信号</span>'}</td>
       <td class="muted">${fmtDate(e.first_seen_at)}</td>
       <td>${e.signal_id ? `<button class="btn small ghost" data-signal="${e.signal_id}">标记已核</button>` : ''}</td>
@@ -514,6 +556,96 @@ function renderEventPending(list) {
       } catch (err) { $('appErr').textContent = '操作失败：' + err.message; btn.disabled = false; }
     };
   });
+}
+
+let tzRowById = {};
+
+async function loadEventTz() {
+  try {
+    const [cntAll, cntUnv, cntNull, listRes] = await Promise.all([
+      sb.from('event_sessions').select('id', { count: 'exact', head: true }),
+      sb.from('event_sessions').select('id', { count: 'exact', head: true }).eq('tz_verified', false),
+      sb.from('event_sessions').select('id', { count: 'exact', head: true }).is('timezone', null),
+      sb.from('event_sessions')
+        .select('id,event_id,start_at,end_at,timezone,tz_verified,tz_source,public_events!inner(title,title_zh,city,verification_status,event_status)')
+        .eq('tz_verified', false)
+        .order('start_at', { ascending: true })
+        .limit(50),
+    ]);
+    if (listRes.error) throw new Error(listRes.error.message);
+    renderEventTz({ total: cntAll.count ?? 0, unverified: cntUnv.count ?? 0, tzNull: cntNull.count ?? 0, rows: listRes.data || [] });
+  } catch (e) {
+    $('eventTzList').innerHTML = '<div class="empty">场次时区加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderEventTz(info) {
+  tzRowById = {};
+  info.rows.forEach((s) => { tzRowById[s.id] = s; });
+  $('eventTzStats').innerHTML = `<div class="cred">场次共 ${info.total} 条 · 时区未核实 ${info.unverified} 条 · 时区待定（空） ${info.tzNull} 条。下表按场次时间先后列出未核实的前 ${info.rows.length} 条，逐条对照官方页复核后用「修正时区」落账。</div>`;
+  if (!info.rows.length) { $('eventTzList').innerHTML = '<div class="empty">暂无未核实时区的场次。</div>'; return; }
+  $('eventTzList').innerHTML = '<table><tr><th>活动</th><th>场次当地时间</th><th>时区 · 来源</th><th>状态</th><th></th></tr>' +
+    info.rows.map((s) => {
+      const ev = s.public_events || {};
+      const src = s.tz_source ? (TZ_SOURCE[s.tz_source] || s.tz_source) : '存量未知';
+      return `<tr>
+      <td><b>${esc(ev.title_zh || ev.title || '')}</b><br><span class="muted">${esc(ev.city || '—')} · ${esc(ev.verification_status || '')}${ev.event_status ? ' · ' + esc(ev.event_status) : ''}</span></td>
+      <td>${sessWhenHtml(s)}</td>
+      <td>${esc(s.timezone || '（待定）')}<br><span class="muted">来源：${esc(src)}</span></td>
+      <td>${s.tz_verified ? '<span class="tag ok">时区已核实</span>' : '<span class="tag warn">⚠ 时区未核实</span>'}</td>
+      <td><button class="btn small ghost" data-tzedit="${s.id}">修正时区</button></td>
+    </tr>`;
+    }).join('') + '</table>';
+  $('eventTzList').querySelectorAll('button[data-tzedit]').forEach((btn) => {
+    btn.onclick = () => editSessionTz(btn.dataset.tzedit, btn);
+  });
+}
+
+function isValidIanaTz(tz) {
+  if (!tz || typeof tz !== 'string') return false;
+  try { Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; }
+}
+
+// 把某时刻在指定时区下的墙钟时间格式化为 'YYYY-MM-DD HH:MM'（修正时预填用）
+function wallInTz(t, tz) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(t));
+    const g = (k) => (parts.find((p) => p.type === k) || {}).value || '';
+    return `${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}`;
+  } catch { return ''; }
+}
+
+async function editSessionTz(sessionId, btn) {
+  const s = tzRowById[sessionId];
+  if (!s) return;
+  const input = prompt('输入该场次所在时区（IANA 名称，如 America/New_York、Asia/Shanghai、Europe/Berlin）：', s.timezone || '');
+  if (input === null) return;
+  const tz = input.trim();
+  if (!isValidIanaTz(tz)) { $('appErr').textContent = '时区无效：「' + tz + '」不是合法 IANA 时区名，未做任何修改。'; return; }
+  // 当地开始时间预填为「现时刻在新时区下的墙钟」：管理员对照官方页，
+  // 不符就改——服务端据此按新时区重算绝对时刻（保持原时长）。
+  const prefill = wallInTz(s.start_at, tz);
+  const localInput = prompt(`该场次在 ${tz} 的当地开始时间（格式 YYYY-MM-DD HH:MM）。\n已按现时刻换算预填；与官方页不符时请改成官方页的当地钟点，一致则直接确认：`, prefill);
+  if (localInput === null) return;
+  const localStart = localInput.trim();
+  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(localStart) || isNaN(new Date(localStart.replace(' ', 'T')).getTime())) {
+    $('appErr').textContent = '当地开始时间格式不对（需 YYYY-MM-DD HH:MM），未做任何修改。'; return;
+  }
+  const changed = localStart !== prefill;
+  if (!confirm(`确认修正该场次时区？\n时区：${s.timezone || '（待定）'} → ${tz}\n当地开始：${changed ? prefill + ' → ' + localStart + '（将按新时区重算绝对时刻）' : localStart + '（绝对时刻不变）'}\n落账口径：来源记 official、标记「时区已核实」。`)) return;
+  btn.disabled = true;
+  try {
+    await rpc('admin_event_session_set_timezone', { p_session_id: sessionId, p_timezone: tz, p_start_local: changed ? localStart : null });
+    $('appErr').textContent = '';
+    loadEventOps();
+  } catch (e) {
+    if (/could not find the function|PGRST202|does not exist/i.test(e.message)) {
+      $('appErr').textContent = '时区修正接口尚未上线：配套 RPC admin_event_session_set_timezone 待迁移应用后可用（前端入口已备好，本次未写入任何数据）。';
+    } else {
+      $('appErr').textContent = '修正失败：' + e.message;
+    }
+    btn.disabled = false;
+  }
 }
 
 function renderEventReports(list) {
