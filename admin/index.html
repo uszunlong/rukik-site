@@ -551,7 +551,7 @@ function renderEventReports(list) {
     btn.onclick = async () => {
       const act = btn.dataset.act;
       const label = act === 'MUTE' ? '禁言 24 小时' : act === 'REMOVE' ? '移出本群（可经新参加重新加入）' : '移出并禁入（不可再自动入群）';
-      if (!confirm(`确认对该成员执行「${label}」？此操作不影响对方的活动参加与「我的安排」。`)) return;
+      if (!confirm(`确认对该成员执行「${label}」？此操作不影响对方的活动参加与「我的计划」。`)) return;
       btn.disabled = true;
       try {
         if (act === 'MUTE') {
