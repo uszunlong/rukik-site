@@ -151,7 +151,7 @@
 
     <div class="card">
       <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
-      <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④加入活动群＝服务端实际入群记录（用户×群，含已退出 / 被移出）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：经应用商店全新安装后再注册的用户目前无归因通道（系统无延迟深度链接，与新闻分享同一现状），②只统计深链直达（已装 App）等可靠归因，不估算、不填充。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
+      <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④加入活动群＝服务端实际入群记录（用户×群，含已退出 / 被移出）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：全新安装的用户可经活动落地页的「活动码」回填归因（注册页手动填入活动码、由服务端落账，渠道标记 backfill_code），②已包含这部分注册；系统仍无延迟深链自动恢复来源，不估算、不填充。每条活动分享链接归属一位具体分享用户，一笔注册同时记「活动」与「分享人」两层：下方按活动表与按分享人表为同一批归因记录、同一口径，分开统计、不混算；链接没有可验证的分享人时不猜测归属、不计入。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
       <div id="eventFunnel" class="mt"></div>
       <div class="cred" style="margin:16px 0 6px">每场活动的归因注册（核心指标）· 当前口径：<b id="eventTouchLabel">最近一次来源（last_touch）</b>
@@ -159,6 +159,8 @@
         <button class="btn small ghost" id="eventTouchFirst" type="button">首次来源</button>
       </div>
       <div id="eventAttrTable"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">按分享人统计（谁的活动分享带来了注册）· 与按活动表同一口径、跟随上方来源开关</div>
+      <div id="eventInviterTable"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">待核实活动（PENDING）</div>
       <div id="eventPending"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
@@ -401,13 +403,14 @@ let eventTouch = 'last';
 
 async function loadEventOps() {
   try {
-    const [ov, pending, reports, attr] = await Promise.all([
+    const [ov, pending, reports, attr, inviters] = await Promise.all([
       rpc('admin_event_ops_overview', { p_touch: eventTouch }),
       rpc('admin_event_list_pending', { p_limit: 50 }),
       rpc('admin_group_reports_list', { p_status: null, p_limit: 50 }),
       rpc('admin_event_attribution_by_event', { p_touch: eventTouch, p_limit: 100 }),
+      rpc('admin_event_attribution_by_inviter', { p_touch: eventTouch, p_limit: 100 }),
     ]);
-    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr);
+    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr); renderEventInviter(inviters);
     $('eventTouchLabel').textContent = eventTouch === 'first' ? '首次来源（first_touch）' : '最近一次来源（last_touch）';
     $('eventTouchLast').className = 'btn small ' + (eventTouch === 'last' ? 'gold' : 'ghost');
     $('eventTouchFirst').className = 'btn small ' + (eventTouch === 'first' ? 'gold' : 'ghost');
@@ -426,6 +429,19 @@ function renderEventAttr(list) {
       <td><b>${esc(r.title || '')}</b></td>
       <td>${r.registrations ?? 0}</td>
       <td>${r.joined_group ?? 0}</td>
+    </tr>`).join('') + '</table>';
+}
+
+function renderEventInviter(list) {
+  if (!list || list.length === 0) { $('eventInviterTable').innerHTML = '<div class="empty">暂无归因到具体分享人的活动注册。</div>'; return; }
+  const touchTxt = eventTouch === 'first' ? '首次来源' : '最近一次来源';
+  $('eventInviterTable').innerHTML = '<table><tr><th>分享人</th><th>归因新注册（' + touchTxt + '）</th><th>其中回填码注册</th><th>其中已入所归因活动的群</th><th>带来注册的活动数</th></tr>' +
+    list.map((r) => `<tr>
+      <td><b>${esc(r.inviter_name || '（未命名）')}</b>${r.inviter_referral_code ? `<br><span class="muted">${esc(r.inviter_referral_code)}</span>` : ''}</td>
+      <td>${r.registrations ?? 0}</td>
+      <td>${r.backfill_registrations ?? 0}</td>
+      <td>${r.joined_group ?? 0}</td>
+      <td>${r.events_count ?? 0}</td>
     </tr>`).join('') + '</table>';
 }
 
