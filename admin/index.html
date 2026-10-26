@@ -150,6 +150,17 @@
     </div>
 
     <div class="card">
+      <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
+      <p class="muted">口径说明：邀请漏斗四段——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝<b>未采集</b>（活动落地页注册不携带活动归因，分享码只在参加时被消费，此段不估算、不填充）；③参加确认＝经分享归因的参加（参加成功时消费暂存的分享码落账），全渠道参加总数仅作对照、与归因数分开列示；④入群＝曾进入活动群的用户×群组合数（含已退出 / 被移出）。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
+      <div id="eventOpsStats"><div class="empty">加载中…</div></div>
+      <div id="eventFunnel" class="mt"></div>
+      <div class="cred" style="margin:16px 0 6px">待核实活动（PENDING）</div>
+      <div id="eventPending"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
+      <div id="eventReports"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -374,6 +385,126 @@ async function loadPushHealth() {
   } catch (e) {
     $('pushHealthStats').innerHTML = '<div class="empty">通知健康加载失败：' + esc(e.message) + '</div>';
   }
+  loadEventOps();
+}
+
+const EV_CAT = { BUSINESS: '商业', FESTIVAL: '节庆', COMMUNITY: '社区', FAMILY_KIDS: '亲子', EXHIBITION: '展览', PERFORMANCE: '演出', OUTDOOR: '户外', FREE_PUBLIC: '免费公共', OTHER: '其他' };
+const SIG_KIND = { page_gone: '官方页已消失', cancel_phrase: '官方页出现取消字样', date_changed: '日期与官方页不一致', lacc_no_event_json: '官方页结构异常', apply_failed: '状态自动落库失败', would_cancel: '预演：将判取消', would_update: '预演：将判延期' };
+const REPORT_STATUS = { OPEN: '待处理', HANDLED: '已处理', DISMISSED: '已忽略' };
+
+async function loadEventOps() {
+  try {
+    const [ov, pending, reports] = await Promise.all([
+      rpc('admin_event_ops_overview'),
+      rpc('admin_event_list_pending', { p_limit: 50 }),
+      rpc('admin_group_reports_list', { p_status: null, p_limit: 50 }),
+    ]);
+    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports);
+  } catch (e) {
+    $('eventOpsStats').innerHTML = '<div class="empty">Event 运营加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderEventOps(ov) {
+  const pool = ov.pool || {}, grp = ov.groups || {}, rep = ov.reports || {}, fn = ov.funnel || {};
+  const items = [
+    [pool.total ?? 0, '活动总数'],
+    [pool.verified ?? 0, '已核实'],
+    [pool.pending ?? 0, '待核实'],
+    [pool.sessions_next_14d ?? 0, '未来 14 天场次'],
+    [grp.total ?? 0, '活动群'],
+    [grp.active ?? 0, '进行中群'],
+    [grp.active_groups_7d ?? 0, '近 7 天活跃群（有成员发言）'],
+    [grp.members_active ?? 0, '群成员（当前）'],
+    [rep.open ?? 0, '待处理举报'],
+  ];
+  $('eventOpsStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  const catLine = (pool.by_category || []).map((t) => `${esc(EV_CAT[t.category] || t.category)} ${t.count}`).join(' · ') || '暂无';
+  $('eventOpsStats').innerHTML +=
+    `<div class="cred">活动类目分布：${catLine}（重大展会 ${pool.major ?? 0} · 已取消 ${pool.cancelled ?? 0} · 已结束 ${pool.ended ?? 0}）</div>` +
+    `<div class="cred">未来 14 天有场次的活动：${pool.events_next_14d ?? 0} 场活动 · 群消息总量 ${grp.messages_total ?? 0}（近 7 天成员发言 ${grp.messages_member_7d ?? 0}）· 已归档群 ${grp.archived ?? 0} · 举报已处理 ${rep.handled ?? 0} / 已忽略 ${rep.dismissed ?? 0}</div>` +
+    `<div class="cred">统计时间：${ov.generated_at ? esc(fmtDate(ov.generated_at)) : '—'}</div>`;
+  const stages = [
+    ['① 分享打开', fn.opens ?? 0, `活动分享链接 ${fn.share_links ?? 0} 条`],
+    ['② 注册完成', null, '活动归因未采集'],
+    ['③ 参加确认（分享归因）', fn.joins_attributed ?? 0, `全渠道参加共 ${fn.joins_total ?? 0}（对照）`],
+    ['④ 入群', fn.group_entries ?? 0, `当前在群 ${grp.members_active ?? 0}`],
+  ];
+  $('eventFunnel').innerHTML = '<div class="cred" style="margin-bottom:6px">邀请漏斗（累计）</div>' +
+    '<div class="stats">' + stages.map(([label, n, sub]) =>
+      `<div class="stat"><b>${n === null ? '<span class="tag no">未采集</span>' : n}</b><span>${label}<br>${esc(sub)}</span></div>`).join('') + '</div>';
+}
+
+function renderEventPending(list) {
+  if (!list || list.length === 0) { $('eventPending').innerHTML = '<div class="empty">暂无待核实活动。</div>'; return; }
+  $('eventPending').innerHTML = '<table><tr><th>活动</th><th>类目 · 城市</th><th>质量层</th><th>核验信号（最新一轮）</th><th>首次发现</th><th></th></tr>' +
+    list.map((e) => `<tr>
+      <td><b>${esc(e.title || '')}</b>${e.official_url ? `<br><a href="${esc(e.official_url)}" target="_blank" rel="noopener">官方页</a>` : ''}</td>
+      <td>${esc(EV_CAT[e.category] || e.category || '')}<br><span class="muted">${esc(e.city || '—')}</span></td>
+      <td>${esc(e.quality_tier || '—')}</td>
+      <td>${e.signal_kind ? `<span class="tag">${esc(SIG_KIND[e.signal_kind] || e.signal_kind)}</span><div class="cred">${esc(e.signal_detail || '')} · ${fmtDate(e.signal_at)}</div>` : '<span class="muted">暂无信号</span>'}</td>
+      <td class="muted">${fmtDate(e.first_seen_at)}</td>
+      <td>${e.signal_id ? `<button class="btn small ghost" data-signal="${e.signal_id}">标记已核</button>` : ''}</td>
+    </tr>`).join('') + '</table>';
+  $('eventPending').querySelectorAll('button[data-signal]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await rpc('admin_event_verify_signal_set_status', { p_signal_id: btn.dataset.signal, p_status: 'RESOLVED' });
+        loadEventOps();
+      } catch (err) { $('appErr').textContent = '操作失败：' + err.message; btn.disabled = false; }
+    };
+  });
+}
+
+function renderEventReports(list) {
+  if (!list || list.length === 0) { $('eventReports').innerHTML = '<div class="empty">暂无举报记录。</div>'; return; }
+  $('eventReports').innerHTML = '<table><tr><th>时间</th><th>群 / 举报人</th><th>被举报人</th><th>被举报内容</th><th>状态</th><th></th></tr>' +
+    list.map((r) => {
+      const canActOnTarget = r.target_user_id && r.target_membership_status === 'ACTIVE';
+      return `<tr>
+      <td class="muted">${fmtDate(r.created_at)}</td>
+      <td><b>${esc(r.group_title || '')}</b><br><span class="muted">举报人：${esc(r.reporter_name || '')}${r.reporter_email ? ' · ' + esc(r.reporter_email) : ''}</span></td>
+      <td>${r.target_name ? esc(r.target_name) : '<span class="muted">（未指定）</span>'}${r.target_membership_status ? `<div class="cred">当前成员状态：${esc(r.target_membership_status)}</div>` : ''}</td>
+      <td>${r.message_body ? `<div>${esc(r.message_body)}</div>` : ''}${r.reason ? `<div class="cred">理由：${esc(r.reason)}</div>` : ''}</td>
+      <td>${r.status === 'OPEN' ? '<span class="tag">待处理</span>' : esc(REPORT_STATUS[r.status] || r.status)}${r.handled_by_name ? `<div class="cred">${esc(r.handled_by_name)} · ${fmtDate(r.handled_at)}</div>` : ''}</td>
+      <td style="white-space:nowrap">
+        ${r.status === 'OPEN'
+          ? `<button class="btn small gold" data-report="${r.id}" data-act="HANDLED">已处理</button>
+             <button class="btn small ghost" data-report="${r.id}" data-act="DISMISSED">忽略</button>`
+          : `<button class="btn small ghost" data-report="${r.id}" data-act="OPEN">重开</button>`}
+        ${canActOnTarget ? `<br><button class="btn small ghost" data-target="${r.target_user_id}" data-group="${r.group_id}" data-act="MUTE">禁言 24h</button>
+             <button class="btn small ghost" data-target="${r.target_user_id}" data-group="${r.group_id}" data-act="REMOVE">移出</button>
+             <button class="btn small ghost" data-target="${r.target_user_id}" data-group="${r.group_id}" data-act="BAN">禁入</button>` : ''}
+      </td>
+    </tr>`;
+    }).join('') + '</table>';
+  $('eventReports').querySelectorAll('button[data-report]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await rpc('admin_group_report_set_status', { p_report_id: btn.dataset.report, p_status: btn.dataset.act });
+        loadEventOps();
+      } catch (err) { $('appErr').textContent = '操作失败：' + err.message; btn.disabled = false; }
+    };
+  });
+  $('eventReports').querySelectorAll('button[data-target]').forEach((btn) => {
+    btn.onclick = async () => {
+      const act = btn.dataset.act;
+      const label = act === 'MUTE' ? '禁言 24 小时' : act === 'REMOVE' ? '移出本群（可经新参加重新加入）' : '移出并禁入（不可再自动入群）';
+      if (!confirm(`确认对该成员执行「${label}」？此操作不影响对方的活动参加与「我的安排」。`)) return;
+      btn.disabled = true;
+      try {
+        if (act === 'MUTE') {
+          await rpc('group_admin_mute_member', { p_group_id: btn.dataset.group, p_user_id: btn.dataset.target, p_until: new Date(Date.now() + 24 * 3600 * 1000).toISOString(), p_reason: '后台举报处置' });
+        } else {
+          await rpc('group_admin_remove_member', { p_group_id: btn.dataset.group, p_user_id: btn.dataset.target, p_ban: act === 'BAN', p_reason: '后台举报处置' });
+        }
+        loadEventOps();
+      } catch (err) { $('appErr').textContent = '操作失败：' + err.message; btn.disabled = false; }
+    };
+  });
 }
 
 function renderPushHealth(ov) {
