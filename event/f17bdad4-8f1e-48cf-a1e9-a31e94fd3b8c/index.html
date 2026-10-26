@@ -77,12 +77,12 @@
 <div class="wrap">
   <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK Event</span></div>
   
-  <img class="cover" src="https://rukik.com/assets/og-share.png" alt="">
+  <img class="cover" src="https://www.ces.tech/media/1yebqthg/ai.jpg?v=639171443628330000&amp;width=1000&amp;height=1000&amp;format=webp&amp;quality=80" alt="">
   
   <h1>CES Unveiled Las Vegas</h1>
   
   <div class="meta">展览 · Las Vegas</div>
-  
+  <div class="credit">图片来源：CTA</div>
   <h2>时间</h2><ul><li>1月4日 周一 09:00 – 23:59</li></ul>
   <h2>地点</h2><p>Las Vegas</p>
   
@@ -301,6 +301,30 @@ if (dlBtn) {
     setTimeout(function(){ location.href = url; }, 180);
   });
 }
+</script>
+<script>
+// RUKIK-OPEN-COUNT v1（活动级匿名打开计数，迁移 0144）：只记「本活动
+// 今天被打开了多少次」一个聚合数。请求只带活动 id，不带用户、设备、
+// 来源等任何其它参数；与上方分享归因脚本是两套完全独立的统计，本块
+// 不读不写那边的任何变量与数据。同一浏览器会话内同一活动只计一次
+// （sessionStorage 旗标）；sessionStorage 不可用时按打开尝试计数。
+(function () {
+  var oid = "f17bdad4-8f1e-48cf-a1e9-a31e94fd3b8c";
+  var okey = "rukik-open-counted:" + oid;
+  try {
+    if (window.sessionStorage) {
+      if (sessionStorage.getItem(okey)) return;
+      sessionStorage.setItem(okey, "1");
+    }
+  } catch (e) {}
+  try {
+    fetch("https://yzgzgtrqrmarfjftgbwt.supabase.co/rest/v1/rpc/count_event_open", {
+      method: "POST", keepalive: true,
+      headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event_id: oid })
+    }).catch(function () {});
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>

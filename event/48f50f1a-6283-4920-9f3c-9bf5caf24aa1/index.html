@@ -77,12 +77,12 @@
 <div class="wrap">
   <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK Event</span></div>
   
-  <img class="cover" src="https://rukik.com/assets/og-share.png" alt="">
+  <img class="cover" src="https://live.staticflickr.com/2887/11076975753_4f4b8b8c0a_b.jpg" alt="">
   
   <h1>The Aesthetic Meeting</h1>
   
   <div class="meta">商业 · New York</div>
-  
+  <div class="credit">图片来源：Spencer Means · Openverse · CC BY-SA 2.0</div>
   <h2>时间</h2><ul><li>3月30日 周四 00:00</li><li>3月31日 周五 00:00</li><li>4月1日 周六 00:00</li><li>4月2日 周日 00:00</li></ul>
   <h2>地点</h2><p>Jacob K. Javits Convention Center · 429 11th Ave, New York, NY 10001 · New York</p>
   
@@ -301,6 +301,30 @@ if (dlBtn) {
     setTimeout(function(){ location.href = url; }, 180);
   });
 }
+</script>
+<script>
+// RUKIK-OPEN-COUNT v1（活动级匿名打开计数，迁移 0144）：只记「本活动
+// 今天被打开了多少次」一个聚合数。请求只带活动 id，不带用户、设备、
+// 来源等任何其它参数；与上方分享归因脚本是两套完全独立的统计，本块
+// 不读不写那边的任何变量与数据。同一浏览器会话内同一活动只计一次
+// （sessionStorage 旗标）；sessionStorage 不可用时按打开尝试计数。
+(function () {
+  var oid = "48f50f1a-6283-4920-9f3c-9bf5caf24aa1";
+  var okey = "rukik-open-counted:" + oid;
+  try {
+    if (window.sessionStorage) {
+      if (sessionStorage.getItem(okey)) return;
+      sessionStorage.setItem(okey, "1");
+    }
+  } catch (e) {}
+  try {
+    fetch("https://yzgzgtrqrmarfjftgbwt.supabase.co/rest/v1/rpc/count_event_open", {
+      method: "POST", keepalive: true,
+      headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event_id: oid })
+    }).catch(function () {});
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>

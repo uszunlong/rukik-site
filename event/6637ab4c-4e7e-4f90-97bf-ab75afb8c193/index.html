@@ -302,5 +302,29 @@ if (dlBtn) {
   });
 }
 </script>
+<script>
+// RUKIK-OPEN-COUNT v1（活动级匿名打开计数，迁移 0144）：只记「本活动
+// 今天被打开了多少次」一个聚合数。请求只带活动 id，不带用户、设备、
+// 来源等任何其它参数；与上方分享归因脚本是两套完全独立的统计，本块
+// 不读不写那边的任何变量与数据。同一浏览器会话内同一活动只计一次
+// （sessionStorage 旗标）；sessionStorage 不可用时按打开尝试计数。
+(function () {
+  var oid = "6637ab4c-4e7e-4f90-97bf-ab75afb8c193";
+  var okey = "rukik-open-counted:" + oid;
+  try {
+    if (window.sessionStorage) {
+      if (sessionStorage.getItem(okey)) return;
+      sessionStorage.setItem(okey, "1");
+    }
+  } catch (e) {}
+  try {
+    fetch("https://yzgzgtrqrmarfjftgbwt.supabase.co/rest/v1/rpc/count_event_open", {
+      method: "POST", keepalive: true,
+      headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event_id: oid })
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>
