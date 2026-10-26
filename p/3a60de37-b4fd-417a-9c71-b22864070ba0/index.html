@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mengqi Huang · 教育顾问 — Rukik 专业人士</title>
+<meta name="description" content="两个孩子的父亲，长期记录家庭教育与人生规划，把经验写成文字留给更多人。">
+<style>
+  :root{--navy:#142235;--navy2:#1D2F47;--gold:#C6A15B;--gold-soft:#E9D9B8;--paper:#F7F3EC;--ink:#1C2733;--muted:#6E7A89;--line:#E3DCCB;--card:#FFFDF8}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--paper);color:var(--ink)}
+  .masthead{background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 100%);color:#F3EDDD;padding:56px 24px 64px}
+  .wrap{max-width:860px;margin:0 auto}
+  .brand{font-size:12px;letter-spacing:.35em;color:var(--gold-soft);text-transform:uppercase}
+  .who{display:flex;gap:22px;align-items:center;margin-top:30px;flex-wrap:wrap}
+  .avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);flex:none;background:var(--navy2);display:flex;align-items:center;justify-content:center;font-family:Georgia,'Songti SC',serif;font-size:36px;color:var(--gold-soft)}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  h1{font-family:Georgia,'Songti SC',serif;font-size:38px;font-weight:600;color:#FBF7EC}
+  .role{font-size:15px;color:var(--gold-soft);margin-top:6px}
+  .badges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .badge{font-size:11.5px;color:#F3EDDD;border:1px solid rgba(233,217,184,.45);border-radius:999px;padding:4px 11px}
+  .badge.gold{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:600}
+  .bio{margin-top:22px;font-size:15.5px;line-height:1.9;color:#E8E1CE;max-width:640px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;margin-top:-32px;box-shadow:0 12px 32px rgba(20,34,53,.10)}
+  .panel h2{font-family:Georgia,'Songti SC',serif;font-size:21px;color:var(--navy);margin-bottom:6px}
+  .panel .sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7}
+  .cta{display:inline-block;padding:13px 26px;border-radius:12px;background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;text-decoration:none}
+  .arts{margin-top:28px}
+  .art{display:block;padding:16px 4px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+  .art:first-child{border-top:none}
+  .art-t{font-size:16.5px;font-weight:600;color:var(--navy);font-family:Georgia,'Songti SC',serif}
+  .art-s{font-size:13.5px;color:var(--muted);line-height:1.7;margin-top:5px}
+  .art-m{font-size:12px;color:#A08C5A;margin-top:7px;letter-spacing:.04em}
+  .empty{font-size:13.5px;color:var(--muted);padding:10px 0 4px}
+  footer{padding:34px 24px 44px;text-align:center}
+  footer .seal{font-family:Georgia,serif;letter-spacing:.3em;color:var(--navy);font-size:13px}
+  footer p{font-size:12px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<header class="masthead"><div class="wrap">
+  <div class="brand">Rukik · Professional</div>
+  <div class="who">
+    <div class="avatar">M</div>
+    <div>
+      <h1>Mengqi Huang</h1>
+      <div class="role">教育顾问</div>
+      <div class="badges"><span class="badge gold">Rukik 认证专家</span><span class="badge">教育顾问</span></div>
+    </div>
+  </div>
+  <p class="bio">两个孩子的父亲，长期记录家庭教育与人生规划，把经验写成文字留给更多人。</p>
+</div></header>
+
+<main class="wrap" style="padding:0 24px">
+  <section class="panel">
+    <h2>与 Mengqi Huang 的专业 AI 对话</h2>
+    <p class="sub">在 Rukik App 中打开 Mengqi Huang 的专家主页，即可向 TA 的专业 AI 分身提问——分身基于其已发布的文章与专业知识回答，并标注来源。</p>
+    <a class="cta" href="https://rukik.com/">打开 Rukik</a>
+  </section>
+
+  <section class="panel arts">
+    <h2>已发布文章</h2>
+    <p class="sub">文章由作者在 Rukik 发布；列表实时同步，撤回后即不再显示。</p>
+    <div id="arts"><p class="empty">加载中…</p></div>
+  </section>
+</main>
+
+<footer>
+  <div class="seal">R U K I K</div>
+  <p>AI 懂很多，Rukik 更懂您。</p>
+</footer>
+
+<script>
+(function () {
+  var box = document.getElementById('arts');
+  fetch('https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/zhiku', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'author_articles', professional_id: '3a60de37-b4fd-417a-9c71-b22864070ba0' })
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    var list = (d && d.articles) || [];
+    if (!list.length) { box.innerHTML = '<p class="empty">暂无公开文章。</p>'; return; }
+    box.innerHTML = list.map(function (a) {
+      var date = a.published_at ? a.published_at.slice(0, 10) : '';
+      var topics = (a.topics || []).join(' · ');
+      return '<a class="art" href="' + a.public_url + '">' +
+        '<div class="art-t">' + a.title + '</div>' +
+        (a.summary ? '<div class="art-s">' + a.summary + '</div>' : '') +
+        '<div class="art-m">' + date + (topics ? ' · ' + topics : '') + '</div></a>';
+    }).join('');
+  }).catch(function () { box.innerHTML = '<p class="empty">文章加载失败，请稍后再试。</p>'; });
+})();
+</script>
+</body>
+</html>

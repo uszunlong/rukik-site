@@ -15,6 +15,16 @@
     location.replace("/invite/?c=" + encodeURIComponent(m[1].toUpperCase()) + extra);
     return;
   }
+  // 智库 V6.0：/a/<article_id> 是文章规范链接，实时解析到 knowledge-view
+  //（仅已发布文章返回正文；撤回/删除后该函数返回已下架页，链接自动失效）
+  var ma = path.match(/^\/a\/([0-9a-fA-F-]{36})\/?$/);
+  if (ma) {
+    location.replace(
+      "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/knowledge-view?key=article:" +
+        encodeURIComponent(ma[1])
+    );
+    return;
+  }
   document.addEventListener("DOMContentLoaded", function () {
     document.body.innerHTML = '<div style="font-family:-apple-system,\'PingFang SC\',sans-serif;text-align:center;padding:80px 24px;color:#8A8378;">页面不存在。<br><br><a href="https://rukik.com/" style="color:#142235;">前往 Rukik 首页</a></div>';
   });
