@@ -151,9 +151,14 @@
 
     <div class="card">
       <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
-      <p class="muted">口径说明：邀请漏斗四段——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝<b>未采集</b>（活动落地页注册不携带活动归因，分享码只在参加时被消费，此段不估算、不填充）；③参加确认＝经分享归因的参加（参加成功时消费暂存的分享码落账），全渠道参加总数仅作对照、与归因数分开列示；④入群＝曾进入活动群的用户×群组合数（含已退出 / 被移出）。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
+      <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④加入活动群＝服务端实际入群记录（用户×群，含已退出 / 被移出）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：经应用商店全新安装后再注册的用户目前无归因通道（系统无延迟深度链接，与新闻分享同一现状），②只统计深链直达（已装 App）等可靠归因，不估算、不填充。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
       <div id="eventFunnel" class="mt"></div>
+      <div class="cred" style="margin:16px 0 6px">每场活动的归因注册（核心指标）· 当前口径：<b id="eventTouchLabel">最近一次来源（last_touch）</b>
+        <button class="btn small gold" id="eventTouchLast" type="button">最近一次来源</button>
+        <button class="btn small ghost" id="eventTouchFirst" type="button">首次来源</button>
+      </div>
+      <div id="eventAttrTable"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">待核实活动（PENDING）</div>
       <div id="eventPending"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
@@ -392,17 +397,36 @@ const EV_CAT = { BUSINESS: '商业', FESTIVAL: '节庆', COMMUNITY: '社区', FA
 const SIG_KIND = { page_gone: '官方页已消失', cancel_phrase: '官方页出现取消字样', date_changed: '日期与官方页不一致', lacc_no_event_json: '官方页结构异常', apply_failed: '状态自动落库失败', would_cancel: '预演：将判取消', would_update: '预演：将判延期' };
 const REPORT_STATUS = { OPEN: '待处理', HANDLED: '已处理', DISMISSED: '已忽略' };
 
+let eventTouch = 'last';
+
 async function loadEventOps() {
   try {
-    const [ov, pending, reports] = await Promise.all([
-      rpc('admin_event_ops_overview'),
+    const [ov, pending, reports, attr] = await Promise.all([
+      rpc('admin_event_ops_overview', { p_touch: eventTouch }),
       rpc('admin_event_list_pending', { p_limit: 50 }),
       rpc('admin_group_reports_list', { p_status: null, p_limit: 50 }),
+      rpc('admin_event_attribution_by_event', { p_touch: eventTouch, p_limit: 100 }),
     ]);
-    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports);
+    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr);
+    $('eventTouchLabel').textContent = eventTouch === 'first' ? '首次来源（first_touch）' : '最近一次来源（last_touch）';
+    $('eventTouchLast').className = 'btn small ' + (eventTouch === 'last' ? 'gold' : 'ghost');
+    $('eventTouchFirst').className = 'btn small ' + (eventTouch === 'first' ? 'gold' : 'ghost');
+    $('eventTouchLast').onclick = () => { if (eventTouch !== 'last') { eventTouch = 'last'; loadEventOps(); } };
+    $('eventTouchFirst').onclick = () => { if (eventTouch !== 'first') { eventTouch = 'first'; loadEventOps(); } };
   } catch (e) {
     $('eventOpsStats').innerHTML = '<div class="empty">Event 运营加载失败：' + esc(e.message) + '</div>';
   }
+}
+
+function renderEventAttr(list) {
+  if (!list || list.length === 0) { $('eventAttrTable').innerHTML = '<div class="empty">暂无经活动分享归因的注册。</div>'; return; }
+  const touchTxt = eventTouch === 'first' ? '首次来源' : '最近一次来源';
+  $('eventAttrTable').innerHTML = '<table><tr><th>活动</th><th>归因新注册（' + touchTxt + '）</th><th>其中已入本场群</th></tr>' +
+    list.map((r) => `<tr>
+      <td><b>${esc(r.title || '')}</b></td>
+      <td>${r.registrations ?? 0}</td>
+      <td>${r.joined_group ?? 0}</td>
+    </tr>`).join('') + '</table>';
 }
 
 function renderEventOps(ov) {
@@ -425,13 +449,15 @@ function renderEventOps(ov) {
     `<div class="cred">活动类目分布：${catLine}（重大展会 ${pool.major ?? 0} · 已取消 ${pool.cancelled ?? 0} · 已结束 ${pool.ended ?? 0}）</div>` +
     `<div class="cred">未来 14 天有场次的活动：${pool.events_next_14d ?? 0} 场活动 · 群消息总量 ${grp.messages_total ?? 0}（近 7 天成员发言 ${grp.messages_member_7d ?? 0}）· 已归档群 ${grp.archived ?? 0} · 举报已处理 ${rep.handled ?? 0} / 已忽略 ${rep.dismissed ?? 0}</div>` +
     `<div class="cred">统计时间：${ov.generated_at ? esc(fmtDate(ov.generated_at)) : '—'}</div>`;
+  const touchTxt = fn.touch === 'first' ? '首次来源（first_touch）' : '最近一次来源（last_touch）';
   const stages = [
     ['① 分享打开', fn.opens ?? 0, `活动分享链接 ${fn.share_links ?? 0} 条`],
-    ['② 注册完成', null, '活动归因未采集'],
-    ['③ 参加确认（分享归因）', fn.joins_attributed ?? 0, `全渠道参加共 ${fn.joins_total ?? 0}（对照）`],
-    ['④ 入群', fn.group_entries ?? 0, `当前在群 ${grp.members_active ?? 0}`],
+    ['② 注册完成', fn.registrations ?? 0, `归因口径：${touchTxt}`],
+    ['③ 参加确认', fn.joins ?? 0, '用户主动确认参加（全渠道）'],
+    ['④ 加入活动群', fn.group_entries ?? 0, `当前在群 ${grp.members_active ?? 0}`],
+    ['⑤ 群内活跃', fn.group_active_users ?? 0, '在群内发过言的用户数'],
   ];
-  $('eventFunnel').innerHTML = '<div class="cred" style="margin-bottom:6px">邀请漏斗（累计）</div>' +
+  $('eventFunnel').innerHTML = '<div class="cred" style="margin-bottom:6px">邀请漏斗（累计 · 注册归因口径：' + touchTxt + '）</div>' +
     '<div class="stats">' + stages.map(([label, n, sub]) =>
       `<div class="stat"><b>${n === null ? '<span class="tag no">未采集</span>' : n}</b><span>${label}<br>${esc(sub)}</span></div>`).join('') + '</div>';
 }
