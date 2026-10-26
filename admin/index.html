@@ -154,6 +154,9 @@
       <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④加入活动群＝服务端实际入群记录（用户×群，含已退出 / 被移出）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：全新安装的用户可经活动落地页的「活动码」回填归因（注册页手动填入活动码、由服务端落账，渠道标记 backfill_code），②已包含这部分注册；系统仍无延迟深链自动恢复来源，不估算、不填充。每条活动分享链接归属一位具体分享用户，一笔注册同时记「活动」与「分享人」两层：下方按活动表与按分享人表为同一批归因记录、同一口径，分开统计、不混算；链接没有可验证的分享人时不猜测归属、不计入。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
       <div id="eventFunnel" class="mt"></div>
+      <div class="cred" style="margin:16px 0 6px">活动打开热度（匿名计数 · 裸热度，与归因无关）</div>
+      <p class="muted">口径说明：活动落地页与 App 活动详情每次打开计一次（同一浏览器 / App 会话内同一活动只计一次），服务端只按「活动 × 日期」聚合——不记用户、设备或任何来源信息。此数只看活动本身的热度，<b>不参与注册归因、不用于任何奖励计算</b>；与上方漏斗的「① 分享打开」（经分享链接的打开、属归因链）是两套独立统计，不要相加、不要互相折算。</p>
+      <div id="eventOpenHeat"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">每场活动的归因注册（核心指标）· 当前口径：<b id="eventTouchLabel">最近一次来源（last_touch）</b>
         <button class="btn small gold" id="eventTouchLast" type="button">最近一次来源</button>
         <button class="btn small ghost" id="eventTouchFirst" type="button">首次来源</button>
@@ -403,14 +406,15 @@ let eventTouch = 'last';
 
 async function loadEventOps() {
   try {
-    const [ov, pending, reports, attr, inviters] = await Promise.all([
+    const [ov, pending, reports, attr, inviters, openHeat] = await Promise.all([
       rpc('admin_event_ops_overview', { p_touch: eventTouch }),
       rpc('admin_event_list_pending', { p_limit: 50 }),
       rpc('admin_group_reports_list', { p_status: null, p_limit: 50 }),
       rpc('admin_event_attribution_by_event', { p_touch: eventTouch, p_limit: 100 }),
       rpc('admin_event_attribution_by_inviter', { p_touch: eventTouch, p_limit: 100 }),
+      rpc('admin_event_open_heat', { p_limit: 100 }),
     ]);
-    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr); renderEventInviter(inviters);
+    renderEventOps(ov); renderEventPending(pending); renderEventReports(reports); renderEventAttr(attr); renderEventInviter(inviters); renderEventOpenHeat(openHeat);
     $('eventTouchLabel').textContent = eventTouch === 'first' ? '首次来源（first_touch）' : '最近一次来源（last_touch）';
     $('eventTouchLast').className = 'btn small ' + (eventTouch === 'last' ? 'gold' : 'ghost');
     $('eventTouchFirst').className = 'btn small ' + (eventTouch === 'first' ? 'gold' : 'ghost');
@@ -429,6 +433,18 @@ function renderEventAttr(list) {
       <td><b>${esc(r.title || '')}</b></td>
       <td>${r.registrations ?? 0}</td>
       <td>${r.joined_group ?? 0}</td>
+    </tr>`).join('') + '</table>';
+}
+
+function renderEventOpenHeat(list) {
+  if (!list || list.length === 0) { $('eventOpenHeat').innerHTML = '<div class="empty">暂无打开计数（落地页 / App 详情打开后开始累计）。</div>'; return; }
+  $('eventOpenHeat').innerHTML = '<table><tr><th>活动</th><th>近 7 日打开</th><th>近 30 日打开</th><th>累计打开</th><th>最近打开日</th></tr>' +
+    list.map((r) => `<tr>
+      <td><b>${esc(r.title || '')}</b></td>
+      <td>${r.opens_7d ?? 0}</td>
+      <td>${r.opens_30d ?? 0}</td>
+      <td>${r.opens_total ?? 0}</td>
+      <td class="muted">${esc(r.last_open_day || '')}</td>
     </tr>`).join('') + '</table>';
 }
 
