@@ -55,8 +55,9 @@ function track(shareId, event){
     headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" },
     body: JSON.stringify({ share_id: shareId, event: event }) }); } catch(e){}
 }
-fetch(SB_URL + "/rest/v1/share_links?code=eq." + encodeURIComponent(code) + "&select=id,content_type,meta",
-  { headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY } })
+fetch(SB_URL + "/rest/v1/rpc/resolve_share_link",
+  { method:"POST", headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" },
+    body: JSON.stringify({ p_code: code }) })
 .then(function(r){ return r.json(); })
 .then(function(rows){
   var app = document.getElementById("app");
