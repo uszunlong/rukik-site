@@ -1,21 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHP 安全风波凸显 AI 正在降低漏洞利用门槛 · Rukik</title>
-<meta name="description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。PHP 作为全球广泛使用的服务">
-<meta property="og:site_name" content="Rukik">
-<meta property="og:type" content="article">
-<meta property="og:title" content="PHP 安全风波凸显 AI 正在降低漏洞利用门槛">
-<meta property="og:description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。PHP 作为全球广泛使用的服务">
-<meta property="og:image" content="https://rukik.com/assets/og-share.png">
-<meta property="og:url" content="https://rukik.com/news/81c4adcf-4ce2-4871-8afd-164c39a3d3e1">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PHP 安全风波凸显 AI 正在降低漏洞利用门槛">
-<meta name="twitter:description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。PHP 作为全球广泛使用的服务">
-<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
-<style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PHP 安全风波凸显 AI 正在降低漏洞利用门槛 · Rukik</title><meta name="description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。"><link rel="canonical" href="https://rukik.com/news/81c4adcf-4ce2-4871-8afd-164c39a3d3e1"><meta property="og:site_name" content="Rukik"><meta property="og:type" content="article"><meta property="og:title" content="PHP 安全风波凸显 AI 正在降低漏洞利用门槛"><meta property="og:description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。"><meta property="og:image" content="https://media.wired.com/photos/6adbb8a7e6d0c133525c3e7c/master/pass/KernelPanic_The%20PHP%20Meltdown%20Shows%20How%20AI%20Makes%20Bugs%20More%20Exploitable.jpg"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="2000"><meta property="og:image:height" content="2000"><meta property="og:url" content="https://rukik.com/news/81c4adcf-4ce2-4871-8afd-164c39a3d3e1"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="PHP 安全风波凸显 AI 正在降低漏洞利用门槛"><meta name="twitter:description" content="安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。"><meta name="twitter:image" content="https://media.wired.com/photos/6adbb8a7e6d0c133525c3e7c/master/pass/KernelPanic_The%20PHP%20Meltdown%20Shows%20How%20AI%20Makes%20Bugs%20More%20Exploitable.jpg"><style>
   :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -24,7 +9,6 @@
   .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
   .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
   .cover { width:100%; border-radius:12px; margin-bottom:14px; }
-  .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
   h1 { font-size:26px; line-height:1.45; margin-bottom:14px; }
   .meta { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:20px; }
   .credit { font-size:12px; color:var(--gray); margin-bottom:16px; }
@@ -33,7 +17,6 @@
   p { margin-bottom:14px; }
   ul { padding-left:20px; }
   li { margin-bottom:10px; }
-  .note { font-size:13px; color:var(--gray); margin-top:8px; }
   .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
   .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
   .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
@@ -67,21 +50,9 @@
   button.btn.ghost { border:1px solid var(--navy); }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
-</style>
-</head>
+</style></head>
 <body>
-<div class="wrap">
-  <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div>
-  <img class="cover" src="https://media.wired.com/photos/6adbb8a7e6d0c133525c3e7c/master/pass/KernelPanic_The%20PHP%20Meltdown%20Shows%20How%20AI%20Makes%20Bugs%20More%20Exploitable.jpg" alt="">
-  
-  <h1>PHP 安全风波凸显 AI 正在降低漏洞利用门槛</h1>
-  <div class="meta">Wired · 2026-10-24 · 单一来源</div>
-  <div class="credit">图片来源：Wired</div>
-  <h2>RUKIK AI 整合摘要</h2><p>安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。PHP 作为全球广泛使用的服务端脚本语言，其生态中的漏洞一旦被利用，潜在影响范围涉及数百万个网站。这一事件表明，安全社区需要重新评估漏洞披露的时机、补丁发布的紧迫性，以及防御策略在 AI 时代的有效性。</p>
-  <h2>为什么与您有关</h2><p>这说明 AI 正在同时提升漏洞发现和攻击利用效率，可能影响开源软件维护者、网站运营方以及依赖相关技术栈的用户。</p>
-  <h2>重要事实</h2><ul><li>安全研究人员使用 AI 工具协助发现了 PHP 中存在多年的漏洞。</li><li>这些漏洞涉及 PHP 这一广泛使用的 Web 脚本语言。</li><li>在漏洞被发现后，利用 AI 辅助展开的攻击开始出现。</li><li>这起事件表明，AI 可能让软件漏洞变得更容易被利用。</li></ul>
-  
-  <p style="margin-top:24px;"><a href="https://www.wired.com/story/kernel-panic-the-php-meltdown-shows-how-ai-makes-bugs-more-exploitable/">查看来源 ›</a></p>
+<div class="wrap"><div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div><img class="cover" src="https://media.wired.com/photos/6adbb8a7e6d0c133525c3e7c/master/pass/KernelPanic_The%20PHP%20Meltdown%20Shows%20How%20AI%20Makes%20Bugs%20More%20Exploitable.jpg" alt=""><div class="credit">图片：Wired</div><h1>PHP 安全风波凸显 AI 正在降低漏洞利用门槛</h1><div class="meta">Wired · 2026-10-24 · 单一来源</div><h2>RUKIK 新闻摘要</h2><p>安全研究人员利用 AI 工具协助发现了 PHP 网络脚本语言中存在多年的漏洞。随后，基于 AI 辅助的攻击随之而来。本事件反映了一个新兴的安全困境：AI 工具在帮助防守方识别和修复漏洞的同时，也大幅降低了攻击者利用已知漏洞的技术门槛。过去需要高度专业知识才能开发的漏洞利用代码，如今可以通过 AI 工具快速生成，这使得那些看似已被遗忘或低优先级的旧漏洞重新成为现实威胁。PHP 作为全球广泛使用的服务端脚本语言，其生态中的漏洞一旦被利用，潜在影响范围涉及数百万个网站。这一事件表明，安全社区需要重新评估漏洞披露的时机、补丁发布的紧迫性，以及防御策略在 AI 时代的有效性。</p><h2>RUKIK 专业解读</h2><p>PHP生态的这次安全危机根本上反映了一个被长期忽视的非对称性问题：防守与攻击在AI赋能下的能力差不再成比例。</p><p>事件的关键在于时间窗口的收缩。传统上，安全研究人员发现漏洞、厂商修复、补丁部署这个链条往往需要数周到数月。在这个过程中，攻击者需要具备相当的逆向工程与代码审计能力才能自主构造利用代码。但当AI工具能够在几分钟内将漏洞描述转化为可执行的攻击代码时，这个链条被打破了。研究者用AI辅助发现漏洞的同时，攻击者群体中的低技能参与者也获得了等同的能力。这意味着即使是PHP这样看似低优先级或已沉睡多年的漏洞，一旦被公开讨论或部分披露，瞬间就能被大规模武器化。</p><p>从技术成熟度看，这里涉及两个不同层面的AI应用。一是漏洞发现端：大型语言模型通过静态代码分析、符号执行模式识别等手段辅助人类研究员筛查代码缺陷，这已是可靠的落地能力，主要作用是加速代码审计的机械部分。二是漏洞利用端：从漏洞描述生成工作的exploit代码，这涉及对目标语言语法、运行时行为、系统调用的深层理解，目前主要通过prompt工程与代码补全模型实现。两者看似能力相当，但攻击侧的门槛下降幅度更陡——因为防守方已有的流程相对规范（代码审计→漏洞确认→补丁开发→版本发布），而攻击侧以前就是碎片化的、需要因人而异的临时性工作，被标准化AI流程一替代，整个攻击生态的参与者基数会指数级扩大。</p><p>这里出现了一个值得注意的悖论。AI提升了防守效率，让研究员能更快地找到隐藏漏洞；但这个效率提升本身成为了加速威胁曝光的催化剂。PHP作为全球超过77%网站的后端支撑（根据公开的Web服务器统计），其生态中任何被激活的旧漏洞都不是孤立问题，而是牵涉数百万个生产环境的系统风险。材料暗示这些被发现的漏洞存在&quot;多年&quot;，意味着现网中存在大量未更新的易受攻击版本，防守方的补丁可用性与实际部署之间的时间差被AI大幅拉长了。</p><p>从安全社区内部的观点看，这次事件已引发对漏洞披露政策的重新审视。传统的负责任披露（Responsible Disclosure）流程假设攻击者缺乏即时武器化能力，给予厂商合理的修复窗口。但在AI时代，这个假设失效了。一些安全专家可能主张缩短披露前的对外沟通周期，甚至考虑不公开技术细节仅公布漏洞编号；另一些可能认为应该加快补丁发布的强制性时间线。材料未提及PHP官方对此的具体回应声明，这本身就反映了社区在应对这类新型威胁时的准备不足。</p><p>潜在影响分为两个维度。直接影响是PHP及其广泛依赖的框架（Laravel、WordPress等）面临的短期利用风险上升，未打补丁的站点成为优先级更高的目标。间接影响更值得关注：这个案例会加速其他广泛使用的编程语言社区（Python、JavaScript、Java等）对AI赋能漏洞工具链的防御评估，可能推动整个软件供应链安全的范式转变。这不仅涉及技术流程调整，也涉及法规约束——各国政府与安全监管机构可能会对&quot;AI工具是否应该被用于生成攻击代码&quot;这类问题的立法进行加速。</p><p>后续观察的具体节点包括：PHP官方对这批漏洞的补丁发布时间与覆盖范围、全球网站更新率统计（可通过CVE数据库与扫描报告追踪）、是否有具体的AI辅助攻击事件被公开报告（当前材料仅说&quot;攻击随之而来&quot;，缺乏具体事件记录）、安全行业是否推出针对性的防守工具或检测规则、以及相关国家网络安全部门的政策指导更新。这些数据点将决定这场&quot;AI安全对称性破缺&quot;是否会演变成产业级别的危机。</p><h2>为什么与您有关</h2><p>这说明 AI 正在同时提升漏洞发现和攻击利用效率，可能影响开源软件维护者、网站运营方以及依赖相关技术栈的用户。</p><h2>重要事实</h2><ul><li>安全研究人员使用 AI 工具协助发现了 PHP 中存在多年的漏洞。</li><li>这些漏洞涉及 PHP 这一广泛使用的 Web 脚本语言。</li><li>在漏洞被发现后，利用 AI 辅助展开的攻击开始出现。</li><li>这起事件表明，AI 可能让软件漏洞变得更容易被利用。</li></ul><p style="margin-top:24px;"><a href="https://www.wired.com/story/kernel-panic-the-php-meltdown-shows-how-ai-makes-bugs-more-exploitable/">查看来源：Wired ›</a></p>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
       <img class="bc-seal" src="/assets/seal.png" alt="RUKIK">
@@ -118,11 +89,6 @@
 </div>
 <script>
 // RUKIK-SHARE-TRACK v2: 分享打开/下载点击归因（share_events）+ 品牌邀请卡片
-// 事件 kind（share_events.event 为 text、无 CHECK 约束，沿用现行写入纪律）：
-// open / store_redirect 沿用；card_view（品牌卡曝光）/ copy_code（复制邀请码）/
-// cta_open（开启我的 RUKIK 点击）为 News Sharing 3.0 新增文本值。
-// cta_open 在微信内置浏览器里表示"已展示去浏览器打开的引导层"，kind 不变、
-// 以 meta.branch="wechat_guide" 区分；其余浏览器表示真实拉起/跳商店尝试。
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var NEWS_ID = "81c4adcf-4ce2-4871-8afd-164c39a3d3e1";
@@ -152,7 +118,6 @@ function resolveShareId() {
   return shareIdPromise;
 }
 if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
-// 品牌卡曝光：卡片进入视口发一次 card_view（无 IntersectionObserver 时打开即发）
 (function(){
   var card = document.getElementById("brandcard");
   if (!card) return;
@@ -197,9 +162,6 @@ if (openBtn) {
   openBtn.addEventListener("click", function(e){
     e.preventDefault();
     var ua = navigator.userAgent || "";
-    // 微信内置浏览器拦截一切网页唤醒 App（Universal Link 与 scheme 均不放行），
-    // 不硬闯：记 cta_open（meta.branch=wechat_guide）并弹页面内引导层，
-    // 指引用户走右上角「··· → 在浏览器中打开」。
     if (/MicroMessenger/i.test(ua)) {
       resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam, "wechat_guide"); });
       if (wxGuide) wxGuide.classList.add("show");
@@ -208,14 +170,9 @@ if (openBtn) {
     resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam); });
     var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (!isIOS) {
-      // 桌面/Android 无本机 App 可唤起：直达 App Store 页（与页脚下载按钮同目标）。
       setTimeout(function(){ location.href = STORE_URL; }, 180);
       return;
     }
-    // iOS 普通浏览器：页内点同域 Universal Link 按 iOS 规则不会被当作 UL
-    // 触发（同域导航只重载页面，这正是旧版按钮"没反应"的原因），故用 App
-    // 已注册的 rukik:// scheme 拉起同一路由（news/{id}，带 ref/s 归因参数）；
-    // 1.5s 内页面未切走（未装 App）则兜底跳 App Store。
     var gone = false;
     function markGone(){ gone = true; }
     document.addEventListener("visibilitychange", function(){ if (document.hidden) markGone(); });
