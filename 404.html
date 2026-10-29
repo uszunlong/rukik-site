@@ -2,6 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="Rukik 智库">
+<meta property="og:description" content="AI懂很多，Rukik更懂您。">
+<meta property="og:image" content="https://rukik.com/assets/og-share-pro.png">
+<meta name="twitter:card" content="summary_large_image">
 <title>Rukik</title>
 <script>
 // GitHub Pages 静态托管无动态路由：/invite/CODE 形式的链接在此统一转到 /invite/?c=CODE
@@ -15,14 +21,27 @@
     location.replace("/invite/?c=" + encodeURIComponent(m[1].toUpperCase()) + extra);
     return;
   }
-  // 智库 V6.0：/a/<article_id> 是文章规范链接，实时解析到 knowledge-view
-  //（仅已发布文章返回正文；撤回/删除后该函数返回已下架页，链接自动失效）
+  // 智库文章：/a/<article_id> 的规范形态是静态全文页（由文章巡检生成）。
+  // 静态页尚未生成（刚发布）或文章已下线时，GitHub Pages 落到本 404 页：
+  // 不再跳转任何函数域名（旧版跳 knowledge-view，函数 GET 被网关改写
+  // Content-Type 后在微信里直显源码，2026-10-29 真机实证），改为就地呈现
+  // 品牌化的「准备中」成品页；静态页生成后同一链接自动恢复全文。
   var ma = path.match(/^\/a\/([0-9a-fA-F-]{36})\/?$/);
   if (ma) {
-    location.replace(
-      "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/knowledge-view?key=article:" +
-        encodeURIComponent(ma[1])
-    );
+    document.title = "Rukik 智库";
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.style.background = "#FAF6EE";
+      document.body.style.margin = "0";
+      document.body.innerHTML =
+        '<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;padding:48px 24px;">' +
+        '<div style="max-width:420px;width:100%;text-align:center;background:#FFFFFF;border:1px solid #E7E0D2;border-radius:16px;padding:40px 28px;box-shadow:0 8px 30px rgba(20,34,53,0.06);">' +
+        '<div style="font-size:15px;letter-spacing:6px;color:#A47B45;font-weight:600;">RUKIK</div>' +
+        '<div style="font-size:22px;color:#142235;font-weight:600;margin-top:14px;">这篇文章正在为您准备</div>' +
+        '<p style="font-size:15px;line-height:1.7;color:#6B6357;margin:14px 0 26px;">分享页马上就好，请稍等片刻再打开一次。<br>好内容值得多等这一小会儿。</p>' +
+        '<a href="" onclick="location.reload();return false;" style="display:inline-block;background:#142235;color:#FFFFFF;text-decoration:none;font-size:15px;padding:11px 28px;border-radius:999px;margin-right:10px;">刷新重试</a>' +
+        '<a href="https://rukik.com/" style="display:inline-block;background:#F2E6CF;color:#342C24;text-decoration:none;font-size:15px;padding:11px 28px;border-radius:999px;">前往 Rukik 首页</a>' +
+        '</div></div>';
+    });
     return;
   }
   document.addEventListener("DOMContentLoaded", function () {
