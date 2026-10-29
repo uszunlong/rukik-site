@@ -1,21 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对 · Rukik</title>
-<meta name="description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。除此之外，原文未提供更多可核实的细节：包括实施发现的人工智能系统的具体类型与发现方式、所谓缺陷涉及的PHP版本、技术成因与严重程度、发现与披露的具体时间与地点、参与响应的机构、企业或安全">
-<meta property="og:site_name" content="Rukik">
-<meta property="og:type" content="article">
-<meta property="og:title" content="PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对">
-<meta property="og:description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。除此之外，原文未提供更多可核实的细节：包括实施发现的人工智能系统的具体类型与发现方式、所谓缺陷涉及的PHP版本、技术成因与严重程度、发现与披露的具体时间与地点、参与响应的机构、企业或安全">
-<meta property="og:image" content="https://rukik.com/assets/og-share.png">
-<meta property="og:url" content="https://rukik.com/news/d2a22c87-f840-44f2-8050-8e1685dfbc5b">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对">
-<meta name="twitter:description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。除此之外，原文未提供更多可核实的细节：包括实施发现的人工智能系统的具体类型与发现方式、所谓缺陷涉及的PHP版本、技术成因与严重程度、发现与披露的具体时间与地点、参与响应的机构、企业或安全">
-<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
-<style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对 · Rukik</title><meta name="description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。"><link rel="canonical" href="https://rukik.com/news/d2a22c87-f840-44f2-8050-8e1685dfbc5b"><meta property="og:site_name" content="Rukik"><meta property="og:type" content="article"><meta property="og:title" content="PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对"><meta property="og:description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。"><meta property="og:image" content="https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/fccd/live/bf4a03d0-ce15-11f1-9a39-31b474234113.jpg"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="976"><meta property="og:image:height" content="547"><meta property="og:url" content="https://rukik.com/news/d2a22c87-f840-44f2-8050-8e1685dfbc5b"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对"><meta name="twitter:description" content="根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。"><meta name="twitter:image" content="https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/fccd/live/bf4a03d0-ce15-11f1-9a39-31b474234113.jpg"><style>
   :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -24,7 +9,6 @@
   .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
   .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
   .cover { width:100%; border-radius:12px; margin-bottom:14px; }
-  .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
   h1 { font-size:26px; line-height:1.45; margin-bottom:14px; }
   .meta { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:20px; }
   .credit { font-size:12px; color:var(--gray); margin-bottom:16px; }
@@ -33,7 +17,6 @@
   p { margin-bottom:14px; }
   ul { padding-left:20px; }
   li { margin-bottom:10px; }
-  .note { font-size:13px; color:var(--gray); margin-top:8px; }
   .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
   .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
   .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
@@ -67,21 +50,9 @@
   button.btn.ghost { border:1px solid var(--navy); }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
-</style>
-</head>
+</style></head>
 <body>
-<div class="wrap">
-  <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div>
-  <img class="cover" src="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/fccd/live/bf4a03d0-ce15-11f1-9a39-31b474234113.jpg" alt="">
-  
-  <h1>PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对</h1>
-  <div class="meta">BBC Technology · 2026-10-23 · 官方确认</div>
-  <div class="credit">图片来源：BBC Technology</div>
-  <h2>RUKIK AI 整合摘要</h2><p>根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。除此之外，原文未提供更多可核实的细节：包括实施发现的人工智能系统的具体类型与发现方式、所谓缺陷涉及的PHP版本、技术成因与严重程度、发现与披露的具体时间与地点、参与响应的机构、企业或安全组织、受影响系统的范围与数量，以及目前是否已有补丁、缓解措施或官方声明，均尚未确认。原文标题提出了“什么是PHP”以及“为何引发全球网络安全行动”的问题，但所附正文仅为一句话导语，未展开解释PHP的定义与用途，也未说明此次行动的具体经过、各方表态和所处阶段。因此，以现有信息无法完整还原谁参与、何时何地、事件经过与进展，相关关键事实有待一手来源进一步披露。</p>
-  <h2>为什么与您有关</h2><p>这反映出 AI 正在改变漏洞发现与防御的节奏，影响软件开发者、网站运营方和网络安全团队的风险管理方式。</p>
-  <h2>重要事实</h2><ul><li>AI 发现了 PHP 中长期潜藏的编程漏洞。</li><li>这些漏洞的曝光引发了一次罕见的全球网络安全响应。</li></ul>
-  
-  <p style="margin-top:24px;"><a href="https://www.bbc.co.uk/news/articles/c3qjnwye0ep5o?at_medium=RSS&amp;at_campaign=rss">查看来源 ›</a></p>
+<div class="wrap"><div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div><img class="cover" src="https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/fccd/live/bf4a03d0-ce15-11f1-9a39-31b474234113.jpg" alt=""><div class="credit">图片：BBC Technology</div><h1>PHP 长期潜藏的编程漏洞被 AI 发现，引发全球网络安全紧急应对</h1><div class="meta">BBC Technology · 2026-10-23 · 官方确认</div><h2>RUKIK 新闻摘要</h2><p>根据BBC Technology提供的有限信息，本篇报道围绕PHP及其引发的全球网络安全应对展开。原文目前可确认的核心事实仅有两点：一是人工智能发现了长期隐藏的编程缺陷，二是该发现触发了一次罕见的全球网络安全响应。除此之外，原文未提供更多可核实的细节：包括实施发现的人工智能系统的具体类型与发现方式、所谓缺陷涉及的PHP版本、技术成因与严重程度、发现与披露的具体时间与地点、参与响应的机构、企业或安全组织、受影响系统的范围与数量，以及目前是否已有补丁、缓解措施或官方声明，均尚未确认。原文标题提出了“什么是PHP”以及“为何引发全球网络安全行动”的问题，但所附正文仅为一句话导语，未展开解释PHP的定义与用途，也未说明此次行动的具体经过、各方表态和所处阶段。因此，以现有信息无法完整还原谁参与、何时何地、事件经过与进展，相关关键事实有待一手来源进一步披露。</p><h2>RUKIK 专业解读</h2><p>您每天打开的网站、论坛、内容管理系统乃至不少政务和电商后台，很可能就运行在一种叫PHP的服务端语言之上。它出现已超过二十年，生态庞大、部署分散、版本更迭缓慢，这意味着一旦底层出现通用型缺陷，影响不会局限于某家公司，而是会沿着主机商、建站工具和开源组件迅速扩散。</p><p>这次引人注目的地方不在于发现了缺陷本身，而在于两个特征叠加：潜藏时间长，以及发现者是人工智能系统。这意味着传统人工审计和规则化扫描长期未能触及的代码逻辑，可能存在系统性盲区。从技术原理看，长期未被发现的缺陷往往藏在历史兼容代码、复杂解析流程或跨版本维护的角落里，触发条件苛刻，人工复现成本很高。而近年落地较快的人工智能辅助审计，包括基于大模型的代码语义理解和自动化模糊测试的结合，确实在路径覆盖和模式联想上展现出优势，但其成熟度仍需区分看待：能定位可疑模式属于已落地能力，能否稳定判定可利用性和危害等级，则仍高度依赖人工验证，误报并不少见。</p><p>值得注意的是，材料中并未披露人工智能的具体类型、分析方法、所涉PHP版本、缺陷成因与评分，也没有给出发现时间、响应主体和处置状态，因此无法判断此次响应的真实规模和紧迫程度，也无法呈现不同专家的分歧。这里的信息局限需要向您说明清楚，不宜把一次响应动作直接等同于大规模在野利用。</p><p>直接影响可能集中在运维层面，如果后续确认涉及主流受支持版本，站长和云厂商将需要升级或打补丁，短期内会出现兼容性测试压力。间接影响可能更深远，这意味着漏洞发现的范式正在变化，防守方获得新的探针，但攻击方同样可能用类似方法批量挖掘存量开源软件，攻防节奏会被压缩。</p><p>后续值得您观察的都是可核实的节点：PHP官方是否发布安全公告和修复版本，是否分配CVE编号并给出严重程度评分，全球应急响应机构是否发布缓解指南，以及是否有复现细节和受影响范围数据得到进一步验证。在这些文件出现之前，对严重性的任何定性都只能是推测。</p><h2>为什么与您有关</h2><p>这反映出 AI 正在改变漏洞发现与防御的节奏，影响软件开发者、网站运营方和网络安全团队的风险管理方式。</p><h2>重要事实</h2><ul><li>AI 发现了 PHP 中长期潜藏的编程漏洞。</li><li>这些漏洞的曝光引发了一次罕见的全球网络安全响应。</li></ul><p style="margin-top:24px;"><a href="https://www.bbc.co.uk/news/articles/c3qjnwye0ep5o?at_medium=RSS&amp;at_campaign=rss">查看来源：BBC Technology ›</a></p>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
       <img class="bc-seal" src="/assets/seal.png" alt="RUKIK">
@@ -118,11 +89,6 @@
 </div>
 <script>
 // RUKIK-SHARE-TRACK v2: 分享打开/下载点击归因（share_events）+ 品牌邀请卡片
-// 事件 kind（share_events.event 为 text、无 CHECK 约束，沿用现行写入纪律）：
-// open / store_redirect 沿用；card_view（品牌卡曝光）/ copy_code（复制邀请码）/
-// cta_open（开启我的 RUKIK 点击）为 News Sharing 3.0 新增文本值。
-// cta_open 在微信内置浏览器里表示"已展示去浏览器打开的引导层"，kind 不变、
-// 以 meta.branch="wechat_guide" 区分；其余浏览器表示真实拉起/跳商店尝试。
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var NEWS_ID = "d2a22c87-f840-44f2-8050-8e1685dfbc5b";
@@ -152,7 +118,6 @@ function resolveShareId() {
   return shareIdPromise;
 }
 if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
-// 品牌卡曝光：卡片进入视口发一次 card_view（无 IntersectionObserver 时打开即发）
 (function(){
   var card = document.getElementById("brandcard");
   if (!card) return;
@@ -197,9 +162,6 @@ if (openBtn) {
   openBtn.addEventListener("click", function(e){
     e.preventDefault();
     var ua = navigator.userAgent || "";
-    // 微信内置浏览器拦截一切网页唤醒 App（Universal Link 与 scheme 均不放行），
-    // 不硬闯：记 cta_open（meta.branch=wechat_guide）并弹页面内引导层，
-    // 指引用户走右上角「··· → 在浏览器中打开」。
     if (/MicroMessenger/i.test(ua)) {
       resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam, "wechat_guide"); });
       if (wxGuide) wxGuide.classList.add("show");
@@ -208,14 +170,9 @@ if (openBtn) {
     resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam); });
     var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (!isIOS) {
-      // 桌面/Android 无本机 App 可唤起：直达 App Store 页（与页脚下载按钮同目标）。
       setTimeout(function(){ location.href = STORE_URL; }, 180);
       return;
     }
-    // iOS 普通浏览器：页内点同域 Universal Link 按 iOS 规则不会被当作 UL
-    // 触发（同域导航只重载页面，这正是旧版按钮"没反应"的原因），故用 App
-    // 已注册的 rukik:// scheme 拉起同一路由（news/{id}，带 ref/s 归因参数）；
-    // 1.5s 内页面未切走（未装 App）则兜底跳 App Store。
     var gone = false;
     function markGone(){ gone = true; }
     document.addEventListener("visibilitychange", function(){ if (document.hidden) markGone(); });
