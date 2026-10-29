@@ -1,21 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险 · Rukik</title>
-<meta name="description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。该文章由网络安全研究专家撰写，解释了这一缺陷如何被恶意攻击者可能利用，以及人工智能如何在网络攻防的双方发挥作用">
-<meta property="og:site_name" content="Rukik">
-<meta property="og:type" content="article">
-<meta property="og:title" content="PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险">
-<meta property="og:description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。该文章由网络安全研究专家撰写，解释了这一缺陷如何被恶意攻击者可能利用，以及人工智能如何在网络攻防的双方发挥作用">
-<meta property="og:image" content="https://rukik.com/assets/og-share.png">
-<meta property="og:url" content="https://rukik.com/news/3baa37b7-52e8-4b35-b99d-cde087057fde">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险">
-<meta name="twitter:description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。该文章由网络安全研究专家撰写，解释了这一缺陷如何被恶意攻击者可能利用，以及人工智能如何在网络攻防的双方发挥作用">
-<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
-<style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险 · Rukik</title><meta name="description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。"><link rel="canonical" href="https://rukik.com/news/3baa37b7-52e8-4b35-b99d-cde087057fde"><meta property="og:site_name" content="Rukik"><meta property="og:type" content="article"><meta property="og:title" content="PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险"><meta property="og:description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。"><meta property="og:image" content="https://images.theconversation.com/files/767981/original/file-20261023-50-hmz6ge.jpg?ixlib=rb-4.1.1&amp;rect=0%2C785%2C4704%2C2352&amp;q=45&amp;auto=format&amp;w=1356&amp;h=668&amp;fit=crop"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1356"><meta property="og:image:height" content="668"><meta property="og:url" content="https://rukik.com/news/3baa37b7-52e8-4b35-b99d-cde087057fde"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险"><meta name="twitter:description" content="PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。"><meta name="twitter:image" content="https://images.theconversation.com/files/767981/original/file-20261023-50-hmz6ge.jpg?ixlib=rb-4.1.1&amp;rect=0%2C785%2C4704%2C2352&amp;q=45&amp;auto=format&amp;w=1356&amp;h=668&amp;fit=crop"><style>
   :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -24,7 +9,6 @@
   .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
   .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
   .cover { width:100%; border-radius:12px; margin-bottom:14px; }
-  .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
   h1 { font-size:26px; line-height:1.45; margin-bottom:14px; }
   .meta { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:20px; }
   .credit { font-size:12px; color:var(--gray); margin-bottom:16px; }
@@ -33,7 +17,6 @@
   p { margin-bottom:14px; }
   ul { padding-left:20px; }
   li { margin-bottom:10px; }
-  .note { font-size:13px; color:var(--gray); margin-top:8px; }
   .cta { margin-top:36px; border-top:1px solid var(--line); padding-top:24px; text-align:center; }
   .btn { display:inline-block; background:var(--navy); color:#fff; text-decoration:none; padding:12px 30px; border-radius:999px; font-size:15px; margin:4px; }
   .btn.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
@@ -67,21 +50,9 @@
   button.btn.ghost { border:1px solid var(--navy); }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
-</style>
-</head>
+</style></head>
 <body>
-<div class="wrap">
-  <div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div>
-  <img class="cover" src="https://images.theconversation.com/files/767981/original/file-20261023-50-hmz6ge.jpg?ixlib=rb-4.1.1&amp;rect=0%2C785%2C4704%2C2352&amp;q=45&amp;auto=format&amp;w=1356&amp;h=668&amp;fit=crop" alt="">
-  
-  <h1>PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险</h1>
-  <div class="meta">The Conversation US · 2026-10-23 · 官方确认</div>
-  <div class="credit">图片来源：The Conversation US</div>
-  <h2>RUKIK AI 整合摘要</h2><p>PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。该文章由网络安全研究专家撰写，解释了这一缺陷如何被恶意攻击者可能利用，以及人工智能如何在网络攻防的双方发挥作用——既可被用于发动更复杂的网络攻击，也可被用于防御和检测这些攻击。文章强调了 PHP 等广泛部署软件中的安全问题对互联网生态系统的关键威胁。</p>
-  <h2>为什么与您有关</h2><p>这类基础软件的漏洞影响面极广，后续修补进展及 AI 在网络攻防中的应用都值得持续关注。</p>
-  <h2>重要事实</h2><ul><li>PHP 是约 70% 网站所依赖的基础软件。</li><li>一处软件漏洞可能使数以百万计的网站面临黑客入侵风险。</li><li>文章由一位网络安全研究人员对该风险进行解释。</li><li>这起事件凸显了人工智能在互联网攻击与防御中的双重作用。</li></ul>
-  
-  <p style="margin-top:24px;"><a href="https://theconversation.com/php-is-in-the-foundation-of-70-of-websites-heres-what-it-is-and-why-a-flaw-in-the-software-is-a-major-hacking-threat-294999">查看来源 ›</a></p>
+<div class="wrap"><div class="brand"><span class="logo">RUKIK</span><span class="kind">RUKIK日报</span></div><img class="cover" src="https://images.theconversation.com/files/767981/original/file-20261023-50-hmz6ge.jpg?ixlib=rb-4.1.1&amp;rect=0%2C785%2C4704%2C2352&amp;q=45&amp;auto=format&amp;w=1356&amp;h=668&amp;fit=crop" alt=""><div class="credit">图片：The Conversation US</div><h1>PHP支撑着约70%的网站：其安全漏洞为何会带来重大黑客风险</h1><div class="meta">The Conversation US · 2026-10-23 · 官方确认</div><h2>RUKIK 新闻摘要</h2><p>PHP 是一种开源服务器端编程语言，为全球约 70% 的网站提供技术基础，包括 WordPress、Facebook 和维基百科等知名平台。作为如此广泛使用的软件基础设施，PHP 中的安全缺陷会影响数百万个网站。根据网络安全研究人员的分析，PHP 存在的漏洞使这些网站面临被黑客利用的风险。该文章由网络安全研究专家撰写，解释了这一缺陷如何被恶意攻击者可能利用，以及人工智能如何在网络攻防的双方发挥作用——既可被用于发动更复杂的网络攻击，也可被用于防御和检测这些攻击。文章强调了 PHP 等广泛部署软件中的安全问题对互联网生态系统的关键威胁。</p><h2>RUKIK 专业解读</h2><p>如果您打开过绝大多数博客、论坛、电商或内容管理系统，您大概率已经用过PHP，只是没有察觉。它是一种运行在服务器端的脚本语言，负责动态生成网页、处理登录和连接数据库，WordPress等建站工具都构建在它之上。已证实事实是，它的装机量极大，覆盖了相当比例的现存网站，这意味着任何底层缺陷都不是孤立事件，而是供应链层面的系统性敞口。</p><p>真正的关键问题不在于有没有漏洞，而在于为什么一个漏洞就能波及如此广的范围，以及人工智能为何在此时被同时谈起。从科技与AI的专业框架看，这涉及三个机制：复用带来的单点放大，长期不更新带来的版本碎片化，以及扫描与利用成本的急剧下降。大量站点由外包建站或虚拟主机维护，站长甚至不知道自己在用哪个PHP版本，补丁链条很长。值得注意的是，材料并未披露此次缺陷的具体编号、受影响版本和可利用条件，信息有限，因此无法判断它是远程执行还是权限绕过。</p><p>这意味着风险评估必须分层。可能的情况是，攻击者先用自动化扫描定位未修复主机，再批量尝试利用，而防御方同样可以用大模型做代码审计、异常流量识别和自动修复建议。攻防双方比拼的不再是谁更懂单个漏洞，而是谁能更快把智能工具规模化。材料中没有提供具名研究者姓名与机构，也未呈现明确对立观点，所以无法转述所谓分歧，如实说明这一点比硬造结论更重要。</p><p>对您而言，直接影响取决于您是访客还是运维者。作为访客，可能面临的是账号被盗、支付页面被篡改或恶意跳转，但这尚未被证实已经大规模发生。作为站长或企业，直接影响是服务器被接管、数据泄露和业务中断，还会带来清理与合规成本。间接影响可能更深远：如果基础组件反复出问题，会削弱人们对开源生态和中小网站的信任，同时加速托管商强制升级、安全托管和AI巡检服务的普及。</p><p>后续有几个可核实的节点值得您盯住：一是PHP官方是否发布安全公告、明确修复版本号与升级指引；二是该修复是处于提出、通过还是已生效阶段，切勿把建议当成已强制实施；三是是否有独立复现、受影响站点数量的实测数据披露；四是主流云厂商和建站平台的补丁推送进度。只有这些落地，才能判断这次提醒是一次常规维护，还是一场需要立即行动的重大威胁。在此之前，保持更新、备份与最小权限，仍是最稳妥的选择。</p><h2>为什么与您有关</h2><p>这类基础软件的漏洞影响面极广，后续修补进展及 AI 在网络攻防中的应用都值得持续关注。</p><h2>重要事实</h2><ul><li>PHP 是约 70% 网站所依赖的基础软件。</li><li>一处软件漏洞可能使数以百万计的网站面临黑客入侵风险。</li><li>文章由一位网络安全研究人员对该风险进行解释。</li><li>这起事件凸显了人工智能在互联网攻击与防御中的双重作用。</li></ul><p style="margin-top:24px;"><a href="https://theconversation.com/php-is-in-the-foundation-of-70-of-websites-heres-what-it-is-and-why-a-flaw-in-the-software-is-a-major-hacking-threat-294999">查看来源：The Conversation US ›</a></p>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
       <img class="bc-seal" src="/assets/seal.png" alt="RUKIK">
@@ -118,11 +89,6 @@
 </div>
 <script>
 // RUKIK-SHARE-TRACK v2: 分享打开/下载点击归因（share_events）+ 品牌邀请卡片
-// 事件 kind（share_events.event 为 text、无 CHECK 约束，沿用现行写入纪律）：
-// open / store_redirect 沿用；card_view（品牌卡曝光）/ copy_code（复制邀请码）/
-// cta_open（开启我的 RUKIK 点击）为 News Sharing 3.0 新增文本值。
-// cta_open 在微信内置浏览器里表示"已展示去浏览器打开的引导层"，kind 不变、
-// 以 meta.branch="wechat_guide" 区分；其余浏览器表示真实拉起/跳商店尝试。
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var NEWS_ID = "3baa37b7-52e8-4b35-b99d-cde087057fde";
@@ -152,7 +118,6 @@ function resolveShareId() {
   return shareIdPromise;
 }
 if (sParam) { resolveShareId().then(function(id){ if (id) postShareEvent(id, "open", refParam); }); }
-// 品牌卡曝光：卡片进入视口发一次 card_view（无 IntersectionObserver 时打开即发）
 (function(){
   var card = document.getElementById("brandcard");
   if (!card) return;
@@ -197,9 +162,6 @@ if (openBtn) {
   openBtn.addEventListener("click", function(e){
     e.preventDefault();
     var ua = navigator.userAgent || "";
-    // 微信内置浏览器拦截一切网页唤醒 App（Universal Link 与 scheme 均不放行），
-    // 不硬闯：记 cta_open（meta.branch=wechat_guide）并弹页面内引导层，
-    // 指引用户走右上角「··· → 在浏览器中打开」。
     if (/MicroMessenger/i.test(ua)) {
       resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam, "wechat_guide"); });
       if (wxGuide) wxGuide.classList.add("show");
@@ -208,14 +170,9 @@ if (openBtn) {
     resolveShareId().then(function(id){ postShareEvent(id, "cta_open", refParam); });
     var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (!isIOS) {
-      // 桌面/Android 无本机 App 可唤起：直达 App Store 页（与页脚下载按钮同目标）。
       setTimeout(function(){ location.href = STORE_URL; }, 180);
       return;
     }
-    // iOS 普通浏览器：页内点同域 Universal Link 按 iOS 规则不会被当作 UL
-    // 触发（同域导航只重载页面，这正是旧版按钮"没反应"的原因），故用 App
-    // 已注册的 rukik:// scheme 拉起同一路由（news/{id}，带 ref/s 归因参数）；
-    // 1.5s 内页面未切走（未装 App）则兜底跳 App Store。
     var gone = false;
     function markGone(){ gone = true; }
     document.addEventListener("visibilitychange", function(){ if (document.hidden) markGone(); });
