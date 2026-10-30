@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>重置密码 · Reset Password — RUKIK</title>
+<style>
+  :root { --ink:#1D2735; --navy:#16283F; --gold:#B08D57; --paper:#F7F3EC; --gray:#6E675C; --line:#E4DCCF; --red:#A33B32; --green:#2E6B45; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+  .wrap { max-width:520px; margin:0 auto; padding:56px 22px 72px; }
+  .brand { font-weight:800; letter-spacing:3px; color:var(--navy); font-size:15px; margin-bottom:26px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:30px 26px 28px; box-shadow:0 6px 22px rgba(20,25,35,.06); }
+  h1 { font-size:23px; margin:0 0 6px; color:var(--navy); }
+  .en { color:var(--gray); font-size:13.5px; margin:0 0 20px; }
+  label { display:block; font-size:14px; font-weight:600; margin:16px 0 6px; }
+  label .en2 { color:var(--gray); font-weight:400; font-size:12.5px; }
+  input { width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 13px; font-size:16px; background:#fff; color:var(--ink); }
+  input:focus { outline:2px solid var(--gold); outline-offset:0; border-color:transparent; }
+  button { width:100%; margin-top:22px; background:var(--navy); color:#fff; border:0; border-radius:10px; padding:13px 0; font-size:16px; font-weight:600; cursor:pointer; }
+  button[disabled] { opacity:.55; cursor:default; }
+  .msg { border-radius:10px; padding:12px 14px; font-size:14.5px; margin-top:18px; display:none; }
+  .msg.err { background:#FBEDEC; color:var(--red); border:1px solid #EBCFCB; display:block; }
+  .msg.ok { background:#EDF5EF; color:var(--green); border:1px solid #CBDFD2; display:block; }
+  .note { color:var(--gray); font-size:13px; margin-top:16px; }
+  .linkbtn { background:none; border:0; color:var(--gold); font-size:14.5px; font-weight:600; cursor:pointer; padding:0; margin-top:18px; width:auto; }
+  .state { display:none; }
+  .state.on { display:block; }
+  .foot { margin-top:26px; color:var(--gray); font-size:12.5px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">RUKIK</div>
+
+  <!-- 状态 0：处理链接中 -->
+  <div class="card state" id="st-loading">
+    <h1>正在处理…</h1>
+    <p class="en">Processing your link…</p>
+  </div>
+
+  <!-- 状态 1：输入邮箱，发送重置邮件 -->
+  <div class="card state" id="st-email">
+    <h1>重置密码</h1>
+    <p class="en">Reset your password — enter your account email and we will send you a reset link.</p>
+    <form id="form-email" novalidate>
+      <label for="email">邮箱 <span class="en2">Email</span></label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">
+      <button id="btn-send" type="submit">发送重置链接 · Send reset link</button>
+    </form>
+    <div class="msg" id="msg-email"></div>
+    <p class="note">链接约 1 小时内有效。没有注册过的邮箱不会收到邮件。<br>The link is valid for about 1 hour. Unregistered emails will not receive one.</p>
+  </div>
+
+  <!-- 状态 2：已发送 -->
+  <div class="card state" id="st-sent">
+    <h1>重置链接已发送</h1>
+    <p class="en">A reset link is on its way.</p>
+    <div class="msg ok" style="display:block">请打开邮箱，点邮件里的「Reset password」链接，在打开的本页面设置新密码。<br>Open your email and tap the “Reset password” link — it brings you back to this page to set a new password.</div>
+    <button class="linkbtn" id="btn-again" type="button">没收到？换个邮箱再发一次 · Resend</button>
+  </div>
+
+  <!-- 状态 3：设置新密码 -->
+  <div class="card state" id="st-password">
+    <h1>设置新密码</h1>
+    <p class="en">Set a new password for your RUKIK account.</p>
+    <form id="form-password" novalidate>
+      <label for="pw1">新密码 <span class="en2">New password（至少 8 位 · 8+ characters）</span></label>
+      <input id="pw1" type="password" autocomplete="new-password">
+      <label for="pw2">再输入一次 <span class="en2">Confirm password</span></label>
+      <input id="pw2" type="password" autocomplete="new-password">
+      <button id="btn-save" type="submit">保存新密码 · Save new password</button>
+    </form>
+    <div class="msg" id="msg-password"></div>
+  </div>
+
+  <!-- 状态 4：完成 -->
+  <div class="card state" id="st-done">
+    <h1>密码已更新</h1>
+    <p class="en">Your password has been updated.</p>
+    <div class="msg ok" style="display:block">请回 RUKIK App，用新密码登录。<br>Please return to the RUKIK app and sign in with your new password.</div>
+  </div>
+
+  <!-- 状态 5：链接无效/过期 -->
+  <div class="card state" id="st-error">
+    <h1>这个链接用不了了</h1>
+    <p class="en">This link is no longer valid.</p>
+    <div class="msg err" id="msg-error">链接已过期或已失效。重置链接只能用一次，约 1 小时内有效。<br>This link has expired or already been used. Reset links work once and last about 1 hour.</div>
+    <button id="btn-retry" type="button">重新发送重置链接 · Send a new link</button>
+  </div>
+
+  <div class="foot">RUKIK · AI懂很多，RUKIK更懂您</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var REDIRECT_TO = 'https://rukik.com/auth/reset/';
+
+  var STATES = ['st-loading', 'st-email', 'st-sent', 'st-password', 'st-done', 'st-error'];
+  function show(id) {
+    STATES.forEach(function (s) {
+      document.getElementById(s).classList.toggle('on', s === id);
+    });
+    window.scrollTo(0, 0);
+  }
+  function setMsg(el, text, kind) {
+    el.textContent = text || '';
+    el.className = 'msg' + (text ? ' ' + kind : '');
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  show('st-loading');
+
+  if (!window.supabase || !window.supabase.createClient) {
+    document.getElementById('msg-error').textContent =
+      '页面组件加载失败，请检查网络后刷新重试。Failed to load page components — check your connection and refresh.';
+    show('st-error');
+    return;
+  }
+
+  var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+
+  // ---- 入口判断：hash 里的 token / error ----
+  var hash = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  var query = new URLSearchParams(location.search || '');
+  var errParam = hash.get('error') || hash.get('error_code') || query.get('error') || query.get('error_code');
+  var accessToken = hash.get('access_token');
+  var refreshToken = hash.get('refresh_token');
+  var linkType = hash.get('type');
+
+  // token 不留在地址栏/历史里
+  if (location.hash) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+
+  var sessionReady = false;
+
+  if (errParam) {
+    show('st-error');
+  } else if (accessToken && refreshToken) {
+    client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.session) {
+          show('st-error');
+          return;
+        }
+        sessionReady = true;
+        if (linkType === 'recovery') {
+          show('st-password');
+        } else {
+          // 邮箱确认 / magic link 等其他类型：会话已建立，直接提示回 App
+          show('st-done');
+        }
+      })
+      .catch(function () { show('st-error'); });
+  } else {
+    show('st-email');
+  }
+
+  // ---- 发送重置邮件 ----
+  var formEmail = document.getElementById('form-email');
+  var msgEmail = document.getElementById('msg-email');
+  formEmail.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    if (!email || email.indexOf('@') < 1) {
+      setMsg(msgEmail, '请先填写正确的邮箱地址。Please enter a valid email address.', 'err');
+      return;
+    }
+    var btn = document.getElementById('btn-send');
+    btn.disabled = true;
+    setMsg(msgEmail, '', '');
+    client.auth.resetPasswordForEmail(email, { redirectTo: REDIRECT_TO })
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.error) {
+          setMsg(msgEmail, '发送失败：' + res.error.message + ' / Sending failed: ' + res.error.message, 'err');
+          return;
+        }
+        show('st-sent');
+      })
+      .catch(function (e) {
+        btn.disabled = false;
+        setMsg(msgEmail, '发送失败，请检查网络后重试。Sending failed — check your connection and retry.', 'err');
+      });
+  });
+
+  document.getElementById('btn-again').addEventListener('click', function () { show('st-email'); });
+  document.getElementById('btn-retry').addEventListener('click', function () { show('st-email'); });
+
+  // ---- 设置新密码 ----
+  var formPw = document.getElementById('form-password');
+  var msgPw = document.getElementById('msg-password');
+  formPw.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!sessionReady) { show('st-error'); return; }
+    var pw1 = document.getElementById('pw1').value;
+    var pw2 = document.getElementById('pw2').value;
+    if (!pw1 || pw1.length < 8) {
+      setMsg(msgPw, '密码太短了，请设置至少 8 位密码。Password too short — use at least 8 characters.', 'err');
+      return;
+    }
+    if (pw1 !== pw2) {
+      setMsg(msgPw, '两次密码不一致，请再确认一次。Passwords differ — please re-enter.', 'err');
+      return;
+    }
+    var btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    setMsg(msgPw, '', '');
+    client.auth.updateUser({ password: pw1 })
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.error) {
+          setMsg(msgPw, '保存失败：' + res.error.message + ' / Failed: ' + res.error.message, 'err');
+          return;
+        }
+        // 本地会话随即注销，不在本浏览器留登录态
+        client.auth.signOut({ scope: 'local' }).catch(function () {});
+        document.getElementById('pw1').value = '';
+        document.getElementById('pw2').value = '';
+        show('st-done');
+      })
+      .catch(function () {
+        btn.disabled = false;
+        setMsg(msgPw, '保存失败，请检查网络后重试。Failed — check your connection and retry.', 'err');
+      });
+  });
+})();
+</script>
+</body>
+</html>
