@@ -7,12 +7,16 @@
     4. 替换两处占位符：
        __PROFESSIONAL_ID__  → 该专业人士在 professionals 表的 id
        __SUPABASE_ANON_KEY__ → Rukik Supabase 项目的 anon key（公开客户端 key，可出现在网页）
-  规则（统一 UID · 手机号 P0 口径，2026-10-30 起）：
+  规则（统一 UID · 手机号三段分离口径，2026-10-30 起）：
     - 咨询必须先注册/登录（邮箱或手机号验证码，与 App 同一账号体系、同一 UID），未登录只显示注册卡。
-    - 手机号登录严禁默认自动建号：发码带 shouldCreateUser=false，已绑号码进原 UID；
-      未绑号码先出现分支询问（已有账号→邮箱登录后在页内绑定；新用户→明确确认后才创建）。
-    - 已登录且未绑手机号时，咨询区顶部提供页内绑定（updateUser + phone_change 验证，
-      号码被占用由服务端 phone_exists 拦截，成败写 identity_change_audit）。
+    - 手机号走 phone-otp 三段分离服务（发码 sendPhoneOtp / 验码 verifyPhoneOtp /
+      身份解析 resolvePhoneIdentity）：发码与账号是否存在无关、不泄露绑定状态；
+      验码只换短时一次性验证凭证；已绑号码解析进原 UID；未绑号码在验码后才出现
+      分支询问（已有账号→邮箱登录后在页内绑定；新用户→明确确认后才由服务端创建，
+      且受注册开关把门）。客户端不再直接调用 GoTrue 原生手机 OTP。
+    - 已登录且未绑手机号时，咨询区顶部提供页内绑定（同服务 bind 上下文：发码、
+      验码、解析；号码被占用由服务端在解析阶段判冲突、不做任何变更；绑定成败与
+      冲突的 identity_change_audit 由服务端统一落账，网页端不再写）。
     - 网页端最多 3 轮（客户端计数 + 后端 pro-chat 服务端兜底 + 服务端要求登录态），
       满 3 轮后禁用输入并显示下载 App 引导卡。
     - 回复为流式逐段显示；AI 回复经 rkMd 轻量渲染（与房源页同款），流式中途未闭合标记不露出。
@@ -252,6 +256,28 @@
   else {
     window.__rukikChatReady = true;
     var sb = createClient(SUPABASE_URL, ANON_KEY);
+    var OTP_API = SUPABASE_URL + '/functions/v1/phone-otp';
+    var pendingVerifyToken = '';
+    // 三段分离服务调用：发码 sendPhoneOtp / 验码 verifyPhoneOtp / 身份解析
+    // resolvePhoneIdentity。withSession 时带当前会话 JWT（bind 的 UID 只认它）。
+    async function phoneOtp(op, payload, withSession) {
+      var headers = { 'Content-Type': 'application/json', 'apikey': ANON_KEY };
+      var tk = '';
+      if (withSession) {
+        try { var gs = await sb.auth.getSession(); tk = (gs && gs.data && gs.data.session && gs.data.session['access' + '_token']) || ''; } catch (e) { /* 取不到会话按未登录处理 */ }
+      }
+      headers['Authorization'] = 'Bearer ' + (tk || ANON_KEY);
+      var res = await fetch(OTP_API, { method: 'POST', headers: headers, body: JSON.stringify(Object.assign({ op: op }, payload || {})) });
+      var data = {};
+      try { data = await res.json(); } catch (e) { /* 非 JSON 响应按空处理 */ }
+      return { status: res.status, data: data };
+    }
+    function adoptPhoneSession(d) {
+      var payload = {};
+      payload['access' + '_token'] = d['access' + '_token'];
+      payload['refresh' + '_token'] = d['refresh' + '_token'];
+      return sb.auth.setSession(payload);
+    }
     var session = null;
     var history = [];
     var rounds = 0;
@@ -345,7 +371,6 @@
       return cc + digits;
     }
     var smsTimer = null;
-    var phoneCreate = false;
     var pendingPhone = '';
     var pendingBindPhone = '';
     var boundDone = false;
@@ -367,17 +392,16 @@
     if (sendSmsBtn) sendSmsBtn.addEventListener('click', async function () {
       var phone = buildPhone();
       if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
-      var creating = phoneCreate; phoneCreate = false;
       sendSmsBtn.disabled = true;
       authMsg.textContent = '正在发送验证码…';
       try {
-        var r = await sb.auth.signInWithOtp({ phone: phone, options: { shouldCreateUser: creating } });
-        if (r.error) {
+        // 三段分离第一段：发码与账号是否存在无关，响应不泄露绑定状态
+        var r = await phoneOtp('sendPhoneOtp', { phone: phone, context: 'login' });
+        if (r.status !== 200) {
           sendSmsBtn.disabled = false;
-          var em = (r.error.message || '');
-          if (!creating && ((r.error.code || '') === 'otp_disabled' || /signups not allowed/i.test(em))) { pendingPhone = phone; if (branchEl) branchEl.hidden = false; if (regEl) regEl.hidden = true; authMsg.textContent = ''; }
-          else if (/rate|too many|frequency|seconds/i.test(em)) authMsg.textContent = '发送太频繁了，请过一分钟再试。';
-          else if (/invalid|unsupported|not supported|phone/i.test(em)) authMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          var ec = (r.data && r.data.error_code) || '';
+          if (ec === 'rate_limited') authMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (ec === 'invalid_phone') authMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
           else authMsg.textContent = '发送失败，请检查手机号后重试。';
         } else {
           smsRow.hidden = false;
@@ -401,18 +425,35 @@
       verifySmsBtn.disabled = true;
       authMsg.textContent = '正在验证…';
       try {
-        var r = await sb.auth.verifyOtp({ phone: phone, token: token, type: 'sms' });
-        if (r.error) {
+        // 第二段：验码，只换短时一次性验证凭证（不建号、不登录）
+        var v = await phoneOtp('verifyPhoneOtp', { phone: phone, code: token });
+        if (v.status !== 200 || !v.data.verification_token) {
           authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。';
-        } else {
-          session = (r.data && r.data.session) || null;
-          var name = (nameEl.value || '').trim();
-          if (name) {
-            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
-          }
-          renderAuth();
-          if (inputEl) inputEl.focus();
+          return;
         }
+        // 第三段：身份解析（已绑→原账号会话；未绑→验码后才出现分支）
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'auto' });
+        if (r.data && r.data.status === 'needs_account_decision') {
+          pendingVerifyToken = r.data.verification_token || '';
+          pendingPhone = phone;
+          if (branchEl) branchEl.hidden = false;
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '';
+          return;
+        }
+        if (!r.data || r.data.status !== 'session') {
+          authMsg.textContent = '验证失败，请重新发送验证码后再试。';
+          return;
+        }
+        var sr = await adoptPhoneSession(r.data);
+        if (sr.error) { authMsg.textContent = '登录未完成，请重试。'; return; }
+        session = (sr.data && sr.data.session) || null;
+        var name = (nameEl.value || '').trim();
+        if (name) {
+          try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+        }
+        renderAuth();
+        if (inputEl) inputEl.focus();
       } catch (e) {
         authMsg.textContent = '验证失败，请检查网络后重试。';
       } finally {
@@ -435,10 +476,40 @@
       if (regEl) regEl.hidden = true;
       if (branchEl) branchEl.hidden = false;
     });
-    if (regDoBtn) regDoBtn.addEventListener('click', function () {
-      if (regEl) regEl.hidden = true;
-      phoneCreate = true;
-      if (sendSmsBtn) sendSmsBtn.click();
+    if (regDoBtn) regDoBtn.addEventListener('click', async function () {
+      if (!pendingVerifyToken) { authMsg.textContent = '验证已过期，请重新获取验证码。'; if (regEl) regEl.hidden = true; return; }
+      regDoBtn.disabled = true;
+      authMsg.textContent = '正在创建账号…';
+      try {
+        // 显式确认后才由服务端建号（且受注册开关把门）；已绑号码直接登录原账号
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: pendingVerifyToken, action: 'register' });
+        if (r.data && r.data.status === 'session') {
+          pendingVerifyToken = '';
+          if (regEl) regEl.hidden = true;
+          var sr = await adoptPhoneSession(r.data);
+          if (sr.error) { authMsg.textContent = '账号已创建，但登录未完成，请重新获取验证码登录。'; return; }
+          session = (sr.data && sr.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) {
+            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+          }
+          renderAuth();
+          if (inputEl) inputEl.focus();
+        } else if (r.data && r.data.status === 'registration_disabled') {
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '手机号注册即将开放。目前请先用邮箱注册，注册后可以在页面上方绑定这个手机号。';
+        } else if (r.data && r.data.status === 'created_no_session') {
+          pendingVerifyToken = '';
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '账号已创建，请重新获取验证码登录。';
+        } else {
+          authMsg.textContent = '注册未完成，验证可能已过期，请重新获取验证码。';
+        }
+      } catch (e) {
+        authMsg.textContent = '注册失败，请检查网络后重试。';
+      } finally {
+        regDoBtn.disabled = false;
+      }
     });
 
     function prefillBind() {
@@ -458,15 +529,6 @@
       if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
       if (digits.length < 6 || digits.length > 14) return '';
       return cc + digits;
-    }
-    function auditBind(result, note) {
-      try {
-        if (!session || !session.user) return;
-        sb.from('identity_change_audit').insert({
-          user_id: session.user.id, action: 'identity_bind_phone', method: 'phone',
-          result: result, detail: { note: note || '', client_ts: Date.now() }
-        }).then(function () {}, function () {});
-      } catch (e) { /* 审计失败不阻塞绑定（与 App 同口径） */ }
     }
     var bindTimer = null;
     function startBindCooldown() {
@@ -490,16 +552,13 @@
       bindSendBtn.disabled = true;
       bindMsg.textContent = '正在发送验证码…';
       try {
-        var r = await sb.auth.updateUser({ phone: p });
-        if (r.error) {
+        // 绑定发码同样不泄露号码是否已被占用，冲突在确认阶段由服务端判定
+        var r = await phoneOtp('sendPhoneOtp', { phone: p, context: 'bind' }, true);
+        if (r.status !== 200) {
           bindSendBtn.disabled = false;
-          var em = (r.error.message || '');
-          if ((r.error.code || '') === 'phone_exists' || /phone_exists/i.test(em)) {
-            bindMsg.textContent = '这个手机号已经属于另一个 RUKIK 账号了，本次没有做任何变更。';
-            auditBind('blocked_conflict', 'phone_exists');
-          }
-          else if (/rate|too many|frequency|seconds/i.test(em)) bindMsg.textContent = '发送太频繁了，请过一分钟再试。';
-          else if (/invalid|phone/i.test(em)) bindMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          var ec = (r.data && r.data.error_code) || '';
+          if (ec === 'rate_limited') bindMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (ec === 'invalid_phone') bindMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
           else bindMsg.textContent = '发送失败，请检查手机号后重试。';
         } else {
           bindRow.hidden = false;
@@ -512,6 +571,7 @@
         bindMsg.textContent = '发送失败，请检查网络后重试。';
       }
     });
+
     if (bindVerifyBtn) bindVerifyBtn.addEventListener('click', async function () {
       var p = buildBindPhone();
       var token = (bindCodeEl.value || '').trim();
@@ -520,19 +580,28 @@
       bindVerifyBtn.disabled = true;
       bindMsg.textContent = '正在确认…';
       try {
-        var r = await sb.auth.verifyOtp({ phone: p, token: token, type: 'phone_change' });
-        if (r.error) {
+        var v = await phoneOtp('verifyPhoneOtp', { phone: p, code: token });
+        if (v.status !== 200 || !v.data.verification_token) {
           bindMsg.textContent = '确认失败：验证码不正确或已过期，请重新发送。';
-          auditBind('failure', 'verify_failed');
-        } else {
-          var gs = await sb.auth.getSession();
-          if (gs && gs.data && gs.data.session) session = gs.data.session;
-          boundDone = true;
-          pendingBindPhone = '';
-          auditBind('success', 'bound');
-          if (bindForm) bindForm.hidden = true;
-          bindMsg.textContent = '手机号已绑定，下次可以直接用手机号登录这个账号。';
+          return;
         }
+        // 身份解析（bind）：UID 只认当前会话、服务端核验；成败审计由服务端统一落账
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'bind' }, true);
+        if (r.data && r.data.status === 'conflict') {
+          bindMsg.textContent = '这个手机号已经属于另一个 RUKIK 账号了，本次没有做任何变更。';
+          return;
+        }
+        if (!r.data || r.data.status !== 'bound') {
+          bindMsg.textContent = '确认失败，请重新发送验证码后再试。';
+          return;
+        }
+        var gs = await sb.auth.getSession();
+        if (gs && gs.data && gs.data.session) session = gs.data.session;
+        boundDone = true;
+        pendingBindPhone = '';
+        if (bindForm) bindForm.hidden = true;
+        bindMsg.textContent = '手机号已绑定，下次可以直接用手机号登录这个账号。';
+        renderAuth();
       } catch (e) {
         bindMsg.textContent = '确认失败，请检查网络后重试。';
       } finally {
