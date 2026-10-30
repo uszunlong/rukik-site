@@ -166,6 +166,36 @@
       <button id="chatSend" type="button">发送</button>
     </div>
     <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
+<!-- ===== 联系专家本人（0260）独立增量块：自带样式/脚本，不依赖聊天模块内部变量 ===== -->
+<style>
+  .ctc { margin-top:16px; }
+  .ctc-btn { width:100%; background:#fff; color:#142235; border:1px solid #142235; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-btn:disabled { opacity:.55; cursor:default; }
+  .ctc-panel { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-top:12px; }
+  .ctc-note { font-size:14px; line-height:1.7; color:#44403a; margin:0 0 10px; }
+  .ctc-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+  .ctc-row .ctc-k { flex:0 0 44px; font-size:14px; color:#8B857D; }
+  .ctc-row .ctc-v { flex:1; font-size:15px; color:#202020; word-break:break-all; min-width:0; }
+  .ctc-row a.ctc-act, .ctc-row button.ctc-act { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .ctc-form input { width:100%; box-sizing:border-box; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; margin-top:10px; }
+  .ctc-form button { width:100%; margin-top:12px; background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-form button:disabled { opacity:.55; cursor:default; }
+  .ctc-msg { margin-top:10px; font-size:13px; line-height:1.6; color:#8B857D; text-align:center; min-height:18px; }
+</style>
+<div class="ctc" id="ctcWrap" style="display:none">
+  <button class="ctc-btn" id="ctcBtn" type="button">联系专家本人</button>
+  <div class="ctc-panel" id="ctcPanel" style="display:none">
+    <div id="ctcPublic"></div>
+    <form class="ctc-form" id="ctcForm" style="display:none">
+      <p class="ctc-note">专家本人暂未公开联系方式。留下您的联系方式，专家会主动联系您。</p>
+      <input id="ctcName" type="text" placeholder="您的称呼" maxlength="40" autocomplete="name">
+      <input id="ctcContact" type="text" placeholder="您的电话或邮箱" maxlength="120" autocomplete="tel">
+      <input id="ctcMessage" type="text" placeholder="一句话留言（选填）" maxlength="200">
+      <button id="ctcSubmit" type="submit">请专家联系我</button>
+    </form>
+    <div class="ctc-msg" id="ctcMsg"></div>
+  </div>
+</div>
     <div class="dl" id="chatDownload" hidden>
       网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
       <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
@@ -687,6 +717,126 @@
 
     sendBtn.addEventListener('click', send);
     inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+  }
+</script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  var CTC_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var CTC_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var CTC_PRO = 'c7995f81-3b29-46ab-8485-0813c6e39cff';
+  var wrap = document.getElementById('ctcWrap');
+  if (wrap) {
+    var btn = document.getElementById('ctcBtn');
+    var panel = document.getElementById('ctcPanel');
+    var pubBox = document.getElementById('ctcPublic');
+    var form = document.getElementById('ctcForm');
+    var msg = document.getElementById('ctcMsg');
+    var nameEl = document.getElementById('ctcName');
+    var contactEl = document.getElementById('ctcContact');
+    var messageEl = document.getElementById('ctcMessage');
+    var submitBtn = document.getElementById('ctcSubmit');
+    var sb2 = createClient(CTC_URL, CTC_ANON);
+    var ctcSession = null;
+    var ctcLoaded = false;
+    var ctcOpen = false;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function rowHtml(k, v, actHtml) {
+      return '<div class="ctc-row"><span class="ctc-k">' + k + '</span><span class="ctc-v">' + esc(v) + '</span>' + actHtml + '</div>';
+    }
+    function renderPublic(c) {
+      var html = '';
+      if (c.phone) {
+        var tel = String(c.phone).replace(/[^+\d]/g, '');
+        html += rowHtml('电话', c.phone, '<a class="ctc-act" href="tel:' + esc(tel) + '">拨打</a>');
+      }
+      if (c.email) {
+        html += rowHtml('邮箱', c.email, '<a class="ctc-act" href="mailto:' + esc(c.email) + '">发邮件</a>');
+      }
+      if (c.wechat) {
+        html += rowHtml('微信', c.wechat, '<button class="ctc-act" type="button" id="ctcCopyWx">复制</button>');
+      }
+      if (c.website) {
+        var url = String(c.website);
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        html += rowHtml('官网', c.website, '<a class="ctc-act" href="' + esc(url) + '" target="_blank" rel="noopener">访问</a>');
+      }
+      pubBox.innerHTML = html;
+      form.style.display = 'none';
+      var cp = document.getElementById('ctcCopyWx');
+      if (cp) cp.addEventListener('click', async function () {
+        var ok = false;
+        try { await navigator.clipboard.writeText(String(c.wechat)); ok = true; } catch (e) { /* 剪贴板不可用时退回手动复制 */ }
+        msg.textContent = ok ? '微信号已复制，去微信添加即可。' : '微信号就在上方，长按或手动复制即可。';
+      });
+    }
+    async function loadContact() {
+      if (ctcLoaded) return;
+      ctcLoaded = true;
+      try {
+        var r = await sb2.rpc('get_expert_public_contact', { p_professional_id: CTC_PRO });
+        var c = r && r.data;
+        if (c && (c.phone || c.email || c.wechat || c.website)) renderPublic(c);
+        else { pubBox.innerHTML = ''; form.style.display = 'block'; }
+      } catch (e) {
+        pubBox.innerHTML = '';
+        form.style.display = 'block';
+      }
+    }
+    function renderCtc() {
+      var logged = !!ctcSession;
+      wrap.style.display = logged ? 'block' : 'none';
+      if (!logged) { ctcOpen = false; panel.style.display = 'none'; }
+    }
+    sb2.auth.getSession().then(function (res) {
+      ctcSession = (res && res.data && res.data.session) || null;
+      renderCtc();
+    }).catch(function () { renderCtc(); });
+    sb2.auth.onAuthStateChange(function (_e, s) { ctcSession = s; renderCtc(); });
+
+    btn.addEventListener('click', function () {
+      ctcOpen = !ctcOpen;
+      panel.style.display = ctcOpen ? 'block' : 'none';
+      if (ctcOpen) loadContact();
+    });
+
+    form.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      if (!ctcSession) { msg.textContent = '登录已过期，请重新登录后再提交。'; return; }
+      var name = (nameEl.value || '').trim();
+      var contact = (contactEl.value || '').trim();
+      var message = (messageEl.value || '').trim();
+      if (!name) { msg.textContent = '请先填写您的称呼。'; return; }
+      if (contact.length < 3) { msg.textContent = '请填写您的电话或邮箱，方便专家联系您。'; return; }
+      submitBtn.disabled = true;
+      msg.textContent = '正在提交…';
+      try {
+        var r = await sb2.rpc('submit_expert_contact_request', {
+          p_professional_id: CTC_PRO, p_name: name, p_contact: contact, p_message: message
+        });
+        var d = (r && r.data) || null;
+        if (r && r.error) {
+          msg.textContent = '提交失败，请检查网络后重试。';
+        } else if (d && d.ok) {
+          form.style.display = 'none';
+          msg.textContent = '已提交。专家会通过您留下的联系方式联系您，请留意。';
+        } else if (d && d.error === 'rate_limited') {
+          msg.textContent = '您提交得有点频繁了，请稍后再试。';
+        } else if (d && d.error === 'login_required') {
+          msg.textContent = '登录已过期，请重新登录后再提交。';
+        } else {
+          msg.textContent = '提交失败，请稍后重试。';
+        }
+      } catch (e) {
+        msg.textContent = '提交失败，请检查网络后重试。';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
   }
 </script>
 </body>
