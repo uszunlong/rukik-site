@@ -28,11 +28,129 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .status{text-align:center;padding:44px 10px 8px}
 .status .big{font-size:24px;font-weight:800}
 .foot{font-size:12px;color:#9A8F7A;line-height:1.7;margin-top:20px}
+.askbtn{display:block;width:100%;text-align:center;background:#B98A2F;color:#fff;border:0;font-size:16.5px;font-weight:700;border-radius:999px;padding:14px;margin-top:22px;cursor:pointer}
+.ask-mask{position:fixed;inset:0;background:rgba(20,24,34,.45);z-index:50}
+.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:86vh;background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px 10px}
+.ask-head{display:flex;justify-content:space-between;align-items:flex-start}
+.ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer}
+.ask-msgs{overflow-y:auto;padding:10px 2px;flex:1;min-height:120px}
+.msg{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.msg.ai{background:#F2E6CF;color:#1F2A44}
+.msg.me{background:#1F2A44;color:#fff;margin-left:auto}
+.ask-bar{display:flex;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
+.ask-bar input{flex:1;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:15px;min-width:0}
+.ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px}
+.ask-lead{background:#fff;border:1px solid #EAE3D5;border-radius:14px;padding:12px;margin:8px 0}
+.ask-lead input[type=text],.ask-lead input:not([type=checkbox]),.subbox input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;border:1px solid #E0D5BC;border-radius:10px;padding:10px 12px;font-size:15px;margin:8px 0}
+.ask-consent{display:block;font-size:12.5px;color:#5A6472;line-height:1.5;margin:8px 0}
+.subbox{background:#fff;border:1px solid #EAE3D5;border-radius:16px;padding:14px;margin-top:16px}
 </style></head><body><div class="wrap"><img class="hero" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/438450f9-b3f3-4460-bb45-d56a869e9db9/6e4b564b-07e4-41a4-ba89-d8dbba416290/1793345763159.jpg" alt="房源照片"/><div class="price">$1,499,000</div><div class="spec">3卧 · 3卫 · 2,108 sqft</div><div class="addr">138 Biome, Irvine, CA 92618</div><table><tr><td class="k">房屋类型</td><td>Single Family</td></tr><tr><td class="k">占地面积</td><td>3,000 sqft</td></tr><tr><td class="k">建成年份</td><td>2,022</td></tr><tr><td class="k">HOA</td><td>240 /月<div class="note">以 HOA 官方文件为准，请向经纪人核实最新金额。</div></td></tr><tr><td class="k">学区</td><td>Irvine Unified School District<div class="note">学区边界与学校分配可能调整，请以学区官网最新信息为准。</div></td></tr><tr><td class="k">MLS 编号</td><td>OC26231623</td></tr></table><div class="copy">位于 Irvine 大公园 Solis Park 的转角位独栋样板房，3 卧 3 卫，建于 2022 年，居住面积约 2,108 平方英尺，带私人露台、太阳能板与双车位车库。厨房配石英石台面与不锈钢电器。社区泳池、公园等设施近在咫尺。HOA 月费 $240，欢迎预约看房。</div><div class="copy">A 3-bedroom, 3-bathroom detached former model home on a premium corner lot in Solis Park, Great Park Neighborhoods, Irvine. Built in 2022 with about 2,108 sqft, a private deck, solar panels and an attached 2-car garage. The kitchen features quartz countertops and stainless steel appliances. Community pools, parks and recreation are moments away. HOA dues are $240 per month. Contact us to arrange a viewing.</div><div class="gal"><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/438450f9-b3f3-4460-bb45-d56a869e9db9/6e4b564b-07e4-41a4-ba89-d8dbba416290/1793345764895.jpg" alt="房源照片"/><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/438450f9-b3f3-4460-bb45-d56a869e9db9/6e4b564b-07e4-41a4-ba89-d8dbba416290/1793345766562.jpg" alt="房源照片"/></div>
+<button class="askbtn" id="rkAskOpen">✨ 问问这套房</button>
+<div class="note" style="text-align:center">不用下载 App，直接问 测试专家 · 内部验证 的 AI 团队：价格、户型、HOA 都能答；看房与议价会转达经纪人本人。</div>
+<div id="rkMask" class="ask-mask" hidden>
+ <div class="ask-panel">
+  <div class="ask-head"><div><b>问问这套房</b><div class="note" id="rkSub"></div></div>
+  <button class="ask-x" id="rkClose" aria-label="关闭">×</button></div>
+  <div id="rkMsgs" class="ask-msgs"></div>
+  <div id="rkLead" class="ask-lead" hidden>
+   <div style="font-weight:700">请经纪人联系我</div>
+   <p class="note">留下联系方式，经纪人会就这套房与您联系，不会用于其他营销。</p>
+   <input id="rkLeadName" placeholder="您的称呼（选填）" autocomplete="name"/>
+   <input id="rkLeadContact" placeholder="手机号或邮箱" autocomplete="tel"/>
+   <label class="ask-consent"><input type="checkbox" id="rkLeadConsent"/> 同意经纪人通过我留下的联系方式，就这套房源与我联系。</label>
+   <button class="ask-send" id="rkLeadBtn">提交</button>
+   <div class="note" id="rkLeadMsg"></div>
+  </div>
+  <div class="ask-bar">
+   <input id="rkInput" placeholder="问问价格、户型、HOA…"/>
+   <button class="ask-send" id="rkSend">发送</button>
+   <button class="ask-leadbtn" id="rkLeadOpen">请经纪人联系我</button>
+  </div>
+ </div>
+</div>
+<div class="subbox">
+ <div style="font-weight:700">关注这套房的状态变化</div>
+ <p class="note">售出、下架或调价时通知您。只通知这一套房，不发营销信息。</p>
+ <input id="rkSubContact" placeholder="手机号或邮箱"/>
+ <label class="ask-consent"><input type="checkbox" id="rkSubConsent"/> 同意在这套房源状态变化（如售出、下架、价格调整）时，通过我留下的联系方式通知我。</label>
+ <button class="ask-send" id="rkSubBtn">订阅提醒</button>
+ <div class="note" id="rkSubMsg"></div>
+</div>
+<script>window.RK_CFG={"slug": "3971d0aaa07a", "fn": "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/listing-webchat", "anon": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc", "agent": "测试专家 · 内部验证", "consentLead": "同意经纪人通过我留下的联系方式，就这套房源与我联系。", "consentStatus": "同意在这套房源状态变化（如售出、下架、价格调整）时，通过我留下的联系方式通知我。"};</script>
 <div class="agent"><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png" alt=""/>
 <div><div style="font-weight:700;font-size:16px">测试专家 · 内部验证</div>
 <div class="spec" style="font-size:13.5px"></div>
 <div class="note">Rukik 认证地产经纪</div></div></div>
 <a class="cta" href="https://apps.apple.com/us/app/rukik-one-step-ahead-ai/id6824554988">✨ 在 Rukik 里问问这套房</a>
 <div class="foot">房源状态与价格由经纪人 测试专家 · 内部验证 确认；学区、税费、HOA 等信息请以官方最新记录为准。本页由 Rukik 生成，房源有效期至 2026-11-29。</div>
-</div></body></html>
+</div>
+<script>
+(function(){
+  var B={"slug": "3971d0aaa07a", "fn": "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/listing-webchat", "anon": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc"};
+  function post(body){ try { return fetch(B.fn, {method:'POST', keepalive:true,
+    headers:{'apikey':B.anon,'Content-Type':'application/json'}, body:JSON.stringify(body)})
+    .then(function(r){return r.json().then(function(d){return {status:r.status,data:d}})}); } catch(e) { return Promise.reject(e); } }
+  // 浏览计数：同浏览器同房源用 session_ref 去重（服务端再按 60 秒窗兜底）
+  try {
+    var rk='rk_ref_'+B.slug, refv=sessionStorage.getItem(rk);
+    if(!refv) { refv='w'+Math.random().toString(36).slice(2)+Date.now().toString(36); sessionStorage.setItem(rk, refv); }
+    post({action:'view', slug:B.slug, session_ref:refv}).catch(function(){});
+  } catch(e) {}
+  var cfg=window.RK_CFG; if(!cfg) return;
+  var $=function(id){return document.getElementById(id)};
+  var tokKey='rk_sess_'+cfg.slug, tok=null;
+  try { tok=sessionStorage.getItem(tokKey); } catch(e) {}
+  var sending=false, replies=0, leadShown=false;
+  function bubble(text, me){ var d=document.createElement('div'); d.className='msg '+(me?'me':'ai');
+    d.textContent=text; $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; }
+  function ensureSession(){ if(tok) return Promise.resolve(tok);
+    return post({action:'start', slug:cfg.slug}).then(function(r){
+      if(r.status===200 && r.data.session_token) { tok=r.data.session_token;
+        try { sessionStorage.setItem(tokKey, tok); } catch(e) {}
+        $('rkSub').textContent=(cfg.agent?cfg.agent+' 的 AI 团队':'AI 团队')+' · 在线';
+        return tok; }
+      throw new Error('start_failed'); }); }
+  function openPanel(){ $('rkMask').hidden=false;
+    if(!$('rkMsgs').children.length) {
+      ensureSession().then(function(){
+        bubble('您好，我是'+(cfg.agent||'经纪人')+'的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。', false);
+      }).catch(function(){ bubble('网络有点问题，请稍后再试。', false); });
+    } }
+  function showLead(){ leadShown=true; $('rkLead').hidden=false; }
+  function send(){ var v=$('rkInput').value.trim(); if(!v||sending) return;
+    sending=true; bubble(v, true); $('rkInput').value='';
+    ensureSession().then(function(t){ return post({action:'chat', session_token:t, message:v}); })
+    .then(function(r){ sending=false;
+      if(r.status===200 && r.data.reply) { bubble(r.data.reply, false); replies++;
+        if(replies>=2 && !leadShown) showLead(); }
+      else if(r.data && r.data.error==='round_limit') { bubble('这次先聊到这儿——想继续了解，直接请经纪人联系您吧。', false); showLead(); }
+      else if(r.status===401) { tok=null; try { sessionStorage.removeItem(tokKey); } catch(e) {}
+        bubble('会话过期了，请关掉面板重新打开。', false); }
+      else bubble('这个问题我暂时答不上来，换个问法试试，或者请经纪人直接联系您。', false); })
+    .catch(function(){ sending=false; bubble('网络有点问题，请稍后再试。', false); }); }
+  $('rkAskOpen').addEventListener('click', openPanel);
+  $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true; });
+  $('rkSend').addEventListener('click', send);
+  $('rkInput').addEventListener('keydown', function(e){ if(e.key==='Enter') send(); });
+  $('rkLeadOpen').addEventListener('click', showLead);
+  $('rkLeadBtn').addEventListener('click', function(){
+    var contact=$('rkLeadContact').value.trim();
+    if(!contact) { $('rkLeadMsg').textContent='请先填写手机号或邮箱。'; return; }
+    if(!$('rkLeadConsent').checked) { $('rkLeadMsg').textContent='请先勾选同意，经纪人才能联系您。'; return; }
+    ensureSession().then(function(t){ return post({action:'lead', session_token:t,
+      customer_name:$('rkLeadName').value.trim(), contact:contact, consent:true}); })
+    .then(function(r){ if(r.status===200 && r.data.ok) {
+        $('rkLead').innerHTML='<div style="font-weight:700">已提交 ✓</div><p class="note">经纪人会就这套房尽快与您联系，请留意来电与消息。</p>'; }
+      else $('rkLeadMsg').textContent='提交没成功，请稍后再试。'; })
+    .catch(function(){ $('rkLeadMsg').textContent='网络有点问题，请稍后再试。'; }); });
+  $('rkSubBtn').addEventListener('click', function(){
+    var contact=$('rkSubContact').value.trim();
+    if(!contact) { $('rkSubMsg').textContent='请先填写手机号或邮箱。'; return; }
+    if(!$('rkSubConsent').checked) { $('rkSubMsg').textContent='请先勾选同意，我们才能通知您。'; return; }
+    ensureSession().then(function(t){ return post({action:'subscribe', session_token:t, contact:contact, consent:true}); })
+    .then(function(r){ $('rkSubMsg').textContent=(r.status===200 && r.data.ok)
+      ? '已订阅。这套房状态变化时会通知您。' : '订阅没成功，请稍后再试。'; })
+    .catch(function(){ $('rkSubMsg').textContent='网络有点问题，请稍后再试。'; }); });
+})();
+</script></body></html>
