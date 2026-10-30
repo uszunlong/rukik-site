@@ -146,9 +146,52 @@
 
     <div class="card">
       <h2>问 Rukik · AI 创作图片成本（V1.0）</h2>
-      <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）→ 收费回退至多一次（gpt-image-1），受收费总开关＋平台每日 / 每月预算＋单任务成本上限约束（配置在 app_private.ask_imagegen）；只有成功交付才扣用户每日配额。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
+      <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）；收费回退（gpt-image-1）按 2026-10-30 裁决暂时关闭，预算闸保留（单张 $0.20 / 日 $3 / 月 $50，配置在 app_private.ask_imagegen）。用户额度分层：普通用户每日 2 张、内测人员 5 张，只有成功交付才扣。全平台免费额度动态计算：池总量 10,000 − 当日全功能实际已耗 − 文本预留 5,500 − 安全余量，再按近 14 天滚动实测均价折算张数，受理时原子预占、失败释放（ask_imagegen_pool_status）。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
       <div id="askImgStats"><div class="empty">加载中…</div></div>
       <div id="askImgDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
+      <h2>房源情报完整度（房产情报引擎）</h2>
+      <p class="muted">口径说明：试点房源 × 六个情报维度（学校表现 / 城市级治安 / 洪水 / 对口学校 / 街区级治安 / 价格参考）的核验状态，来自 re_listing_intel_status（迁移 0251）。状态＝已接通 / 待地址级核验 / 待数据源；「最近核验」为该维度最近一次真实查询成功或有效缓存命中的时间。区域公共数据（学校表现、城市级治安）走区域缓存共享、不逐房复制；前台不展示此技术状态、只交付结果并标注数据范围与时间。</p>
+      <div id="reIntelStats"><div class="empty">加载中…</div></div>
+      <div id="reIntelDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
+      <h2>对口学校人工核验补录（房产情报引擎 · 迁移 0252）</h2>
+      <p class="muted">口径说明：学区分配没有程序化官方接口，本表是过渡机制——工作人员先用学区官方地址查询工具（如 IUSD School Locator）按地址核实，再把结果连同核验来源、核验日期、适用学年与核验人员录入此处。<b>未经官方工具核实的数据不得录入</b>；证据服务 re-intel 只采用状态＝「有效」的记录作答并标注核验信息，其余地址维持「未核实＋官方入口」口径。边界调整或学年更替后，把旧记录置为「待复核 / 失效」并重新核验录入。</p>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="saAddress" type="text" placeholder="房源完整地址（如 5 Deer Creek, Irvine, CA 92604）" style="flex:2;min-width:260px">
+        <input id="saListing" type="text" placeholder="房源 listing_id（选填，填上优先按房源命中）" style="flex:1;min-width:220px">
+      </div>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="saElem" type="text" placeholder="对口小学" style="flex:1;min-width:150px">
+        <input id="saMid" type="text" placeholder="对口初中" style="flex:1;min-width:150px">
+        <input id="saHigh" type="text" placeholder="对口高中" style="flex:1;min-width:150px">
+      </div>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="saSourceName" type="text" value="IUSD 官方 School Locator（PowerSchool MySchoolLocator）" style="flex:1;min-width:220px">
+        <input id="saSourceUrl" type="text" value="https://locator.decisioninsite.com/?StudyID=236134" style="flex:1;min-width:220px">
+      </div>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label class="muted">核验日期 <input id="saVerifiedAt" type="date"></label>
+        <input id="saYear" type="text" value="2026-2027" placeholder="适用学年" style="width:120px">
+        <input id="saBy" type="text" placeholder="核验人员" style="width:180px">
+        <select id="saStatus" style="padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff">
+          <option value="verified">有效</option>
+          <option value="needs_review">待复核</option>
+          <option value="expired">失效</option>
+        </select>
+        <input id="saNotes" type="text" placeholder="备注（选填）" style="flex:1;min-width:160px">
+        <button id="saAddBtn" class="btn" type="button">录入补录记录</button>
+      </div>
+      <div id="saMsg" class="cred" style="margin-top:8px"></div>
+      <div class="mt" style="display:flex;gap:8px;align-items:center">
+        <span class="cred">已录入记录</span>
+        <button id="saReload" class="btn" type="button">刷新</button>
+      </div>
+      <div id="saList" class="mt"><div class="empty">加载中…</div></div>
     </div>
 
     <div class="card">
@@ -300,6 +343,8 @@ async function loadAll() {
     loadNetwork();
     loadGroups();
     loadAskImgStats();
+    loadReIntelStatus();
+    loadSchoolAssign();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -434,19 +479,20 @@ async function loadImageStats() {
 async function loadAskImgStats() {
   try {
     const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-    const [att, gen] = await Promise.all([
+    const [att, gen, pool] = await Promise.all([
       sb.from('ask_imagegen_log').select('provider,model,result,cost_usd,failure_type,fallback_path,created_at').gte('created_at', since).order('created_at', { ascending: false }).limit(5000),
       sb.from('ask_image_generations').select('status,is_free,fell_back,fallback_reason,failure_type,cost_usd').gte('created_at', since).limit(5000),
+      rpc('ask_imagegen_pool_status').catch(() => null),
     ]);
     if (att.error) throw att.error;
     if (gen.error) throw gen.error;
-    renderAskImgStats(att.data ?? [], gen.data ?? []);
+    renderAskImgStats(att.data ?? [], gen.data ?? [], pool);
   } catch (e) {
     $('askImgStats').innerHTML = '<div class="empty">创作图片成本加载失败：' + esc(e.message) + '</div>';
   }
 }
 
-function renderAskImgStats(attempts, gens) {
+function renderAskImgStats(attempts, gens, pool) {
   const done = gens.filter((g) => g.status === 'done');
   const failed = gens.filter((g) => g.status === 'failed');
   const cost = attempts.reduce((s, a) => s + Number(a.cost_usd ?? 0), 0);
@@ -454,6 +500,7 @@ function renderAskImgStats(attempts, gens) {
   const cfOk = attempts.filter((a) => a.provider === 'cloudflare' && a.result === 'ok').length;
   const freeRate = genAttempts.length ? Math.round((cfOk / genAttempts.length) * 1000) / 10 : 0;
   const items = [
+    ...(pool ? [['约 ' + Number(pool.supportable_images ?? 0) + ' 张', '今日免费生图还可支持']] : []),
     [done.length, '成功交付作品（30 天）'], [failed.length, '失败任务'], [attempts.length, '生成尝试总数'],
     [freeRate + '%', '免费命中率'], ['$' + cost.toFixed(2), '实际费用（估算）'],
     [gens.filter((g) => g.fell_back).length, '发生收费回退的任务'],
@@ -471,9 +518,127 @@ function renderAskImgStats(attempts, gens) {
   const ft = {};
   for (const a of attempts) if (a.failure_type) ft[a.failure_type] = (ft[a.failure_type] ?? 0) + 1;
   $('askImgDetail').innerHTML =
+    (pool ? `<div class="cred">今日免费池（UTC 日界）：总量 ${Number(pool.pool_total_neurons ?? 0)}，全功能已耗 ${Number(pool.used_neurons ?? 0)}，文本预留 ${Number(pool.text_reserve_neurons ?? 0)}，安全余量 ${Number(pool.safety_margin_neurons ?? 0)}，在途预占 ${Number(pool.held_neurons ?? 0)}，剩余 ${Number(pool.remaining_neurons ?? 0)} Neurons；单张滚动均价 ${Number(pool.avg_cost_neurons ?? 0)}，还可支持约 ${Number(pool.supportable_images ?? 0)} 张。</div>` : '') +
     '<table><tr><th>服务商 / 模型</th><th>尝试</th><th>成功</th><th>失败率</th><th>费用</th></tr>' + rows + '</table>' +
     `<div class="cred">回退原因分布：${Object.entries(fb).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>` +
     `<div class="cred">失败类型分布：${Object.entries(ft).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>`;
+}
+
+async function loadReIntelStatus() {
+  try {
+    const [st, ls] = await Promise.all([
+      sb.from('re_listing_intel_status').select('listing_id,dimension,status,last_verified_at,note'),
+      sb.from('property_listings').select('id,fields').eq('status', 'Active').eq('is_public', true).limit(200),
+    ]);
+    if (st.error) throw st.error;
+    renderReIntelStatus(st.data ?? [], (ls && !ls.error && ls.data) ? ls.data : []);
+  } catch (e) {
+    $('reIntelStats').innerHTML = '<div class="empty">房源情报完整度加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderReIntelStatus(rows, listings) {
+  const DIM = { school_performance: '学校表现', city_safety: '城市级治安', flood: '洪水', school_assignment: '对口学校', neighborhood_safety: '街区级治安', price_reference: '价格参考' };
+  const DIM_ORDER = ['school_performance', 'city_safety', 'flood', 'school_assignment', 'neighborhood_safety', 'price_reference'];
+  const ST = { connected: '已接通', pending_address_verification: '待地址级核验', pending_data_source: '待数据源' };
+  const addr = {};
+  for (const l of listings) { const f = (l.fields && typeof l.fields === 'object') ? l.fields : {}; const av = f.address && typeof f.address === 'object' ? f.address.v : ''; if (av) addr[l.id] = av; }
+  const byListing = {};
+  for (const r of rows) { (byListing[r.listing_id] = byListing[r.listing_id] || {})[r.dimension] = r; }
+  const nConn = rows.filter((r) => r.status === 'connected').length;
+  const nPend = rows.filter((r) => r.status !== 'connected').length;
+  const items = [
+    [Object.keys(byListing).length, '已建状态的房源'], [nConn, '已接通维度'], [nPend, '待补齐维度'], [rows.length, '维度记录总数'],
+  ];
+  $('reIntelStats').innerHTML = '<div class="stats">' + items.map(([n, label]) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`).join('') + '</div>';
+  const fmtT = (t) => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '—';
+  const trs = Object.entries(byListing).map(([lid, dims]) => {
+    const cells = DIM_ORDER.map((d) => {
+      const r = dims[d];
+      if (!r) return '<td>—</td>';
+      return `<td>${esc(ST[r.status] || r.status)}<br><span class="muted">${fmtT(r.last_verified_at)}</span></td>`;
+    }).join('');
+    return `<tr><td><b>${esc(addr[lid] || lid.slice(0, 8) + '…')}</b></td>${cells}</tr>`;
+  }).join('');
+  $('reIntelDetail').innerHTML = '<table><tr><th>房源</th>' + DIM_ORDER.map((d) => `<th>${DIM[d]}</th>`).join('') + '</tr>' + trs + '</table>';
+}
+
+// ── 对口学校人工核验补录（迁移 0252 · re_school_assignments）：管理员经
+// RLS 直读写（is_admin 策略）；证据服务 re-intel 只采用 status=verified。
+const SA_STATUS = { verified: '有效', needs_review: '待复核', expired: '失效' };
+
+async function loadSchoolAssign() {
+  try {
+    if ($('saVerifiedAt') && !$('saVerifiedAt').value) $('saVerifiedAt').value = new Date().toISOString().slice(0, 10);
+    const { data, error } = await sb.from('re_school_assignments')
+      .select('id,listing_id,address,elementary_school,middle_school,high_school,source_name,source_url,verified_at,school_year,verified_by,status,notes,created_at')
+      .order('created_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    renderSchoolAssign(data ?? []);
+  } catch (e) {
+    $('saList').innerHTML = '<div class="empty">补录记录加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderSchoolAssign(rows) {
+  if (!rows.length) { $('saList').innerHTML = '<div class="empty">暂无补录记录。先用官方 School Locator 核实地址，再在上方录入。</div>'; return; }
+  const trs = rows.map((r) => {
+    const schools = [r.elementary_school && ('小：' + r.elementary_school), r.middle_school && ('初：' + r.middle_school), r.high_school && ('高：' + r.high_school)].filter(Boolean).join('<br>') || '—';
+    const opts = Object.entries(SA_STATUS).map(([v, t]) => `<option value="${v}"${r.status === v ? ' selected' : ''}>${t}</option>`).join('');
+    return `<tr>
+      <td><b>${esc(r.address)}</b>${r.listing_id ? `<br><span class="muted">房源 ${esc(r.listing_id.slice(0, 8))}…</span>` : ''}${r.notes ? `<br><span class="muted">${esc(r.notes)}</span>` : ''}</td>
+      <td>${schools}</td>
+      <td>${esc(r.verified_at)} · ${esc(r.school_year)} 学年<br><span class="muted">${esc(r.verified_by)} · ${esc(r.source_name)}</span>${r.source_url ? `<br><a href="${esc(r.source_url)}" target="_blank" rel="noopener">核验来源</a>` : ''}</td>
+      <td><select data-sa-status="${r.id}" style="padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff">${opts}</select></td>
+      <td><button class="btn" type="button" data-sa-del="${r.id}">删除</button></td>
+    </tr>`;
+  }).join('');
+  $('saList').innerHTML = '<table><tr><th>地址</th><th>对口学校</th><th>核验信息</th><th>状态</th><th>操作</th></tr>' + trs + '</table>';
+  $('saList').querySelectorAll('[data-sa-status]').forEach((sel) => {
+    sel.onchange = async () => {
+      const { error } = await sb.from('re_school_assignments').update({ status: sel.value, updated_at: new Date().toISOString() }).eq('id', sel.getAttribute('data-sa-status'));
+      $('saMsg').textContent = error ? ('状态更新失败：' + error.message) : '状态已更新。';
+      if (!error) loadSchoolAssign();
+    };
+  });
+  $('saList').querySelectorAll('[data-sa-del]').forEach((btn) => {
+    btn.onclick = async () => {
+      if (!confirm('确认删除这条补录记录？删除后该地址立即恢复未核实口径。')) return;
+      const { error } = await sb.from('re_school_assignments').delete().eq('id', btn.getAttribute('data-sa-del'));
+      $('saMsg').textContent = error ? ('删除失败：' + error.message) : '记录已删除。';
+      if (!error) loadSchoolAssign();
+    };
+  });
+}
+
+async function submitSchoolAssign() {
+  const address = $('saAddress').value.trim();
+  const verifiedBy = $('saBy').value.trim();
+  const verifiedAt = $('saVerifiedAt').value;
+  const year = $('saYear').value.trim();
+  if (!address) { $('saMsg').textContent = '请填房源完整地址。'; return; }
+  if (!$('saElem').value.trim() && !$('saMid').value.trim() && !$('saHigh').value.trim()) { $('saMsg').textContent = '至少填写一所已核验的对口学校。'; return; }
+  if (!verifiedBy || !verifiedAt || !year) { $('saMsg').textContent = '核验人员、核验日期与适用学年必填——无核验信息不得录入。'; return; }
+  const { data: u } = await sb.auth.getUser();
+  const row = {
+    listing_id: $('saListing').value.trim() || null,
+    address,
+    elementary_school: $('saElem').value.trim() || null,
+    middle_school: $('saMid').value.trim() || null,
+    high_school: $('saHigh').value.trim() || null,
+    source_name: $('saSourceName').value.trim() || 'IUSD 官方 School Locator（PowerSchool MySchoolLocator）',
+    source_url: $('saSourceUrl').value.trim() || null,
+    verified_at: verifiedAt,
+    school_year: year,
+    verified_by: verifiedBy,
+    status: $('saStatus').value,
+    notes: $('saNotes').value.trim() || null,
+    created_by: (u && u.user && u.user.id) || null,
+    updated_by: (u && u.user && u.user.id) || null,
+  };
+  const { error } = await sb.from('re_school_assignments').insert(row);
+  $('saMsg').textContent = error ? ('录入失败：' + error.message) : '已录入。证据服务即时生效（分配段不缓存）。';
+  if (!error) { $('saAddress').value = ''; $('saElem').value = ''; $('saMid').value = ''; $('saHigh').value = ''; $('saNotes').value = ''; loadSchoolAssign(); }
 }
 
 async function loadPushHealth() {
@@ -1326,6 +1491,9 @@ function renderRewards(r) {
       <td>${esc(e.status)}</td><td>${esc(e.source_event || '—')}</td></tr>`).join('') + '</table>';
   $('rewards').innerHTML = html;
 }
+
+if ($('saAddBtn')) $('saAddBtn').onclick = () => submitSchoolAssign();
+if ($('saReload')) $('saReload').onclick = () => loadSchoolAssign();
 
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
