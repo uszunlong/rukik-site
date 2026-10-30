@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
 <title>$1,695,000 · 4卧 · 3卫 · 2,396 sqft · Irvine｜测试专家 · 内部验证 的房源 · Rukik</title>
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="$1,695,000 · 4卧 · 3卫 · 2,396 sqft · Irvine｜测试专家 · 内部验证 的房源"/>
@@ -8,7 +8,7 @@
 <meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/derived/7f95f37d-7045-45dd-8c07-1caa231fc803/c0687297b92c_cover.jpg"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <style>
-body{margin:0;font-family:-apple-system,'PingFang SC','Helvetica Neue',Arial,sans-serif;background:#FAF7F2;color:#1F2A44}
+body{margin:0;font-family:-apple-system,'PingFang SC','Helvetica Neue',Arial,sans-serif;background:#FAF7F2;color:#1F2A44;overflow-x:clip}
 .wrap{max-width:680px;margin:0 auto;padding:20px 18px 40px}
 .hero{width:100%;border-radius:16px;aspect-ratio:3/2;object-fit:cover;background:#EDE6DA}
 .price{font-size:30px;font-weight:800;margin:16px 0 4px}
@@ -35,18 +35,21 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .status .big{font-size:24px;font-weight:800}
 .foot{font-size:12px;color:#9A8F7A;line-height:1.7;margin-top:20px}
 .askbtn{display:block;width:100%;text-align:center;background:#B98A2F;color:#fff;border:0;font-size:16.5px;font-weight:700;border-radius:999px;padding:14px;margin-top:22px;cursor:pointer}
-.ask-mask{position:fixed;inset:0;background:rgba(20,24,34,.45);z-index:50}
-.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:86vh;background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px 10px}
+.ask-mask{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;background:rgba(20,24,34,.45);z-index:50}
+.ask-panel,.ask-panel *{box-sizing:border-box}
+.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;max-height:calc(var(--rk-vh,100dvh)*.88);background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+.ask-panel.kb{padding-bottom:10px}
+.ask-panel input{font-size:16px}
 .ask-head{display:flex;justify-content:space-between;align-items:flex-start}
-.ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer}
-.ask-msgs{overflow-y:auto;padding:10px 2px;flex:1;min-height:120px}
+.ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer;flex:0 0 auto}
+.ask-msgs{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 2px;flex:1;min-height:96px}
 .msg{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .msg.ai{background:#F2E6CF;color:#1F2A44}
 .msg.me{background:#1F2A44;color:#fff;margin-left:auto}
-.ask-bar{display:flex;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
-.ask-bar input{flex:1;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:15px;min-width:0}
-.ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
-.ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px}
+.ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
+.ask-bar input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
+.ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px;flex:0 0 auto;margin-left:auto}
 .ask-lead{background:#fff;border:1px solid #EAE3D5;border-radius:14px;padding:12px;margin:8px 0}
 .ask-lead input[type=text],.ask-lead input:not([type=checkbox]),.subbox input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;border:1px solid #E0D5BC;border-radius:10px;padding:10px 12px;font-size:15px;margin:8px 0}
 .ask-consent{display:block;font-size:12.5px;color:#5A6472;line-height:1.5;margin:8px 0}
@@ -115,6 +118,18 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   });
   var cfg=window.RK_CFG; if(!cfg) return;
   var $=function(id){return document.getElementById(id)};
+  // 键盘感知（微信内置浏览器 vh 不随键盘变）：用 visualViewport 把遮罩钉在
+  // 可见视口内——键盘弹起时面板底部恰在键盘上方并切 .kb 压缩底部留白，
+  // 收起后自动恢复；--rk-vh 供面板 max-height 同步收缩，消息区随之让位。
+  function rkFit(){ var vv=window.visualViewport, m=$('rkMask'); if(!vv||!m) return;
+    m.style.top=vv.offsetTop+'px'; m.style.height=vv.height+'px';
+    document.documentElement.style.setProperty('--rk-vh', vv.height+'px');
+    var kb=(window.innerHeight-vv.height)>80, p=m.querySelector('.ask-panel');
+    if(p) p.classList.toggle('kb', kb);
+    if(!m.hidden) { var g=$('rkMsgs'); if(g) g.scrollTop=g.scrollHeight; } }
+  if(window.visualViewport) { window.visualViewport.addEventListener('resize', rkFit);
+    window.visualViewport.addEventListener('scroll', rkFit); }
+  window.addEventListener('orientationchange', function(){ setTimeout(rkFit, 300); });
   var tokKey='rk_sess_'+cfg.slug, tok=null;
   try { tok=sessionStorage.getItem(tokKey); } catch(e) {}
   var sending=false, replies=0, leadShown=false;
@@ -127,7 +142,7 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
         $('rkSub').textContent=(cfg.agent?cfg.agent+' 的 AI 团队':'AI 团队')+' · 在线';
         return tok; }
       throw new Error('start_failed'); }); }
-  function openPanel(){ $('rkMask').hidden=false;
+  function openPanel(){ $('rkMask').hidden=false; rkFit();
     if(!$('rkMsgs').children.length) {
       ensureSession().then(function(){
         bubble('您好，我是'+(cfg.agent||'经纪人')+'的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。', false);
