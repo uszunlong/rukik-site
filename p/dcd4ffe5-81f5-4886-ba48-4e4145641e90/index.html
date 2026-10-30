@@ -54,6 +54,8 @@
   .auth-tabs button { flex:1; background:#fff; color:#142235; border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; }
   .auth-tabs button.on { background:#142235; color:#F7F3EC; border-color:#142235; }
   .auth-row select { flex:1; min-width:0; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; }
+  .auth-row button.plain { background:#fff; color:#142235; border:1px solid #e3ddd2; }
+  #bindBar { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-bottom:14px; }
 </style>
 </head>
 <body>
@@ -65,8 +67,8 @@
   <div class="card">Linda Zhou 是 Rukik 创建的 AI 专业角色，擅长财税领域的信息梳理、问题讨论与思路整理。熟悉上海及周边财税议题，专长包括企业所得税、跨境税务、公司报税，善于把复杂问题拆成清楚的步骤。本角色提供一般性信息参考，不构成正式专业意见；遇到重要决定，建议再向具备相应资格的真人专业人士确认。</div>
   <div class="chat">
   <div id="authBox">
-    <div class="chat-title">注册后即可向我的 AI 助理提问</div>
-    <p class="auth-hint">用邮箱或手机号注册一次，网页和 Rukik App 都能登录咨询。复杂问题还可以直接联系我本人。</p>
+    <div class="chat-title">您的每一个问题，都值得专业解答。</div>
+    <p class="auth-hint">注册登录后，即可与我的专属 AI 智能团队交流，获得专业、贴心的解答。需要进一步帮助时，也可以直接联系我本人。</p>
     <div class="auth-row">
       <input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name">
     </div>
@@ -106,11 +108,52 @@
       <input id="authSmsCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code">
       <button id="authVerifySms" type="button">验证并登录</button>
     </div>
+    <div id="authBranch" hidden>
+    <p class="auth-hint" style="text-align:left">这是尚未绑定的手机号。您是否已经有 RUKIK 账号？</p>
+    <div class="auth-row">
+      <button id="authBranchOld" type="button">我已有账号</button>
+      <button id="authBranchNew" type="button" class="plain">我是新用户</button>
+    </div>
+    </div>
+    <div id="authRegConfirm" hidden>
+    <p class="auth-hint" style="text-align:left">确认后，将为您创建一个新的 RUKIK 账号，并把这个手机号作为登录方式。创建后，您也可以再绑定邮箱。</p>
+    <div class="auth-row">
+      <button id="authRegDo" type="button">确认注册</button>
+      <button id="authRegBack" type="button" class="plain">返回</button>
+    </div>
+    </div>
     </div>
     <div class="auth-msg" id="authMsg">正在准备登录…</div>
   </div>
   <div id="chatBox" hidden>
     <div class="auth-bar"><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
+    <div id="bindBar" hidden>
+    <p class="auth-hint" style="text-align:left;margin:0 0 10px">绑定手机号后，下次可以直接用手机号登录这个账号。</p>
+    <div id="bindForm">
+    <div class="auth-row">
+      <select id="bindCc" aria-label="国家或地区区号">
+        <option value="+1" selected>美国 / 加拿大 +1</option>
+        <option value="+86">中国 +86</option>
+        <option value="+852">中国香港 +852</option>
+        <option value="+886">中国台湾 +886</option>
+        <option value="+65">新加坡 +65</option>
+        <option value="+44">英国 +44</option>
+        <option value="+61">澳大利亚 +61</option>
+        <option value="+81">日本 +81</option>
+        <option value="+82">韩国 +82</option>
+      </select>
+    </div>
+    <div class="auth-row">
+      <input id="bindPhone" type="tel" placeholder="手机号码" maxlength="20" autocomplete="tel">
+      <button id="bindSend" type="button">发送验证码</button>
+    </div>
+    <div class="auth-row" id="bindRow" hidden>
+      <input id="bindCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code">
+      <button id="bindVerify" type="button">确认绑定</button>
+    </div>
+    </div>
+    <div class="auth-msg" id="bindMsg"></div>
+    </div>
     <div class="chat-title">直接向我的 AI 助理提问</div>
     <div class="msgs" id="chatMsgs"></div>
     <div class="chat-row">
@@ -163,6 +206,21 @@
   var smsRow = document.getElementById('authSmsRow');
   var smsCodeEl = document.getElementById('authSmsCode');
   var verifySmsBtn = document.getElementById('authVerifySms');
+  var branchEl = document.getElementById('authBranch');
+  var branchOldBtn = document.getElementById('authBranchOld');
+  var branchNewBtn = document.getElementById('authBranchNew');
+  var regEl = document.getElementById('authRegConfirm');
+  var regDoBtn = document.getElementById('authRegDo');
+  var regBackBtn = document.getElementById('authRegBack');
+  var bindBar = document.getElementById('bindBar');
+  var bindForm = document.getElementById('bindForm');
+  var bindCcEl = document.getElementById('bindCc');
+  var bindPhoneEl = document.getElementById('bindPhone');
+  var bindSendBtn = document.getElementById('bindSend');
+  var bindRow = document.getElementById('bindRow');
+  var bindCodeEl = document.getElementById('bindCode');
+  var bindVerifyBtn = document.getElementById('bindVerify');
+  var bindMsg = document.getElementById('bindMsg');
   var authMsg = document.getElementById('authMsg');
   var authBarText = document.getElementById('authBarText');
   var logoutBtn = document.getElementById('authLogout');
@@ -186,6 +244,7 @@
       if (logged) {
         authBarText.textContent = '已登录：' + ((session.user && (session.user.email || session.user.phone)) || '');
         if (authMsg) authMsg.textContent = '';
+        if (bindBar) { var hasPh = !!(session.user && session.user.phone); bindBar.hidden = hasPh || boundDone; if (!bindBar.hidden) prefillBind(); }
       }
     }
 
@@ -251,6 +310,8 @@
       if (tabPhoneBtn) tabPhoneBtn.classList.toggle('on', phone);
       if (emailPane) emailPane.hidden = phone;
       if (phonePane) phonePane.hidden = !phone;
+      if (branchEl) branchEl.hidden = true;
+      if (regEl) regEl.hidden = true;
       if (authMsg) authMsg.textContent = '';
     }
     if (tabEmailBtn) tabEmailBtn.addEventListener('click', function () { setAuthTab(false); });
@@ -264,6 +325,10 @@
       return cc + digits;
     }
     var smsTimer = null;
+    var phoneCreate = false;
+    var pendingPhone = '';
+    var pendingBindPhone = '';
+    var boundDone = false;
     function startSmsCooldown() {
       var left = 60;
       sendSmsBtn.disabled = true;
@@ -282,18 +347,22 @@
     if (sendSmsBtn) sendSmsBtn.addEventListener('click', async function () {
       var phone = buildPhone();
       if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
+      var creating = phoneCreate; phoneCreate = false;
       sendSmsBtn.disabled = true;
       authMsg.textContent = '正在发送验证码…';
       try {
-        var r = await sb.auth.signInWithOtp({ phone: phone });
+        var r = await sb.auth.signInWithOtp({ phone: phone, options: { shouldCreateUser: creating } });
         if (r.error) {
           sendSmsBtn.disabled = false;
           var em = (r.error.message || '');
-          if (/rate|too many|frequency|seconds/i.test(em)) authMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          if (!creating && ((r.error.code || '') === 'otp_disabled' || /signups not allowed/i.test(em))) { pendingPhone = phone; if (branchEl) branchEl.hidden = false; if (regEl) regEl.hidden = true; authMsg.textContent = ''; }
+          else if (/rate|too many|frequency|seconds/i.test(em)) authMsg.textContent = '发送太频繁了，请过一分钟再试。';
           else if (/invalid|unsupported|not supported|phone/i.test(em)) authMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
           else authMsg.textContent = '发送失败，请检查手机号后重试。';
         } else {
           smsRow.hidden = false;
+          if (branchEl) branchEl.hidden = true;
+          if (regEl) regEl.hidden = true;
           authMsg.textContent = '验证码已发送到您的手机，请查收短信，然后填入验证码登录。';
           startSmsCooldown();
           smsCodeEl.focus();
@@ -328,6 +397,126 @@
         authMsg.textContent = '验证失败，请检查网络后重试。';
       } finally {
         verifySmsBtn.disabled = false;
+      }
+    });
+
+    if (branchOldBtn) branchOldBtn.addEventListener('click', function () {
+      pendingBindPhone = pendingPhone;
+      if (branchEl) branchEl.hidden = true;
+      setAuthTab(false);
+      authMsg.textContent = '请先用邮箱登录。登录后，可以在页面上方把这个手机号绑定到您的账号。';
+    });
+    if (branchNewBtn) branchNewBtn.addEventListener('click', function () {
+      if (branchEl) branchEl.hidden = true;
+      if (regEl) regEl.hidden = false;
+      authMsg.textContent = '';
+    });
+    if (regBackBtn) regBackBtn.addEventListener('click', function () {
+      if (regEl) regEl.hidden = true;
+      if (branchEl) branchEl.hidden = false;
+    });
+    if (regDoBtn) regDoBtn.addEventListener('click', function () {
+      if (regEl) regEl.hidden = true;
+      phoneCreate = true;
+      if (sendSmsBtn) sendSmsBtn.click();
+    });
+
+    function prefillBind() {
+      if (!pendingBindPhone || !bindPhoneEl || bindPhoneEl.value) return;
+      var codes = ['+852', '+886', '+86', '+65', '+44', '+61', '+81', '+82', '+1'];
+      for (var i = 0; i < codes.length; i++) {
+        if (pendingBindPhone.indexOf(codes[i]) === 0) {
+          if (bindCcEl) bindCcEl.value = codes[i];
+          bindPhoneEl.value = pendingBindPhone.slice(codes[i].length);
+          break;
+        }
+      }
+    }
+    function buildBindPhone() {
+      var cc = (bindCcEl && bindCcEl.value) || '+1';
+      var digits = ((bindPhoneEl && bindPhoneEl.value) || '').replace(/[^\d]/g, '');
+      if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+      if (digits.length < 6 || digits.length > 14) return '';
+      return cc + digits;
+    }
+    function auditBind(result, note) {
+      try {
+        if (!session || !session.user) return;
+        sb.from('identity_change_audit').insert({
+          user_id: session.user.id, action: 'identity_bind_phone', method: 'phone',
+          result: result, detail: { note: note || '', client_ts: Date.now() }
+        }).then(function () {}, function () {});
+      } catch (e) { /* 审计失败不阻塞绑定（与 App 同口径） */ }
+    }
+    var bindTimer = null;
+    function startBindCooldown() {
+      var left = 60;
+      bindSendBtn.disabled = true;
+      bindSendBtn.textContent = '重新发送（' + left + 's）';
+      bindTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(bindTimer); bindTimer = null;
+          bindSendBtn.disabled = false;
+          bindSendBtn.textContent = '发送验证码';
+        } else {
+          bindSendBtn.textContent = '重新发送（' + left + 's）';
+        }
+      }, 1000);
+    }
+    if (bindSendBtn) bindSendBtn.addEventListener('click', async function () {
+      var p = buildBindPhone();
+      if (!p) { bindMsg.textContent = '请先填写正确的手机号码。'; return; }
+      bindSendBtn.disabled = true;
+      bindMsg.textContent = '正在发送验证码…';
+      try {
+        var r = await sb.auth.updateUser({ phone: p });
+        if (r.error) {
+          bindSendBtn.disabled = false;
+          var em = (r.error.message || '');
+          if ((r.error.code || '') === 'phone_exists' || /phone_exists/i.test(em)) {
+            bindMsg.textContent = '这个手机号已经属于另一个 RUKIK 账号了，本次没有做任何变更。';
+            auditBind('blocked_conflict', 'phone_exists');
+          }
+          else if (/rate|too many|frequency|seconds/i.test(em)) bindMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (/invalid|phone/i.test(em)) bindMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          else bindMsg.textContent = '发送失败，请检查手机号后重试。';
+        } else {
+          bindRow.hidden = false;
+          bindMsg.textContent = '验证码已发送到您的手机，请填入验证码确认绑定。';
+          startBindCooldown();
+          bindCodeEl.focus();
+        }
+      } catch (e) {
+        bindSendBtn.disabled = false;
+        bindMsg.textContent = '发送失败，请检查网络后重试。';
+      }
+    });
+    if (bindVerifyBtn) bindVerifyBtn.addEventListener('click', async function () {
+      var p = buildBindPhone();
+      var token = (bindCodeEl.value || '').trim();
+      if (!p) { bindMsg.textContent = '请先填写正确的手机号码。'; return; }
+      if (!token) { bindMsg.textContent = '请填写短信里收到的验证码。'; return; }
+      bindVerifyBtn.disabled = true;
+      bindMsg.textContent = '正在确认…';
+      try {
+        var r = await sb.auth.verifyOtp({ phone: p, token: token, type: 'phone_change' });
+        if (r.error) {
+          bindMsg.textContent = '确认失败：验证码不正确或已过期，请重新发送。';
+          auditBind('failure', 'verify_failed');
+        } else {
+          var gs = await sb.auth.getSession();
+          if (gs && gs.data && gs.data.session) session = gs.data.session;
+          boundDone = true;
+          pendingBindPhone = '';
+          auditBind('success', 'bound');
+          if (bindForm) bindForm.hidden = true;
+          bindMsg.textContent = '手机号已绑定，下次可以直接用手机号登录这个账号。';
+        }
+      } catch (e) {
+        bindMsg.textContent = '确认失败，请检查网络后重试。';
+      } finally {
+        bindVerifyBtn.disabled = false;
       }
     });
 
