@@ -177,6 +177,34 @@
     </div>
 
     <div class="card">
+      <h2>活动群管理（V2.0 · 按需建群）</h2>
+      <p class="muted">口径说明：活动群只有两个来源——用户在活动详情页点「加入活动群」按需创建（user_on_demand），或管理员在此按活动建群（admin）；参加活动 / 收藏 / 分享都不入群。本卡仅平台管理员可见、可管理全部群；群管理员（活动主办方或被指派者）只在 App 内管理自己被授权的群，服务端同口径分级把关（group_admin_set_role：群管理员仅可授 / 撤主持人层级，ADMIN 层级仅平台管理员可授）。处置全部直调服务端管理接口、与 App 内同审计（group_admin_actions）。归档后成员不可见、不可发；「启用」经建群接口复活同一群、不新建。跨群举报队列在上方 Event 运营卡，本卡详情里可处置单个群的举报。</p>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="grpSearch" type="text" placeholder="按群名（活动名）搜索" style="flex:1;min-width:180px">
+        <select id="grpStatusFilter" style="padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff">
+          <option value="">全部状态</option>
+          <option value="ACTIVE">进行中</option>
+          <option value="ARCHIVED">已归档</option>
+        </select>
+        <select id="grpSourceFilter" style="padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff">
+          <option value="">全部来源</option>
+          <option value="user_on_demand">用户按需</option>
+          <option value="admin">管理员建群</option>
+          <option value="legacy_backfill">历史补建</option>
+        </select>
+        <button id="grpReload" class="btn" type="button">刷新</button>
+      </div>
+      <div id="grpList" class="mt"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">按活动建群（admin_create_event_group · 整活动群）</div>
+      <div class="mt" style="display:flex;gap:8px">
+        <input id="grpEventKw" type="text" placeholder="搜索活动标题" style="flex:1">
+        <button id="grpEventSearchBtn" class="btn" type="button">搜索活动</button>
+      </div>
+      <div id="grpEventResults" class="mt"></div>
+      <div id="grpDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
     </div>
@@ -263,6 +291,7 @@ async function loadAll() {
     ]);
     renderStats(ov); renderPros(pros); renderUsers(users); renderConsults(consults);
     loadNetwork();
+    loadGroups();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -695,6 +724,284 @@ function renderEventReports(list) {
       } catch (err) { $('appErr').textContent = '操作失败：' + err.message; btn.disabled = false; }
     };
   });
+}
+
+// ── 活动群管理（V2.0）：平台管理员全量；数据经 RLS 直读（is_admin 全量
+// 可读）＋管理 RPC（服务端鉴权＋审计）。群管理员分级在 App 内落实，
+// 本页不向非平台管理员开放（enterApp 的 is_admin 门已把关）。 ──
+const GROUP_STATUS_TXT = { ACTIVE: '进行中', ARCHIVED: '已归档' };
+const GROUP_SOURCE_TXT = { user_on_demand: '用户按需', admin: '管理员建群', legacy_backfill: '历史补建' };
+const GROUP_ROLE_TXT = { MEMBER: '成员', MODERATOR: '群管理员（主持人）', ADMIN: '群管理员', ORGANIZER: '组织者' };
+const MEMBER_STATUS_TXT = { ACTIVE: '在群', LEFT: '已退出', REMOVED: '已移出', BANNED: '已禁入' };
+
+let grpAll = [];
+let grpOpenReports = {};
+let grpBound = false;
+let grpSelected = null;
+
+async function loadGroups() {
+  if (!grpBound) {
+    grpBound = true;
+    $('grpReload').onclick = () => loadGroups();
+    $('grpSearch').oninput = () => renderGrpList();
+    $('grpStatusFilter').onchange = () => renderGrpList();
+    $('grpSourceFilter').onchange = () => renderGrpList();
+    $('grpEventSearchBtn').onclick = () => searchGrpEvents();
+  }
+  try {
+    const [gRes, mRes, rRes] = await Promise.all([
+      sb.from('event_groups')
+        .select('id,event_id,session_id,snap_title,group_status,creation_source,created_by,owner_or_manager_id,created_at,archived_at')
+        .order('created_at', { ascending: false }).limit(200),
+      sb.from('event_group_members').select('group_id').eq('membership_status', 'ACTIVE').limit(5000),
+      sb.from('group_reports').select('group_id').eq('status', 'OPEN').limit(5000),
+    ]);
+    if (gRes.error) throw new Error(gRes.error.message);
+    grpAll = gRes.data || [];
+    const counts = {};
+    (mRes.data || []).forEach((r) => { counts[r.group_id] = (counts[r.group_id] || 0) + 1; });
+    grpAll.forEach((g) => { g._memberCount = counts[g.id] || 0; });
+    grpOpenReports = {};
+    (rRes.data || []).forEach((r) => { grpOpenReports[r.group_id] = (grpOpenReports[r.group_id] || 0) + 1; });
+    renderGrpList();
+  } catch (e) {
+    $('grpList').innerHTML = '<div class="empty">活动群加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderGrpList() {
+  const kw = ($('grpSearch').value || '').trim().toLowerCase();
+  const st = $('grpStatusFilter').value;
+  const src = $('grpSourceFilter').value;
+  const list = grpAll.filter((g) =>
+    (!kw || (g.snap_title || '').toLowerCase().includes(kw)) &&
+    (!st || g.group_status === st) &&
+    (!src || g.creation_source === src));
+  if (!list.length) { $('grpList').innerHTML = '<div class="empty">没有符合条件的活动群。</div>'; return; }
+  $('grpList').innerHTML = '<table><tr><th>群（活动）</th><th>状态</th><th>来源</th><th>成员</th><th>待处理举报</th><th>创建时间</th><th></th></tr>' +
+    list.map((g) => {
+      const open = grpOpenReports[g.id] || 0;
+      return `<tr>
+      <td><b>${esc(g.snap_title || '')}</b>${g.session_id ? '<br><span class="muted">场次群</span>' : ''}<br><span class="muted">${esc(g.id.slice(0, 8))}…</span></td>
+      <td>${g.group_status === 'ACTIVE' ? '<span class="tag ok">进行中</span>' : '<span class="tag no">已归档</span>'}</td>
+      <td>${esc(GROUP_SOURCE_TXT[g.creation_source] || g.creation_source || '—')}</td>
+      <td>${g._memberCount ?? 0}</td>
+      <td>${open ? `<span class="tag warn">${open} 条</span>` : '0'}</td>
+      <td class="muted">${fmtDate(g.created_at)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn small gold" data-grp-detail="${g.id}">成员 / 日志</button>
+        <button class="btn small ghost" data-grp-announce="${g.id}">公告</button>
+        ${g.group_status === 'ACTIVE'
+          ? `<button class="btn small ghost" data-grp-archive="${g.id}">归档</button>`
+          : `<button class="btn small gold" data-grp-enable="${g.id}">启用</button>`}
+      </td>
+    </tr>`;
+    }).join('') + '</table>';
+  $('grpList').querySelectorAll('button[data-grp-detail]').forEach((btn) => {
+    btn.onclick = () => loadGrpDetail(btn.dataset.grpDetail);
+  });
+  $('grpList').querySelectorAll('button[data-grp-announce]').forEach((btn) => {
+    btn.onclick = async () => {
+      const body = prompt('公告内容（将以管理员公告发到群里）：');
+      if (!body || !body.trim()) return;
+      btn.disabled = true;
+      try {
+        await rpc('group_admin_announce', { p_group_id: btn.dataset.grpAnnounce, p_body: body.trim() });
+        $('appErr').textContent = '';
+        alert('公告已发布。');
+      } catch (err) { $('appErr').textContent = '公告失败：' + err.message; }
+      btn.disabled = false;
+    };
+  });
+  $('grpList').querySelectorAll('button[data-grp-archive]').forEach((btn) => {
+    btn.onclick = async () => {
+      if (!confirm('归档该群？归档后成员不可见、不可发消息（可再启用复活）。')) return;
+      btn.disabled = true;
+      try {
+        await rpc('group_admin_archive', { p_group_id: btn.dataset.grpArchive, p_reason: '后台归档' });
+        loadGroups(); if (grpSelected === btn.dataset.grpArchive) loadGrpDetail(grpSelected);
+      } catch (err) { $('appErr').textContent = '归档失败：' + err.message; btn.disabled = false; }
+    };
+  });
+  $('grpList').querySelectorAll('button[data-grp-enable]').forEach((btn) => {
+    btn.onclick = async () => {
+      const g = grpAll.find((x) => x.id === btn.dataset.grpEnable);
+      if (!g) return;
+      btn.disabled = true;
+      try {
+        await rpc('admin_create_event_group', { p_event_id: g.event_id, p_session_id: g.session_id, p_reason: '后台启用' });
+        loadGroups(); if (grpSelected === g.id) loadGrpDetail(g.id);
+      } catch (err) { $('appErr').textContent = '启用失败：' + err.message; btn.disabled = false; }
+    };
+  });
+}
+
+async function searchGrpEvents() {
+  const kw = ($('grpEventKw').value || '').trim();
+  if (!kw) { $('grpEventResults').innerHTML = '<div class="empty">先输入活动标题关键词。</div>'; return; }
+  try {
+    const { data, error } = await sb.from('public_events')
+      .select('id,title,title_zh,category,event_status,created_at')
+      .or(`title.ilike.%${kw}%,title_zh.ilike.%${kw}%`)
+      .order('created_at', { ascending: false }).limit(20);
+    if (error) throw new Error(error.message);
+    const rows = data || [];
+    if (!rows.length) { $('grpEventResults').innerHTML = '<div class="empty">没有匹配的活动。</div>'; return; }
+    const wholeGroupOf = {};
+    grpAll.forEach((g) => { if (!g.session_id) wholeGroupOf[g.event_id] = g; });
+    $('grpEventResults').innerHTML = '<table><tr><th>活动</th><th>类目 · 状态</th><th>整活动群</th><th></th></tr>' +
+      rows.map((e) => {
+        const g = wholeGroupOf[e.id];
+        return `<tr>
+        <td><b>${esc(e.title_zh || e.title || '')}</b></td>
+        <td>${esc(EV_CAT[e.category] || e.category || '')} · ${esc(e.event_status || '')}</td>
+        <td>${g ? esc(GROUP_STATUS_TXT[g.group_status] || g.group_status) : '<span class="muted">未建群</span>'}</td>
+        <td>${e.category === 'FAMILY_KIDS'
+          ? '<span class="muted">亲子类目不开群</span>'
+          : (g && g.group_status === 'ACTIVE'
+            ? '<span class="muted">已建群</span>'
+            : `<button class="btn small gold" data-grp-create="${e.id}">${g ? '启用' : '建群'}</button>`)}</td>
+      </tr>`;
+      }).join('') + '</table>';
+    $('grpEventResults').querySelectorAll('button[data-grp-create]').forEach((btn) => {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        try {
+          const r = await rpc('admin_create_event_group', { p_event_id: btn.dataset.grpCreate, p_session_id: null, p_reason: '后台建群' });
+          $('appErr').textContent = '';
+          alert(r && r.created_group ? '已建群。' : '已启用既有群。');
+          loadGroups(); searchGrpEvents();
+        } catch (err) { $('appErr').textContent = '建群失败：' + err.message; btn.disabled = false; }
+      };
+    });
+  } catch (e) {
+    $('grpEventResults').innerHTML = '<div class="empty">活动搜索失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadGrpDetail(groupId) {
+  grpSelected = groupId;
+  const g = grpAll.find((x) => x.id === groupId);
+  $('grpDetail').innerHTML = '<div class="empty">加载群详情…</div>';
+  try {
+    const [memRes, repRes, logRes] = await Promise.all([
+      rpc('list_group_members', { p_group_id: groupId }),
+      sb.from('group_reports').select('*').eq('group_id', groupId).order('created_at', { ascending: false }).limit(20),
+      sb.from('group_admin_actions').select('*').eq('group_id', groupId).order('created_at', { ascending: false }).limit(50),
+    ]);
+    if (repRes.error) throw new Error(repRes.error.message);
+    if (logRes.error) throw new Error(logRes.error.message);
+    const members = (memRes && memRes.members) || [];
+    const reports = repRes.data || [];
+    const logs = logRes.data || [];
+    const nameOf = {};
+    members.forEach((m) => { nameOf[m.user_id] = m.display_name || m.user_id.slice(0, 8); });
+    const who = (uid) => uid ? esc(nameOf[uid] || uid.slice(0, 8) + '…') : '—';
+    let html = `<div class="cred" style="margin:10px 0 6px">群详情：${esc(g ? (g.snap_title || '') : groupId)}（${g ? esc(GROUP_STATUS_TXT[g.group_status] || g.group_status) : ''}）</div>`;
+    html += '<table><tr><th>成员</th><th>角色</th><th>状态</th><th>禁言至</th><th></th></tr>' +
+      (members.length ? members.map((m) => {
+        const muted = m.ban_until && new Date(m.ban_until).getTime() > Date.now();
+        const acts = [];
+        if (m.membership_status === 'ACTIVE') {
+          acts.push(muted
+            ? `<button class="btn small ghost" data-m-unmute="${m.user_id}">解禁</button>`
+            : `<button class="btn small ghost" data-m-mute="${m.user_id}">禁言 24h</button>`);
+          if (m.role === 'MEMBER') {
+            acts.push(`<button class="btn small ghost" data-m-role="MODERATOR:${m.user_id}">设为主持人</button>`);
+            acts.push(`<button class="btn small ghost" data-m-role="ADMIN:${m.user_id}">设为群管理员</button>`);
+          } else if (m.role === 'MODERATOR') {
+            acts.push(`<button class="btn small ghost" data-m-role="ADMIN:${m.user_id}">升为群管理员</button>`);
+            acts.push(`<button class="btn small ghost" data-m-role="MEMBER:${m.user_id}">撤销管理</button>`);
+          } else if (m.role === 'ADMIN') {
+            acts.push(`<button class="btn small ghost" data-m-role="MEMBER:${m.user_id}">撤销管理</button>`);
+          }
+          acts.push(`<button class="btn small ghost" data-m-remove="${m.user_id}">移出</button>`);
+          acts.push(`<button class="btn small ghost" data-m-ban="${m.user_id}">移出并禁入</button>`);
+        }
+        return `<tr>
+        <td><b>${esc(m.display_name || '')}</b><br><span class="muted">${esc((m.user_id || '').slice(0, 8))}…</span></td>
+        <td>${esc(GROUP_ROLE_TXT[m.role] || m.role || '')}</td>
+        <td>${esc(MEMBER_STATUS_TXT[m.membership_status] || m.membership_status || '')}</td>
+        <td class="muted">${muted ? fmtDate(m.ban_until) : '—'}</td>
+        <td style="white-space:nowrap">${acts.join(' ')}</td>
+      </tr>`;
+      }).join('') : '<tr><td colspan="5" class="muted">暂无成员记录。</td></tr>') + '</table>';
+    html += '<div class="cred" style="margin:14px 0 6px">本群举报</div>' +
+      (reports.length ? '<table><tr><th>时间</th><th>举报人</th><th>对象</th><th>原因</th><th>状态</th><th></th></tr>' +
+        reports.map((r) => `<tr>
+        <td class="muted">${fmtDate(r.created_at)}</td>
+        <td>${who(r.reporter_user_id)}</td>
+        <td>${r.target_user_id ? who(r.target_user_id) : '（消息举报）'}</td>
+        <td>${esc(r.reason || '')}</td>
+        <td>${esc(REPORT_STATUS[r.status] || r.status)}</td>
+        <td style="white-space:nowrap">${r.status === 'OPEN'
+          ? `<button class="btn small gold" data-rep="HANDLED:${r.id}">标记已处理</button> <button class="btn small ghost" data-rep="DISMISSED:${r.id}">忽略</button>`
+          : `<span class="muted">${r.handled_at ? fmtDate(r.handled_at) : ''}</span>`}</td>
+      </tr>`).join('') + '</table>' : '<div class="empty">本群暂无举报。</div>');
+    html += '<div class="cred" style="margin:14px 0 6px">操作日志（group_admin_actions）</div>' +
+      (logs.length ? '<table><tr><th>时间</th><th>动作</th><th>操作者</th><th>对象</th><th>原因 / 详情</th></tr>' +
+        logs.map((a) => `<tr>
+        <td class="muted">${fmtDate(a.created_at)}</td>
+        <td>${esc(a.action)}</td>
+        <td>${who(a.actor_user_id)}</td>
+        <td>${a.target_user_id ? who(a.target_user_id) : '—'}</td>
+        <td>${esc(a.reason || '')}${a.detail ? `<br><span class="muted">${esc(JSON.stringify(a.detail))}</span>` : ''}</td>
+      </tr>`).join('') + '</table>' : '<div class="empty">暂无操作日志。</div>');
+    $('grpDetail').innerHTML = html;
+    const after = () => { loadGroups(); loadGrpDetail(groupId); };
+    $('grpDetail').querySelectorAll('button[data-m-mute]').forEach((btn) => {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        try {
+          await rpc('group_admin_mute_member', { p_group_id: groupId, p_user_id: btn.dataset.mMute, p_until: new Date(Date.now() + 24 * 3600 * 1000).toISOString(), p_reason: '后台处置' });
+          after();
+        } catch (err) { $('appErr').textContent = '禁言失败：' + err.message; btn.disabled = false; }
+      };
+    });
+    $('grpDetail').querySelectorAll('button[data-m-unmute]').forEach((btn) => {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        try {
+          await rpc('group_admin_unmute_member', { p_group_id: groupId, p_user_id: btn.dataset.mUnmute, p_reason: '后台处置' });
+          after();
+        } catch (err) { $('appErr').textContent = '解禁失败：' + err.message; btn.disabled = false; }
+      };
+    });
+    $('grpDetail').querySelectorAll('button[data-m-remove], button[data-m-ban]').forEach((btn) => {
+      btn.onclick = async () => {
+        const ban = btn.dataset.mBan !== undefined && btn.dataset.mBan !== null && btn.hasAttribute('data-m-ban');
+        if (!confirm(ban ? '移出并禁入该成员？之后对方点「加入活动群」也会被拒绝。' : '移出该成员？对方之后仍可再次加入。')) return;
+        btn.disabled = true;
+        try {
+          await rpc('group_admin_remove_member', { p_group_id: groupId, p_user_id: ban ? btn.dataset.mBan : btn.dataset.mRemove, p_ban: ban, p_reason: '后台处置' });
+          after();
+        } catch (err) { $('appErr').textContent = '移出失败：' + err.message; btn.disabled = false; }
+      };
+    });
+    $('grpDetail').querySelectorAll('button[data-m-role]').forEach((btn) => {
+      btn.onclick = async () => {
+        const [role, uid] = btn.dataset.mRole.split(':');
+        if (!confirm(`把该成员设为「${GROUP_ROLE_TXT[role] || role}」？`)) return;
+        btn.disabled = true;
+        try {
+          await rpc('group_admin_set_role', { p_group_id: groupId, p_user_id: uid, p_role: role, p_reason: '后台指派' });
+          after();
+        } catch (err) { $('appErr').textContent = '设置失败：' + err.message; btn.disabled = false; }
+      };
+    });
+    $('grpDetail').querySelectorAll('button[data-rep]').forEach((btn) => {
+      btn.onclick = async () => {
+        const [status, rid] = btn.dataset.rep.split(':');
+        btn.disabled = true;
+        try {
+          await rpc('admin_group_report_set_status', { p_report_id: rid, p_status: status });
+          after();
+        } catch (err) { $('appErr').textContent = '举报处置失败：' + err.message; btn.disabled = false; }
+      };
+    });
+  } catch (e) {
+    $('grpDetail').innerHTML = '<div class="empty">群详情加载失败：' + esc(e.message) + '</div>';
+  }
 }
 
 function renderPushHealth(ov) {
