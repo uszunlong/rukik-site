@@ -44,7 +44,14 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer;flex:0 0 auto}
 .ask-msgs{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 2px;flex:1;min-height:96px}
 .msg{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.msg.ai{background:#F2E6CF;color:#1F2A44}
+.msg.ai{background:#F2E6CF;color:#1F2A44;white-space:normal}
+.msg.ai b{font-weight:800}
+.md-h{font-weight:800;margin:8px 0 3px}
+.md-h:first-child{margin-top:0}
+.md-ul,.md-ol{margin:4px 0;padding-left:20px}
+.md-ul li,.md-ol li{margin:2px 0}
+.msg.wait{opacity:.7}
+.msg.waitfail{color:#9A3B2E;cursor:pointer;text-decoration:underline}
 .msg.me{background:#1F2A44;color:#fff;margin-left:auto}
 .ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
 .ask-bar input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
@@ -61,7 +68,7 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
  <div class="ask-panel">
   <div class="ask-head"><div><b>问问这套房</b><div class="note" id="rkSub"></div></div>
   <button class="ask-x" id="rkClose" aria-label="关闭">×</button></div>
-  <div id="rkMsgs" class="ask-msgs"></div>
+  <div id="rkMsgs" class="ask-msgs"><div class="msg ai">您好，我是测试专家 · 内部验证的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。</div></div>
   <div id="rkLead" class="ask-lead" hidden>
    <div style="font-weight:700">请经纪人联系我</div>
    <p class="note">留下联系方式，经纪人会就这套房与您联系，不会用于其他营销。</p>
@@ -133,8 +140,29 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   var tokKey='rk_sess_'+cfg.slug, tok=null;
   try { tok=sessionStorage.getItem(tokKey); } catch(e) {}
   var sending=false, replies=0, leadShown=false;
-  function bubble(text, me){ var d=document.createElement('div'); d.className='msg '+(me?'me':'ai');
-    d.textContent=text; $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; }
+  // 轻量 Markdown 渲染：AI 回复是 Markdown 源码（## / ** / - 列表），原样
+  // textContent 会把标记当普通文字露出。先转义 HTML 再做标记替换（访客与
+  // AI 文本都不可信），只支持加粗/标题/有序无序列表/分段，不引任何库。
+  function rkMd(t){ var s=String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function inl(x){ return x.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
+    var lines=s.split(/\r?\n/), out=[], list=0;
+    function closeList(){ if(list===1) out.push('</ul>'); if(list===2) out.push('</ol>'); list=0; }
+    lines.forEach(function(ln){ var m;
+      if(m=ln.match(/^\s*[-*•]\s+(.*)$/)){ if(list!==1){ closeList(); out.push('<ul class="md-ul">'); list=1; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      if(m=ln.match(/^\s*\d{1,2}[.、)]\s+(.*)$/)){ if(list!==2){ closeList(); out.push('<ol class="md-ol">'); list=2; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      closeList();
+      if(m=ln.match(/^\s*#{1,6}\s+(.*)$/)){ out.push('<div class="md-h">'+inl(m[1])+'</div>'); return; }
+      if(/^\s*(-{3,}|={3,})\s*$/.test(ln)){ out.push('<div>&nbsp;</div>'); return; }
+      ln=ln.replace(/^\s*>\s?/,'');
+      out.push('<div>'+(ln.trim()?inl(ln):'&nbsp;')+'</div>'); });
+    closeList(); return out.join(''); }
+  function bubble(text, me, wait){ var d=document.createElement('div');
+    d.className='msg '+(me?'me':'ai')+(wait?' wait':'');
+    if(me) d.textContent=text; else d.innerHTML=rkMd(text);
+    $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; return d; }
   function ensureSession(){ if(tok) return Promise.resolve(tok);
     return post({action:'start', slug:cfg.slug}).then(function(r){
       if(r.status===200 && r.data.session_token) { tok=r.data.session_token;
@@ -143,23 +171,29 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
         return tok; }
       throw new Error('start_failed'); }); }
   function openPanel(){ $('rkMask').hidden=false; rkFit();
-    if(!$('rkMsgs').children.length) {
-      ensureSession().then(function(){
-        bubble('您好，我是'+(cfg.agent||'经纪人')+'的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。', false);
-      }).catch(function(){ bubble('网络有点问题，请稍后再试。', false); });
-    } }
+    // 问候语是固定文案、已随模板预渲染在消息区，点开即在；这里只预热会话
+    // （回填副标题/令牌），不再等建会话往返。预热失败静默——发送时自会
+    // 重试并在等待行上给出失败提示。
+    ensureSession().catch(function(){}); }
   function showLead(){ leadShown=true; $('rkLead').hidden=false; }
   function send(){ var v=$('rkInput').value.trim(); if(!v||sending) return;
     sending=true; bubble(v, true); $('rkInput').value='';
+    // 真实等待态：只表示「等待中」这一个真实状态，不编造进度阶段；
+    // 回复到达即移除，网络失败则原地变可点击重试的失败行。
+    var wait=bubble('正在为您核对这套房的信息…', false, true);
     ensureSession().then(function(t){ return post({action:'chat', session_token:t, message:v}); })
-    .then(function(r){ sending=false;
+    .then(function(r){ sending=false; if(wait) wait.remove();
       if(r.status===200 && r.data.reply) { bubble(r.data.reply, false); replies++;
         if(replies>=2 && !leadShown) showLead(); }
       else if(r.data && r.data.error==='round_limit') { bubble('这次先聊到这儿——想继续了解，直接请经纪人联系您吧。', false); showLead(); }
       else if(r.status===401) { tok=null; try { sessionStorage.removeItem(tokKey); } catch(e) {}
         bubble('会话过期了，请关掉面板重新打开。', false); }
       else bubble('这个问题我暂时答不上来，换个问法试试，或者请经纪人直接联系您。', false); })
-    .catch(function(){ sending=false; bubble('网络有点问题，请稍后再试。', false); }); }
+    .catch(function(){ sending=false;
+      if(wait) { wait.classList.remove('wait'); wait.classList.add('waitfail');
+        wait.textContent='发送失败，网络有点问题。点这里重试。';
+        wait.addEventListener('click', function(){ wait.remove(); $('rkInput').value=v; send(); }); }
+      else bubble('网络有点问题，请稍后再试。', false); }); }
   $('rkAskOpen').addEventListener('click', openPanel);
   $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true; });
   $('rkSend').addEventListener('click', send);
