@@ -60,6 +60,11 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .ask-lead{background:#fff;border:1px solid #EAE3D5;border-radius:14px;padding:12px;margin:8px 0}
 .ask-lead input[type=text],.ask-lead input:not([type=checkbox]),.subbox input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;border:1px solid #E0D5BC;border-radius:10px;padding:10px 12px;font-size:15px;margin:8px 0}
 .ask-consent{display:block;font-size:12.5px;color:#5A6472;line-height:1.5;margin:8px 0}
+.ask-quick{margin:10px 0 2px}
+.ask-quick-t{font-size:12.5px;color:#8A7B5C;font-weight:700;margin:2px 0 4px}
+.qcard{display:block;width:100%;text-align:left;background:#fff;border:1px solid #E0D5BC;color:#1F2A44;border-radius:12px;padding:9px 12px;font-size:14px;margin:6px 0;cursor:pointer}
+.qcard:active{background:#F2E6CF}
+.ask-quick-toggle{background:none;border:0;color:#7A5A21;font-size:13px;font-weight:700;cursor:pointer;padding:4px 2px}
 .subbox{background:#fff;border:1px solid #EAE3D5;border-radius:16px;padding:14px;margin-top:16px}
 </style></head><body><div class="wrap"><div class="gal2"><div class="track"><figure><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/derived/3361c06a-1aed-4555-88a1-4c5b2252b263/68f3e37c0f4e_gallery.jpg" alt="房源照片" loading="lazy"/></figure><figure><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/derived/3361c06a-1aed-4555-88a1-4c5b2252b263/1b7322e119a2_gallery.jpg" alt="房源照片" loading="lazy"/></figure><figure><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/derived/3361c06a-1aed-4555-88a1-4c5b2252b263/e75ecee88ff4_gallery.jpg" alt="房源照片" loading="lazy"/></figure><figure><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/listings/derived/3361c06a-1aed-4555-88a1-4c5b2252b263/27a35fdd2c9c_gallery.jpg" alt="房源照片" loading="lazy"/></figure></div><div class="gcount">1/4</div><div class="gbadge">示意图片 · 非本房源实拍</div></div><div class="price">$1,685,000</div><div class="spec">5卧 · 3卫 · 2,376 sqft</div><div class="addr">3832 Hamilton St, Irvine, CA 92614</div><table><tr><td class="k">房屋类型</td><td>Single Family</td></tr><tr><td class="k">占地面积</td><td>5,085 sqft</td></tr><tr><td class="k">建成年份</td><td>1,971</td></tr><tr><td class="k">HOA</td><td>85 /月<div class="note">以 HOA 官方文件为准，请向经纪人核实最新金额。</div></td></tr><tr><td class="k">年房产税</td><td>5,782<div class="note">税费可能随评估变化，请以县税务官网最新记录为准。</div></td></tr><tr><td class="k">学区</td><td>Irvine Unified School District<div class="note">学区边界与学校分配可能调整，请以学区官网最新信息为准。</div></td></tr><tr><td class="k">MLS 编号</td><td>PW26231203</td></tr></table><div class="copy">位于 Irvine Westpark 村 Culverdale 的独栋住宅，5 卧 3 卫，居住面积 2,376 平方英尺，占地 5,085 平方英尺，建于 1971 年。卧室全部位于二楼，客厅与主卧设有壁炉，厨房配花岗岩台面。全屋新地板，带私人后院，社区泳池、水疗与网球场近在周边。HOA 月费 $85，欢迎预约看房。</div><div class="copy">A 5-bedroom, 3-bathroom single family home in Culverdale, Westpark Village, Irvine: 2,376 sqft on a 5,085 sqft lot, built in 1971. All bedrooms are upstairs; the living room and primary bedroom have fireplaces, and the kitchen has granite counters. New flooring throughout, a private backyard, and community pool, spa and tennis courts nearby. HOA dues are $85 per month. Contact us to arrange a viewing.</div>
 <button class="askbtn" id="rkAskOpen">✨ 问问这套房</button>
@@ -68,7 +73,13 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
  <div class="ask-panel">
   <div class="ask-head"><div><b>问问这套房</b><div class="note" id="rkSub"></div></div>
   <button class="ask-x" id="rkClose" aria-label="关闭">×</button></div>
-  <div id="rkMsgs" class="ask-msgs"><div class="msg ai">您好，我是测试专家 · 内部验证的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。</div></div>
+  <div id="rkMsgs" class="ask-msgs"><div class="msg ai">一套房子，是一个地址，也可能是您人生新篇章的开始。无论您正在寻找理想的家，还是担心做错决定，我都会陪您认真分析，让每一步选择更有底气。</div></div>
+  <div id="rkQuick" class="ask-quick">
+   <div class="ask-quick-t">您可能想问</div>
+   <div><button class="qcard" data-q="这可能是我人生中很重要的一笔支出。我希望买得值得，而不是买完后悔。您能帮我分析真实成交价、房屋状况和议价空间吗？">我怕买贵了，帮我把把关</button><button class="qcard" data-q="我看中了一套房子，但不想只看价格和面积。您能帮我分析它的居住舒适度、周边环境，以及对家人日常生活的影响吗？">这套房，能让家人住得幸福吗？</button><button class="qcard" data-q="买房对我来说，也是为孩子选择成长环境。您能帮我调查附近学校的真实表现、学校分配、社区环境和日常接送便利程度吗？">给孩子一个更好的成长环境</button><button class="qcard" data-q="我比较在意家人的居住安全。您能帮我调查这套房附近的公开治安记录、交通风险、洪水和山火风险，并告诉我需要注意什么吗？">我想让家人住得更安心</button></div>
+   <div id="rkQuickMore" hidden><button class="qcard" data-q="我不希望买房以后每个月都为房贷发愁。您能帮我计算首付、月供、房产税、保险、HOA 和维护成本，看看什么预算更适合我吗？">买得起，也要住得轻松</button><button class="qcard" data-q="我想在这里安一个家，但不知道什么样的房子才真正适合我。您能结合我的预算、家庭情况和生活习惯，帮我找到值得考虑的选择吗？">帮我找到真正适合的家</button><button class="qcard" data-q="这是我第一次在美国买房，很多流程都不熟悉。您能像一位耐心的顾问一样，帮我梳理流程、费用、风险和每一步该做什么吗？">第一次在美国买房，有点不安</button><button class="qcard" data-q="我希望父母以后住得舒服、方便，也有安全感。您能帮我从医疗、无障碍设施、生活配套和长期居住成本来筛选房子吗？">为父母寻找舒适的养老居所</button></div>
+   <button id="rkQuickToggle" class="ask-quick-toggle">展开更多问题 ▾</button>
+  </div>
   <div id="rkLead" class="ask-lead" hidden>
    <div style="font-weight:700">请经纪人联系我</div>
    <p class="note">留下联系方式，经纪人会就这套房与您联系，不会用于其他营销。</p>
@@ -195,6 +206,15 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
         wait.addEventListener('click', function(){ wait.remove(); $('rkInput').value=v; send(); }); }
       else bubble('网络有点问题，请稍后再试。', false); }); }
   $('rkAskOpen').addEventListener('click', openPanel);
+  // 快捷咨询模板卡片（V1.0）：点击把完整问句填入输入框并直接发送，
+  // 与手动输入走同一条 send() 链路（等待态/失败重试/轮次上限全复用）；
+  // 房源上下文由服务端按 listing 注入，问句本身不带地址价格。
+  document.querySelectorAll('.qcard').forEach(function(b){
+    b.addEventListener('click', function(){ var q=b.getAttribute('data-q');
+      if(!q || sending) return; $('rkInput').value=q; send(); }); });
+  var rkQT=$('rkQuickToggle'), rkQM=$('rkQuickMore');
+  if(rkQT && rkQM) rkQT.addEventListener('click', function(){ var open=rkQM.hidden;
+    rkQM.hidden=!open; rkQT.textContent=open?'收起 ▴':'展开更多问题 ▾'; });
   $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true; });
   $('rkSend').addEventListener('click', send);
   $('rkInput').addEventListener('keydown', function(e){ if(e.key==='Enter') send(); });
