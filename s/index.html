@@ -83,8 +83,8 @@ fetch(SB_URL + "/rest/v1/rpc/resolve_share_link",
   }
   app.innerHTML = html;
   track(row.id, "open");
-  if (row.content_type === "ARTICLE") {
-    fetch(SB_URL + "/rest/v1/share_assets?content_type=eq.ARTICLE&content_id=eq." + encodeURIComponent(row.content_id || "") + "&kind=eq.og&select=image_url&limit=1",
+  if (row.content_type === "ARTICLE" || row.content_type === "PROFESSIONAL_INSIGHT") {
+    fetch(SB_URL + "/rest/v1/share_assets?content_type=eq." + encodeURIComponent(row.content_type) + "&content_id=eq." + encodeURIComponent(row.content_id || "") + "&kind=eq.og&select=image_url&limit=1",
       { headers:{ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY } })
     .then(function(r){ return r.json(); })
     .then(function(a){

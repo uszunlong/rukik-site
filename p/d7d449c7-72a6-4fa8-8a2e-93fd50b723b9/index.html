@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sam Zhou 的专业 AI 助理 — Rukik</title>
+<meta name="description" content="湾区房价高，更要算清持有成本">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sam Zhou 的 AI 团队">
+<meta property="og:description" content="湾区房价高，更要算清持有成本">
+<meta property="og:url" content="https://rukik.com/p/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/hero-50828f38.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="800">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/hero-50828f38.jpg">
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#F7F3EC; color:#202020; }
+  .wrap { max-width:640px; margin:0 auto; padding:56px 24px; text-align:center; }
+  img.avatar { width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid #B58A58; }
+  h1 { color:#142235; font-size:26px; margin:20px 0 4px; }
+  .role { color:#8B857D; font-size:15px; margin-bottom:20px; }
+  .line { display:inline-block; background:#142235; color:#F7F3EC; padding:12px 22px; border-radius:999px; font-size:16px; letter-spacing:1px; }
+  .card { background:#fff; border-radius:16px; padding:22px; margin-top:28px; text-align:left; line-height:1.9; color:#44403a; font-size:15px; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .btn { display:inline-block; margin-top:24px; background:#B58A58; color:#fff; text-decoration:none; padding:13px 30px; border-radius:999px; font-size:16px; }
+  .co { margin-top:14px; color:#8B857D; font-size:13px; }
+  .co img { width:18px; height:18px; vertical-align:-4px; border-radius:4px; }
+  .foot { margin-top:44px; color:#8B857D; font-size:12px; }
+  .chat { background:#fff; border-radius:16px; padding:20px; margin-top:28px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .chat-title { font-size:16px; font-weight:600; color:#142235; margin-bottom:12px; text-align:center; }
+  .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .msg.user { align-self:flex-end; background:#142235; color:#F7F3EC; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:#F7F3EC; color:#202020; border-bottom-left-radius:4px; }
+  .chat-row { display:flex; gap:8px; margin-top:14px; }
+  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; }
+  .chat-row input:disabled { background:#f1ede4; color:#8B857D; }
+  .chat-row button { background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .chat-row button:disabled { opacity:.55; cursor:default; }
+  .chat-note { margin-top:10px; font-size:12px; color:#8B857D; text-align:center; }
+  .dl { margin-top:16px; background:#F7F3EC; border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
+  .dl .btn { margin-top:10px; }
+  .auth-hint { font-size:14px; line-height:1.7; color:#44403a; text-align:center; margin:0 0 14px; }
+  .auth-row { display:flex; gap:8px; margin-top:10px; }
+  .auth-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; min-width:0; }
+  .auth-row button { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; }
+  .auth-row button:disabled { opacity:.55; cursor:default; }
+  .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:#8B857D; text-align:center; min-height:18px; }
+  .auth-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#8B857D; margin-bottom:10px; }
+  .auth-bar button { background:none; border:none; color:#B58A58; font-size:12px; cursor:pointer; padding:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/d7d449c7-72a6-4fa8-8a2e-93fd50b723b9/hero-50828f38.jpg" alt="Sam Zhou">
+  <h1>Sam Zhou</h1>
+  <div class="role">房产经纪 · US-CA</div>
+  <div class="line">湾区房价高，更要算清持有成本</div>
+  <div class="card">Sam Zhou 是 Rukik 创建的 AI 专业角色，擅长房地产领域的信息梳理、问题讨论与思路整理。熟悉旧金山及周边房地产议题，专长包括湾区房产、首次购房、房产投资，善于把复杂问题拆成清楚的步骤。本角色提供一般性信息参考，不构成正式专业意见；遇到重要决定，建议再向具备相应资格的真人专业人士确认。</div>
+  <div class="chat">
+  <div id="authBox">
+    <div class="chat-title">注册后即可向我的 AI 助理提问</div>
+    <p class="auth-hint">用邮箱注册一次，网页和 Rukik App 都能登录咨询。复杂问题还可以直接联系我本人。</p>
+    <div class="auth-row">
+      <input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name">
+    </div>
+    <div class="auth-row">
+      <input id="authEmail" type="email" placeholder="邮箱地址" maxlength="120" autocomplete="email">
+      <button id="authSendCode" type="button">发送验证码</button>
+    </div>
+    <div class="auth-row" id="authCodeRow" hidden>
+      <input id="authCode" type="text" inputmode="numeric" placeholder="邮箱收到的验证码" maxlength="10" autocomplete="one-time-code">
+      <button id="authVerify" type="button">验证并登录</button>
+    </div>
+    <div class="auth-msg" id="authMsg">正在准备登录…</div>
+  </div>
+  <div id="chatBox" hidden>
+    <div class="auth-bar"><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
+    <div class="chat-title">直接向我的 AI 助理提问</div>
+    <div class="msgs" id="chatMsgs"></div>
+    <div class="chat-row">
+      <input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off">
+      <button id="chatSend" type="button">发送</button>
+    </div>
+    <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
+    <div class="dl" id="chatDownload" hidden>
+      网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
+      <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 看门狗：登录模块（type=module）若因网络等原因没能启动，给出兜底提示，避免页面静默无反应
+  setTimeout(function () {
+    if (!window.__rukikChatReady) {
+      var m = document.getElementById('authMsg');
+      if (m && !document.getElementById('authBox').hidden) {
+        m.textContent = '登录组件加载较慢，请刷新页面重试，或下载 Rukik App 咨询。';
+      }
+    }
+  }, 8000);
+</script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var API_URL = SUPABASE_URL + '/functions/v1/pro-chat';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var PROFESSIONAL_ID = 'd7d449c7-72a6-4fa8-8a2e-93fd50b723b9';
+  var MAX_ROUNDS = 3;
+
+  var authBox = document.getElementById('authBox');
+  var chatBox = document.getElementById('chatBox');
+  var nameEl = document.getElementById('authName');
+  var emailEl = document.getElementById('authEmail');
+  var sendCodeBtn = document.getElementById('authSendCode');
+  var codeRow = document.getElementById('authCodeRow');
+  var codeEl = document.getElementById('authCode');
+  var verifyBtn = document.getElementById('authVerify');
+  var authMsg = document.getElementById('authMsg');
+  var authBarText = document.getElementById('authBarText');
+  var logoutBtn = document.getElementById('authLogout');
+  var msgsEl = document.getElementById('chatMsgs');
+  var inputEl = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('chatSend');
+  var dlEl = document.getElementById('chatDownload');
+  if (!authBox || !chatBox || !msgsEl || !inputEl || !sendBtn) { /* 页面结构不完整则不启动 */ }
+  else {
+    window.__rukikChatReady = true;
+    var sb = createClient(SUPABASE_URL, ANON_KEY);
+    var session = null;
+    var history = [];
+    var rounds = 0;
+    var busy = false;
+
+    function renderAuth() {
+      var logged = !!session;
+      authBox.hidden = logged;
+      chatBox.hidden = !logged;
+      if (logged) {
+        authBarText.textContent = '已登录：' + ((session.user && session.user.email) || '');
+        if (authMsg) authMsg.textContent = '';
+      }
+    }
+
+    sb.auth.getSession().then(function (res) {
+      session = (res && res.data && res.data.session) || null;
+      if (authMsg && !session) authMsg.textContent = '';
+      renderAuth();
+    }).catch(function () { renderAuth(); });
+    sb.auth.onAuthStateChange(function (_event, s) {
+      session = s;
+      renderAuth();
+    });
+
+    sendCodeBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      if (!email) { authMsg.textContent = '请先填写邮箱地址。'; return; }
+      sendCodeBtn.disabled = true;
+      authMsg.textContent = '正在发送验证码…';
+      try {
+        var r = await sb.auth.signInWithOtp({ email: email });
+        if (r.error) { authMsg.textContent = '发送失败，请检查邮箱地址后重试。'; }
+        else {
+          codeRow.hidden = false;
+          authMsg.textContent = '验证码已发送到您的邮箱，请查收（也可能在垃圾邮件里），然后填入验证码登录。';
+          codeEl.focus();
+        }
+      } catch (e) {
+        authMsg.textContent = '发送失败，请检查网络后重试。';
+      } finally {
+        sendCodeBtn.disabled = false;
+      }
+    });
+
+    verifyBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      var token = (codeEl.value || '').trim();
+      if (!email) { authMsg.textContent = '请先填写邮箱地址。'; return; }
+      if (!token) { authMsg.textContent = '请填写邮箱里收到的验证码。'; return; }
+      verifyBtn.disabled = true;
+      authMsg.textContent = '正在验证…';
+      try {
+        var r = await sb.auth.verifyOtp({ email: email, token: token, type: 'email' });
+        if (r.error) {
+          authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。';
+        } else {
+          session = (r.data && r.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) {
+            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+          }
+          renderAuth();
+          if (inputEl) inputEl.focus();
+        }
+      } catch (e) {
+        authMsg.textContent = '验证失败，请检查网络后重试。';
+      } finally {
+        verifyBtn.disabled = false;
+      }
+    });
+
+    logoutBtn.addEventListener('click', async function () {
+      try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
+      session = null;
+      history = [];
+      rounds = 0;
+      msgsEl.innerHTML = '';
+      renderAuth();
+    });
+
+    function addMsg(role, text) {
+      var div = document.createElement('div');
+      div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+      div.textContent = text;
+      msgsEl.appendChild(div);
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+      return div;
+    }
+
+    function lockWithGuide() {
+      inputEl.disabled = true;
+      sendBtn.disabled = true;
+      inputEl.placeholder = '网页咨询已达 3 轮上限';
+      if (dlEl) dlEl.hidden = false;
+    }
+
+    function friendlyError(code) {
+      if (code === 'not_configured') return '助理正在开通中，暂时还不能回答。请稍后再来，或点下方按钮在 Rukik App 里联系我本人。';
+      if (code === 'round_limit') { lockWithGuide(); return '网页端的 3 轮免费咨询已用完，下载 Rukik App 可以继续咨询。'; }
+      if (code === 'login_required') return '登录已过期，请重新登录后再咨询。';
+      return '暂时无法回答，请检查网络后重试。';
+    }
+
+    async function send() {
+      if (busy) return;
+      if (!session) { renderAuth(); return; }
+      if (rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
+      var text = inputEl.value.trim();
+      if (!text) return;
+      busy = true;
+      sendBtn.disabled = true;
+      inputEl.value = '';
+      addMsg('user', text);
+      history.push({ role: 'user', content: text });
+      var thinking = addMsg('ai', '正在思考…');
+      var reply = '';
+      try {
+        var tokenRes = await sb.auth.getSession();
+        var accessToken = (tokenRes && tokenRes.data && tokenRes.data.session && tokenRes.data.session.access_token) || (session && session.access_token) || '';
+        var res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': ANON_KEY,
+            'Authorization': 'Bearer ' + accessToken
+          },
+          body: JSON.stringify({ professional_id: PROFESSIONAL_ID, mode: 'web', stream: true, messages: history })
+        });
+        if (!res.ok) {
+          var errData = {};
+          try { errData = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+          history.pop();
+          if ((errData.error || '') === 'login_required') {
+            try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
+            session = null;
+            renderAuth();
+          }
+          thinking.textContent = friendlyError(errData.error || '');
+        } else if (res.body && typeof res.body.getReader === 'function' && (res.headers.get('Content-Type') || '').indexOf('event-stream') >= 0) {
+          // 流式接收：逐段追加显示，不再等整段生成完
+          var reader = res.body.getReader();
+          var decoder = new TextDecoder('utf-8');
+          var buffer = '';
+          for (;;) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            var lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i].trim();
+              if (line.indexOf('data:') !== 0) continue;
+              var payload = line.slice(5).trim();
+              if (payload === '[DONE]') continue;
+              try {
+                var delta = JSON.parse(payload).choices[0].delta.content || '';
+                if (delta) {
+                  reply += delta;
+                  thinking.textContent = reply;
+                  msgsEl.scrollTop = msgsEl.scrollHeight;
+                }
+              } catch (e) { /* 非数据行忽略 */ }
+            }
+          }
+          if (!reply) {
+            history.pop();
+            thinking.textContent = friendlyError('');
+          } else {
+            history.push({ role: 'assistant', content: reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        } else {
+          var data = {};
+          try { data = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+          if (!data.reply) {
+            history.pop();
+            thinking.textContent = friendlyError(data.error || '');
+          } else {
+            thinking.textContent = data.reply;
+            history.push({ role: 'assistant', content: data.reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        }
+      } catch (e) {
+        if (reply) {
+          // 已流出部分内容后断线：保留已显示的部分作为本轮回答
+          history.push({ role: 'assistant', content: reply });
+          rounds += 1;
+          if (rounds >= MAX_ROUNDS) lockWithGuide();
+        } else {
+          history.pop();
+          thinking.textContent = friendlyError('');
+        }
+      } finally {
+        busy = false;
+        if (rounds < MAX_ROUNDS && session) { sendBtn.disabled = false; inputEl.focus(); }
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+  }
+</script>
+</body>
+</html>
