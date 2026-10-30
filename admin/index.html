@@ -138,6 +138,13 @@
     </div>
 
     <div class="card">
+      <h2>文章审核（专家公开发布先待审 · 迁移 0256）</h2>
+      <p class="muted">口径说明：专家文章走公开发布先落「待审核」，不进智库 / 搜索 / 分发池；V3.5 负面清单自动审仍是成文管线的第一道门，命中清单照旧拦截。用户本人一键成文的私人草稿不受影响。此处通过才转 published 并按现行口径同步分发；驳回必须填原因，作者可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
+      <div id="articleReviewQueue"><div class="empty">加载中…</div></div>
+      <div id="articleReviewDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>配图生产（Image Engine）</h2>
       <p class="muted">口径说明：三级取图——①原文页自带配图 / 官方图 ②开放许可网络图（公共领域 / CC，仅 cc0 / pdm / by / by-sa，记作者·来源·许可）③Cloudflare Workers AI 免费生图（FLUX-1-schnell，免费额度 10,000 Neurons / 日、UTC 日界，代码内每日上限 57 张，达限即停、条目留待补图）。OpenAI / Gemini 付费腿受开关门控、默认关闭。尝试统计来自 image_gen_log 近 7 天逐次记录；供图方为系统原始标识。</p>
       <div id="imageStats"><div class="empty">加载中…</div></div>
@@ -149,6 +156,13 @@
       <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）；收费回退（gpt-image-1）按 2026-10-30 裁决暂时关闭，预算闸保留（单张 $0.20 / 日 $3 / 月 $50，配置在 app_private.ask_imagegen）。用户额度分层：普通用户每日 2 张、内测人员 5 张，只有成功交付才扣。全平台免费额度动态计算：池总量 10,000 − 当日全功能实际已耗 − 文本预留 5,500 − 安全余量，再按近 14 天滚动实测均价折算张数，受理时原子预占、失败释放（ask_imagegen_pool_status）。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
       <div id="askImgStats"><div class="empty">加载中…</div></div>
       <div id="askImgDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
+      <h2>房源审核（发布先待审 · 迁移 0256）</h2>
+      <p class="muted">口径说明：经纪人提交发布后先落「待审核」、不公开（分享页 / 橱窗 / 问 Rukik 检索均不可见）；自动规则门（关键项 / 代理确认 / 照片授权 / 额度）仍在提交环节前置把关。此处通过才转 Active 公开（批准时复核额度、按默认有效期上架、刷新执照快照）；驳回必须填原因，提交人可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
+      <div id="listingReviewQueue"><div class="empty">加载中…</div></div>
+      <div id="listingReviewDetail" class="mt"></div>
     </div>
 
     <div class="card">
@@ -345,6 +359,7 @@ async function loadAll() {
     loadAskImgStats();
     loadReIntelStatus();
     loadSchoolAssign();
+    loadReviewQueues();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -522,6 +537,145 @@ function renderAskImgStats(attempts, gens, pool) {
     '<table><tr><th>服务商 / 模型</th><th>尝试</th><th>成功</th><th>失败率</th><th>费用</th></tr>' + rows + '</table>' +
     `<div class="cred">回退原因分布：${Object.entries(fb).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>` +
     `<div class="cred">失败类型分布：${Object.entries(ft).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>`;
+}
+
+// ── 房源＋文章人工审核队列（迁移 0256）──
+async function loadReviewQueues() {
+  try {
+    const [lq, aq] = await Promise.all([
+      rpc('admin_review_listings_queue', { p_limit: 50 }),
+      rpc('admin_review_articles_queue', { p_limit: 50 }),
+    ]);
+    renderListingReviewQueue(lq);
+    renderArticleReviewQueue(aq);
+  } catch (e) {
+    const msg = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+    $('listingReviewQueue').innerHTML = msg;
+    $('articleReviewQueue').innerHTML = msg;
+  }
+}
+
+function renderListingReviewQueue(list) {
+  if (!list || list.length === 0) { $('listingReviewQueue').innerHTML = '<div class="empty">暂无待审核房源。</div>'; return; }
+  $('listingReviewQueue').innerHTML = '<table><tr><th>提交时间</th><th>提交人</th><th>房源</th><th>价格</th><th>照片</th><th></th></tr>' +
+    list.map((l) => `<tr>
+      <td class="muted">${fmtDate(l.submitted_at || l.created_at)}</td>
+      <td><b>${esc(l.pro_name || '')}</b><br><span class="muted">${esc(l.pro_firm || '')}</span></td>
+      <td>${esc(l.address || '（无地址）')}<br><span class="muted">${esc(l.city || '')}</span></td>
+      <td>${l.price != null && l.price !== '' ? esc(String(l.price)) : '—'}</td>
+      <td>${l.photo_count ?? 0} 张</td>
+      <td><button class="btn small gold" data-lrq="${l.id}">查看详情</button></td>
+    </tr>`).join('') + '</table>';
+  $('listingReviewQueue').querySelectorAll('button[data-lrq]').forEach((btn) => {
+    btn.onclick = () => showListingReviewDetail(btn.dataset.lrq);
+  });
+}
+
+async function showListingReviewDetail(id) {
+  $('listingReviewDetail').innerHTML = '<div class="empty">加载详情…</div>';
+  try {
+    const d = await rpc('admin_review_listing_detail', { p_listing_id: id });
+    if (!d || d.ok === false) { $('listingReviewDetail').innerHTML = '<div class="empty">详情加载失败。</div>'; return; }
+    const l = d.listing, p = d.professional || {};
+    const fields = l.fields || {};
+    const fieldRows = Object.keys(fields).sort().map((k) => {
+      const f = fields[k] || {};
+      const v = f.v === null || f.v === undefined || f.v === '' ? '<span class="muted">（空）</span>' : esc(String(f.v));
+      return `<tr><td>${esc(k)}</td><td>${v}</td><td class="muted">tier ${f.tier ?? '—'} · ${f.confirmed ? '已确认' : '未确认'} · ${esc(f.src || '')}</td></tr>`;
+    }).join('');
+    const photos = (l.photos || []).map((ph, i) => {
+      const r = ph.rights || {};
+      return `<div style="display:flex;gap:10px;align-items:flex-start;margin:6px 0">
+        ${ph.url ? `<a href="${esc(ph.url)}" target="_blank" rel="noopener"><img src="${esc(ph.url)}" style="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></a>` : ''}
+        <div class="muted">照片 ${i + 1}${ph.is_cover ? '（封面）' : ''}<br>授权状态：${esc(r.status || (ph.authorized ? 'authorized(旧格式)' : '未声明'))} · 来源：${esc(r.source || '—')}${r.licensor ? ' · 授权人：' + esc(r.licensor) : ''}${r.declared_at ? '<br>声明时间：' + fmtDate(r.declared_at) : ''}${r.note ? '<br>备注：' + esc(r.note) : ''}</div>
+      </div>`;
+    }).join('') || '<div class="empty">无照片。</div>';
+    const snap = l.license_snapshot || {};
+    const creds = (d.credentials || []).map((c) =>
+      `<div class="cred">${esc(c.kind)} · ${esc(c.credential_title || '')} · ${esc(c.issuer_name || '')} · ${esc(c.jurisdiction || '')}${c.license_no ? ' · ' + esc(c.license_no) : ''}${c.verified ? ' · 平台已核验' : ''}${c.expires_on ? ' · 有效期至 ' + esc(c.expires_on) : ''}</div>`).join('');
+    $('listingReviewDetail').innerHTML = `
+      <div class="cred" style="margin:10px 0 6px">房源详情 · ${esc(l.id)}</div>
+      <p class="muted">提交人：<b>${esc(p.name || '')}</b>（${esc(PROF[p.profession] || p.profession || '')} · ${esc(p.firm || '—')}）· 代理确认：${l.agency_confirmed ? '是' : '否'} · 来源：${esc(l.source_type || '')}${l.source_url ? ' · ' + esc(l.source_url) : ''} · 提交时间：${fmtDate(l.review_submitted_at)}</p>
+      <table><tr><th style="width:150px">字段</th><th>值</th><th style="width:220px">来源 / 确认</th></tr>${fieldRows}</table>
+      <div class="cred" style="margin:12px 0 4px">照片与授权声明</div>${photos}
+      <div class="cred" style="margin:12px 0 4px">执照信息（发布快照）</div>
+      <div class="muted">${esc(snap.license_title || '—')} · ${esc(snap.license_issuer || '—')} · ${esc(snap.license_jurisdiction || '—')}</div>
+      ${creds || '<div class="empty">无凭证记录。</div>'}
+      ${l.copy_zh ? `<div class="cred" style="margin:12px 0 4px">中文文案</div><div style="white-space:pre-wrap">${esc(l.copy_zh)}</div>` : ''}
+      ${l.copy_en ? `<div class="cred" style="margin:12px 0 4px">英文文案</div><div style="white-space:pre-wrap">${esc(l.copy_en)}</div>` : ''}
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="lrReason" type="text" placeholder="驳回原因（驳回时必填，提交人可见）" style="flex:1;min-width:240px">
+        <button class="btn gold" id="lrApprove" type="button">通过并公开</button>
+        <button class="btn ghost" id="lrReject" type="button">驳回</button>
+      </div>`;
+    $('lrApprove').onclick = () => decideListingReview(id, 'approve');
+    $('lrReject').onclick = () => decideListingReview(id, 'reject');
+  } catch (e) {
+    $('listingReviewDetail').innerHTML = '<div class="empty">详情加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function decideListingReview(id, decision) {
+  const reason = (($('lrReason') || {}).value || '').trim();
+  if (decision === 'reject' && !reason) { $('appErr').textContent = '驳回必须填写原因。'; return; }
+  try {
+    const r = await rpc('admin_review_listing_decide', { p_listing_id: id, p_decision: decision, p_reason: reason || null });
+    if (r && r.ok === false) { $('appErr').textContent = '审核未生效：' + (r.error || 'unknown') + (r.status ? '（当前状态 ' + r.status + '）' : ''); return; }
+    $('appErr').textContent = '';
+    $('listingReviewDetail').innerHTML = '<div class="empty">' + (decision === 'approve' ? '已通过并公开。' : '已驳回，原因已记给提交人。') + '</div>';
+    loadReviewQueues();
+  } catch (e) { $('appErr').textContent = '操作失败：' + e.message; }
+}
+
+function renderArticleReviewQueue(list) {
+  if (!list || list.length === 0) { $('articleReviewQueue').innerHTML = '<div class="empty">暂无待审核文章。</div>'; return; }
+  $('articleReviewQueue').innerHTML = '<table><tr><th>提交时间</th><th>作者</th><th>标题</th><th>来源</th><th></th></tr>' +
+    list.map((a) => `<tr>
+      <td class="muted">${fmtDate(a.submitted_at || a.created_at)}</td>
+      <td><b>${esc(a.pro_name || '')}</b></td>
+      <td>${esc(a.title || '（无标题）')}<br><span class="muted">${esc(a.summary || '')}</span></td>
+      <td>${a.ai_generated ? 'AI 辅助成文' : '专家原创'}</td>
+      <td><button class="btn small gold" data-arq="${a.id}">查看全文</button></td>
+    </tr>`).join('') + '</table>';
+  $('articleReviewQueue').querySelectorAll('button[data-arq]').forEach((btn) => {
+    btn.onclick = () => showArticleReviewDetail(btn.dataset.arq);
+  });
+}
+
+async function showArticleReviewDetail(id) {
+  $('articleReviewDetail').innerHTML = '<div class="empty">加载全文…</div>';
+  try {
+    const d = await rpc('admin_review_article_detail', { p_article_id: id });
+    if (!d || d.ok === false) { $('articleReviewDetail').innerHTML = '<div class="empty">详情加载失败。</div>'; return; }
+    const a = d.article, p = d.professional || {};
+    $('articleReviewDetail').innerHTML = `
+      <div class="cred" style="margin:10px 0 6px">文章全文 · ${esc(a.id)}</div>
+      <p class="muted">作者：<b>${esc(p.name || '')}</b>（${esc(PROF[p.profession] || p.profession || '')} · ${esc(p.firm || '—')}）· 提交时间：${fmtDate(a.review_submitted_at)} · 类型：${esc(a.content_type || '')}${(a.topics || []).length ? ' · 话题：' + esc((a.topics || []).join('、')) : ''}${a.jurisdiction ? ' · 辖区：' + esc(a.jurisdiction) : ''}</p>
+      <h3 style="margin:10px 0 6px">${esc(a.title || '')}</h3>
+      ${a.summary ? `<p class="muted">${esc(a.summary)}</p>` : ''}
+      <div style="white-space:pre-wrap;border:1px solid var(--line);border-radius:10px;padding:14px;max-height:520px;overflow:auto">${esc(a.body || '')}</div>
+      <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="arReason" type="text" placeholder="驳回原因（驳回时必填，作者可见）" style="flex:1;min-width:240px">
+        <button class="btn gold" id="arApprove" type="button">通过并发布</button>
+        <button class="btn ghost" id="arReject" type="button">驳回</button>
+      </div>`;
+    $('arApprove').onclick = () => decideArticleReview(id, 'approve');
+    $('arReject').onclick = () => decideArticleReview(id, 'reject');
+  } catch (e) {
+    $('articleReviewDetail').innerHTML = '<div class="empty">详情加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function decideArticleReview(id, decision) {
+  const reason = (($('arReason') || {}).value || '').trim();
+  if (decision === 'reject' && !reason) { $('appErr').textContent = '驳回必须填写原因。'; return; }
+  try {
+    const r = await rpc('admin_review_article_decide', { p_article_id: id, p_decision: decision, p_reason: reason || null });
+    if (r && r.ok === false) { $('appErr').textContent = '审核未生效：' + (r.error || 'unknown') + (r.status ? '（当前状态 ' + r.status + '）' : ''); return; }
+    $('appErr').textContent = '';
+    $('articleReviewDetail').innerHTML = '<div class="empty">' + (decision === 'approve' ? '已通过并发布。' : '已驳回，原因已记给作者。') + '</div>';
+    loadReviewQueues();
+  } catch (e) { $('appErr').textContent = '操作失败：' + e.message; }
 }
 
 async function loadReIntelStatus() {
