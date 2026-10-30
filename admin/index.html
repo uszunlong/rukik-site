@@ -145,6 +145,13 @@
     </div>
 
     <div class="card">
+      <h2>问 Rukik · AI 创作图片成本（V1.0）</h2>
+      <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）→ 收费回退至多一次（gpt-image-1），受收费总开关＋平台每日 / 每月预算＋单任务成本上限约束（配置在 app_private.ask_imagegen）；只有成功交付才扣用户每日配额。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
+      <div id="askImgStats"><div class="empty">加载中…</div></div>
+      <div id="askImgDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>通知健康（Push Health）</h2>
       <p class="muted">口径说明：权限状态与设备令牌状态分开统计（push_devices：客户端上报状态、reminder-dispatch 按 Expo 真实票据回写最后成功推送与最近错误）。没有令牌 ≠ 用户拒绝授权，也可能是未注册设备或同步失败。推送成功数来自 push_log（只记已发送）；发送失败看 reminder_objects 的 expo_error 暂缓行；App 内通知为 notifications 账本行数，不代表已送达或已读。</p>
       <div id="pushHealthStats"><div class="empty">加载中…</div></div>
@@ -292,6 +299,7 @@ async function loadAll() {
     renderStats(ov); renderPros(pros); renderUsers(users); renderConsults(consults);
     loadNetwork();
     loadGroups();
+    loadAskImgStats();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -421,6 +429,51 @@ async function loadImageStats() {
     $('imageStats').innerHTML = '<div class="empty">配图生产加载失败：' + esc(e.message) + '</div>';
   }
   loadPushHealth();
+}
+
+async function loadAskImgStats() {
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    const [att, gen] = await Promise.all([
+      sb.from('ask_imagegen_log').select('provider,model,result,cost_usd,failure_type,fallback_path,created_at').gte('created_at', since).order('created_at', { ascending: false }).limit(5000),
+      sb.from('ask_image_generations').select('status,is_free,fell_back,fallback_reason,failure_type,cost_usd').gte('created_at', since).limit(5000),
+    ]);
+    if (att.error) throw att.error;
+    if (gen.error) throw gen.error;
+    renderAskImgStats(att.data ?? [], gen.data ?? []);
+  } catch (e) {
+    $('askImgStats').innerHTML = '<div class="empty">创作图片成本加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderAskImgStats(attempts, gens) {
+  const done = gens.filter((g) => g.status === 'done');
+  const failed = gens.filter((g) => g.status === 'failed');
+  const cost = attempts.reduce((s, a) => s + Number(a.cost_usd ?? 0), 0);
+  const genAttempts = attempts.filter((a) => a.provider === 'cloudflare' || a.provider === 'openai');
+  const cfOk = attempts.filter((a) => a.provider === 'cloudflare' && a.result === 'ok').length;
+  const freeRate = genAttempts.length ? Math.round((cfOk / genAttempts.length) * 1000) / 10 : 0;
+  const items = [
+    [done.length, '成功交付作品（30 天）'], [failed.length, '失败任务'], [attempts.length, '生成尝试总数'],
+    [freeRate + '%', '免费命中率'], ['$' + cost.toFixed(2), '实际费用（估算）'],
+    [gens.filter((g) => g.fell_back).length, '发生收费回退的任务'],
+  ];
+  $('askImgStats').innerHTML = '<div class="stats">' + items.map(([n, label]) => `<div class="stat"><b>${n}</b><span>${label}</span></div>`).join('') + '</div>';
+  const byModel = {};
+  for (const a of attempts) {
+    const k = (a.provider ?? '-') + ' / ' + (a.model ?? '—');
+    byModel[k] = byModel[k] ?? { n: 0, ok: 0, cost: 0 };
+    byModel[k].n++; if (a.result === 'ok') byModel[k].ok++; byModel[k].cost += Number(a.cost_usd ?? 0);
+  }
+  const rows = Object.entries(byModel).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.n}</td><td>${v.ok}</td><td>${v.n ? Math.round(((v.n - v.ok) / v.n) * 1000) / 10 : 0}%</td><td>$${v.cost.toFixed(2)}</td></tr>`).join('');
+  const fb = {};
+  for (const g of gens) if (g.fell_back || g.fallback_reason) fb[g.fallback_reason ?? '—'] = (fb[g.fallback_reason ?? '—'] ?? 0) + 1;
+  const ft = {};
+  for (const a of attempts) if (a.failure_type) ft[a.failure_type] = (ft[a.failure_type] ?? 0) + 1;
+  $('askImgDetail').innerHTML =
+    '<table><tr><th>服务商 / 模型</th><th>尝试</th><th>成功</th><th>失败率</th><th>费用</th></tr>' + rows + '</table>' +
+    `<div class="cred">回退原因分布：${Object.entries(fb).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>` +
+    `<div class="cred">失败类型分布：${Object.entries(ft).map(([k, v]) => esc(k) + ' × ' + v).join('、') || '无'}</div>`;
 }
 
 async function loadPushHealth() {
