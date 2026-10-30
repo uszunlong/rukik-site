@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
 <title>这套房源已下架｜测试专家 · 内部验证 的房源 · Rukik</title>
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="这套房源已下架｜测试专家 · 内部验证 的房源"/>
@@ -8,7 +8,7 @@
 <meta property="og:image" content="https://rukik.com/assets/og-share.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <style>
-body{margin:0;font-family:-apple-system,'PingFang SC','Helvetica Neue',Arial,sans-serif;background:#FAF7F2;color:#1F2A44}
+body{margin:0;font-family:-apple-system,'PingFang SC','Helvetica Neue',Arial,sans-serif;background:#FAF7F2;color:#1F2A44;overflow-x:clip}
 .wrap{max-width:680px;margin:0 auto;padding:20px 18px 40px}
 .hero{width:100%;border-radius:16px;aspect-ratio:3/2;object-fit:cover;background:#EDE6DA}
 .price{font-size:30px;font-weight:800;margin:16px 0 4px}
@@ -20,8 +20,14 @@ td{padding:8px 6px;border-bottom:1px solid #EAE3D5;vertical-align:top}
 td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .note{font-size:12px;color:#9A8F7A}
 .copy{font-size:16px;line-height:1.75;margin-top:18px;white-space:pre-wrap}
-.gal{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.gal img{width:100%;border-radius:12px;aspect-ratio:4/3;object-fit:cover}
+.gal2{position:relative;margin-top:4px}
+.gal2 .track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;scrollbar-width:none}
+.gal2 .track::-webkit-scrollbar{display:none}
+.gal2 figure{flex:0 0 100%;margin:0;scroll-snap-align:start}
+.gal2 img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:#EDE6DA}
+.gcount{position:absolute;right:10px;bottom:10px;background:rgba(20,24,34,.62);color:#fff;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:700}
+.gbadge{position:absolute;left:10px;bottom:10px;background:rgba(20,24,34,.62);color:#fff;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:700}
+.lic{font-size:12.5px;color:#3E7C4F;font-weight:600;margin-top:2px}
 .agent{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #EAE3D5;border-radius:16px;padding:14px;margin-top:22px}
 .agent img{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#EDE6DA}
 .cta{display:block;text-align:center;background:#1F2A44;color:#fff;text-decoration:none;font-size:16.5px;font-weight:700;border-radius:999px;padding:14px;margin-top:22px}
@@ -29,21 +35,36 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .status .big{font-size:24px;font-weight:800}
 .foot{font-size:12px;color:#9A8F7A;line-height:1.7;margin-top:20px}
 .askbtn{display:block;width:100%;text-align:center;background:#B98A2F;color:#fff;border:0;font-size:16.5px;font-weight:700;border-radius:999px;padding:14px;margin-top:22px;cursor:pointer}
-.ask-mask{position:fixed;inset:0;background:rgba(20,24,34,.45);z-index:50}
-.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:86vh;background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px 10px}
+.ask-mask{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;background:rgba(20,24,34,.45);z-index:50}
+.ask-panel,.ask-panel *{box-sizing:border-box}
+.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;max-height:calc(var(--rk-vh,100dvh)*.88);background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+.ask-panel.kb{padding-bottom:10px}
+.ask-panel input{font-size:16px}
 .ask-head{display:flex;justify-content:space-between;align-items:flex-start}
-.ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer}
-.ask-msgs{overflow-y:auto;padding:10px 2px;flex:1;min-height:120px}
+.ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer;flex:0 0 auto}
+.ask-msgs{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 2px;flex:1;min-height:96px}
 .msg{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.msg.ai{background:#F2E6CF;color:#1F2A44}
+.msg.ai{background:#F2E6CF;color:#1F2A44;white-space:normal}
+.msg.ai b{font-weight:800}
+.md-h{font-weight:800;margin:8px 0 3px}
+.md-h:first-child{margin-top:0}
+.md-ul,.md-ol{margin:4px 0;padding-left:20px}
+.md-ul li,.md-ol li{margin:2px 0}
+.msg.wait{opacity:.7}
+.msg.waitfail{color:#9A3B2E;cursor:pointer;text-decoration:underline}
 .msg.me{background:#1F2A44;color:#fff;margin-left:auto}
-.ask-bar{display:flex;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
-.ask-bar input{flex:1;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:15px;min-width:0}
-.ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
-.ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px}
+.ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
+.ask-bar input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
+.ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px;flex:0 0 auto;margin-left:auto}
 .ask-lead{background:#fff;border:1px solid #EAE3D5;border-radius:14px;padding:12px;margin:8px 0}
 .ask-lead input[type=text],.ask-lead input:not([type=checkbox]),.subbox input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;border:1px solid #E0D5BC;border-radius:10px;padding:10px 12px;font-size:15px;margin:8px 0}
 .ask-consent{display:block;font-size:12.5px;color:#5A6472;line-height:1.5;margin:8px 0}
+.ask-quick{margin:10px 0 2px}
+.ask-quick-t{font-size:12.5px;color:#8A7B5C;font-weight:700;margin:2px 0 4px}
+.qcard{display:block;width:100%;text-align:left;background:#fff;border:1px solid #E0D5BC;color:#1F2A44;border-radius:12px;padding:9px 12px;font-size:14px;margin:6px 0;cursor:pointer}
+.qcard:active{background:#F2E6CF}
+.ask-quick-toggle{background:none;border:0;color:#7A5A21;font-size:13px;font-weight:700;cursor:pointer;padding:4px 2px}
 .subbox{background:#fff;border:1px solid #EAE3D5;border-radius:16px;padding:14px;margin-top:16px}
 </style></head><body><div class="wrap">
 <div class="status"><div class="big">这套房源已下架</div>
@@ -51,6 +72,7 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 <div class="agent"><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png" alt=""/>
 <div><div style="font-weight:700;font-size:16px">测试专家 · 内部验证</div>
 <div class="spec" style="font-size:13.5px"></div>
+
 <div class="note">Rukik 认证地产经纪</div></div></div>
 <a class="cta" href="https://apps.apple.com/us/app/rukik-one-step-ahead-ai/id6824554988">✨ 在 Rukik 里问问这套房</a>
 <div class="foot">房源状态与价格由经纪人 测试专家 · 内部验证 确认；学区、税费、HOA 等信息请以官方最新记录为准。本页由 Rukik 生成，房源有效期至 2026-11-29。</div>
@@ -67,13 +89,55 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
     if(!refv) { refv='w'+Math.random().toString(36).slice(2)+Date.now().toString(36); sessionStorage.setItem(rk, refv); }
     post({action:'view', slug:B.slug, session_ref:refv}).catch(function(){});
   } catch(e) {}
+  // 画廊页码计数（无画廊页面自动跳过）
+  document.querySelectorAll('.gal2').forEach(function(g){
+    var t=g.querySelector('.track'), cn=g.querySelector('.gcount');
+    if(!t||!cn) return;
+    t.addEventListener('scroll', function(){
+      var n=t.children.length, i=Math.round(t.scrollLeft/Math.max(t.clientWidth,1));
+      cn.textContent=(Math.min(Math.max(i,0),n-1)+1)+'/'+n;
+    }, {passive:true});
+  });
   var cfg=window.RK_CFG; if(!cfg) return;
   var $=function(id){return document.getElementById(id)};
+  // 键盘感知（微信内置浏览器 vh 不随键盘变）：用 visualViewport 把遮罩钉在
+  // 可见视口内——键盘弹起时面板底部恰在键盘上方并切 .kb 压缩底部留白，
+  // 收起后自动恢复；--rk-vh 供面板 max-height 同步收缩，消息区随之让位。
+  function rkFit(){ var vv=window.visualViewport, m=$('rkMask'); if(!vv||!m) return;
+    m.style.top=vv.offsetTop+'px'; m.style.height=vv.height+'px';
+    document.documentElement.style.setProperty('--rk-vh', vv.height+'px');
+    var kb=(window.innerHeight-vv.height)>80, p=m.querySelector('.ask-panel');
+    if(p) p.classList.toggle('kb', kb);
+    if(!m.hidden) { var g=$('rkMsgs'); if(g) g.scrollTop=g.scrollHeight; } }
+  if(window.visualViewport) { window.visualViewport.addEventListener('resize', rkFit);
+    window.visualViewport.addEventListener('scroll', rkFit); }
+  window.addEventListener('orientationchange', function(){ setTimeout(rkFit, 300); });
   var tokKey='rk_sess_'+cfg.slug, tok=null;
   try { tok=sessionStorage.getItem(tokKey); } catch(e) {}
   var sending=false, replies=0, leadShown=false;
-  function bubble(text, me){ var d=document.createElement('div'); d.className='msg '+(me?'me':'ai');
-    d.textContent=text; $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; }
+  // 轻量 Markdown 渲染：AI 回复是 Markdown 源码（## / ** / - 列表），原样
+  // textContent 会把标记当普通文字露出。先转义 HTML 再做标记替换（访客与
+  // AI 文本都不可信），只支持加粗/标题/有序无序列表/分段，不引任何库。
+  function rkMd(t){ var s=String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function inl(x){ return x.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
+    var lines=s.split(/\r?\n/), out=[], list=0;
+    function closeList(){ if(list===1) out.push('</ul>'); if(list===2) out.push('</ol>'); list=0; }
+    lines.forEach(function(ln){ var m;
+      if(m=ln.match(/^\s*[-*•]\s+(.*)$/)){ if(list!==1){ closeList(); out.push('<ul class="md-ul">'); list=1; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      if(m=ln.match(/^\s*\d{1,2}[.、)]\s+(.*)$/)){ if(list!==2){ closeList(); out.push('<ol class="md-ol">'); list=2; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      closeList();
+      if(m=ln.match(/^\s*#{1,6}\s+(.*)$/)){ out.push('<div class="md-h">'+inl(m[1])+'</div>'); return; }
+      if(/^\s*(-{3,}|={3,})\s*$/.test(ln)){ out.push('<div>&nbsp;</div>'); return; }
+      ln=ln.replace(/^\s*>\s?/,'');
+      out.push('<div>'+(ln.trim()?inl(ln):'&nbsp;')+'</div>'); });
+    closeList(); return out.join(''); }
+  function bubble(text, me, wait){ var d=document.createElement('div');
+    d.className='msg '+(me?'me':'ai')+(wait?' wait':'');
+    if(me) d.textContent=text; else d.innerHTML=rkMd(text);
+    $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; return d; }
   function ensureSession(){ if(tok) return Promise.resolve(tok);
     return post({action:'start', slug:cfg.slug}).then(function(r){
       if(r.status===200 && r.data.session_token) { tok=r.data.session_token;
@@ -81,25 +145,40 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
         $('rkSub').textContent=(cfg.agent?cfg.agent+' 的 AI 团队':'AI 团队')+' · 在线';
         return tok; }
       throw new Error('start_failed'); }); }
-  function openPanel(){ $('rkMask').hidden=false;
-    if(!$('rkMsgs').children.length) {
-      ensureSession().then(function(){
-        bubble('您好，我是'+(cfg.agent||'经纪人')+'的 AI 团队。这套房的价格、户型、HOA 我都了解，尽管问；看房安排、议价这类事，我会帮您转达给经纪人本人。', false);
-      }).catch(function(){ bubble('网络有点问题，请稍后再试。', false); });
-    } }
+  function openPanel(){ $('rkMask').hidden=false; rkFit();
+    // 问候语是固定文案、已随模板预渲染在消息区，点开即在；这里只预热会话
+    // （回填副标题/令牌），不再等建会话往返。预热失败静默——发送时自会
+    // 重试并在等待行上给出失败提示。
+    ensureSession().catch(function(){}); }
   function showLead(){ leadShown=true; $('rkLead').hidden=false; }
   function send(){ var v=$('rkInput').value.trim(); if(!v||sending) return;
     sending=true; bubble(v, true); $('rkInput').value='';
+    // 真实等待态：只表示「等待中」这一个真实状态，不编造进度阶段；
+    // 回复到达即移除，网络失败则原地变可点击重试的失败行。
+    var wait=bubble('正在为您核对这套房的信息…', false, true);
     ensureSession().then(function(t){ return post({action:'chat', session_token:t, message:v}); })
-    .then(function(r){ sending=false;
+    .then(function(r){ sending=false; if(wait) wait.remove();
       if(r.status===200 && r.data.reply) { bubble(r.data.reply, false); replies++;
         if(replies>=2 && !leadShown) showLead(); }
       else if(r.data && r.data.error==='round_limit') { bubble('这次先聊到这儿——想继续了解，直接请经纪人联系您吧。', false); showLead(); }
       else if(r.status===401) { tok=null; try { sessionStorage.removeItem(tokKey); } catch(e) {}
         bubble('会话过期了，请关掉面板重新打开。', false); }
       else bubble('这个问题我暂时答不上来，换个问法试试，或者请经纪人直接联系您。', false); })
-    .catch(function(){ sending=false; bubble('网络有点问题，请稍后再试。', false); }); }
+    .catch(function(){ sending=false;
+      if(wait) { wait.classList.remove('wait'); wait.classList.add('waitfail');
+        wait.textContent='发送失败，网络有点问题。点这里重试。';
+        wait.addEventListener('click', function(){ wait.remove(); $('rkInput').value=v; send(); }); }
+      else bubble('网络有点问题，请稍后再试。', false); }); }
   $('rkAskOpen').addEventListener('click', openPanel);
+  // 快捷咨询模板卡片（V1.0）：点击把完整问句填入输入框并直接发送，
+  // 与手动输入走同一条 send() 链路（等待态/失败重试/轮次上限全复用）；
+  // 房源上下文由服务端按 listing 注入，问句本身不带地址价格。
+  document.querySelectorAll('.qcard').forEach(function(b){
+    b.addEventListener('click', function(){ var q=b.getAttribute('data-q');
+      if(!q || sending) return; $('rkInput').value=q; send(); }); });
+  var rkQT=$('rkQuickToggle'), rkQM=$('rkQuickMore');
+  if(rkQT && rkQM) rkQT.addEventListener('click', function(){ var open=rkQM.hidden;
+    rkQM.hidden=!open; rkQT.textContent=open?'收起 ▴':'展开更多问题 ▾'; });
   $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true; });
   $('rkSend').addEventListener('click', send);
   $('rkInput').addEventListener('keydown', function(e){ if(e.key==='Enter') send(); });
