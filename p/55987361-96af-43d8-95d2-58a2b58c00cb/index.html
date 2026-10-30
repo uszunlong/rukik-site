@@ -27,33 +27,38 @@
   .co { margin-top:14px; color:#8B857D; font-size:13px; }
   .co img { width:18px; height:18px; vertical-align:-4px; border-radius:4px; }
   .foot { margin-top:44px; color:#8B857D; font-size:12px; }
+  [hidden] { display:none !important; }
   .chat { background:#fff; border-radius:16px; padding:20px; margin-top:28px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
   .chat-title { font-size:16px; font-weight:600; color:#142235; margin-bottom:12px; text-align:center; }
   .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
   .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
   .msg.user { align-self:flex-end; background:#142235; color:#F7F3EC; border-bottom-right-radius:4px; }
-  .msg.ai { align-self:flex-start; background:#F7F3EC; color:#202020; border-bottom-left-radius:4px; }
+  .msg.ai { align-self:flex-start; background:#F7F3EC; color:#202020; border-bottom-left-radius:4px; white-space:normal; }
+  .md-h { font-weight:800; margin:8px 0 3px; }
+  .md-h:first-child { margin-top:0; }
+  .md-ul, .md-ol { margin:4px 0; padding-left:20px; }
+  .md-ul li, .md-ol li { margin:2px 0; }
   .chat-row { display:flex; gap:8px; margin-top:14px; }
-  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; }
+  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; }
   .chat-row input:disabled { background:#f1ede4; color:#8B857D; }
-  .chat-row button { background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .chat-row button { background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; min-height:44px; box-sizing:border-box; }
   .chat-row button:disabled { opacity:.55; cursor:default; }
   .chat-note { margin-top:10px; font-size:12px; color:#8B857D; text-align:center; }
   .dl { margin-top:16px; background:#F7F3EC; border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
   .dl .btn { margin-top:10px; }
   .auth-hint { font-size:14px; line-height:1.7; color:#44403a; text-align:center; margin:0 0 14px; }
   .auth-row { display:flex; gap:8px; margin-top:10px; }
-  .auth-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; min-width:0; }
-  .auth-row button { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; }
+  .auth-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; min-width:0; min-height:44px; box-sizing:border-box; }
+  .auth-row button { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; min-height:44px; box-sizing:border-box; }
   .auth-row button:disabled { opacity:.55; cursor:default; }
   .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:#8B857D; text-align:center; min-height:18px; }
   .auth-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#8B857D; margin-bottom:10px; }
   .auth-bar button { background:none; border:none; color:#B58A58; font-size:12px; cursor:pointer; padding:0; }
 
   .auth-tabs { display:flex; gap:8px; margin:12px 0 2px; }
-  .auth-tabs button { flex:1; background:#fff; color:#142235; border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; }
+  .auth-tabs button { flex:1; background:#fff; color:#142235; border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; min-height:44px; box-sizing:border-box; }
   .auth-tabs button.on { background:#142235; color:#F7F3EC; border-color:#142235; }
-  .auth-row select { flex:1; min-width:0; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; }
+  .auth-row select { flex:1; min-width:0; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; min-height:44px; box-sizing:border-box; }
   .auth-row button.plain { background:#fff; color:#142235; border:1px solid #e3ddd2; }
   #bindBar { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-bottom:14px; }
 </style>
@@ -538,10 +543,39 @@
       renderAuth();
     });
 
+  // 轻量 Markdown 渲染：AI 回复是 Markdown 源码（## / ** / - 列表），原样
+  // textContent 会把标记当普通文字露出。先转义 HTML 再做标记替换（访客与
+  // AI 文本都不可信），只支持加粗/标题/有序无序列表/分段，不引任何库。
+  function rkMd(t){ var s=String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function inl(x){ return x.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
+    var lines=s.split(/\r?\n/), out=[], list=0;
+    function closeList(){ if(list===1) out.push('</ul>'); if(list===2) out.push('</ol>'); list=0; }
+    lines.forEach(function(ln){ var m;
+      if(m=ln.match(/^\s*[-*•]\s+(.*)$/)){ if(list!==1){ closeList(); out.push('<ul class="md-ul">'); list=1; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      if(m=ln.match(/^\s*\d{1,2}[.、)]\s+(.*)$/)){ if(list!==2){ closeList(); out.push('<ol class="md-ol">'); list=2; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      closeList();
+      if(m=ln.match(/^\s*#{1,6}\s+(.*)$/)){ out.push('<div class="md-h">'+inl(m[1])+'</div>'); return; }
+      if(/^\s*(-{3,}|={3,})\s*$/.test(ln)){ out.push('<div>&nbsp;</div>'); return; }
+      ln=ln.replace(/^\s*>\s?/,'');
+      out.push('<div>'+(ln.trim()?inl(ln):'&nbsp;')+'</div>'); });
+    closeList(); return out.join(''); }
+  // 流式中途专用（专家页为流式回复）：未闭合的 ** 与末行未成形的标记
+  // 前缀先不露出原始符号——仅处理显示副本，缓冲原文不动；流结束时
+  // 再以 rkMd 按完整文本重渲染。与房源页「只渲染成形文本」同口径。
+  function rkMdStream(t){ var s=String(t==null?'':t);
+    var nl=s.lastIndexOf('\n'); var tail=nl>=0?s.slice(nl+1):s;
+    if(/^\s*(#{1,6}|[-*•])\s*$/.test(tail)) s=nl>=0?s.slice(0,nl):'';
+    if(/\*$/.test(s) && !/\*\*$/.test(s)) s=s.slice(0,-1);
+    if((s.split('**').length-1)%2===1){ var idx=s.lastIndexOf('**'); s=s.slice(0,idx)+s.slice(idx+2); }
+    return rkMd(s); }
+
     function addMsg(role, text) {
       var div = document.createElement('div');
       div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
-      div.textContent = text;
+      if (role === 'user') div.textContent = text; else div.innerHTML = rkMd(text);
       msgsEl.appendChild(div);
       msgsEl.scrollTop = msgsEl.scrollHeight;
       return div;
@@ -616,7 +650,7 @@
                 var delta = JSON.parse(payload).choices[0].delta.content || '';
                 if (delta) {
                   reply += delta;
-                  thinking.textContent = reply;
+                  thinking.innerHTML = rkMdStream(reply);
                   msgsEl.scrollTop = msgsEl.scrollHeight;
                 }
               } catch (e) { /* 非数据行忽略 */ }
@@ -626,6 +660,7 @@
             history.pop();
             thinking.textContent = friendlyError('');
           } else {
+            thinking.innerHTML = rkMd(reply);
             history.push({ role: 'assistant', content: reply });
             rounds += 1;
             if (rounds >= MAX_ROUNDS) lockWithGuide();
@@ -637,7 +672,7 @@
             history.pop();
             thinking.textContent = friendlyError(data.error || '');
           } else {
-            thinking.textContent = data.reply;
+            thinking.innerHTML = rkMd(data.reply);
             history.push({ role: 'assistant', content: data.reply });
             rounds += 1;
             if (rounds >= MAX_ROUNDS) lockWithGuide();
