@@ -57,14 +57,35 @@
   <!-- 登录 -->
   <div id="loginView" class="card login">
     <h2>管理员登录</h2>
-    <p class="muted">使用管理员邮箱接收验证码登录。非管理员账号登录后也看不到任何数据。</p>
+    <p class="muted">使用管理员邮箱登录（验证码或密码均可）。非管理员账号登录后也看不到任何数据。</p>
     <input id="email" type="email" placeholder="邮箱" autocomplete="email">
-    <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
-    <div id="codeRow" style="display:none">
-      <div class="mt"><input id="code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码"></div>
-      <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
+    <div class="row mt" style="gap:8px">
+      <button id="tabOtpBtn" class="btn gold small" style="flex:1">验证码登录</button>
+      <button id="tabPwdBtn" class="btn ghost small" style="flex:1">密码登录</button>
+    </div>
+    <div id="otpPane">
+      <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
+      <div id="codeRow" style="display:none">
+        <div class="mt"><input id="code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码"></div>
+        <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
+      </div>
+    </div>
+    <div id="pwdPane" style="display:none">
+      <div class="mt"><input id="password" type="password" placeholder="密码" autocomplete="current-password"></div>
+      <div class="mt"><button id="pwdLoginBtn" class="btn" style="width:100%">密码登录</button></div>
+      <div class="mt"><a href="#" id="forgotPwdLink">首次设置密码 / 忘记密码</a></div>
     </div>
     <div id="loginErr" class="err"></div>
+  </div>
+
+  <!-- 设置新密码（设置/重置密码邮件回跳） -->
+  <div id="resetView" class="card login" style="display:none">
+    <h2>设置新密码</h2>
+    <p class="muted">为管理员账号设置新密码（至少 6 位，两次输入需一致）。设置成功后，请用新密码登录。</p>
+    <div class="mt"><input id="newPw1" type="password" placeholder="新密码（至少 6 位）" autocomplete="new-password"></div>
+    <div class="mt"><input id="newPw2" type="password" placeholder="再输入一次新密码" autocomplete="new-password"></div>
+    <div class="mt"><button id="setPwBtn" class="btn gold" style="width:100%">保存新密码</button></div>
+    <div id="resetErr" class="err"></div>
   </div>
 
   <!-- 无权限 -->
@@ -288,6 +309,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 设置/重置密码邮件回跳标记：尽早捕获 hash（type=recovery），并监听 PASSWORD_RECOVERY 事件双保险。
+const RECOVERY_LINK = /type=recovery/.test(location.hash || '');
+sb.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') show('reset'); });
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -297,6 +321,7 @@ const fmtDate = (t) => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }
 
 function show(view) {
   $('loginView').style.display = view === 'login' ? '' : 'none';
+  $('resetView').style.display = view === 'reset' ? '' : 'none';
   $('deniedView').style.display = view === 'denied' ? '' : 'none';
   $('appView').style.display = view === 'app' ? '' : 'none';
   const inApp = view === 'app';
@@ -337,6 +362,73 @@ $('verifyBtn').onclick = async () => {
     return;
   }
   enterApp();
+};
+
+// ── 密码登录通道（与验证码通道并行；登录成功后同样走 enterApp 的 is_admin 门禁）──
+function setLoginMode(mode) {
+  const otp = mode === 'otp';
+  $('otpPane').style.display = otp ? '' : 'none';
+  $('pwdPane').style.display = otp ? 'none' : '';
+  $('tabOtpBtn').className = 'btn small' + (otp ? ' gold' : ' ghost');
+  $('tabPwdBtn').className = 'btn small' + (otp ? ' ghost' : ' gold');
+  $('loginErr').textContent = '';
+}
+$('tabOtpBtn').onclick = () => setLoginMode('otp');
+$('tabPwdBtn').onclick = () => setLoginMode('pwd');
+
+$('pwdLoginBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  $('loginErr').textContent = '';
+  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  if (!password) { $('loginErr').textContent = '先填密码。'; return; }
+  $('pwdLoginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  $('pwdLoginBtn').disabled = false;
+  if (error) {
+    const msg = error.message || '';
+    const code = error.code || '';
+    if (/banned/i.test(msg) || code === 'user_banned') {
+      $('loginErr').textContent = '该账号目前无法登录（封存状态），请联系平台处理。';
+    } else if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) {
+      $('loginErr').textContent = '邮箱或密码不正确。若这个账号还没设过密码，请点下方「首次设置密码 / 忘记密码」，先用邮箱链接设置密码。';
+    } else if (/email not confirmed/i.test(msg)) {
+      $('loginErr').textContent = '该邮箱还没有完成确认，请先用验证码登录一次。';
+    } else if (/fetch|network/i.test(msg)) {
+      $('loginErr').textContent = '网络连接失败，请检查网络后重试。';
+    } else {
+      $('loginErr').textContent = '登录失败：' + msg;
+    }
+    return;
+  }
+  enterApp();
+};
+$('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pwdLoginBtn').click(); });
+
+$('forgotPwdLink').onclick = async (e) => {
+  e.preventDefault();
+  const email = $('email').value.trim();
+  $('loginErr').textContent = '';
+  if (!email) { $('loginErr').textContent = '先填邮箱，再点这里发送设置密码的邮件。'; return; }
+  $('forgotPwdLink').style.pointerEvents = 'none';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://rukik.com/admin/' });
+  $('forgotPwdLink').style.pointerEvents = '';
+  if (error) { $('loginErr').textContent = '发送失败：' + error.message; return; }
+  $('loginErr').textContent = '设置密码的邮件已发到邮箱，点邮件里的链接回到本页即可设置新密码。';
+};
+
+$('setPwBtn').onclick = async () => {
+  const p1 = $('newPw1').value, p2 = $('newPw2').value;
+  $('resetErr').textContent = '';
+  if (p1.length < 6) { $('resetErr').textContent = '密码至少 6 位。'; return; }
+  if (p1 !== p2) { $('resetErr').textContent = '两次输入的密码不一致。'; return; }
+  $('setPwBtn').disabled = true;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  $('setPwBtn').disabled = false;
+  if (error) { $('resetErr').textContent = '设置失败：' + error.message + '（链接可能已过期，请重新发送设置密码的邮件。）'; return; }
+  await sb.auth.signOut();
+  show('login'); setLoginMode('pwd');
+  $('loginErr').textContent = '新密码已设置好，请用新密码登录。';
 };
 
 $('logoutBtn').onclick = $('deniedLogout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
@@ -1661,6 +1753,7 @@ if ($('saAddBtn')) $('saAddBtn').onclick = () => submitSchoolAssign();
 if ($('saReload')) $('saReload').onclick = () => loadSchoolAssign();
 
 (async () => {
+  if (RECOVERY_LINK) { show('reset'); return; }
   const { data: { session } } = await sb.auth.getSession();
   if (session) enterApp(); else show('login');
 })();
