@@ -37,12 +37,14 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .askbtn{display:block;width:100%;text-align:center;background:#B98A2F;color:#fff;border:0;font-size:16.5px;font-weight:700;border-radius:999px;padding:14px;margin-top:22px;cursor:pointer}
 .ask-mask{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;background:rgba(20,24,34,.45);z-index:50}
 .ask-panel,.ask-panel *{box-sizing:border-box}
-.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;max-height:calc(var(--rk-vh,100dvh)*.88);background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding:14px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+.ask-panel{position:absolute;left:0;right:0;bottom:0;max-height:88vh;max-height:calc(var(--rk-vh,100dvh)*.88);background:#FFFDF8;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden;padding:14px 14px calc(12px + env(safe-area-inset-bottom,0px))}
 .ask-panel.kb{padding-bottom:10px}
 .ask-panel input{font-size:16px}
-.ask-head{display:flex;justify-content:space-between;align-items:flex-start}
+.ask-head{display:flex;justify-content:space-between;align-items:flex-start;flex:0 0 auto}
 .ask-x{border:0;background:none;font-size:26px;line-height:1;color:#8A7B5C;cursor:pointer;flex:0 0 auto}
-.ask-msgs{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 2px;flex:1;min-height:96px}
+.ask-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.ask-scroll::-webkit-scrollbar{display:none}
+.ask-msgs{padding:10px 2px}
 .msg{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
 .msg.ai{background:#F2E6CF;color:#1F2A44;white-space:normal}
 .msg.ai b{font-weight:800}
@@ -53,7 +55,7 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .msg.wait{opacity:.7}
 .msg.waitfail{color:#9A3B2E;cursor:pointer;text-decoration:underline}
 .msg.me{background:#1F2A44;color:#fff;margin-left:auto}
-.ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px}
+.ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px;flex:0 0 auto}
 .ask-bar input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
 .ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px;flex:0 0 auto;margin-left:auto}
@@ -100,18 +102,39 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   });
   var cfg=window.RK_CFG; if(!cfg) return;
   var $=function(id){return document.getElementById(id)};
-  // 键盘感知（微信内置浏览器 vh 不随键盘变）：用 visualViewport 把遮罩钉在
-  // 可见视口内——键盘弹起时面板底部恰在键盘上方并切 .kb 压缩底部留白，
-  // 收起后自动恢复；--rk-vh 供面板 max-height 同步收缩，消息区随之让位。
-  function rkFit(){ var vv=window.visualViewport, m=$('rkMask'); if(!vv||!m) return;
-    m.style.top=vv.offsetTop+'px'; m.style.height=vv.height+'px';
-    document.documentElement.style.setProperty('--rk-vh', vv.height+'px');
-    var kb=(window.innerHeight-vv.height)>80, p=m.querySelector('.ask-panel');
-    if(p) p.classList.toggle('kb', kb);
-    if(!m.hidden) { var g=$('rkMsgs'); if(g) g.scrollTop=g.scrollHeight; } }
+  // 键盘感知 V2（RK-KB2，2026-11-01 微信 iOS 录屏实证修复）：高度仍以
+  // visualViewport 为准把遮罩钉在可见视口内，但旧版三处不足一并修掉——
+  // ①微信内置浏览器不保证派发 vv resize：面板内任一输入聚焦期间以
+  // 200ms 轮询兜底比对 vv.height，变化即重钉，失焦后停轮询并补钉两次；
+  // ②vv scroll 事件只更新遮罩位置、不再强拉消息滚动（旧版每次平移都
+  // 写 scrollTop，键盘开合动画期间反复重排，是气泡重叠残影的成因）；
+  // ③消息/快捷问题/联系表单同处独立滚动容器 rkScroll，输入行在容器
+  // 之外固定于面板底部——面板高度再小，内容只在容器内让位，输入行
+  // 永远贴面板底部可见（旧版消息区 min-height＋快捷区自然高超过键盘
+  // 态面板高时，flex 溢出会把输入行挤出面板、藏到键盘后面）。
+  var rkLastH=-1, rkPoll=null;
+  function rkScrollBottom(){ var c=$('rkScroll'); if(c) c.scrollTop=c.scrollHeight; }
+  function rkFit(){ var vv=window.visualViewport, m=$('rkMask'); if(!m) return;
+    var h=vv?vv.height:window.innerHeight;
+    if(h!==rkLastH) { var wasKb=!!m.querySelector('.ask-panel.kb');
+      m.style.top=(vv?vv.offsetTop:0)+'px'; m.style.height=h+'px';
+      document.documentElement.style.setProperty('--rk-vh', h+'px');
+      var kb=(window.innerHeight-h)>80, p=m.querySelector('.ask-panel');
+      if(p) p.classList.toggle('kb', kb);
+      rkLastH=h;
+      if(!m.hidden && kb && !wasKb) rkScrollBottom(); }
+    else if(vv) { m.style.top=vv.offsetTop+'px'; } }
   if(window.visualViewport) { window.visualViewport.addEventListener('resize', rkFit);
     window.visualViewport.addEventListener('scroll', rkFit); }
+  window.addEventListener('resize', rkFit);
   window.addEventListener('orientationchange', function(){ setTimeout(rkFit, 300); });
+  function rkPollStart(){ if(rkPoll) return; rkPoll=setInterval(rkFit, 200); rkFit(); }
+  function rkPollStop(){ if(rkPoll) { clearInterval(rkPoll); rkPoll=null; }
+    setTimeout(rkFit, 60); setTimeout(rkFit, 380); }
+  function rkIntoView(el){ var c=$('rkScroll'); if(!c||!el||!c.contains(el)) return;
+    setTimeout(function(){ rkFit(); var r=el.getBoundingClientRect(), cr=c.getBoundingClientRect();
+      if(r.bottom>cr.bottom||r.top<cr.top)
+        c.scrollTop+=(r.top-cr.top)-(cr.height-r.height)/2; }, 380); }
   var tokKey='rk_sess_'+cfg.slug, tok=null;
   try { tok=sessionStorage.getItem(tokKey); } catch(e) {}
   var sending=false, replies=0, leadShown=false;
@@ -137,7 +160,7 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   function bubble(text, me, wait){ var d=document.createElement('div');
     d.className='msg '+(me?'me':'ai')+(wait?' wait':'');
     if(me) d.textContent=text; else d.innerHTML=rkMd(text);
-    $('rkMsgs').appendChild(d); $('rkMsgs').scrollTop=$('rkMsgs').scrollHeight; return d; }
+    $('rkMsgs').appendChild(d); rkScrollBottom(); return d; }
   function ensureSession(){ if(tok) return Promise.resolve(tok);
     return post({action:'start', slug:cfg.slug}).then(function(r){
       if(r.status===200 && r.data.session_token) { tok=r.data.session_token;
@@ -145,12 +168,13 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
         $('rkSub').textContent=(cfg.agent?cfg.agent+' 的 AI 团队':'AI 团队')+' · 在线';
         return tok; }
       throw new Error('start_failed'); }); }
-  function openPanel(){ $('rkMask').hidden=false; rkFit();
+  function openPanel(){ $('rkMask').hidden=false; document.body.style.overflow='hidden'; rkFit();
     // 问候语是固定文案、已随模板预渲染在消息区，点开即在；这里只预热会话
     // （回填副标题/令牌），不再等建会话往返。预热失败静默——发送时自会
     // 重试并在等待行上给出失败提示。
     ensureSession().catch(function(){}); }
-  function showLead(){ leadShown=true; $('rkLead').hidden=false; }
+  function showLead(){ leadShown=true; $('rkLead').hidden=false;
+    setTimeout(rkScrollBottom, 60); }
   function send(){ var v=$('rkInput').value.trim(); if(!v||sending) return;
     sending=true; bubble(v, true); $('rkInput').value='';
     // 真实等待态：只表示「等待中」这一个真实状态，不编造进度阶段；
@@ -179,7 +203,15 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   var rkQT=$('rkQuickToggle'), rkQM=$('rkQuickMore');
   if(rkQT && rkQM) rkQT.addEventListener('click', function(){ var open=rkQM.hidden;
     rkQM.hidden=!open; rkQT.textContent=open?'收起 ▴':'展开更多问题 ▾'; });
-  $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true; });
+  $('rkClose').addEventListener('click', function(){ $('rkMask').hidden=true;
+    document.body.style.overflow=''; rkPollStop(); });
+  // 面板内聚焦兜底：聚焦即启 vv 轮询（微信不发 resize 时靠它捕获键盘
+  // 高度变化）；滚动容器内的字段（联系表单）聚焦后滚入容器可见区中央。
+  var rkPanel=document.querySelector('.ask-panel');
+  if(rkPanel) { rkPanel.addEventListener('focusin', function(e){ rkPollStart();
+      if(e.target && e.target.tagName==='INPUT') rkIntoView(e.target); });
+    rkPanel.addEventListener('focusout', function(){ setTimeout(function(){
+      if(!rkPanel.contains(document.activeElement)) rkPollStop(); }, 120); }); }
   $('rkSend').addEventListener('click', send);
   $('rkInput').addEventListener('keydown', function(e){ if(e.key==='Enter') send(); });
   $('rkLeadOpen').addEventListener('click', showLead);
