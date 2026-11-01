@@ -58,7 +58,7 @@
   <div id="loginView" class="card login">
     <h2>管理员登录</h2>
     <p class="muted">使用管理员邮箱登录（验证码或密码均可）。非管理员账号登录后也看不到任何数据。</p>
-    <input id="email" type="email" placeholder="邮箱" autocomplete="email">
+    <input id="email" type="email" name="email" placeholder="邮箱" autocomplete="email">
     <div class="row mt" style="gap:8px">
       <button id="tabOtpBtn" class="btn gold small" style="flex:1">验证码登录</button>
       <button id="tabPwdBtn" class="btn ghost small" style="flex:1">密码登录</button>
@@ -66,12 +66,12 @@
     <div id="otpPane">
       <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
       <div id="codeRow" style="display:none">
-        <div class="mt"><input id="code" type="text" inputmode="numeric" placeholder="邮箱收到的 6 位验证码"></div>
+        <div class="mt"><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱收到的 6 位验证码"></div>
         <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
       </div>
     </div>
     <div id="pwdPane" style="display:none">
-      <div class="mt"><input id="password" type="password" placeholder="密码" autocomplete="current-password"></div>
+      <div class="mt"><input id="password" type="password" name="password" placeholder="密码" autocomplete="current-password"></div>
       <div class="mt"><button id="pwdLoginBtn" class="btn" style="width:100%">密码登录</button></div>
       <div class="mt"><a href="#" id="forgotPwdLink">首次设置密码 / 忘记密码</a></div>
     </div>
@@ -82,8 +82,8 @@
   <div id="resetView" class="card login" style="display:none">
     <h2>设置新密码</h2>
     <p class="muted">为管理员账号设置新密码（至少 6 位，两次输入需一致）。设置成功后，请用新密码登录。</p>
-    <div class="mt"><input id="newPw1" type="password" placeholder="新密码（至少 6 位）" autocomplete="new-password"></div>
-    <div class="mt"><input id="newPw2" type="password" placeholder="再输入一次新密码" autocomplete="new-password"></div>
+    <div class="mt"><input id="newPw1" type="password" name="new-password" placeholder="新密码（至少 6 位）" autocomplete="new-password"></div>
+    <div class="mt"><input id="newPw2" type="password" name="new-password-confirm" placeholder="再输入一次新密码" autocomplete="new-password"></div>
     <div class="mt"><button id="setPwBtn" class="btn gold" style="width:100%">保存新密码</button></div>
     <div id="resetErr" class="err"></div>
   </div>
@@ -319,6 +319,36 @@ const PROF = { lawyer: '律师', cpa: '税务师 / CPA', advisor: '理财顾问'
 const ACTION = { ask: '发起咨询', book: '预约', contact: '转人工' };
 const fmtDate = (t) => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '';
 
+// ── 登录区：邮箱格式校验＋报错中文化（GoTrue 原始英文只进 console，禁止原样上屏）──
+const ADMIN_EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+const EMAIL_FORMAT_MSG = '请先填写正确的管理员邮箱，例如 mengqihuang19901201@gmail.com 这样的完整邮箱地址';
+function validEmail(v) { return ADMIN_EMAIL_RE.test(String(v || '').trim()); }
+function requireEmail() {
+  const email = $('email').value.trim();
+  if (!validEmail(email)) { $('loginErr').textContent = EMAIL_FORMAT_MSG; $('email').focus(); return null; }
+  return email;
+}
+function rememberEmail(email) { try { if (validEmail(email)) localStorage.setItem('rukik_admin_email', email); } catch (_) {} }
+function authErrZh(error, fallback) {
+  const msg = (error && error.message) || '';
+  const code = (error && error.code) || '';
+  const status = error && error.status;
+  try { console.warn('[admin auth error]', code, msg); } catch (_) {}
+  if (/banned/i.test(msg) || code === 'user_banned') return '该账号目前无法登录（封存状态），请联系平台处理。';
+  if (/unable to validate email|invalid format|invalid email/i.test(msg)) return EMAIL_FORMAT_MSG;
+  if (/user not found|no user found|signups not allowed/i.test(msg) || code === 'user_not_found') return '这个邮箱还没有注册账号，请确认邮箱填写无误。';
+  if (/email not confirmed/i.test(msg) || code === 'email_not_confirmed') return '该邮箱还没有完成确认，请先用验证码登录一次。';
+  if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return '邮箱或密码不正确。若这个账号还没设过密码，请点下方「首次设置密码 / 忘记密码」，先用邮箱链接设置密码。';
+  if (code === 'otp_expired' || /expired or is invalid|token.*invalid|invalid.*token/i.test(msg)) return '验证码不对或已过期，请重新发送验证码。';
+  if (/rate limit|too many requests|over_.*rate_limit/i.test(msg) || /rate_limit/.test(code) || status === 429) return '操作太频繁，请稍等一分钟再试。';
+  if (/password should be|weak password|password.*at least/i.test(msg)) return '密码不符合要求：至少 6 位，请换一个更复杂的密码。';
+  if (/auth session missing|session.*missing|session.*expired/i.test(msg)) return '设置链接已失效，请重新发送设置密码的邮件。';
+  if (/fetch|network/i.test(msg)) return '网络连接失败，请检查网络后重试。';
+  return fallback || '操作失败，请稍后重试。';
+}
+// 上次成功用过的邮箱预填（只存邮箱、不存密码），减少手填出错。
+try { const savedEmail = localStorage.getItem('rukik_admin_email'); if (savedEmail && validEmail(savedEmail)) $('email').value = savedEmail; } catch (_) {}
+
 function show(view) {
   $('loginView').style.display = view === 'login' ? '' : 'none';
   $('resetView').style.display = view === 'reset' ? '' : 'none';
@@ -330,37 +360,29 @@ function show(view) {
 }
 
 $('sendCodeBtn').onclick = async () => {
-  const email = $('email').value.trim();
   $('loginErr').textContent = '';
-  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  const email = requireEmail();
+  if (!email) return;
   $('sendCodeBtn').disabled = true;
   const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
   $('sendCodeBtn').disabled = false;
-  if (error) { $('loginErr').textContent = '发送失败：' + error.message; return; }
+  if (error) { $('loginErr').textContent = authErrZh(error, '发送失败，请稍后重试。'); return; }
+  rememberEmail(email);
   $('codeRow').style.display = '';
   $('loginErr').textContent = '验证码已发到邮箱，填上面登录。';
 };
 
 $('verifyBtn').onclick = async () => {
-  const email = $('email').value.trim();
-  const token = $('code').value.trim();
   $('loginErr').textContent = '';
+  const email = requireEmail();
+  if (!email) return;
+  const token = $('code').value.trim();
   if (!token) { $('loginErr').textContent = '先填验证码。'; return; }
   $('verifyBtn').disabled = true;
   const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
   $('verifyBtn').disabled = false;
-  if (error) {
-    const msg = error.message || '';
-    const code = error.code || '';
-    if (/banned/i.test(msg) || code === 'user_banned') {
-      $('loginErr').textContent = '该账号目前无法登录（封存状态），请联系平台处理。';
-    } else if (code === 'otp_expired' || /expired or is invalid/i.test(msg)) {
-      $('loginErr').textContent = '验证码不对或已过期：' + msg;
-    } else {
-      $('loginErr').textContent = msg;
-    }
-    return;
-  }
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  rememberEmail(email);
   enterApp();
 };
 
@@ -377,43 +399,30 @@ $('tabOtpBtn').onclick = () => setLoginMode('otp');
 $('tabPwdBtn').onclick = () => setLoginMode('pwd');
 
 $('pwdLoginBtn').onclick = async () => {
-  const email = $('email').value.trim();
-  const password = $('password').value;
   $('loginErr').textContent = '';
-  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  const email = requireEmail();
+  if (!email) return;
+  const password = $('password').value;
   if (!password) { $('loginErr').textContent = '先填密码。'; return; }
   $('pwdLoginBtn').disabled = true;
   const { error } = await sb.auth.signInWithPassword({ email, password });
   $('pwdLoginBtn').disabled = false;
-  if (error) {
-    const msg = error.message || '';
-    const code = error.code || '';
-    if (/banned/i.test(msg) || code === 'user_banned') {
-      $('loginErr').textContent = '该账号目前无法登录（封存状态），请联系平台处理。';
-    } else if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) {
-      $('loginErr').textContent = '邮箱或密码不正确。若这个账号还没设过密码，请点下方「首次设置密码 / 忘记密码」，先用邮箱链接设置密码。';
-    } else if (/email not confirmed/i.test(msg)) {
-      $('loginErr').textContent = '该邮箱还没有完成确认，请先用验证码登录一次。';
-    } else if (/fetch|network/i.test(msg)) {
-      $('loginErr').textContent = '网络连接失败，请检查网络后重试。';
-    } else {
-      $('loginErr').textContent = '登录失败：' + msg;
-    }
-    return;
-  }
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  rememberEmail(email);
   enterApp();
 };
 $('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pwdLoginBtn').click(); });
 
 $('forgotPwdLink').onclick = async (e) => {
   e.preventDefault();
-  const email = $('email').value.trim();
   $('loginErr').textContent = '';
-  if (!email) { $('loginErr').textContent = '先填邮箱，再点这里发送设置密码的邮件。'; return; }
+  const email = requireEmail();
+  if (!email) return;
   $('forgotPwdLink').style.pointerEvents = 'none';
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://rukik.com/admin/' });
   $('forgotPwdLink').style.pointerEvents = '';
-  if (error) { $('loginErr').textContent = '发送失败：' + error.message; return; }
+  if (error) { $('loginErr').textContent = authErrZh(error, '发送失败，请稍后重试。'); return; }
+  rememberEmail(email);
   $('loginErr').textContent = '设置密码的邮件已发到邮箱，点邮件里的链接回到本页即可设置新密码。';
 };
 
@@ -425,7 +434,7 @@ $('setPwBtn').onclick = async () => {
   $('setPwBtn').disabled = true;
   const { error } = await sb.auth.updateUser({ password: p1 });
   $('setPwBtn').disabled = false;
-  if (error) { $('resetErr').textContent = '设置失败：' + error.message + '（链接可能已过期，请重新发送设置密码的邮件。）'; return; }
+  if (error) { $('resetErr').textContent = authErrZh(error, '设置失败，请稍后重试（链接可能已过期，可重新发送设置密码的邮件）。'); return; }
   await sb.auth.signOut();
   show('login'); setLoginMode('pwd');
   $('loginErr').textContent = '新密码已设置好，请用新密码登录。';
