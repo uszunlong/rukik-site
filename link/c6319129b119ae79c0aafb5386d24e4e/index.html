@@ -123,7 +123,7 @@
     <div class="sub">完善您的身份信息，立即加入群组</div>
     <button class="bigbtn topopen" id="landingOpenAppBtn" type="button">打开 Rukik App</button>
     <div class="ctx">
-      <img id="ctxCover" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/plan/og-plan.png" alt="">
+      <img id="ctxCover" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/plan/og-plan.png" alt="" onerror="coverFallback(this)">
       <div>
         <div class="t" id="ctxTitle">老范仓库开业</div>
         <div class="m" id="ctxMeta"></div>
@@ -230,6 +230,15 @@ var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
 var CODE = (location.pathname.match(/\/link\/([0-9a-f]{32})\//) || [])[1] || "";
 var $ = function(id){ return document.getElementById(id); };
+// 封面兜底（2026-11-01 破图修复）：群封面加载失败（源站图失效/防盗链/
+// CDN 临时地址轮换）时先换品牌印章占位，印章再失败则隐藏图片框——
+// 永远不出现浏览器破图图标。挂在 <img> 的 onerror 属性上，静态烤入
+// 的 src 与任何后续 JS 回填的 src 都受覆盖。
+function coverFallback(img){
+  if (!img) return;
+  if (!img.dataset.fb) { img.dataset.fb = "1"; img.src = "/assets/seal.png"; }
+  else { img.style.visibility = "hidden"; }
+}
 var session = null;           // {access_token, refresh_token, expires_at, user_id}
 var verifyCtx = null;         // {channel:'phone'|'email', value, verification_token, decision}
 var preview = null;
@@ -492,6 +501,10 @@ function openInApp(){
 
 // ---------- 初始化 ----------
 function init(){
+  // 兜底补检：封面若在脚本运行前就已经加载失败（complete 且 naturalWidth=0），
+  // 立即走同一条兜底路径（与 onerror 属性互为双保险）。
+  var civ = $("ctxCover");
+  if (civ && civ.complete && civ.naturalWidth === 0 && civ.getAttribute("src")) coverFallback(civ);
   if (!CODE) {
     $("unavailTitle").textContent = "邀请链接不完整";
     $("unavailText").textContent = "请通过发起人分享的完整链接打开本页。";

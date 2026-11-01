@@ -9,12 +9,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="ASPIRE 领导力峰会 · 尔湾商会｜邀请您加入 RUKIK Link">
 <meta property="og:description" content="与同行伙伴交流、了解活动安排、不错过重要消息。">
-<meta property="og:image" content="https://cdn-jeeld.nitrocdn.com/fCgoGXGBzmPYKOJFOoaKboAwVoIqQacE/assets/images/optimized/rev-4ddcaa2/greaterirvinechamber.com/wp-content/uploads/freshizer/bf7459b9f5385820d95ab1e735f28171_Jessica-Chen-Headshot-1-e1789671416189-250-250-c-100.png">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/d5f0ea22-82cb-4d99-9990-2c50011e00d4/og-f3ecba27.jpg">
 <meta property="og:url" content="https://rukik.com/link/55225439b5ffb1eb50bff050bfa0c9c5/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ASPIRE 领导力峰会 · 尔湾商会｜邀请您加入 RUKIK Link">
 <meta name="twitter:description" content="与同行伙伴交流、了解活动安排、不错过重要消息。">
-<meta name="twitter:image" content="https://cdn-jeeld.nitrocdn.com/fCgoGXGBzmPYKOJFOoaKboAwVoIqQacE/assets/images/optimized/rev-4ddcaa2/greaterirvinechamber.com/wp-content/uploads/freshizer/bf7459b9f5385820d95ab1e735f28171_Jessica-Chen-Headshot-1-e1789671416189-250-250-c-100.png">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/d5f0ea22-82cb-4d99-9990-2c50011e00d4/og-f3ecba27.jpg">
 <link rel="icon" type="image/png" href="/assets/seal.png">
 <style>
   :root{
@@ -123,7 +123,7 @@
     <div class="sub">完善您的身份信息，立即加入群组</div>
     <button class="bigbtn topopen" id="landingOpenAppBtn" type="button">打开 Rukik App</button>
     <div class="ctx">
-      <img id="ctxCover" src="https://cdn-jeeld.nitrocdn.com/fCgoGXGBzmPYKOJFOoaKboAwVoIqQacE/assets/images/optimized/rev-4ddcaa2/greaterirvinechamber.com/wp-content/uploads/freshizer/bf7459b9f5385820d95ab1e735f28171_Jessica-Chen-Headshot-1-e1789671416189-250-250-c-100.png" alt="">
+      <img id="ctxCover" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/d5f0ea22-82cb-4d99-9990-2c50011e00d4/og-f3ecba27.jpg" alt="" onerror="coverFallback(this)">
       <div>
         <div class="t" id="ctxTitle">ASPIRE 领导力峰会 · 尔湾商会</div>
         <div class="m" id="ctxMeta"></div>
@@ -230,6 +230,15 @@ var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
 var CODE = (location.pathname.match(/\/link\/([0-9a-f]{32})\//) || [])[1] || "";
 var $ = function(id){ return document.getElementById(id); };
+// 封面兜底（2026-11-01 破图修复）：群封面加载失败（源站图失效/防盗链/
+// CDN 临时地址轮换）时先换品牌印章占位，印章再失败则隐藏图片框——
+// 永远不出现浏览器破图图标。挂在 <img> 的 onerror 属性上，静态烤入
+// 的 src 与任何后续 JS 回填的 src 都受覆盖。
+function coverFallback(img){
+  if (!img) return;
+  if (!img.dataset.fb) { img.dataset.fb = "1"; img.src = "/assets/seal.png"; }
+  else { img.style.visibility = "hidden"; }
+}
 var session = null;           // {access_token, refresh_token, expires_at, user_id}
 var verifyCtx = null;         // {channel:'phone'|'email', value, verification_token, decision}
 var preview = null;
@@ -492,6 +501,10 @@ function openInApp(){
 
 // ---------- 初始化 ----------
 function init(){
+  // 兜底补检：封面若在脚本运行前就已经加载失败（complete 且 naturalWidth=0），
+  // 立即走同一条兜底路径（与 onerror 属性互为双保险）。
+  var civ = $("ctxCover");
+  if (civ && civ.complete && civ.naturalWidth === 0 && civ.getAttribute("src")) coverFallback(civ);
   if (!CODE) {
     $("unavailTitle").textContent = "邀请链接不完整";
     $("unavailText").textContent = "请通过发起人分享的完整链接打开本页。";
