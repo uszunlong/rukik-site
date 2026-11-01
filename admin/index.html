@@ -324,7 +324,18 @@ $('verifyBtn').onclick = async () => {
   $('verifyBtn').disabled = true;
   const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
   $('verifyBtn').disabled = false;
-  if (error) { $('loginErr').textContent = '验证码不对或已过期：' + error.message; return; }
+  if (error) {
+    const msg = error.message || '';
+    const code = error.code || '';
+    if (/banned/i.test(msg) || code === 'user_banned') {
+      $('loginErr').textContent = '该账号目前无法登录（封存状态），请联系平台处理。';
+    } else if (code === 'otp_expired' || /expired or is invalid/i.test(msg)) {
+      $('loginErr').textContent = '验证码不对或已过期：' + msg;
+    } else {
+      $('loginErr').textContent = msg;
+    }
+    return;
+  }
   enterApp();
 };
 
