@@ -63,6 +63,14 @@ fetch(SB_URL + "/rest/v1/rpc/resolve_share_link",
   var app = document.getElementById("app");
   if (!rows || !rows.length) { app.innerHTML = '<div class="missing">这条分享不存在或已失效。</div>'; return; }
   var row = rows[0], m = row.meta || {};
+  // PLAN（计划分享）：规范页是静态邀请页 rukik.com/plan/{content_id}
+  //（head 烤入逐条 OG）。已按 /s/?c= 发出的存量链接在浏览器里打开
+  // 时直接转到规范页（带原邀请码保归因/接受通道）；微信卡片预览不
+  // 执行 JS、仍是品牌兜底，属静态托管固有限制，新分享走规范页直达。
+  if (row.content_type === "PLAN" && /^[0-9a-fA-F-]{36}$/.test(row.content_id || "")) {
+    location.replace("https://rukik.com/plan/" + encodeURIComponent(row.content_id) + "?c=" + encodeURIComponent(code));
+    return;
+  }
   document.getElementById("kind").textContent = KINDS[row.content_type] || "";
   document.title = (m.title || "Rukik") + " · Rukik";
   var og = document.createElement("meta"); og.setAttribute("property","og:title"); og.content = m.title || "Rukik"; document.head.appendChild(og);

@@ -44,6 +44,28 @@
     });
     return;
   }
+  // 计划分享：/plan/<event_id> 的规范形态是静态邀请页（由计划分享页
+  // 同步生成）。静态页尚未生成（刚分享）时落到本 404 页：与文章同
+  // 口径，就地呈现品牌化「准备中」成品页；页面生成后同一链接自动
+  // 恢复完整邀请页（标题/时间/地点/打开 Rukik）。
+  var mp = path.match(/^\/plan\/([0-9a-fA-F-]{36})\/?$/);
+  if (mp) {
+    document.title = "Rukik 计划分享";
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.style.background = "#FAF6EE";
+      document.body.style.margin = "0";
+      document.body.innerHTML =
+        '<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,\'PingFang SC\',\'Microsoft YaHei\',sans-serif;padding:48px 24px;">' +
+        '<div style="max-width:420px;width:100%;text-align:center;background:#FFFFFF;border:1px solid #E7E0D2;border-radius:16px;padding:40px 28px;box-shadow:0 8px 30px rgba(20,34,53,0.06);">' +
+        '<div style="font-size:15px;letter-spacing:6px;color:#A47B45;font-weight:600;">RUKIK</div>' +
+        '<div style="font-size:22px;color:#142235;font-weight:600;margin-top:14px;">这条计划分享正在为您准备</div>' +
+        '<p style="font-size:15px;line-height:1.7;color:#6B6357;margin:14px 0 26px;">分享页马上就好，请稍等片刻再打开一次。<br>好安排值得多等这一小会儿。</p>' +
+        '<a href="" onclick="location.reload();return false;" style="display:inline-block;background:#142235;color:#FFFFFF;text-decoration:none;font-size:15px;padding:11px 28px;border-radius:999px;margin-right:10px;">刷新重试</a>' +
+        '<a href="https://rukik.com/" style="display:inline-block;background:#F2E6CF;color:#342C24;text-decoration:none;font-size:15px;padding:11px 28px;border-radius:999px;">前往 Rukik 首页</a>' +
+        '</div></div>';
+    });
+    return;
+  }
   document.addEventListener("DOMContentLoaded", function () {
     document.body.innerHTML = '<div style="font-family:-apple-system,\'PingFang SC\',sans-serif;text-align:center;padding:80px 24px;color:#8A8378;">页面不存在。<br><br><a href="https://rukik.com/" style="color:#142235;">前往 Rukik 首页</a></div>';
   });
