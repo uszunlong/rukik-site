@@ -90,8 +90,13 @@
   .wxguide .wx-arrow{position:absolute;top:2px;right:14px;font-size:46px;line-height:1;color:#E7C87E}
   .wxguide .wx-tip{position:absolute;top:62px;right:20px;left:20px;text-align:right;font-size:16.5px;line-height:1.9}
   .wxguide .wx-tip .wx-alt{font-size:13.5px;color:#D8C9A3}
-  .wxguide .wx-note{position:absolute;top:262px;right:24px;left:24px;font-size:14px;line-height:1.85;color:#EDE4CB;
+  .wxguide .wx-main{position:absolute;top:64px;right:20px;left:20px;font-size:17.5px;line-height:1.9;color:#fff;
+    text-align:left;background:rgba(231,200,126,.16);border:1px solid rgba(231,200,126,.55);border-radius:12px;padding:14px 16px}
+  .wxguide .wx-main .wx-main-title{font-size:19px;font-weight:800;color:#E7C87E}
+  .wxguide .wx-note{position:absolute;top:292px;right:24px;left:24px;font-size:14px;line-height:1.85;color:#EDE4CB;
     text-align:left;background:rgba(255,255,255,.08);border:1px solid rgba(231,200,126,.35);border-radius:12px;padding:12px 14px}
+  .wxguide .wx-note .wx-alt{font-size:13px;color:#D8C9A3}
+  .topopen{margin:0 0 16px}
   .wxguide .wx-close{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:transparent;
     color:#fff;border:1px solid #fff;border-radius:999px;padding:10px 36px;font-size:15px;font-family:inherit;cursor:pointer}
 </style>
@@ -116,6 +121,7 @@
   <div id="viewMain" style="display:none">
     <h1>加入 RUKIK Link</h1>
     <div class="sub">完善您的身份信息，立即加入群组</div>
+    <button class="bigbtn topopen" id="landingOpenAppBtn" type="button">打开 Rukik App</button>
     <div class="ctx">
       <img id="ctxCover" src="https://cdn-jeeld.nitrocdn.com/fCgoGXGBzmPYKOJFOoaKboAwVoIqQacE/assets/images/optimized/rev-4ddcaa2/greaterirvinechamber.com/wp-content/uploads/freshizer/bf7459b9f5385820d95ab1e735f28171_Jessica-Chen-Headshot-1-e1789671416189-250-250-c-100.png" alt="">
       <div>
@@ -208,8 +214,8 @@
 
 <div class="wxguide" id="wxGuide">
   <div class="wx-arrow">↗</div>
-  <div class="wx-tip">第一步：点右上角 「···」<br>第二步：点「在默认浏览器中打开」<br><span class="wx-alt">（有的微信版本写作「用默认浏览器打开」，是同一项）</span><br>第三步：浏览器打开本页后<br>再点「打开 Rukik App」</div>
-  <div class="wx-note">还没安装 RUKIK App 也没关系：在浏览器里点「打开 Rukik App」会自动转到 App Store；装好后，用您刚才验证的同一个手机号或邮箱登录，就能直接进群——您的成员身份已经保存好了。</div>
+  <div class="wx-main"><span class="wx-main-title">您已成功加入！</span><br>直接回到手机桌面打开 Rukik App，用刚才验证的手机号或邮箱登录，群聊就在里面，不用再从浏览器跳转。</div>
+  <div class="wx-note">备选方法（想从浏览器打开也可以）：<br>第一步：点右上角 「···」<br>第二步：点「在默认浏览器中打开」<br><span class="wx-alt">（有的微信版本写作「用默认浏览器打开」，是同一项）</span><br>第三步：浏览器打开本页后，再点页面顶部的「打开 Rukik App」<br><br>还没安装 RUKIK App 也没关系：在浏览器里点「打开 Rukik App」会自动转到 App Store；装好后，用您刚才验证的同一个手机号或邮箱登录，就能直接进群——您的成员身份已经保存好了。</div>
   <button class="wx-close" id="wxGuideClose" type="button">知道了</button>
 </div>
 
@@ -556,6 +562,8 @@ $("vConfirm").addEventListener("click", function(){
   else confirmVerify();
 });
 $("openAppBtn").addEventListener("click", openInApp);
+$("landingOpenAppBtn").addEventListener("click", openInApp);
+if (/MicroMessenger/i.test(navigator.userAgent || "")) { $("landingOpenAppBtn").style.display = "none"; }
 $("wxGuide").addEventListener("click", function(){ $("wxGuide").classList.remove("show"); });
 ["sPhone","sWechat","sEmail"].forEach(function(id){ /* 勾选即共享，明示在隐私条 */ });
 ["fPhone","fWechat","fEmail"].forEach(function(id, i){
