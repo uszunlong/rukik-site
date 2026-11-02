@@ -23,6 +23,10 @@
             "comment": "Event detail pages (RUKIK Event share landing pages) open in the Rukik app when installed; the app routes /event/<id> to the canonical events/<id> detail screen."
           },
           {
+            "/": "/link/*",
+            "comment": "RUKIK Link invitation pages (rukik.com/link/<code>/) open in the Rukik app when installed; the app routes /link/<code> to the Link invite landing screen, which restores the target after sign-in."
+          },
+          {
             "/": "/s/*",
             "comment": "Shared content links (query form /s/?c=...) open in the Rukik app when installed."
           }
