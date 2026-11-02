@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Rukik 记忆搬家 · 把过去的故事，带到未来</title>
+<style>
+  :root { --ivory:#F7F3EC; --navy:#142235; --ink:#202020; --gray:#8B857D; --gold:#B58A58; --line:#E3DCCF; --bad:#B3261E; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
+  .wrap { max-width:980px; margin:0 auto; padding:24px 16px 64px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; padding:8px 0 20px; border-bottom:2px solid var(--navy); }
+  .brand { font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.5px; }
+  .brand small { display:block; font-size:12px; font-weight:400; color:var(--gray); margin-top:2px; }
+  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--navy); }
+  .btn.gold { background:var(--gold); border-color:var(--gold); }
+  .btn.small { padding:5px 12px; font-size:13px; border-radius:8px; }
+  .btn.danger { background:transparent; color:var(--bad); border-color:var(--bad); }
+  .btn:disabled { opacity:.5; cursor:wait; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; }
+  .card h2 { margin:0 0 14px; font-size:17px; color:var(--navy); }
+  .card h3 { margin:18px 0 8px; font-size:15px; color:var(--navy); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--gray); font-weight:500; font-size:12px; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:var(--gold); }
+  .tag.ok { background:var(--gold); color:#fff; }
+  .tag.no { border-color:var(--gray); color:var(--gray); }
+  .tag.warn { border-color:var(--bad); color:var(--bad); font-weight:600; }
+  input[type=email], input[type=text], input[type=password], textarea { width:100%; padding:11px; font-size:15px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  .login { max-width:420px; margin:60px auto 0; }
+  .muted { color:var(--gray); font-size:13px; }
+  .err { color:var(--bad); font-size:14px; min-height:20px; margin-top:8px; white-space:pre-wrap; }
+  .ok-note { color:#3d6b35; font-size:14px; margin-top:8px; white-space:pre-wrap; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mt { margin-top:14px; }
+  .quote { font-size:13px; color:#555; background:var(--ivory); border-left:3px solid var(--gold); padding:6px 10px; margin:4px 0; white-space:pre-wrap; }
+  .fact { border-bottom:1px solid var(--line); padding:12px 0; }
+  .fact:last-child { border-bottom:none; }
+  .kv { font-size:13px; color:#555; line-height:1.9; }
+  .kv b { color:var(--navy); }
+  .empty { color:var(--gray); padding:14px 0; }
+  code { background:var(--ivory); padding:1px 5px; border-radius:5px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">记忆搬家<small>把过去的故事，带到未来。</small></div>
+    <div class="row">
+      <span id="who" class="muted"></span>
+      <button id="logoutBtn" class="btn ghost small" style="display:none">退出</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>把过去的故事，带到未来。</h2>
+    <p>您选择珍藏的对话，RUKIK 帮您整理成值得记住的回忆。</p>
+    <p class="muted">内部入口 · 仅限创始人账号。导入的记忆绑定您的 RUKIK 账号，其他任何人（包括其他用户与专家）都看不到。</p>
+  </div>
+
+  <div class="card">
+    <h2>导入说明</h2>
+    <p>导入的是您导出时点之前的聊天记录快照。导入完成后，在任意设备登录同一 RUKIK 账号，打开『问 RUKIK』即可调用这段历史。</p>
+    <p class="muted">微信的新消息不会自动同步。想更新时，重新导出并再次导入即可，系统会自动跳过已导入的记录、只补新的。</p>
+    <p class="muted">文件只在您的浏览器内存中解开并上传到您账号名下的记忆库；本页面不保存任何副本，关掉页面即不留残留。</p>
+  </div>
+
+  <!-- 登录 -->
+  <div id="loginView" class="card login">
+    <h2>登录</h2>
+    <p class="muted">使用创始人账号登录（邮箱验证码或密码均可）。其他账号登录后，数据接口会拒绝访问。</p>
+    <input id="email" type="email" name="email" placeholder="邮箱" autocomplete="email">
+    <div class="row mt" style="gap:8px">
+      <button id="tabOtpBtn" class="btn gold small" style="flex:1">验证码登录</button>
+      <button id="tabPwdBtn" class="btn ghost small" style="flex:1">密码登录</button>
+    </div>
+    <div id="otpPane">
+      <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
+      <div id="codeRow" style="display:none">
+        <div class="mt"><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱收到的 6 位验证码"></div>
+        <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
+      </div>
+    </div>
+    <div id="pwdPane" style="display:none">
+      <div class="mt"><input id="password" type="password" name="password" placeholder="密码" autocomplete="current-password"></div>
+      <div class="mt"><button id="pwdLoginBtn" class="btn" style="width:100%">密码登录</button></div>
+    </div>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <!-- 无权限 -->
+  <div id="deniedView" class="card login" style="display:none">
+    <h2>没有访问权限</h2>
+    <p class="muted">这个账号不在允许名单里，数据接口已拒绝访问。</p>
+    <div class="mt"><button id="deniedLogout" class="btn ghost" style="width:100%">退出并换账号</button></div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="appView" style="display:none">
+    <div class="card">
+      <h2>您的微信在哪个设备上？</h2>
+      <p class="muted">选一下，我们按您手边设备给最省事的导入方式。</p>
+      <div class="row mt">
+        <button class="btn gold" data-device="mac" style="flex:1">Mac 电脑</button>
+        <button class="btn ghost" data-device="windows" style="flex:1">Windows 电脑</button>
+        <button class="btn ghost" data-device="iphone" style="flex:1">iPhone</button>
+      </div>
+      <div id="device-mac" class="mt">
+        <p><span class="tag ok">当前可用</span></p>
+        <p class="muted">在 Mac 微信里打开要珍藏的会话，多选消息 →「合并转发」→「其他应用」→ 选一个暂存工具（如 Dukou 渡口）存成 ZIP；然后回到本页，在下方上传这个 ZIP 即可。已经导出的 ZIP 或 TXT 也可以直接上传。</p>
+      </div>
+      <div id="device-windows" class="mt" style="display:none">
+        <p><span class="tag no">准备中</span></p>
+        <p class="muted">Windows 版的导出小工具还在准备中：目前 Windows 微信导出的文件还不能一键变成可导入的包。已经在 Mac 上导出过 ZIP 的话，直接切到「Mac 电脑」用下方上传即可，导入效果完全一样。</p>
+      </div>
+      <div id="device-iphone" class="mt" style="display:none">
+        <p><span class="tag no">开发中</span></p>
+        <p class="muted">手机分享导入开发中：以后在 iPhone 微信里点「分享」就能把选好的对话直接送进 RUKIK。现在先用 Mac 导出再上传，导入完成后手机上打开『问 Rukik』照样能调用这段记忆。</p>
+      </div>
+    </div>
+
+    <div class="card" id="uploadCard">
+      <h2>上传聊天记录</h2>
+      <p class="muted">选择从微信导出的 ZIP 包（内含聊天记录 TXT 与图片、视频、文件），或直接选择 TXT 文件。ZIP 在浏览器内解开，只把文本与附件清单发给服务端解析。</p>
+      <div class="mt"><input id="fileInput" type="file" accept=".zip,.txt"></div>
+      <div class="row mt">
+        <input id="sampleLabel" type="text" placeholder="批次标识（如 trial5；同一批次重复导入会自动跳过）" style="flex:1;min-width:220px">
+        <input id="titleLabel" type="text" placeholder="会话名称（选填，如「与 Coyi 的聊天」）" style="flex:1;min-width:220px">
+      </div>
+      <div class="row mt">
+        <button id="previewBtn" class="btn ghost" disabled>先预览</button>
+        <button id="importBtn" class="btn gold" disabled>确认导入</button>
+      </div>
+      <div id="fileInfo" class="kv mt"></div>
+      <div id="previewBox"></div>
+      <div id="upErr" class="err"></div>
+      <div id="upOk" class="ok-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>导入批次</h2>
+      <div class="row"><button id="jobsReload" class="btn small">刷新</button><span class="muted">删除批次会同时删除该批次的消息、提取的记忆与已进入问 Rukik 的投影。</span></div>
+      <div id="jobsBox" class="mt"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>提取的记忆</h2>
+      <div class="row">
+        <button class="btn small gold" data-fstatus="">全部</button>
+        <button class="btn small ghost" data-fstatus="confirmed">已确认（问 Rukik 可调用）</button>
+        <button class="btn small ghost" data-fstatus="candidate">待确认</button>
+        <button class="btn small ghost" data-fstatus="inference">推测（永不作事实调用）</button>
+        <button class="btn small ghost" data-fstatus="rejected">已驳回</button>
+      </div>
+      <div id="factsBox" class="mt"><div class="empty">加载中…</div></div>
+    </div>
+    <div id="appErr" class="err"></div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import JSZip from 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
+
+const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+const EF_URL = SUPABASE_URL + '/functions/v1/memory-import';
+
+// 会话只驻内存（不写 localStorage / IndexedDB）：关页即无残留。
+const memStorage = { _m: {}, getItem(k) { return this._m[k] ?? null; }, setItem(k, v) { this._m[k] = String(v); }, removeItem(k) { delete this._m[k]; } };
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: memStorage, persistSession: true, autoRefreshToken: true } });
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function show(view) {
+  $('loginView').style.display = view === 'login' ? '' : 'none';
+  $('deniedView').style.display = view === 'denied' ? '' : 'none';
+  $('appView').style.display = view === 'app' ? '' : 'none';
+  $('logoutBtn').style.display = view === 'app' || view === 'denied' ? '' : 'none';
+}
+
+function authErrZh(error, fallback) {
+  const msg = (error && error.message) || '';
+  const code = (error && error.code) || '';
+  if (/invalid login credentials/i.test(msg) || code === 'invalid_credentials') return '邮箱或密码不正确。';
+  if (/otp_expired|expired or is invalid|token.*invalid/i.test(msg) || code === 'otp_expired') return '验证码不对或已过期，请重新发送。';
+  if (/user not found|signups not allowed/i.test(msg)) return '这个邮箱还没有注册账号，请确认邮箱无误。';
+  if (/rate limit|too many/i.test(msg)) return '操作太频繁，请稍等一分钟再试。';
+  if (/fetch|network/i.test(msg)) return '网络连接失败，请检查网络后重试。';
+  return fallback || '操作失败，请稍后重试。';
+}
+
+async function ef(action, payload = {}) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error('登录已失效，请重新登录。');
+  const res = await fetch(EF_URL, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + session.access_token, apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) {
+    const e = new Error(data.error || ('HTTP ' + res.status));
+    e.status = res.status;
+    throw e;
+  }
+  return data;
+}
+
+// ---------- 登录 ----------
+function setLoginMode(mode) {
+  const otp = mode === 'otp';
+  $('otpPane').style.display = otp ? '' : 'none';
+  $('pwdPane').style.display = otp ? 'none' : '';
+  $('tabOtpBtn').className = 'btn small' + (otp ? ' gold' : ' ghost');
+  $('tabPwdBtn').className = 'btn small' + (otp ? ' ghost' : ' gold');
+  $('loginErr').textContent = '';
+}
+$('tabOtpBtn').onclick = () => setLoginMode('otp');
+$('tabPwdBtn').onclick = () => setLoginMode('pwd');
+
+$('sendCodeBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  $('sendCodeBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  $('sendCodeBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error, '发送失败，请稍后重试。'); return; }
+  $('codeRow').style.display = '';
+  $('loginErr').textContent = '验证码已发到邮箱。';
+};
+$('verifyBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  const token = $('code').value.trim();
+  if (!token) { $('loginErr').textContent = '先填验证码。'; return; }
+  $('verifyBtn').disabled = true;
+  const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  $('verifyBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  enterApp();
+};
+$('pwdLoginBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  if (!password) { $('loginErr').textContent = '先填密码。'; return; }
+  $('pwdLoginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  $('pwdLoginBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  enterApp();
+};
+$('logoutBtn').onclick = $('deniedLogout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function enterApp() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { show('login'); return; }
+  $('who').textContent = user.email || '';
+  try {
+    await ef('list_jobs');
+  } catch (e) {
+    if (e.status === 403) { show('denied'); return; }
+    $('loginErr').textContent = '接口暂时不可用：' + e.message;
+    show('login');
+    return;
+  }
+  show('app');
+  loadJobs();
+  loadFacts('');
+}
+
+// ---------- 文件处理（浏览器内解 ZIP，不落本地） ----------
+let currentFile = null; // { txt, attachments: [name], fileName }
+function baseName(p) { return p.split('/').pop(); }
+
+$('fileInput').addEventListener('change', async () => {
+  $('upErr').textContent = ''; $('upOk').textContent = ''; $('previewBox').innerHTML = '';
+  currentFile = null;
+  $('previewBtn').disabled = true; $('importBtn').disabled = true;
+  const file = $('fileInput').files[0];
+  if (!file) { $('fileInfo').innerHTML = ''; return; }
+  try {
+    if (/\.zip$/i.test(file.name)) {
+      const zip = await JSZip.loadAsync(file);
+      const names = Object.keys(zip.files).filter((n) => !zip.files[n].dir);
+      const txtName = names.find((n) => /\.txt$/i.test(n));
+      if (!txtName) throw new Error('ZIP 里没有找到 TXT 聊天记录文件。');
+      const txt = await zip.files[txtName].async('text');
+      const attachments = names.filter((n) => n !== txtName).map(baseName);
+      currentFile = { txt, attachments, fileName: file.name };
+    } else {
+      const txt = await file.text();
+      currentFile = { txt, attachments: [], fileName: file.name };
+    }
+    if (!$('sampleLabel').value.trim()) {
+      $('sampleLabel').value = file.name.replace(/\.(zip|txt)$/i, '').replace(/[^\w\u4e00-\u9fa5-]+/g, '_').slice(0, 40);
+    }
+    $('fileInfo').innerHTML = `已读取 <b>${esc(file.name)}</b>：文本 ${currentFile.txt.length} 字，附件清单 ${currentFile.attachments.length} 个文件。`;
+    $('previewBtn').disabled = false; $('importBtn').disabled = false;
+  } catch (e) {
+    $('upErr').textContent = '读取文件失败：' + e.message;
+  }
+});
+
+function renderSummary(s, title) {
+  const td = Object.entries(s.type_distribution || {}).map(([k, v]) => `${esc(k)} ${v}`).join('、');
+  const sp = Object.entries(s.speakers || {}).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `${esc(k)}（${v}）`).join('、');
+  const mr = s.media_reconciliation || {};
+  return `<h3>${esc(title)}</h3><div class="kv">
+    消息 <b>${s.messages_parsed}</b> 条（原始段落块 ${s.blocks}，对账${s.counts_reconcile ? '一致' : '不一致'}）<br>
+    时间范围：<b>${esc(s.time_span ? s.time_span.first : '—')}</b> → <b>${esc(s.time_span ? s.time_span.last : '—')}</b><br>
+    类型分布：${td || '—'}<br>
+    参与人 ${s.speaker_count} 位：${sp || '—'}<br>
+    附件对账：正文引用 <b>${(mr.referenced_files || []).length}</b> 个，随包文件 <b>${(mr.on_disk_files || []).length}</b> 个，引用未随包 <b>${(mr.referenced_but_missing_on_disk || []).length}</b> 个<br>
+    语音消息 ${(s.voice || {}).count ?? 0} 条（导出包不含语音音频，只保留时长，这是微信官方导出的限制）
+  </div>`;
+}
+
+$('previewBtn').onclick = async () => {
+  if (!currentFile) return;
+  $('upErr').textContent = ''; $('previewBtn').disabled = true;
+  try {
+    const r = await ef('preview', { txt: currentFile.txt, attachments: currentFile.attachments });
+    $('previewBox').innerHTML = renderSummary(r.summary, '预览（未入库）');
+  } catch (e) { $('upErr').textContent = '预览失败：' + e.message; }
+  $('previewBtn').disabled = false;
+};
+
+$('importBtn').onclick = async () => {
+  if (!currentFile) return;
+  const label = $('sampleLabel').value.trim();
+  if (!label) { $('upErr').textContent = '先填批次标识。'; return; }
+  $('upErr').textContent = ''; $('upOk').textContent = ''; $('importBtn').disabled = true;
+  try {
+    const r = await ef('import', {
+      txt: currentFile.txt, attachments: currentFile.attachments,
+      sample_label: label, file_name: currentFile.fileName,
+      title_label: $('titleLabel').value.trim() || undefined,
+      source_format: /\.zip$/i.test(currentFile.fileName) ? 'zip' : 'txt',
+      source_channel: 'web',
+    });
+    $('previewBox').innerHTML = renderSummary(r.summary, '导入结果');
+    $('upOk').textContent = r.idempotent_replay
+      ? '这个批次已经导入过（内容相同），已自动跳过，没有重复入库。'
+      : `导入完成：新增消息 ${r.messages_inserted} 条。接下来可在下方「提取的记忆」里查看，或直接到任意设备的『问 Rukik』里调用。`;
+    loadJobs();
+  } catch (e) { $('upErr').textContent = '导入失败：' + e.message; }
+  $('importBtn').disabled = false;
+};
+
+// ---------- 批次列表 ----------
+async function loadJobs() {
+  try {
+    const r = await ef('list_jobs');
+    if (!r.jobs || r.jobs.length === 0) { $('jobsBox').innerHTML = '<div class="empty">还没有导入批次。</div>'; return; }
+    $('jobsBox').innerHTML = '<table><tr><th>批次</th><th>状态</th><th>消息</th><th>时间范围</th><th>来源</th><th>导入时间</th><th></th></tr>' +
+      r.jobs.map((j) => {
+        const st = j.stats || {};
+        return `<tr>
+          <td><b>${esc(j.sample_label)}</b><br><span class="muted">${esc(j.file_name || '')}</span></td>
+          <td>${j.status === 'imported' ? '<span class="tag ok">已导入</span>' : '<span class="tag no">' + esc(j.status) + '</span>'}</td>
+          <td>${st.messages_parsed ?? '—'}</td>
+          <td class="muted">${esc(st.time_span ? st.time_span.first + ' → ' + st.time_span.last : '—')}</td>
+          <td class="muted">${esc(j.source_channel || 'web')}</td>
+          <td class="muted">${esc((j.created_at || '').slice(0, 10))}</td>
+          <td><button class="btn small danger" data-deljob="${j.id}" data-label="${esc(j.sample_label)}">删除批次</button></td>
+        </tr>`;
+      }).join('') + '</table>';
+    $('jobsBox').querySelectorAll('button[data-deljob]').forEach((btn) => {
+      btn.onclick = async () => {
+        if (!confirm(`确定删除批次「${btn.dataset.label}」吗？该批次的消息、提取记忆与问 Rukik 投影会一并删除。`)) return;
+        btn.disabled = true;
+        try {
+          const r = await ef('delete_job', { job_id: btn.dataset.deljob });
+          $('appErr').textContent = '';
+          alert(`已删除：消息随批次清除，记忆 ${r.facts_removed} 条、投影 ${r.projections_removed} 条一并移除。`);
+          loadJobs(); loadFacts(currentFactStatus);
+        } catch (e) { $('appErr').textContent = '删除失败：' + e.message; btn.disabled = false; }
+      };
+    });
+  } catch (e) {
+    $('jobsBox').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+  }
+}
+$('jobsReload').onclick = loadJobs;
+
+// ---------- 记忆（事实） ----------
+let currentFactStatus = '';
+document.querySelectorAll('button[data-fstatus]').forEach((btn) => {
+  btn.onclick = () => {
+    currentFactStatus = btn.dataset.fstatus;
+    document.querySelectorAll('button[data-fstatus]').forEach((b) => { b.className = 'btn small' + (b === btn ? ' gold' : ' ghost'); });
+    loadFacts(currentFactStatus);
+  };
+});
+const STATUS_ZH = { confirmed: '已确认', candidate: '待确认', inference: '推测', rejected: '已驳回', deleted: '已删除' };
+async function loadFacts(status) {
+  try {
+    const r = await ef('list_facts', status ? { status } : {});
+    if (!r.facts || r.facts.length === 0) { $('factsBox').innerHTML = '<div class="empty">暂无记录。</div>'; return; }
+    $('factsBox').innerHTML = r.facts.map((f) => {
+      const tagCls = f.status === 'confirmed' ? 'tag ok' : f.status === 'inference' ? 'tag warn' : f.status === 'rejected' ? 'tag no' : 'tag';
+      const ev = (f.evidence || []).map((e) => `<div class="quote">「${esc(e.quote)}」</div>`).join('');
+      const actions = [];
+      if (f.status === 'candidate') actions.push(`<button class="btn small gold" data-act="confirm" data-fid="${f.id}">确认</button>`);
+      if (f.status === 'candidate' || f.status === 'confirmed') actions.push(`<button class="btn small ghost" data-act="correct" data-fid="${f.id}">纠正</button>`);
+      if (f.status !== 'rejected') actions.push(`<button class="btn small danger" data-act="reject" data-fid="${f.id}">驳回</button>`);
+      return `<div class="fact">
+        <div class="row" style="justify-content:space-between">
+          <span><span class="${tagCls}">${STATUS_ZH[f.status] || esc(f.status)}</span> <span class="muted">${esc(f.category)}${f.intel_memory_id ? ' · 已进入问 Rukik' : ''}</span></span>
+          <span class="row">${actions.join('')}</span>
+        </div>
+        <div style="margin-top:6px">${esc(f.fact_text)}</div>
+        <div class="muted">来源发言人：${esc(f.source_speaker_label || '—')}${f.subject_label ? ' · 主体：' + esc(f.subject_label) : ''} · 可信度 ${f.confidence}</div>
+        ${ev}
+      </div>`;
+    }).join('');
+    $('factsBox').querySelectorAll('button[data-act]').forEach((btn) => {
+      btn.onclick = async () => {
+        const act = btn.dataset.act, fid = btn.dataset.fid;
+        let payload = { fact_id: fid, decision: act };
+        if (act === 'correct') {
+          const t = prompt('把这条记忆纠正为：');
+          if (!t || !t.trim()) return;
+          payload.new_text = t.trim();
+        }
+        if (act === 'reject' && !confirm('驳回后这条记忆将不再被问 Rukik 调用。确定？')) return;
+        btn.disabled = true;
+        try {
+          await ef('fact_decide', payload);
+          loadFacts(currentFactStatus);
+        } catch (e) { $('appErr').textContent = '操作失败：' + e.message; btn.disabled = false; }
+      };
+    });
+  } catch (e) {
+    $('factsBox').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+// ---------- 设备感知推荐（内部版：Mac 路径实装，其余为诚实状态） ----------
+document.querySelectorAll('button[data-device]').forEach((btn) => {
+  btn.onclick = () => {
+    const d = btn.dataset.device;
+    document.querySelectorAll('button[data-device]').forEach((b) => { b.className = 'btn' + (b === btn ? ' gold' : ' ghost'); b.style.flex = '1'; });
+    for (const k of ['mac', 'windows', 'iphone']) $('device-' + k).style.display = k === d ? '' : 'none';
+    $('uploadCard').style.display = d === 'mac' ? '' : 'none';
+  };
+});
+
+// 已有会话则直接进入（内存态会话，刷新页面需重新登录是预期行为）
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) enterApp(); else show('login');
+})();
+</script>
+</body>
+</html>
