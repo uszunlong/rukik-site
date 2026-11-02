@@ -237,6 +237,19 @@
     </div>
 
     <div class="card">
+      <h2>商用健康（Health Center · 2.58.0 第八大能力）</h2>
+      <p class="muted">口径说明：数据来自健康聚合层 health_metric_daily（迁移 0395，pg_cron 每日＋每 6 小时 rollup；迟缓趋势由迟缓探针 ingest 覆写）。状态三档——<b>可算</b>＝现有数据源可算比率；<b>部分可算</b>＝代理口径或仅补偿账可见（分母不完整）；<b>无数据源</b>＝现无埋点/落账，显式标注、绝不以 0 冒充。四态分开呈现：客户端实际成功（core_request 落账）／服务端成功／排队中／执行结果待确认（超时≠失败）。登录看板为代理口径（gate_settle/auth 遥测），与登录 P0 事件契约对齐项见健康线终报。</p>
+      <div class="mt" style="display:flex;gap:8px;align-items:center">
+        <input id="healthDay" type="date">
+        <button id="healthReload" class="btn" type="button">刷新</button>
+        <span id="healthDayNote" class="cred"></span>
+      </div>
+      <div id="healthStats" class="mt"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">健康告警（health_alert_events · 阈值触发，统一告警出口）</div>
+      <div id="healthAlerts"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
       <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
       <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④累计入群人次＝历史入群记录累计（用户×群，含已退出 / 被移出，与当前人数分开统计；总览「当前入群人数」＝当前在群且关联真实用户的去重人数、跨群去重）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：全新安装的用户可经活动落地页的「活动码」回填归因（注册页手动填入活动码、由服务端落账，渠道标记 backfill_code），②已包含这部分注册；系统仍无延迟深链自动恢复来源，不估算、不填充。每条活动分享链接归属一位具体分享用户，一笔注册同时记「活动」与「分享人」两层：下方按活动表与按分享人表为同一批归因记录、同一口径，分开统计、不混算；链接没有可验证的分享人时不猜测归属、不计入。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
@@ -915,6 +928,66 @@ async function loadPushHealth() {
     $('pushHealthStats').innerHTML = '<div class="empty">通知健康加载失败：' + esc(e.message) + '</div>';
   }
   loadEventOps();
+  loadHealthCenter();
+}
+
+const HEALTH_STATUS = { computable: '可算', partial: '部分可算', no_source: '无数据源' };
+const HEALTH_DOMAIN = { link: 'Link 与发布', care: '加入后关怀', notify: '通知与提醒', client: '客户端体验', platform: '平台与后台', login: '登录可靠性' };
+
+async function loadHealthCenter() {
+  try {
+    const dayInput = $('healthDay');
+    const day = (dayInput && dayInput.value) ? dayInput.value : null;
+    const s = await rpc('health_admin_summary', day ? { p_day: day } : {});
+    renderHealthCenter(s);
+    const alerts = await rpc('health_admin_alerts', { p_limit: 50 });
+    renderHealthAlerts(alerts);
+    if (dayInput && !dayInput.value && s && s.day) dayInput.value = s.day;
+    $('healthDayNote').textContent = s && s.day ? ('当前显示：' + s.day + '（UTC 日）') : '';
+    $('healthReload').onclick = () => loadHealthCenter();
+    dayInput.onchange = () => loadHealthCenter();
+  } catch (e) {
+    $('healthStats').innerHTML = '<div class="empty">商用健康加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function healthFourState(m) {
+  const f = m.four_state || {};
+  const parts = [];
+  if (f.client_success != null) parts.push('客户端成功 ' + f.client_success);
+  if (f.server_success != null) parts.push('服务端成功 ' + f.server_success);
+  if (f.queued != null) parts.push('排队中 ' + f.queued);
+  if (f.outcome_unknown != null) parts.push('待确认 ' + f.outcome_unknown);
+  return parts.length ? parts.join(' · ') : '—';
+}
+
+function renderHealthCenter(s) {
+  const ms = (s && s.metrics) || [];
+  if (ms.length === 0) { $('healthStats').innerHTML = '<div class="empty">该日暂无聚合行（rollup 未跑或无数据）。</div>'; return; }
+  $('healthStats').innerHTML = '<table><tr><th>指标</th><th>域</th><th>状态</th><th>尝试</th><th>成功</th><th>失败</th><th>排队</th><th>待确认/未知</th><th>比率</th><th>P95</th><th>四态</th></tr>' +
+    ms.map((m) => `<tr>
+      <td><b>${esc(m.label || m.metric_key)}</b></td>
+      <td>${esc(HEALTH_DOMAIN[m.domain] || m.domain || '')}</td>
+      <td>${esc(HEALTH_STATUS[m.data_status] || m.data_status || '')}</td>
+      <td>${m.attempts ?? '—'}</td><td>${m.successes ?? '—'}</td><td>${m.failures ?? '—'}</td>
+      <td>${m.pending ?? '—'}</td><td>${m.unknown ?? '—'}</td>
+      <td>${m.rate == null ? '—' : (Math.round(m.rate * 1000) / 10) + '%'}</td>
+      <td>${m.p95_ms == null ? '—' : Math.round(m.p95_ms) + 'ms'}</td>
+      <td>${esc(healthFourState(m))}</td>
+    </tr>`).join('') + '</table>';
+}
+
+function renderHealthAlerts(list) {
+  if (!list || list.length === 0) { $('healthAlerts').innerHTML = '<div class="empty">暂无告警。</div>'; return; }
+  $('healthAlerts').innerHTML = '<table><tr><th>时间（UTC）</th><th>级别</th><th>告警</th><th>指标</th><th>状态</th><th>确认</th></tr>' +
+    list.map((a) => `<tr>
+      <td>${esc(String(a.ts || '').replace('T', ' ').slice(0, 19))}</td>
+      <td>${esc(a.severity || '')}</td>
+      <td><b>${esc(a.alert_key || '')}</b></td>
+      <td>${esc(a.metric_key || '—')}</td>
+      <td>${esc(a.state || '')}</td>
+      <td>${a.acked_at ? '已确认' : '未确认'}</td>
+    </tr>`).join('') + '</table>';
 }
 
 const EV_CAT = { BUSINESS: '商业', FESTIVAL: '节庆', COMMUNITY: '社区', FAMILY_KIDS: '亲子', EXHIBITION: '展览', PERFORMANCE: '演出', OUTDOOR: '户外', FREE_PUBLIC: '免费公共', OTHER: '其他' };
