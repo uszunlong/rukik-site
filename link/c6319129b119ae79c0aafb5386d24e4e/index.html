@@ -202,6 +202,13 @@
     <p style="margin-top:14px">群聊在 RUKIK App 内进行。没有安装时，您的成员身份已经保存，安装后用同一手机号或邮箱登录即可进入。</p>
   </div>
 
+  <div id="viewPending" class="state">
+    <div class="big">您的安排已经保存</div>
+    <p>群组正在开通中，系统会自动完成您的入群，稍后打开 Rukik App 即可进入群聊，不用重复操作。</p>
+    <button class="bigbtn" id="pendingOpenAppBtn" type="button">打开 Rukik App</button>
+    <a class="ghostbtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+  </div>
+
   <div id="viewGuest" class="state">
     <div class="big">已收到您的入群登记</div>
     <p>您只填写了微信号，还差最后一步：验证您的手机号或邮箱，确认联系方式属于您本人后，即可正式加入。在本页补充手机号或邮箱并完成验证，就能立即入群；也可以安装 RUKIK App 后用同一邀请链接继续。</p>
@@ -261,7 +268,7 @@ var ERR_TEXT = {
 function errText(code){ return ERR_TEXT[code] || ("操作没有成功（" + code + "），请稍后再试。"); }
 function showMsg(el, text, ok){ el.textContent = text || ""; el.className = "msg " + (ok ? "ok" : "err"); el.style.display = text ? "block" : "none"; }
 function show(view){
-  ["viewLoading","viewUnavailable","viewMain","viewSuccess","viewGuest"].forEach(function(v){ $(v).style.display = "none"; });
+  ["viewLoading","viewUnavailable","viewMain","viewSuccess","viewGuest","viewPending"].forEach(function(v){ $(v).style.display = "none"; });
   $(view).style.display = "block";
 }
 
@@ -457,6 +464,8 @@ function doJoin(c){
     btn.disabled = false; btn.textContent = "确认并加入 →";
     if (j && j.ok) {
       try { localStorage.removeItem("rukik_link_guest_" + CODE); } catch (e) {}
+      // [0390] 部分成功：安排已保存、群组补偿中——如实呈现待开通，不冒充已入群
+      if (j.group_pending) { show("viewPending"); return; }
       if (j.already_joined) $("successTitle").textContent = "您已加入 RUKIK Link";
       if (j.title) $("successText").textContent = "您已加入「" + j.title + "」。您的同行伙伴已经在 RUKIK Link 等您，打开 RUKIK 可以参与交流、查看计划、接收提醒。";
       show("viewSuccess");
@@ -495,7 +504,7 @@ function openInApp(){
   var gone = false;
   document.addEventListener("visibilitychange", function(){ if (document.hidden) gone = true; });
   window.addEventListener("pagehide", function(){ gone = true; });
-  location.href = "rukik://";
+  location.href = CODE ? "rukik://link/" + CODE : "rukik://";
   setTimeout(function(){ if (!gone && !document.hidden) location.href = STORE_URL; }, 1500);
 }
 
@@ -532,8 +541,21 @@ function init(){
     show("viewMain");
     restoreSession().then(function(restored){
       if (restored) {
-        showMsg($("verifiedBar"), "已识别您在本浏览器的登录状态，请确认身份信息后加入。", true);
-        prefillFromProfile();
+        // [P4] 已成员识别：持有本页验证会话时查成员状态（link_invite_resolve），
+        // 已加入直接呈现「进入 Link」，不重复走入群（PLAN 审计 §3.4）。
+        rpc("link_invite_resolve", { p_code: CODE }, session.access_token).then(function(rj){
+          if (rj && rj.ok && rj.is_member) {
+            if (rj.title) $("successText").textContent = "您已加入「" + rj.title + "」。打开 RUKIK 可以参与交流、查看计划、接收提醒。";
+            $("successTitle").textContent = "您已加入 RUKIK Link";
+            show("viewSuccess");
+            return;
+          }
+          showMsg($("verifiedBar"), "已识别您在本浏览器的登录状态，请确认身份信息后加入。", true);
+          prefillFromProfile();
+        }).catch(function(){
+          showMsg($("verifiedBar"), "已识别您在本浏览器的登录状态，请确认身份信息后加入。", true);
+          prefillFromProfile();
+        });
       }
     });
   }).catch(function(){
@@ -575,6 +597,7 @@ $("vConfirm").addEventListener("click", function(){
   else confirmVerify();
 });
 $("openAppBtn").addEventListener("click", openInApp);
+$("pendingOpenAppBtn").addEventListener("click", openInApp);
 $("landingOpenAppBtn").addEventListener("click", openInApp);
 if (/MicroMessenger/i.test(navigator.userAgent || "")) { $("landingOpenAppBtn").style.display = "none"; }
 $("wxGuide").addEventListener("click", function(){ $("wxGuide").classList.remove("show"); });
