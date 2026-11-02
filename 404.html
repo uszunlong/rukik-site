@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Rukik">
-<meta property="og:title" content="Rukik 智库">
-<meta property="og:description" content="AI懂很多，Rukik更懂您。">
-<meta property="og:image" content="https://rukik.com/assets/og-share-pro.png">
-<meta name="twitter:card" content="summary_large_image">
+<!-- 去毒（plan-share-wechat-title-fix，2026-11-01）：本页是全站缺失
+     路径的落点，绝不能带 og:title/og:description/og:image 或
+     twitter:card——分享页生成前的空窗里爬虫抓到本页时，旧版标签
+     会被拼成「Rukik 智库」品牌假卡并按 URL 缓存（BOSSHUB 计划微
+     信卡无标题事故）。摘除后抢先抓取最多得到无标题裸链。 -->
 <title>Rukik</title>
 <script>
 // GitHub Pages 静态托管无动态路由：/invite/CODE 形式的链接在此统一转到 /invite/?c=CODE
