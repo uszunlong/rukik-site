@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Alhambra 后备箱讨糖｜邀请您加入 RUKIK Link</title>
+<meta name="description" content="与同行伙伴交流、了解活动安排、不错过重要消息。">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Alhambra 后备箱讨糖｜邀请您加入 RUKIK Link">
+<meta property="og:description" content="与同行伙伴交流、了解活动安排、不错过重要消息。">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/5d949a80-23e9-4e05-9850-0f42fe529369/cover-0582b6f3.jpg">
+<meta property="og:url" content="https://rukik.com/link/1e0c8e75be69fbb04a1a87fe9a077e41/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Alhambra 后备箱讨糖｜邀请您加入 RUKIK Link">
+<meta name="twitter:description" content="与同行伙伴交流、了解活动安排、不错过重要消息。">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/5d949a80-23e9-4e05-9850-0f42fe529369/cover-0582b6f3.jpg">
+<link rel="icon" type="image/png" href="/assets/seal.png">
+<style>
+  :root{
+    --gold:#B58A58; --gold-deep:#8C6239; --brown:#4A3520; --brown-soft:#7A6248;
+    --line:#D9BE8C; --card:#FFFDF6; --err:#B3261E;
+    --champ1:#F7EAD2; --champ2:#FDF8EC; --champ3:#F3E3BE;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--brown);
+    background:linear-gradient(160deg,var(--champ1) 0%,var(--champ2) 45%,var(--champ3) 100%);
+    min-height:100vh;padding:18px 14px 40px;
+  }
+  .sheet{
+    max-width:560px;margin:0 auto;background:linear-gradient(180deg,#FFFDF8 0%,#FBF3DF 100%);
+    border:1px solid var(--line);border-radius:22px;padding:26px 22px 30px;
+    box-shadow:0 14px 44px rgba(140,98,57,.20);
+  }
+  .brandline{display:flex;align-items:center;gap:10px}
+  .seal{width:40px;height:40px;border-radius:10px;flex:none}
+  .wordmark{font-weight:800;letter-spacing:2.5px;font-size:16px;color:var(--brown)}
+  .wordmark .lk{color:var(--gold-deep)}
+  .slogan{font-size:11.5px;color:var(--gold-deep);letter-spacing:.6px;margin-top:2px}
+  h1{font-size:24px;line-height:1.4;margin:20px 0 4px;color:var(--brown)}
+  .sub{font-size:14px;color:var(--brown-soft);margin-bottom:18px}
+  .ctx{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin-bottom:22px}
+  .ctx img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none;background:var(--champ1)}
+  .ctx .t{font-size:16.5px;font-weight:700;line-height:1.45}
+  .ctx .m{font-size:12.5px;color:var(--brown-soft);margin-top:3px;line-height:1.55}
+  .sec{font-size:15px;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .sec .pill{font-size:11px;font-weight:600;color:var(--gold-deep);border:1px solid var(--line);
+    border-radius:999px;padding:2px 10px;background:#FBF3DF}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:6px}
+  .field label .req{color:var(--err)}
+  .row{display:flex;align-items:center;gap:10px}
+  .row input[type=text],.row input[type=tel],.row input[type=email]{
+    flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:#fff;
+    padding:12px 13px;font-size:15.5px;font-family:inherit;color:var(--brown);outline:none}
+  .row input:focus{border-color:var(--gold)}
+  .chk{width:22px;height:22px;flex:none;accent-color:var(--gold-deep);cursor:pointer}
+  .ferr{font-size:12.5px;color:var(--err);margin-top:5px;display:none}
+  .note{font-size:12.5px;color:var(--brown-soft);line-height:1.7;background:#FBF3DF;
+    border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:16px 0}
+  .bigbtn{
+    display:block;width:100%;border:none;cursor:pointer;font-family:inherit;
+    background:linear-gradient(135deg,#D9B878 0%,#B58A58 55%,#8C6239 100%);
+    color:#fff;font-size:17px;font-weight:700;letter-spacing:1px;
+    padding:15px 20px;border-radius:999px;margin-top:18px;
+    box-shadow:0 8px 22px rgba(140,98,57,.35)}
+  .bigbtn:disabled{opacity:.55;cursor:default}
+  .ghostbtn{
+    display:block;width:100%;cursor:pointer;font-family:inherit;background:transparent;
+    border:1px solid var(--gold-deep);color:var(--gold-deep);font-size:15px;font-weight:600;
+    padding:12px 20px;border-radius:999px;margin-top:12px;text-align:center;text-decoration:none}
+  .vbox{border-top:1px solid var(--line);margin-top:22px;padding-top:18px;display:none}
+  .vbox .vt{font-size:15px;font-weight:700;margin-bottom:8px}
+  .vbox p{font-size:13.5px;color:var(--brown-soft);line-height:1.7;margin-bottom:10px}
+  .coderow{display:flex;gap:10px}
+  .coderow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:#fff;
+    padding:12px 13px;font-size:16px;letter-spacing:3px;font-family:inherit;color:var(--brown);outline:none}
+  .coderow button{flex:none;border:1px solid var(--gold-deep);background:#fff;color:var(--gold-deep);
+    border-radius:10px;padding:0 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .msg{font-size:13.5px;line-height:1.7;margin-top:12px;display:none}
+  .msg.err{color:var(--err)} .msg.ok{color:#3E7A3E}
+  .state{display:none;text-align:center;padding:26px 4px 8px}
+  .state .big{font-size:21px;font-weight:800;line-height:1.5;margin-bottom:10px}
+  .state p{font-size:14.5px;color:var(--brown-soft);line-height:1.85}
+  .foot{margin-top:26px;text-align:center;font-size:11px;color:var(--brown-soft);letter-spacing:.5px;line-height:1.8}
+  .wxguide{position:fixed;inset:0;background:rgba(40,28,12,.92);z-index:99;display:none;color:#fff}
+  .wxguide.show{display:block}
+  .wxguide .wx-arrow{position:absolute;top:2px;right:14px;font-size:46px;line-height:1;color:#E7C87E}
+  .wxguide .wx-tip{position:absolute;top:62px;right:20px;left:20px;text-align:right;font-size:16.5px;line-height:1.9}
+  .wxguide .wx-tip .wx-alt{font-size:13.5px;color:#D8C9A3}
+  .wxguide .wx-main{position:absolute;top:64px;right:20px;left:20px;font-size:17.5px;line-height:1.9;color:#fff;
+    text-align:left;background:rgba(231,200,126,.16);border:1px solid rgba(231,200,126,.55);border-radius:12px;padding:14px 16px}
+  .wxguide .wx-main .wx-main-title{font-size:19px;font-weight:800;color:#E7C87E}
+  .wxguide .wx-note{position:absolute;top:292px;right:24px;left:24px;font-size:14px;line-height:1.85;color:#EDE4CB;
+    text-align:left;background:rgba(255,255,255,.08);border:1px solid rgba(231,200,126,.35);border-radius:12px;padding:12px 14px}
+  .wxguide .wx-note .wx-alt{font-size:13px;color:#D8C9A3}
+  .topopen{margin:0 0 16px}
+  .wxguide .wx-close{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:transparent;
+    color:#fff;border:1px solid #fff;border-radius:999px;padding:10px 36px;font-size:15px;font-family:inherit;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="brandline">
+    <img class="seal" src="/assets/seal.png" alt="RUKIK">
+    <div>
+      <div class="wordmark">RUKIK <span class="lk">Link</span></div>
+      <div class="slogan">Connect People. Share Moments.</div>
+    </div>
+  </div>
+
+  <div id="viewLoading" class="state" style="display:block"><p>正在打开邀请…</p></div>
+
+  <div id="viewUnavailable" class="state">
+    <div class="big" id="unavailTitle">邀请暂不可用</div>
+    <p id="unavailText"></p>
+  </div>
+
+  <div id="viewMain" style="display:none">
+    <h1>加入 RUKIK Link</h1>
+    <div class="sub">完善您的身份信息，立即加入群组</div>
+    <button class="bigbtn topopen" id="landingOpenAppBtn" type="button">打开 Rukik App</button>
+    <div class="ctx">
+      <img id="ctxCover" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/5d949a80-23e9-4e05-9850-0f42fe529369/cover-0582b6f3.jpg" alt="" onerror="coverFallback(this)">
+      <div>
+        <div class="t" id="ctxTitle">Alhambra 后备箱讨糖</div>
+        <div class="m" id="ctxMeta"></div>
+      </div>
+    </div>
+
+    <form id="cardForm" autocomplete="on" novalidate>
+      <div class="sec">身份信息（必填）</div>
+      <div class="field">
+        <label for="fName">姓名 <span class="req">*</span></label>
+        <div class="row"><input type="text" id="fName" placeholder="请输入您的姓名" autocomplete="name"></div>
+        <div class="ferr" id="eName">请填写姓名</div>
+      </div>
+      <div class="field">
+        <label for="fOrg">单位 <span class="req">*</span></label>
+        <div class="row"><input type="text" id="fOrg" placeholder="请输入您所在的单位或公司（无单位可填「个人」）" autocomplete="organization"></div>
+        <div class="ferr" id="eOrg">请填写单位（无正式单位可填「个人」）</div>
+      </div>
+      <div class="field">
+        <label for="fTitle">职位 <span class="req">*</span></label>
+        <div class="row"><input type="text" id="fTitle" placeholder="请输入您的职位（自由职业可填「自由职业者」）"></div>
+        <div class="ferr" id="eTitle">请填写职位</div>
+      </div>
+
+      <div class="sec">联系方式（至少填写一项） <span class="pill">电话、微信、邮箱三选一或多选</span></div>
+      <div class="field">
+        <label for="fPhone">联系电话</label>
+        <div class="row">
+          <input class="chk" type="checkbox" id="sPhone" title="共享给发起人">
+          <input type="tel" id="fPhone" placeholder="请输入手机号" autocomplete="tel">
+        </div>
+        <div class="ferr" id="ePhone">电话号码格式不正确</div>
+      </div>
+      <div class="field">
+        <label for="fWechat">微信号</label>
+        <div class="row">
+          <input class="chk" type="checkbox" id="sWechat" title="共享给发起人">
+          <input type="text" id="fWechat" placeholder="请输入您的微信号">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fEmail">电子邮箱</label>
+        <div class="row">
+          <input class="chk" type="checkbox" id="sEmail" title="共享给发起人">
+          <input type="email" id="fEmail" placeholder="请输入您的邮箱地址" autocomplete="email">
+        </div>
+        <div class="ferr" id="eEmail">邮箱格式不正确</div>
+      </div>
+      <div class="ferr" id="eContact">联系电话、微信号、邮箱至少填写一项</div>
+
+      <div class="note">姓名、单位、职位将向群发起人展示；勾选的联系方式会在您确认后按授权范围共享给活动发起人。您的信息将仅用于本次活动的联系与组织，并按照 RUKIK 的隐私政策进行保护。入群不代表同意营销推广。</div>
+
+      <div id="verifiedBar" class="msg ok"></div>
+      <button class="bigbtn" id="joinBtn" type="submit">确认并加入 →</button>
+      <button class="ghostbtn" id="guestBtn" type="button" style="display:none">只填了微信号？先登记，稍后验证入群</button>
+      <div class="msg" id="joinMsg"></div>
+    </form>
+
+    <div class="vbox" id="verifyBox">
+      <div class="vt" id="verifyTitle">验证您的身份</div>
+      <p id="verifyDesc"></p>
+      <div class="coderow">
+        <input id="vCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 位验证码" maxlength="6">
+        <button id="vSend" type="button">发送验证码</button>
+      </div>
+      <button class="bigbtn" id="vConfirm" type="button">验证并继续</button>
+      <div class="msg" id="verifyMsg"></div>
+    </div>
+  </div>
+
+  <div id="viewSuccess" class="state">
+    <div class="big" id="successTitle">欢迎加入 RUKIK Link！</div>
+    <p id="successText">您的同行伙伴已经在 RUKIK Link 等您，打开 RUKIK 可以参与交流、查看计划、接收提醒。</p>
+    <button class="bigbtn" id="openAppBtn" type="button">打开 Rukik App</button>
+    <a class="ghostbtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+    <p style="margin-top:14px">群聊在 RUKIK App 内进行。没有安装时，您的成员身份已经保存，安装后用同一手机号或邮箱登录即可进入。</p>
+  </div>
+
+  <div id="viewPending" class="state">
+    <div class="big">您的安排已经保存</div>
+    <p>群组正在开通中，系统会自动完成您的入群，稍后打开 Rukik App 即可进入群聊，不用重复操作。</p>
+    <button class="bigbtn" id="pendingOpenAppBtn" type="button">打开 Rukik App</button>
+    <a class="ghostbtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+  </div>
+
+  <div id="viewGuest" class="state">
+    <div class="big">已收到您的入群登记</div>
+    <p>您只填写了微信号，还差最后一步：验证您的手机号或邮箱，确认联系方式属于您本人后，即可正式加入。在本页补充手机号或邮箱并完成验证，就能立即入群；也可以安装 RUKIK App 后用同一邀请链接继续。</p>
+    <button class="bigbtn" id="guestBackBtn" type="button">返回补充验证</button>
+    <a class="ghostbtn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a>
+  </div>
+
+  <div class="foot">RUKIK Link · 智能同行连接<br>Connect People. Share Moments.</div>
+</div>
+
+<div class="wxguide" id="wxGuide">
+  <div class="wx-arrow">↗</div>
+  <div class="wx-main"><span class="wx-main-title">您已成功加入！</span><br>直接回到手机桌面打开 Rukik App，用刚才验证的手机号或邮箱登录，群聊就在里面，不用再从浏览器跳转。</div>
+  <div class="wx-note">备选方法（想从浏览器打开也可以）：<br>第一步：点右上角 「···」<br>第二步：点「在默认浏览器中打开」<br><span class="wx-alt">（有的微信版本写作「用默认浏览器打开」，是同一项）</span><br>提示：微信「···」菜单第二排图标可以向左滑，没看到「在默认浏览器中打开」时向左滑就能找到它。<br>第三步：浏览器打开本页后，再点页面顶部的「打开 Rukik App」<br><br>还没安装 RUKIK App 也没关系：在浏览器里点「打开 Rukik App」会自动转到 App Store；装好后，用您刚才验证的同一个手机号或邮箱登录，就能直接进群——您的成员身份已经保存好了。</div>
+  <button class="wx-close" id="wxGuideClose" type="button">知道了</button>
+</div>
+
+<script>
+// RUKIK Link H5 入群（一期）：静态页＋REST/RPC。真源在服务端：
+// 令牌状态走 link_invite_preview；身份只认验证码证明的标识——
+// 手机号走 phone-otp 三段式、邮箱走 GoTrue OTP，拿到会话后才调
+// link_invite_join（只取 auth.uid()，不接受前端传 user_id）。
+// 仅微信号走 link_invite_guest_register 访客登记（不建成员关系）。
+var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+var STORE_URL = "https://apps.apple.com/us/app/rukik/id6824554988";
+var CODE = (location.pathname.match(/\/link\/([0-9a-f]{32})\//) || [])[1] || "";
+var $ = function(id){ return document.getElementById(id); };
+// 封面兜底（2026-11-01 破图修复）：群封面加载失败（源站图失效/防盗链/
+// CDN 临时地址轮换）时先换品牌印章占位，印章再失败则隐藏图片框——
+// 永远不出现浏览器破图图标。挂在 <img> 的 onerror 属性上，静态烤入
+// 的 src 与任何后续 JS 回填的 src 都受覆盖。
+function coverFallback(img){
+  if (!img) return;
+  if (!img.dataset.fb) { img.dataset.fb = "1"; img.src = "/assets/seal.png"; }
+  else { img.style.visibility = "hidden"; }
+}
+var session = null;           // {access_token, refresh_token, expires_at, user_id}
+var verifyCtx = null;         // {channel:'phone'|'email', value, verification_token, decision}
+var preview = null;
+
+var ERR_TEXT = {
+  invite_not_found: "这个邀请链接无效或已被删除。",
+  invite_revoked: "该邀请已被发起人撤销，无法再加入。",
+  invite_expired: "该邀请已过期，请联系发起人重新发送。",
+  invite_full: "该邀请的加入名额已满，请联系发起人。",
+  plan_group_disabled: "RUKIK Link 暂未开放，请稍后再试。",
+  plan_unavailable: "该计划暂时无法加入，请稍后再试。",
+  source_unavailable: "该计划已取消，无法加入。",
+  member_banned: "您已被该群移出，无法加入。",
+  group_unavailable: "暂时无法加入该群，请稍后再试。",
+  missing_full_name: "请填写姓名。", missing_organization: "请填写单位。",
+  missing_job_title: "请填写职位。", missing_contact: "联系方式至少填写一项。",
+  invalid_email: "邮箱格式不正确。", invalid_phone: "电话号码格式不正确。",
+  not_authenticated: "请先完成手机号或邮箱验证。"
+};
+function errText(code){ return ERR_TEXT[code] || ("操作没有成功（" + code + "），请稍后再试。"); }
+function showMsg(el, text, ok){ el.textContent = text || ""; el.className = "msg " + (ok ? "ok" : "err"); el.style.display = text ? "block" : "none"; }
+function show(view){
+  ["viewLoading","viewUnavailable","viewMain","viewSuccess","viewGuest","viewPending"].forEach(function(v){ $(v).style.display = "none"; });
+  $(view).style.display = "block";
+}
+
+function api(path, opts){
+  opts = opts || {};
+  var headers = { apikey: SB_KEY, "Content-Type": "application/json" };
+  headers.Authorization = "Bearer " + (opts.token || SB_KEY);
+  return fetch(SB_URL + path, { method: opts.method || "POST", headers: headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined })
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { status: r.status, body: j }; }); });
+}
+function rpc(name, body, token){
+  return api("/rest/v1/rpc/" + name, { body: body || {}, token: token }).then(function(r){ return r.body; });
+}
+
+// ---------- 会话（本浏览器内的网页登录态，与 App 会话相互独立） ----------
+function saveSession(s){
+  session = s;
+  try { localStorage.setItem("rukik_link_auth", JSON.stringify(s)); } catch (e) {}
+}
+function clearSession(){ session = null; try { localStorage.removeItem("rukik_link_auth"); } catch (e) {} }
+function restoreSession(){
+  var raw = null;
+  try { raw = localStorage.getItem("rukik_link_auth"); } catch (e) {}
+  if (!raw) return Promise.resolve(false);
+  var s = null; try { s = JSON.parse(raw); } catch (e) {}
+  if (!s || !s.refresh_token) return Promise.resolve(false);
+  return fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST", headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: s.refresh_token })
+  }).then(function(r){ return r.json(); }).then(function(j){
+    if (j && j.access_token) {
+      saveSession({ access_token: j.access_token, refresh_token: j.refresh_token,
+        expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user && j.user.id });
+      return true;
+    }
+    clearSession(); return false;
+  }).catch(function(){ return false; });
+}
+
+// ---------- 身份卡 ----------
+function cardValues(){
+  return {
+    name: $("fName").value.trim(), org: $("fOrg").value.trim(), title: $("fTitle").value.trim(),
+    phone: $("fPhone").value.trim(), wechat: $("fWechat").value.trim(), email: $("fEmail").value.trim(),
+    share: []
+      .concat($("sPhone").checked && $("fPhone").value.trim() ? ["phone"] : [])
+      .concat($("sWechat").checked && $("fWechat").value.trim() ? ["wechat_id"] : [])
+      .concat($("sEmail").checked && $("fEmail").value.trim() ? ["email"] : [])
+  };
+}
+function validateCard(){
+  var c = cardValues(); var ok = true;
+  function mark(id, bad){ $(id).style.display = bad ? "block" : "none"; if (bad) ok = false; }
+  mark("eName", !c.name); mark("eOrg", !c.org); mark("eTitle", !c.title);
+  mark("eContact", !c.phone && !c.wechat && !c.email);
+  mark("eEmail", !!c.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email));
+  mark("ePhone", !!c.phone && (!/^[0-9+\-\s()]+$/.test(c.phone) || c.phone.replace(/\D/g, "").length < 5));
+  return ok ? c : null;
+}
+function prefillFromProfile(){
+  if (!session) return Promise.resolve();
+  return api("/rest/v1/group_identity_profiles?select=full_name,organization,job_title,phone,wechat_id,email",
+    { method: "GET", token: session.access_token })
+    .then(function(r){
+      var row = Array.isArray(r.body) && r.body[0];
+      if (!row) return;
+      if (row.full_name) $("fName").value = row.full_name;
+      if (row.organization) $("fOrg").value = row.organization;
+      if (row.job_title) $("fTitle").value = row.job_title;
+      if (row.phone) { $("fPhone").value = row.phone; $("sPhone").checked = true; }
+      if (row.wechat_id) { $("fWechat").value = row.wechat_id; $("sWechat").checked = true; }
+      if (row.email) { $("fEmail").value = row.email; $("sEmail").checked = true; }
+      showMsg($("verifiedBar"), "已为您带入上次保存的身份资料，请确认后加入（可直接修改）。", true);
+    }).catch(function(){});
+}
+
+// ---------- 验证 ----------
+function ef(name, body){
+  return fetch(SB_URL + "/functions/v1/" + name, { method: "POST",
+    headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body) }).then(function(r){ return r.json().catch(function(){ return {}; }); });
+}
+function openVerify(channel, value){
+  verifyCtx = { channel: channel, value: value, verification_token: null, decision: false };
+  $("verifyBox").style.display = "block";
+  $("vCode").value = "";
+  showMsg($("verifyMsg"), "", true);
+  if (channel === "phone") {
+    $("verifyTitle").textContent = "验证手机号";
+    $("verifyDesc").textContent = "我们会向 " + value + " 发送短信验证码，确认这个号码属于您本人。已注册的手机号将直接登录原账号。";
+  } else {
+    $("verifyTitle").textContent = "验证邮箱";
+    $("verifyDesc").textContent = "我们会向 " + value + " 发送邮箱验证码，确认这个邮箱属于您本人。已注册的邮箱将直接登录原账号。";
+  }
+  $("verifyBox").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function sendCode(){
+  if (!verifyCtx) return;
+  var btn = $("vSend"); btn.disabled = true; btn.textContent = "发送中…";
+  var p;
+  if (verifyCtx.channel === "phone") {
+    p = ef("phone-otp", { op: "sendPhoneOtp", phone: verifyCtx.value, context: "login" })
+      .then(function(j){
+        if (j && j.ok) { showMsg($("verifyMsg"), "验证码已发送，请查收短信。", true); }
+        else { showMsg($("verifyMsg"), "验证码发送失败：" + errText((j && j.error_code) || "send_failed"), false); }
+      });
+  } else {
+    p = api("/auth/v1/otp", { body: { email: verifyCtx.value, create_user: true } })
+      .then(function(r){
+        if (r.status < 300) { showMsg($("verifyMsg"), "验证码已发送，请查收邮件（可能在垃圾箱）。", true); }
+        else { showMsg($("verifyMsg"), "验证码发送失败，请稍后再试。", false); }
+      });
+  }
+  p.catch(function(){ showMsg($("verifyMsg"), "网络不稳定，请稍后再试。", false); })
+   .then(function(){ btn.disabled = false; btn.textContent = "发送验证码"; });
+}
+function confirmVerify(){
+  if (!verifyCtx) return;
+  var code = $("vCode").value.trim();
+  if (!/^\d{6}$/.test(code)) { showMsg($("verifyMsg"), "请输入 6 位验证码。", false); return; }
+  var btn = $("vConfirm"); btn.disabled = true; btn.textContent = "验证中…";
+  function fail(t){ showMsg($("verifyMsg"), t, false); btn.disabled = false; btn.textContent = "验证并继续"; }
+  if (verifyCtx.channel === "phone") {
+    ef("phone-otp", { op: "verifyPhoneOtp", phone: verifyCtx.value, code: code })
+      .then(function(j){
+        if (!j || !j.verification_token) { fail("验证码不正确或已过期，请重新获取。"); return null; }
+        verifyCtx.verification_token = j.verification_token;
+        return ef("phone-otp", { op: "resolvePhoneIdentity", verification_token: j.verification_token, action: "auto" });
+      })
+      .then(function(j){
+        if (!j) return;
+        if (j.status === "session" && j.access_token) {
+          saveSession({ access_token: j.access_token, refresh_token: j.refresh_token,
+            expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user_id });
+          onVerified("手机号验证通过。");
+        } else if (j.status === "needs_account_decision") {
+          verifyCtx.decision = true; verifyCtx.verification_token = j.verification_token;
+          $("verifyTitle").textContent = "创建您的 RUKIK 账号";
+          $("verifyDesc").textContent = "这个手机号还没有注册过 RUKIK。点下方按钮即可用该手机号创建账号并继续入群。";
+          btn.textContent = "创建账号并继续"; btn.disabled = false;
+          showMsg($("verifyMsg"), "验证已通过，还差一步：创建账号。", true);
+        } else { fail("暂时无法完成验证，请稍后再试。"); }
+      })
+      .catch(function(){ fail("网络不稳定，请稍后再试。"); });
+  } else {
+    api("/auth/v1/verify", { body: { type: "email", email: verifyCtx.value, token: code } })
+      .then(function(r){
+        var j = r.body || {};
+        if (j.access_token) {
+          saveSession({ access_token: j.access_token, refresh_token: j.refresh_token,
+            expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user && j.user.id });
+          onVerified("邮箱验证通过。");
+        } else { fail("验证码不正确或已过期，请重新获取。"); }
+      })
+      .catch(function(){ fail("网络不稳定，请稍后再试。"); });
+  }
+}
+function registerWithPhone(){
+  var btn = $("vConfirm"); btn.disabled = true; btn.textContent = "创建中…";
+  ef("phone-otp", { op: "resolvePhoneIdentity", verification_token: verifyCtx.verification_token, action: "register" })
+    .then(function(j){
+      if (j && j.status === "session" && j.access_token) {
+        saveSession({ access_token: j.access_token, refresh_token: j.refresh_token,
+          expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user_id });
+        onVerified("账号已创建。");
+      } else if (j && j.status === "registration_disabled") {
+        showMsg($("verifyMsg"), "手机号注册通道暂未开放。您可以用邮箱验证继续入群：在上方卡片填好邮箱，再点一次「确认并加入」。", false);
+        btn.disabled = false; btn.textContent = "创建账号并继续";
+      } else {
+        showMsg($("verifyMsg"), "创建账号没有成功，请稍后再试。", false);
+        btn.disabled = false; btn.textContent = "创建账号并继续";
+      }
+    })
+    .catch(function(){ showMsg($("verifyMsg"), "网络不稳定，请稍后再试。", false); btn.disabled = false; btn.textContent = "创建账号并继续"; });
+}
+function onVerified(note){
+  $("verifyBox").style.display = "none";
+  showMsg($("verifiedBar"), note + "请确认身份信息后，点「确认并加入」完成入群。", true);
+  prefillFromProfile().then(function(){ $("joinBtn").scrollIntoView({ behavior: "smooth", block: "center" }); });
+}
+
+// ---------- 入群 / 访客 ----------
+function doJoin(c){
+  var claim = null;
+  try { claim = localStorage.getItem("rukik_link_guest_" + CODE) || null; } catch (e) {}
+  var btn = $("joinBtn"); btn.disabled = true; btn.textContent = "正在加入…";
+  rpc("link_invite_join", {
+    p_code: CODE, p_full_name: c.name, p_organization: c.org, p_job_title: c.title,
+    p_phone: c.phone || null, p_wechat_id: c.wechat || null, p_email: c.email || null,
+    p_share_fields: c.share, p_guest_claim: claim
+  }, session.access_token).then(function(j){
+    btn.disabled = false; btn.textContent = "确认并加入 →";
+    if (j && j.ok) {
+      try { localStorage.removeItem("rukik_link_guest_" + CODE); } catch (e) {}
+      // [0390] 部分成功：安排已保存、群组补偿中——如实呈现待开通，不冒充已入群
+      if (j.group_pending) { show("viewPending"); return; }
+      if (j.already_joined) $("successTitle").textContent = "您已加入 RUKIK Link";
+      if (j.title) $("successText").textContent = "您已加入「" + j.title + "」。您的同行伙伴已经在 RUKIK Link 等您，打开 RUKIK 可以参与交流、查看计划、接收提醒。";
+      show("viewSuccess");
+    } else {
+      showMsg($("joinMsg"), errText((j && j.error) || "join_failed"), false);
+    }
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = "确认并加入 →";
+    showMsg($("joinMsg"), "网络不稳定，您的填写还在，请点「确认并加入」重试。", false);
+  });
+}
+function doGuest(c){
+  var btn = $("guestBtn"); btn.disabled = true; btn.textContent = "登记中…";
+  rpc("link_invite_guest_register", {
+    p_code: CODE, p_full_name: c.name, p_organization: c.org, p_job_title: c.title,
+    p_phone: c.phone || null, p_wechat_id: c.wechat || null, p_email: c.email || null,
+    p_share_fields: c.share
+  }).then(function(j){
+    btn.disabled = false; btn.textContent = "只填了微信号？先登记，稍后验证入群";
+    if (j && j.ok && j.claim_code) {
+      try { localStorage.setItem("rukik_link_guest_" + CODE, j.claim_code); } catch (e) {}
+      show("viewGuest");
+    } else {
+      showMsg($("joinMsg"), errText((j && j.error) || "guest_failed"), false);
+    }
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = "只填了微信号？先登记，稍后验证入群";
+    showMsg($("joinMsg"), "网络不稳定，您的填写还在，请重试。", false);
+  });
+}
+
+// ---------- 打开 App（微信内引导层＋rukik:// 尝试＋商店兜底） ----------
+function openInApp(){
+  var ua = navigator.userAgent || "";
+  if (/MicroMessenger/i.test(ua)) { $("wxGuide").classList.add("show"); return; }
+  var gone = false;
+  document.addEventListener("visibilitychange", function(){ if (document.hidden) gone = true; });
+  window.addEventListener("pagehide", function(){ gone = true; });
+  location.href = CODE ? "rukik://link/" + CODE : "rukik://";
+  setTimeout(function(){ if (!gone && !document.hidden) location.href = STORE_URL; }, 1500);
+}
+
+// ---------- 初始化 ----------
+function init(){
+  // 兜底补检：封面若在脚本运行前就已经加载失败（complete 且 naturalWidth=0），
+  // 立即走同一条兜底路径（与 onerror 属性互为双保险）。
+  var civ = $("ctxCover");
+  if (civ && civ.complete && civ.naturalWidth === 0 && civ.getAttribute("src")) coverFallback(civ);
+  if (!CODE) {
+    $("unavailTitle").textContent = "邀请链接不完整";
+    $("unavailText").textContent = "请通过发起人分享的完整链接打开本页。";
+    show("viewUnavailable"); return;
+  }
+  rpc("link_invite_preview", { p_code: CODE }).then(function(j){
+    preview = j;
+    if (!j || !j.ok) {
+      var st = (j && j.status) || "invite_not_found";
+      $("unavailTitle").textContent = st === "invite_revoked" ? "邀请已撤销"
+        : st === "invite_expired" ? "邀请已过期" : "邀请暂不可用";
+      $("unavailText").textContent = errText(st);
+      show("viewUnavailable"); return;
+    }
+    var meta = [];
+    if (j.inviter_name) meta.push(j.inviter_name + " 邀请您加入");
+    if (j.member_count) meta.push("已有 " + j.member_count + " 位成员");
+    meta.push(j.kind === "PLAN" ? "RUKIK Link · 计划同行群" : "RUKIK Link · 活动群");
+    $("ctxMeta").textContent = meta.join(" ｜ ");
+    if (j.join_available === false) {
+      $("unavailTitle").textContent = j.unavailable_reason === "invite_full" ? "加入名额已满" : "RUKIK Link 暂未开放";
+      $("unavailText").textContent = errText(j.unavailable_reason || "plan_group_disabled");
+      show("viewUnavailable"); return;
+    }
+    show("viewMain");
+    restoreSession().then(function(restored){
+      if (restored) {
+        // [P4] 已成员识别：持有本页验证会话时查成员状态（link_invite_resolve），
+        // 已加入直接呈现「进入 Link」，不重复走入群（PLAN 审计 §3.4）。
+        rpc("link_invite_resolve", { p_code: CODE }, session.access_token).then(function(rj){
+          if (rj && rj.ok && rj.is_member) {
+            if (rj.title) $("successText").textContent = "您已加入「" + rj.title + "」。打开 RUKIK 可以参与交流、查看计划、接收提醒。";
+            $("successTitle").textContent = "您已加入 RUKIK Link";
+            show("viewSuccess");
+            return;
+          }
+          showMsg($("verifiedBar"), "已识别您在本浏览器的登录状态，请确认身份信息后加入。", true);
+          prefillFromProfile();
+        }).catch(function(){
+          showMsg($("verifiedBar"), "已识别您在本浏览器的登录状态，请确认身份信息后加入。", true);
+          prefillFromProfile();
+        });
+      }
+    });
+  }).catch(function(){
+    $("unavailTitle").textContent = "网络不稳定";
+    $("unavailText").textContent = "页面没能载入邀请信息，请稍后重新打开链接。";
+    show("viewUnavailable");
+  });
+}
+
+$("cardForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  var c = validateCard();
+  if (!c) { showMsg($("joinMsg"), "请先把身份卡填写完整（带 * 的必填，联系方式至少一项）。", false); return; }
+  showMsg($("joinMsg"), "", true);
+  if (session) { doJoin(c); return; }
+  // 先验证已填的联系方式：优先手机号，其次邮箱；仅微信号走访客登记。
+  if (c.phone) openVerify("phone", c.phone);
+  else if (c.email) openVerify("email", c.email);
+  else { $("guestBtn").style.display = "block"; showMsg($("joinMsg"), "您只填写了微信号，无法证明联系方式属于您本人。可以先登记（下方按钮），之后验证手机号或邮箱即可正式入群。", false); }
+});
+["fPhone","fEmail"].forEach(function(id){
+  $(id).addEventListener("input", function(){
+    var c = cardValues();
+    $("guestBtn").style.display = (!c.phone && !c.email && c.wechat) ? "block" : "none";
+  });
+});
+$("fWechat").addEventListener("input", function(){
+  var c = cardValues();
+  $("guestBtn").style.display = (!c.phone && !c.email && c.wechat) ? "block" : "none";
+});
+$("guestBtn").addEventListener("click", function(){
+  var c = validateCard();
+  if (c) doGuest(c);
+});
+$("guestBackBtn").addEventListener("click", function(){ show("viewMain"); });
+$("vSend").addEventListener("click", sendCode);
+$("vConfirm").addEventListener("click", function(){
+  if (verifyCtx && verifyCtx.decision) registerWithPhone();
+  else confirmVerify();
+});
+$("openAppBtn").addEventListener("click", openInApp);
+$("pendingOpenAppBtn").addEventListener("click", openInApp);
+$("landingOpenAppBtn").addEventListener("click", openInApp);
+if (/MicroMessenger/i.test(navigator.userAgent || "")) { $("landingOpenAppBtn").style.display = "none"; }
+$("wxGuide").addEventListener("click", function(){ $("wxGuide").classList.remove("show"); });
+["sPhone","sWechat","sEmail"].forEach(function(id){ /* 勾选即共享，明示在隐私条 */ });
+["fPhone","fWechat","fEmail"].forEach(function(id, i){
+  var chk = ["sPhone","sWechat","sEmail"][i];
+  $(id).addEventListener("input", function(){ if ($(id).value.trim()) $(chk).checked = true; });
+});
+init();
+</script>
+</body>
+</html>
