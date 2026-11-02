@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>RUKIK · 一键记住 — 插件登录</title>
+<!--
+  RUKIK · 一键记住 插件登录桥页
+  安全模型：
+  - 本页只做一件事：让用户用自己的 Rukik 账号完成 Supabase Auth 登录，然后把
+    会话（access/refresh token）交给浏览器插件。
+  - 交接方式：插件通过 chrome.identity.launchWebAuthFlow 打开本页并传入
+    redirect_uri（插件专属的 https://<扩展ID>.chromiumapp.org/ 回调地址）。
+    本页在跳转前用严格正则校验该地址（见 ==PURE-VALIDATE==），不接受任何
+    其他目标；校验不过则只显示说明，绝不跳转。
+  - token 只出现在回跳 URL 的 fragment（#...）里：fragment 不会发送给任何
+    服务器，浏览器在网络层直接拦截该回跳并交给插件。
+  - 本页不加载任何统计/分析脚本，不把 token 写入日志、DOM 或任何存储；
+    登录态本身由 supabase-js 按 rukik.com 站点惯例保存在本站 localStorage。
+-->
+<style>
+  :root { --ivory:#F7F3EC; --ink:#142235; --bronze:#B58A58; --err:#B3261E; --line:#E3DCCF; --mut:#8B857D; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
+  .wrap { max-width:420px; margin:0 auto; padding:48px 20px 40px; }
+  .brand { text-align:center; margin-bottom:26px; }
+  .brand .name { font-size:22px; font-weight:700; letter-spacing:1px; }
+  .brand .slogan { color:var(--bronze); font-size:13px; margin-top:6px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 20px; }
+  .card h2 { font-size:16px; margin:0 0 8px; }
+  .hint { font-size:13px; color:var(--mut); line-height:1.6; margin:6px 0 14px; }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; }
+  .tabs button { flex:1; padding:8px 0; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:13px; cursor:pointer; color:var(--ink); }
+  .tabs button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  label { display:block; font-size:12px; color:var(--mut); margin:12px 0 5px; }
+  input { width:100%; padding:10px 12px; font-size:14px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
+  .primary { width:100%; padding:12px 0; margin-top:16px; border:none; border-radius:8px; background:linear-gradient(180deg,#c9a44e,#b08d3c); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+  .primary:disabled { opacity:.55; cursor:default; }
+  .ghost { width:100%; padding:10px 0; margin-top:10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font-size:13px; cursor:pointer; }
+  .error { color:var(--err); font-size:13px; line-height:1.5; margin-top:12px; }
+  .ok { color:#3d6b35; font-size:13px; margin-top:12px; }
+  .hidden { display:none !important; }
+  .acct { font-size:14px; font-weight:600; word-break:break-all; }
+  .foot { text-align:center; font-size:12px; color:var(--mut); margin-top:18px; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="name">RUKIK · 一键记住</div>
+    <div class="slogan">您看到的精彩，RUKIK 替您记得。</div>
+  </div>
+
+  <!-- 入口参数不合法（不是从插件打开） -->
+  <div class="card hidden" id="fatalCard">
+    <h2>请从插件里打开本页</h2>
+    <p class="hint">这个页面是「RUKIK · 一键记住」浏览器插件的登录入口，只能由插件打开才能把登录结果安全地交回插件。请回到浏览器工具栏，点击 RUKIK 图标，再点「用 Rukik 账号登录」。</p>
+  </div>
+
+  <!-- 已有本站登录态 -->
+  <div class="card hidden" id="accountCard">
+    <h2>已登录 Rukik</h2>
+    <p class="hint">当前账号</p>
+    <p class="acct" id="acctEmail"></p>
+    <button class="primary" id="continueBtn">继续，把登录交给插件</button>
+    <button class="ghost" id="switchBtn">换个账号</button>
+    <p class="error hidden" id="acctErr"></p>
+  </div>
+
+  <!-- 登录表单 -->
+  <div class="card hidden" id="loginCard">
+    <h2>登录 Rukik 账号</h2>
+    <p class="hint">使用您在 Rukik App 里注册的账号。登录成功后，本页会把登录结果直接交回插件，插件不会看到您的密码。</p>
+    <div class="tabs">
+      <button id="tabOtp" class="on" type="button">邮箱验证码</button>
+      <button id="tabPw" type="button">邮箱密码</button>
+    </div>
+
+    <div id="otpPane">
+      <label for="otpEmail">邮箱</label>
+      <input id="otpEmail" type="email" autocomplete="email" placeholder="您注册 Rukik 的邮箱">
+      <button class="primary" id="sendCodeBtn">发送验证码</button>
+      <div id="codeRow" class="hidden">
+        <label for="otpCode">邮箱验证码</label>
+        <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6 位验证码">
+        <button class="primary" id="verifyBtn">验证并登录</button>
+      </div>
+    </div>
+
+    <div id="pwPane" class="hidden">
+      <label for="pwEmail">邮箱</label>
+      <input id="pwEmail" type="email" autocomplete="email" placeholder="您注册 Rukik 的邮箱">
+      <label for="pwPass">密码</label>
+      <input id="pwPass" type="password" autocomplete="current-password" placeholder="账号密码">
+      <button class="primary" id="pwBtn">登录</button>
+    </div>
+
+    <p class="error hidden" id="loginErr"></p>
+    <p class="ok hidden" id="loginOk"></p>
+  </div>
+
+  <p class="foot">登录结果只交给您浏览器里的 RUKIK 插件，<br>不会发送给任何第三方。</p>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = (id) => document.getElementById(id);
+
+// ==PURE-VALIDATE==
+// 与插件 extension/auth.js 同一份校验口径（两处由同一组测试向量锁定）：
+// 合法的插件回调地址只有 https://<32 位 a-p 扩展 ID>.chromiumapp.org[/...]。
+const REDIRECT_URI_RE = /^https:\/\/[a-p]{32}\.chromiumapp\.org(\/[^\s]*)?$/;
+function isValidRedirectUri(u) {
+  return typeof u === 'string' && REDIRECT_URI_RE.test(u);
+}
+// ==/PURE-VALIDATE==
+
+const redirectUri = new URLSearchParams(location.search).get('redirect_uri') || '';
+
+function authErrZh(error, fallback) {
+  const msg = (error && error.message) || '';
+  const code = (error && error.code) || '';
+  if (/invalid login credentials/i.test(msg) || code === 'invalid_credentials') return '邮箱或密码不正确。';
+  if (/otp_expired|expired or is invalid|token.*invalid/i.test(msg) || code === 'otp_expired') return '验证码不对或已过期，请重新发送。';
+  if (/user not found|signups not allowed/i.test(msg)) return '这个邮箱还没有注册账号，请确认邮箱无误，或先在 Rukik App 里注册。';
+  if (/rate limit|too many/i.test(msg)) return '操作太频繁，请稍等一分钟再试。';
+  if (/fetch|network/i.test(msg)) return '网络连接失败，请检查网络后重试。';
+  return fallback || '操作失败，请稍后重试。';
+}
+
+function showErr(text) {
+  const el = $('loginErr');
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+}
+function showOk(text) {
+  const el = $('loginOk');
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+}
+
+// 把会话交回插件：token 只进回跳 URL 的 fragment，浏览器拦截后交给插件。
+function handoff(session) {
+  const frag = new URLSearchParams({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: String(session.expires_at || ''),
+    token_type: session.token_type || 'bearer',
+  });
+  location.replace(redirectUri + '#' + frag.toString());
+}
+
+async function init() {
+  if (!isValidRedirectUri(redirectUri)) {
+    $('fatalCard').classList.remove('hidden');
+    return;
+  }
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) {
+    $('acctEmail').textContent = (data.session.user && data.session.user.email) || '已登录';
+    $('accountCard').classList.remove('hidden');
+    $('continueBtn').onclick = () => handoff(data.session);
+    $('switchBtn').onclick = async () => {
+      await sb.auth.signOut();
+      $('accountCard').classList.add('hidden');
+      $('loginCard').classList.remove('hidden');
+    };
+    return;
+  }
+  $('loginCard').classList.remove('hidden');
+}
+
+// Tabs
+$('tabOtp').onclick = () => {
+  $('tabOtp').classList.add('on'); $('tabPw').classList.remove('on');
+  $('otpPane').classList.remove('hidden'); $('pwPane').classList.add('hidden');
+  showErr(''); showOk('');
+};
+$('tabPw').onclick = () => {
+  $('tabPw').classList.add('on'); $('tabOtp').classList.remove('on');
+  $('pwPane').classList.remove('hidden'); $('otpPane').classList.add('hidden');
+  showErr(''); showOk('');
+};
+
+// 邮箱验证码
+$('sendCodeBtn').onclick = async () => {
+  showErr(''); showOk('');
+  const email = $('otpEmail').value.trim();
+  if (!email) { showErr('请先填邮箱。'); return; }
+  $('sendCodeBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  $('sendCodeBtn').disabled = false;
+  if (error) { showErr(authErrZh(error, '发送失败，请稍后重试。')); return; }
+  $('codeRow').classList.remove('hidden');
+  showOk('验证码已发到邮箱，请查收后填入。');
+};
+$('verifyBtn').onclick = async () => {
+  showErr(''); showOk('');
+  const email = $('otpEmail').value.trim();
+  const token = $('otpCode').value.trim();
+  if (!email || !token) { showErr('邮箱和验证码都要填。'); return; }
+  $('verifyBtn').disabled = true;
+  const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  $('verifyBtn').disabled = false;
+  if (error) { showErr(authErrZh(error)); return; }
+  if (data && data.session) handoff(data.session);
+  else showErr('没有拿到登录结果，请重试。');
+};
+
+// 邮箱密码
+$('pwBtn').onclick = async () => {
+  showErr(''); showOk('');
+  const email = $('pwEmail').value.trim();
+  const password = $('pwPass').value;
+  if (!email || !password) { showErr('邮箱和密码都要填。'); return; }
+  $('pwBtn').disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  $('pwBtn').disabled = false;
+  if (error) { showErr(authErrZh(error)); return; }
+  if (data && data.session) handoff(data.session);
+  else showErr('没有拿到登录结果，请重试。');
+};
+
+init();
+</script>
+</body>
+</html>
