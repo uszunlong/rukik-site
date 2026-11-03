@@ -312,6 +312,23 @@
       <p class="muted">本阶段只建数据基础，不自动发放任何奖励。奖励规则与台账如下。</p>
       <div id="rewards"><div class="empty">加载中…</div></div>
     </div>
+
+    <div class="card">
+      <h2>用户支持（「联系 RUKIK」工单 · 迁移 0419）</h2>
+      <p class="muted">用户在 App 账号冲突提示中一键发起的协助请求。工单只是求助通道，不等于批准账号合并；合并须另行双账号验证与用户确认。冲突凭据仅显示脱敏值，目标账号标识仅本后台可见。</p>
+      <div class="row">
+        <select id="supStatusFilter" style="padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff">
+          <option value="">全部状态</option>
+          <option value="pending">待处理</option>
+          <option value="in_progress">处理中</option>
+          <option value="awaiting_user">待用户验证</option>
+          <option value="resolved">已解决</option>
+        </select>
+        <button class="btn small" id="supReload">刷新</button>
+      </div>
+      <div id="supportTickets" class="mt"><div class="empty">加载中…</div></div>
+      <div id="supportDetail" class="mt"></div>
+    </div>
     <div id="appErr" class="err"></div>
   </div>
 </div>
@@ -485,8 +502,110 @@ async function loadAll() {
     loadReIntelStatus();
     loadSchoolAssign();
     loadReviewQueues();
+    loadSupport();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
+  }
+}
+
+// ===== 用户支持工单（0419 · admin_support_* RPC） =====
+const SUP_STATUS = { pending: '待处理', in_progress: '处理中', awaiting_user: '待用户验证', resolved: '已解决' };
+const SUP_SCENE = { bind_credential: '绑定凭据', change_email: '更换邮箱' };
+let supRows = [];
+let supSelected = null;
+
+async function loadSupport() {
+  try {
+    $('supReload').onclick = () => loadSupport();
+    $('supStatusFilter').onchange = () => renderSupList();
+    const st = $('supStatusFilter').value || null;
+    const data = await rpc('admin_support_tickets_list', { p_status: st, p_limit: 100, p_offset: 0 });
+    supRows = data.rows || [];
+    renderSupList();
+  } catch (e) {
+    $('supportTickets').innerHTML = '<div class="empty">工单加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderSupList() {
+  const box = $('supportTickets');
+  const st = $('supStatusFilter').value;
+  const rows = st ? supRows.filter((t) => t.status === st) : supRows;
+  if (!rows.length) { box.innerHTML = '<div class="empty">暂无工单。</div>'; return; }
+  box.innerHTML = '<table><tr><th>状态</th><th>类型 / 场景</th><th>冲突凭据（脱敏）</th><th>发起用户</th><th>创建时间</th><th></th></tr>' +
+    rows.map((t) => `<tr>
+      <td><span class="tag ${t.status === 'resolved' ? 'ok' : (t.status === 'pending' ? 'warn' : '')}">${esc(SUP_STATUS[t.status] || t.status)}</span></td>
+      <td>${esc(t.type === 'account_conflict' ? '账号冲突 / 账号合并' : t.type)}<br><span class="muted">${esc(SUP_SCENE[t.scene] || t.scene)} · ${esc(t.source || '')}</span></td>
+      <td>${esc(t.credential_type || '')} · ${esc(t.credential_masked || '')}</td>
+      <td><span class="muted">${esc(t.user_id)}</span></td>
+      <td>${esc(String(t.created_at || '').replace('T', ' ').slice(0, 16))}</td>
+      <td><button class="btn small ghost" data-sup="${esc(t.id)}">查看</button></td>
+    </tr>`).join('') + '</table>';
+  box.querySelectorAll('button[data-sup]').forEach((btn) => {
+    btn.onclick = () => loadSupDetail(btn.dataset.sup);
+  });
+}
+
+async function loadSupDetail(id) {
+  supSelected = id;
+  const box = $('supportDetail');
+  box.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const data = await rpc('admin_support_ticket_detail', { p_id: id });
+    if (data.error) { box.innerHTML = '<div class="empty">工单不存在。</div>'; return; }
+    const t = data.ticket;
+    const events = data.events || [];
+    const thread = events.filter((e) => e.kind === 'user_message' || e.kind === 'admin_reply').map((e) =>
+      `<div class="sess"><b>${e.actor_type === 'admin' ? '管理员' : '用户'}</b> <span class="muted">${esc(String(e.created_at || '').replace('T', ' ').slice(0, 16))}</span><br>${esc(e.body || '').replace(/\n/g, '<br>')}</div>`).join('');
+    const trail = events.filter((e) => e.kind === 'status_change' || e.kind === 'created').map((e) =>
+      `<div class="cred">${esc(String(e.created_at || '').replace('T', ' ').slice(0, 16))} · ${e.kind === 'created' ? '工单创建' : '状态 ' + esc(SUP_STATUS[e.from_status] || e.from_status || '') + ' → ' + esc(SUP_STATUS[e.to_status] || e.to_status || '')}</div>`).join('');
+    box.innerHTML = `
+      <h3 style="margin:6px 0;color:var(--navy)">工单详情</h3>
+      <table>
+        <tr><th style="width:130px">状态</th><td>${esc(SUP_STATUS[t.status] || t.status)}</td></tr>
+        <tr><th>场景 / 来源</th><td>${esc(SUP_SCENE[t.scene] || t.scene)} · ${esc(t.source || '')}</td></tr>
+        <tr><th>冲突凭据（脱敏）</th><td>${esc(t.credential_type || '')} · ${esc(t.credential_masked || '')}</td></tr>
+        <tr><th>发起用户 UID</th><td>${esc(t.user_id)}</td></tr>
+        <tr><th>冲突目标账号（内部标识）</th><td>${esc(t.target_user_id || '未解析')}</td></tr>
+        <tr><th>创建时间</th><td>${esc(String(t.created_at || '').replace('T', ' '))}</td></tr>
+      </table>
+      <div class="mt">${thread || '<div class="empty">暂无对话。</div>'}</div>
+      <div class="mt">
+        <textarea id="supReplyBody" rows="3" style="width:100%;padding:12px;font-size:15px;border:1px solid var(--line);border-radius:10px" placeholder="回复用户（将通过站内通知告知用户）"></textarea>
+        <div class="row mt">
+          <button class="btn small" id="supReplyBtn">发送回复</button>
+          <select id="supSetStatus" style="padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff">
+            <option value="">变更状态…</option>
+            <option value="in_progress">处理中</option>
+            <option value="awaiting_user">待用户验证</option>
+            <option value="resolved">已解决</option>
+            <option value="pending">待处理</option>
+          </select>
+          <button class="btn small ghost" id="supStatusBtn">更新状态</button>
+        </div>
+        <div id="supErr" class="err"></div>
+      </div>
+      <div class="mt"><b style="color:var(--navy)">处理记录</b>${trail || '<div class="empty">暂无。</div>'}</div>`;
+    $('supReplyBtn').onclick = async () => {
+      const body = $('supReplyBody').value.trim();
+      if (!body) { $('supErr').textContent = '回复内容不能为空。'; return; }
+      $('supReplyBtn').disabled = true;
+      try {
+        await rpc('admin_support_ticket_reply', { p_id: id, p_body: body });
+        loadSupport(); loadSupDetail(id);
+      } catch (e) { $('supErr').textContent = '回复失败：' + e.message; $('supReplyBtn').disabled = false; }
+    };
+    $('supStatusBtn').onclick = async () => {
+      const v = $('supSetStatus').value;
+      if (!v) { $('supErr').textContent = '请先选择目标状态。'; return; }
+      $('supStatusBtn').disabled = true;
+      try {
+        await rpc('admin_support_ticket_set_status', { p_id: id, p_status: v });
+        loadSupport(); loadSupDetail(id);
+      } catch (e) { $('supErr').textContent = '状态更新失败：' + e.message; $('supStatusBtn').disabled = false; }
+    };
+  } catch (e) {
+    box.innerHTML = '<div class="empty">详情加载失败：' + esc(e.message) + '</div>';
   }
 }
 
