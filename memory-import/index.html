@@ -110,15 +110,15 @@
       </div>
       <div id="device-mac" class="mt">
         <p><span class="tag ok">当前可用</span></p>
-        <p class="muted">在 Mac 微信里打开要珍藏的会话，多选消息 →「合并转发」→「其他应用」→ 选一个暂存工具（如 Dukou 渡口）存成 ZIP；然后回到本页，在下方上传这个 ZIP 即可。已经导出的 ZIP 或 TXT 也可以直接上传。</p>
+        <p class="muted">Rukik Mac 导入助手已在本机验证：在 Mac 微信里打开要珍藏的会话，多选消息 →「合并转发」→「其他应用」→ 选 Rukik，记录先到助手里本机预览、由您确认；助手目前为本机验证形态、尚未对外分发。已经导出的 ZIP 或 TXT，也可以回到本页在下方直接上传导入。</p>
       </div>
       <div id="device-windows" class="mt" style="display:none">
-        <p><span class="tag no">准备中</span></p>
-        <p class="muted">Windows 版的导出小工具还在准备中：目前 Windows 微信导出的文件还不能一键变成可导入的包。已经在 Mac 上导出过 ZIP 的话，直接切到「Mac 电脑」用下方上传即可，导入效果完全一样。</p>
+        <p><span class="tag">网页导入</span></p>
+        <p class="muted">Windows 暂无专用的导入工具，本页的网页上传就是 Windows 的导入通道：手上已有导出的 ZIP 或 TXT 聊天记录包的话，切到「Mac 电脑」一栏、用下方上传即可导入，效果完全一样；还没有导出包的话，先在 Mac 上导出再上传。</p>
       </div>
       <div id="device-iphone" class="mt" style="display:none">
-        <p><span class="tag no">开发中</span></p>
-        <p class="muted">手机分享导入开发中：以后在 iPhone 微信里点「分享」就能把选好的对话直接送进 RUKIK。现在先用 Mac 导出再上传，导入完成后手机上打开『问 Rukik』照样能调用这段记忆。</p>
+        <p><span class="tag ok">当前可用</span></p>
+        <p class="muted">在 iPhone 微信里打开要珍藏的内容——一条文件消息（如 PDF、ZIP）、一篇公众号文章或一张图片——点「…」→「用其他应用打开」→ 选 Rukik；内容先暂存在手机上，再打开 Rukik App（需 2.58.0 版），在「我的专业团队 → 知识库」顶部的「待导入」入口里预览并确认，确认后才导入您的记忆。注意：一次分享一个文件；微信里多选后的「合并转发」不会进入系统分享、这条路走不通，整段聊天记录请仍用 Mac 导出后在本页上传；语音消息在微信里没有分享出口，暂不支持。</p>
       </div>
     </div>
 
@@ -443,7 +443,7 @@ async function loadFacts(status) {
   }
 }
 
-// ---------- 设备感知推荐（内部版：Mac 路径实装，其余为诚实状态） ----------
+// ---------- 设备感知推荐（内部版：Mac 助手本机验证＋网页上传；iPhone 走 App 分享；Windows 网页导入兜底） ----------
 document.querySelectorAll('button[data-device]').forEach((btn) => {
   btn.onclick = () => {
     const d = btn.dataset.device;
