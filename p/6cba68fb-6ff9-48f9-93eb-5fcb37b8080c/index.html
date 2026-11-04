@@ -167,6 +167,11 @@
       <button id="chatSend" type="button">发送</button>
     </div>
     <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
+    <div class="dl" id="chatDownload" hidden>
+      网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
+      <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
+    </div>
+  </div>
 <!-- ===== 联系专家本人（0260）独立增量块：自带样式/脚本，不依赖聊天模块内部变量 ===== -->
 <style>
   .ctc { margin-top:16px; }
@@ -197,11 +202,6 @@
     <div class="ctc-msg" id="ctcMsg"></div>
   </div>
 </div>
-    <div class="dl" id="chatDownload" hidden>
-      网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
-      <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -854,9 +854,10 @@
       }
     }
     function renderCtc() {
-      var logged = !!ctcSession;
-      wrap.style.display = logged ? 'block' : 'none';
-      if (!logged) { ctcOpen = false; panel.style.display = 'none'; }
+      // 2026-11-04 用户裁决：已同意公开的联系方式对未登录访客开放——本区不再按登录态显隐，
+      // 任何访客打开页面即可见（字段仍只经 get_expert_public_contact 的逐字段同意门读取）。
+      // 留资表单行为不变：提交时仍按既有逻辑校验登录（见下方 submit 处理），本次未动。
+      wrap.style.display = 'block';
     }
     sb2.auth.getSession().then(function (res) {
       ctcSession = (res && res.data && res.data.session) || null;
