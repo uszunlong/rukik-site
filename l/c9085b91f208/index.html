@@ -58,6 +58,13 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .ask-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #EAE3D5;padding-top:10px;flex:0 0 auto}
 .ask-bar input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
 .ask-send{background:#1F2A44;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.ask-aibtn{background:#C8A24A;color:#fff;border:0;border-radius:999px;padding:10px 14px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.ask-aibtn[disabled]{opacity:.6;cursor:default}
+.expert-bar{flex-direction:column;align-items:stretch}
+.expert-sel{width:100%;border:1px solid #E0D5BC;border-radius:10px;padding:9px 10px;font-size:15px;background:#fff;color:#1F2A44}
+.expert-row{display:flex;gap:8px;align-items:center;width:100%}
+.expert-row input{flex:1 1 auto;border:1px solid #E0D5BC;border-radius:999px;padding:10px 14px;font-size:16px;min-width:0}
+.msg-tag{font-size:11px;font-weight:700;opacity:.75;margin-bottom:3px}
 .ask-leadbtn{background:none;border:0;color:#7A5A21;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;padding:6px 2px;flex:0 0 auto;margin-left:auto}
 .ask-lead{background:#fff;border:1px solid #EAE3D5;border-radius:14px;padding:12px;margin:8px 0}
 .ask-lead input[type=text],.ask-lead input:not([type=checkbox]),.subbox input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;border:1px solid #E0D5BC;border-radius:10px;padding:10px 12px;font-size:15px;margin:8px 0}
@@ -68,6 +75,8 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
 .qcard:active{background:#F2E6CF}
 .ask-quick-toggle{background:none;border:0;color:#7A5A21;font-size:13px;font-weight:700;cursor:pointer;padding:4px 2px}
 .subbox{background:#fff;border:1px solid #EAE3D5;border-radius:16px;padding:14px;margin-top:16px}
+.mod{margin-top:20px}.mod-t{font-size:17px;font-weight:800;color:#1D2A4D;margin:0 0 8px;padding-top:14px;border-top:1px solid #EAE3D5}
+.mod table{width:100%;border-collapse:collapse}.est-empty{background:#FBF7EE;border:1px dashed #D9C9A3;border-radius:12px;padding:10px 12px;font-size:14px;color:#6B5B2E}
 </style></head><body><div class="wrap">
 <div class="status"><div class="big">这套房源已下架</div>
 <p class="spec">状态由经纪人确认更新于 2026-10-30。</p></div>
@@ -233,5 +242,74 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
     .then(function(r){ $('rkSubMsg').textContent=(r.status===200 && r.data.ok)
       ? '已订阅。这套房状态变化时会通知您。' : '订阅没成功，请稍后再试。'; })
     .catch(function(){ $('rkSubMsg').textContent='网络有点问题，请稍后再试。'; }); });
+  // expert mode (LISTING_WEB_EXPERT_MODE_V1): only activates when the
+  // URL carries ?xt=; verify failure silently keeps visitor mode. The
+  // token lives only in a memory variable, never in local storage.
+  var rkXt=null;
+  try { rkXt=new URLSearchParams(location.search).get('xt'); } catch(e) {}
+  if(rkXt) {
+    var DMFN='https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/dm-ai-draft';
+    var xThread=null, xListingId=null, xName='', xBusy=false, xAiBusy=false;
+    function xpost(url, body){ return fetch(url, {method:'POST',
+      headers:{'apikey':cfg.anon,'Content-Type':'application/json'}, body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(d){ return {status:r.status, data:d}; })
+        .catch(function(){ return {status:r.status, data:{}}; }); }); }
+    function xMsg(t){ var el=$('rkExpertMsg'); if(el) el.textContent=t||''; }
+    function xBubble(text, cls, tag){ var d=document.createElement('div');
+      d.className='msg '+cls;
+      if(tag) { var t=document.createElement('div'); t.className='msg-tag'; t.textContent=tag; d.appendChild(t); }
+      var b=document.createElement('div'); b.textContent=text; d.appendChild(b);
+      $('rkMsgs').appendChild(d); rkScrollBottom(); return d; }
+    function xRender(msgs){ $('rkMsgs').innerHTML='';
+      (msgs||[]).forEach(function(m){
+        if(m.role==='visitor') xBubble(m.content, 'ai', '访客');
+        else if(m.role==='expert') xBubble(m.content, 'me', '专家本人'+(m.name?' · '+m.name:''));
+        else { var d=document.createElement('div'); d.className='msg ai';
+          var t=document.createElement('div'); t.className='msg-tag'; t.textContent='AI 团队'; d.appendChild(t);
+          var b=document.createElement('div'); b.innerHTML=rkMd(m.content); d.appendChild(b);
+          $('rkMsgs').appendChild(d); } });
+      rkScrollBottom(); }
+    xpost(cfg.fn, {action:'expert_verify', xt:rkXt, slug:cfg.slug}).then(function(r){
+      if(r.status!==200 || !r.data || !r.data.expert_mode) return;
+      xListingId=r.data.listing && r.data.listing.id;
+      xName=(r.data.expert && r.data.expert.name) || '';
+      $('rkExpertBar').hidden=false;
+      var vb=$('rkVisitorBar'); if(vb) vb.style.display='none';
+      var q=$('rkQuick'); if(q) q.style.display='none';
+      var ld=$('rkLead'); if(ld) ld.style.display='none';
+      $('rkSub').textContent='专家本人模式'+(xName?' · '+xName:'');
+      var sel=$('rkThreadSel');
+      (r.data.threads||[]).forEach(function(t){ var o=document.createElement('option');
+        o.value=t.session_id;
+        o.textContent=(t.preview||'（无内容）')+' · '+t.msg_count+' 条';
+        sel.appendChild(o); });
+      if(!(r.data.threads||[]).length) xMsg('暂时还没有访客在这套房源下留言。');
+      sel.addEventListener('change', function(){ xThread=sel.value||null;
+        if(!xThread) return; xMsg('');
+        xpost(cfg.fn, {action:'expert_thread', xt:rkXt, slug:cfg.slug, session_id:xThread})
+        .then(function(rr){ if(rr.status===200 && rr.data && rr.data.messages) xRender(rr.data.messages);
+          else xMsg('这条会话暂时打不开，请换一条试试。'); })
+        .catch(function(){ xMsg('网络有点问题，请稍后再试。'); }); });
+      $('rkExpertSend').addEventListener('click', function(){ var v=$('rkExpertInput').value.trim();
+        if(!xThread) { xMsg('请先在上方选择一条访客会话。'); return; }
+        if(!v || xBusy) return; xBusy=true; xMsg('');
+        xpost(cfg.fn, {action:'expert_send', xt:rkXt, slug:cfg.slug, session_id:xThread, message:v})
+        .then(function(rr){ xBusy=false;
+          if(rr.status===200 && rr.data && rr.data.ok) { xBubble(v, 'me', '专家本人'+(xName?' · '+xName:'')); $('rkExpertInput').value=''; }
+          else xMsg('发送失败，请检查网络后重试。'); })
+        .catch(function(){ xBusy=false; xMsg('发送失败，请检查网络后重试。'); }); });
+      $('rkAiBtn').addEventListener('click', function(){ if(!xThread) { xMsg('请先在上方选择一条访客会话。'); return; }
+        if(xAiBusy) return; var cur=$('rkExpertInput').value;
+        var act=cur.trim() ? 'polish' : 'draft'; xAiBusy=true;
+        var btn=$('rkAiBtn'); btn.disabled=true; var old=btn.textContent; btn.textContent='生成中…';
+        xpost(DMFN, {surface:'listing_reply', web_expert_token:rkXt, listing_id:xListingId,
+          session_id:xThread, action:act, current_draft:cur})
+        .then(function(rr){ xAiBusy=false; btn.disabled=false; btn.textContent=old;
+          if(rr.status===200 && rr.data && rr.data.ok && rr.data.draft) { $('rkExpertInput').value=rr.data.draft; $('rkExpertInput').focus(); xMsg('草稿已生成，请您改定后点发送。'); }
+          else xMsg('这次没能生成草稿，请稍后再试。'); })
+        .catch(function(){ xAiBusy=false; btn.disabled=false; btn.textContent=old;
+          xMsg('这次没能生成草稿，请稍后再试。'); }); });
+    }).catch(function(){});
+  }
 })();
 </script></body></html>
