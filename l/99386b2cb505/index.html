@@ -187,21 +187,57 @@ td.k{color:#8A7B5C;width:96px;white-space:nowrap}
   function send(){ var v=$('rkInput').value.trim(); if(!v||sending) return;
     sending=true; bubble(v, true); $('rkInput').value='';
     // 真实等待态：只表示「等待中」这一个真实状态，不编造进度阶段；
-    // 回复到达即移除，网络失败则原地变可点击重试的失败行。
+    // 流式首个增量到达即移除等待行、切换为逐字渲染的回复气泡；
+    // 首字前失败则原地变可点击重试的失败行（与旧整段口径一致）。
     var wait=bubble('正在为您核对这套房的信息…', false, true);
-    ensureSession().then(function(t){ return post({action:'chat', session_token:t, message:v}); })
-    .then(function(r){ sending=false; if(wait) wait.remove();
-      if(r.status===200 && r.data.reply) { bubble(r.data.reply, false); replies++;
-        if(replies>=2 && !leadShown) showLead(); }
-      else if(r.data && r.data.error==='round_limit') { bubble('这次先聊到这儿——想继续了解，直接请经纪人联系您吧。', false); showLead(); }
-      else if(r.status===401) { tok=null; try { sessionStorage.removeItem(tokKey); } catch(e) {}
-        bubble('会话过期了，请关掉面板重新打开。', false); }
-      else bubble('这个问题我暂时答不上来，换个问法试试，或者请经纪人直接联系您。', false); })
-    .catch(function(){ sending=false;
+    var aiEl=null, acc='', got=false, rafId=0;
+    function render(){ if(aiEl) { aiEl.innerHTML=rkMd(acc); rkScrollBottom(); } }
+    function scheduleRender(){ if(rafId) return;
+      rafId=setTimeout(function(){ rafId=0; render(); }, 60); }
+    function fail(){ sending=false;
+      if(aiEl) { aiEl.remove(); aiEl=null; }
       if(wait) { wait.classList.remove('wait'); wait.classList.add('waitfail');
         wait.textContent='发送失败，网络有点问题。点这里重试。';
         wait.addEventListener('click', function(){ wait.remove(); $('rkInput').value=v; send(); }); }
-      else bubble('网络有点问题，请稍后再试。', false); }); }
+      else bubble('网络有点问题，请稍后再试。', false); }
+    function finishOk(){ sending=false;
+      if(rafId) { clearTimeout(rafId); rafId=0; }
+      render(); replies++; if(replies>=2 && !leadShown) showLead(); }
+    ensureSession().then(function(t){ return fetch(cfg.fn, {method:'POST',
+      headers:{'apikey':cfg.anon,'Content-Type':'application/json'},
+      body:JSON.stringify({action:'chat', session_token:t, message:v, stream:true})}); })
+    .then(function(r){
+      var ct=(r.headers && r.headers.get('content-type'))||'';
+      if(!r.ok || ct.indexOf('event-stream')<0 || !r.body || !r.body.getReader) {
+        // 非流式回落（网关旧版/错误体/轮次上限等）：按原 JSON 口径
+        // 处理，文案与行为与旧版完全一致。
+        return r.json().then(function(d){ sending=false; if(wait) { wait.remove(); wait=null; }
+          if(r.status===200 && d.reply) { bubble(d.reply, false); replies++;
+            if(replies>=2 && !leadShown) showLead(); }
+          else if(d && d.error==='round_limit') { bubble('这次先聊到这儿——想继续了解，直接请经纪人联系您吧。', false); showLead(); }
+          else if(r.status===401) { tok=null; try { sessionStorage.removeItem(tokKey); } catch(e) {}
+            bubble('会话过期了，请关掉面板重新打开。', false); }
+          else bubble('这个问题我暂时答不上来，换个问法试试，或者请经纪人直接联系您。', false); })
+        .catch(function(){ fail(); });
+      }
+      var reader=r.body.getReader(), dec=new TextDecoder(), buf='';
+      function pump(){ return reader.read().then(function(res){
+        if(res.done) { if(got) finishOk(); else fail(); return; }
+        buf+=dec.decode(res.value, {stream:true});
+        var idx;
+        while((idx=buf.indexOf('\n\n'))>=0) { var rawEv=buf.slice(0, idx); buf=buf.slice(idx+2);
+          rawEv.split('\n').forEach(function(line){ var lt=line.trim();
+            if(lt.indexOf('data:')!==0) return; var dd=lt.slice(5).trim();
+            if(!dd || dd==='[DONE]') return;
+            try { var j=JSON.parse(dd);
+              var dl=j.choices && j.choices[0] && j.choices[0].delta;
+              if(dl && typeof dl.content==='string' && dl.content) {
+                if(!got) { got=true; if(wait) { wait.remove(); wait=null; }
+                  aiEl=bubble('', false); }
+                acc+=dl.content; scheduleRender(); } } catch(e) {} }); }
+        return pump(); }).catch(function(){ if(got) finishOk(); else fail(); }); }
+      return pump(); })
+    .catch(function(){ fail(); }); }
   $('rkAskOpen').addEventListener('click', openPanel);
   // 快捷咨询模板卡片（V1.0）：点击把完整问句填入输入框并直接发送，
   // 与手动输入走同一条 send() 链路（等待态/失败重试/轮次上限全复用）；
