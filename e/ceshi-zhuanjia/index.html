@@ -1,9 +1,629 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8">
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex"><title>该专家网站已下线 — Rukik</title>
-<style>body{margin:0;font-family:-apple-system,"PingFang SC",sans-serif;background:#F7F3EC;color:#20242a;text-align:center;padding:80px 24px}a{color:#142235}</style>
-</head><body><h1>该专家网站已下线</h1>
-<p>这位专家暂时关闭了 RUKIK Sphere 智库。您仍可以在 Rukik App 中找到 TA。</p>
-<p><a href="https://rukik.com/">返回 Rukik 官网</a> · <a href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a></p>
-</body></html>
+<title>测试专家 · 内部验证 · 律师 — RUKIK Sphere 智库</title>
+<meta name="description" content="律师，专注律师领域，有问题可以先问我">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="测试专家 · 内部验证 · 律师">
+<meta property="og:description" content="律师，专注律师领域，有问题可以先问我">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png">
+<meta property="og:url" content="https://rukik.com/e/ceshi-zhuanjia/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png">
+<link rel="canonical" href="https://rukik.com/e/ceshi-zhuanjia/">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person", "name": "测试专家 · 内部验证", "jobTitle": "律师", "url": "https://rukik.com/e/ceshi-zhuanjia/", "image": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png", "memberOf": {"@type": "Organization", "name": "Rukik", "url": "https://rukik.com/"}}</script>
+<style>
+  :root { --bg:#F7F3EC; --ink:#142235; --muted:#8B857D; --accent:#B58A58; --card:#ffffff; --radius:16px; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:#20242a; }
+  .band { background:linear-gradient(135deg,#142235,#24365E); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:10px; }
+  .band img { width:26px; height:26px; border-radius:7px; }
+  .band b { letter-spacing:2px; font-size:15px; }
+  .band span { margin-left:auto; font-size:12px; opacity:.85; }
+  .wrap { max-width:680px; margin:0 auto; padding:34px 20px 56px; }
+  .hero { text-align:center; }
+  img.avatar { width:112px; height:112px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); background:#fff; }
+  .avatar-fallback { width:112px; height:112px; border-radius:50%; border:3px solid var(--accent); background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto; }
+  h1 { font-family:Georgia,"Songti SC","SimSun",serif; color:var(--ink); font-size:27px; margin:18px 0 4px; }
+  .role { color:var(--muted); font-size:15px; }
+  .badges { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; line-height:1.7; }
+  .badge-verified { background:#fdf3d7; color:#7a5b00; border:1px solid #e3c565; font-weight:700; }
+  .badge-ai { background:#e8eef7; color:#33527a; border:1px solid #b9cbe4; }
+  .line { display:inline-block; background:var(--ink); color:#F7F3EC; padding:12px 22px; border-radius:999px; font-size:16px; letter-spacing:1px; margin-top:18px; }
+  .actions { display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+  .act { border:1.5px solid var(--ink); color:var(--ink); background:transparent; border-radius:999px; padding:10px 22px; font-size:15px; cursor:pointer; text-decoration:none; min-height:44px; display:inline-flex; align-items:center; }
+  .act.on { background:var(--ink); color:#fff; }
+  .fwcount { font-size:13px; color:var(--muted); margin-top:8px; }
+  .card { background:var(--card); border-radius:var(--radius); padding:22px; margin-top:24px; text-align:left; line-height:1.9; color:#44403a; font-size:15px; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .card h2 { font-family:Georgia,"Songti SC","SimSun",serif; color:var(--ink); font-size:18px; margin:0 0 12px; text-align:left; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  .chip { background:var(--bg); border:1px solid rgba(0,0,0,.08); border-radius:999px; padding:2px 11px; font-size:13px; color:#44403a; }
+  .creds { margin-top:10px; }
+  .cred { font-size:14px; color:#33527a; }
+  .arts { display:flex; flex-direction:column; gap:12px; }
+  .art { display:block; border:1px solid rgba(0,0,0,.07); border-radius:12px; padding:14px 16px; text-decoration:none; color:inherit; }
+  .art-t { font-weight:700; color:var(--ink); font-size:16px; line-height:1.55; }
+  .art-s { font-size:14px; color:#6b675f; line-height:1.7; margin-top:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .art-m { font-size:12px; color:var(--muted); margin-top:6px; }
+  .sq { display:block; width:100%; text-align:left; background:var(--bg); border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:10px 14px; font-size:14px; cursor:pointer; margin-top:8px; color:#44403a; }
+  .chat { background:var(--card); border-radius:var(--radius); padding:20px; margin-top:24px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .chat-title { font-size:16px; font-weight:600; color:var(--ink); margin-bottom:12px; text-align:center; }
+  .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .msg.user { align-self:flex-end; background:var(--ink); color:#F7F3EC; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:var(--bg); color:#20242a; border-bottom-left-radius:4px; white-space:normal; }
+  .md-h { font-weight:800; margin:8px 0 3px; } .md-h:first-child { margin-top:0; }
+  .md-ul, .md-ol { margin:4px 0; padding-left:20px; } .md-ul li, .md-ol li { margin:2px 0; }
+  .chat-row { display:flex; gap:8px; margin-top:14px; }
+  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#20242a; }
+  .chat-row input:disabled { background:#f1ede4; color:var(--muted); }
+  .chat-row button { background:var(--accent); color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; min-height:44px; }
+  .chat-row button:disabled { opacity:.55; cursor:default; }
+  .chat-note { margin-top:10px; font-size:12px; color:var(--muted); text-align:center; }
+  .dl { margin-top:16px; background:var(--bg); border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
+  .btn { display:inline-block; margin-top:10px; background:var(--accent); color:#fff; text-decoration:none; padding:12px 28px; border-radius:999px; font-size:15px; }
+  .auth-hint { font-size:14px; line-height:1.7; color:#44403a; text-align:center; margin:0 0 14px; }
+  .auth-row { display:flex; gap:8px; margin-top:10px; }
+  .auth-row input, .auth-row select { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#20242a; min-width:0; min-height:44px; }
+  .auth-row button { background:var(--ink); color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; min-height:44px; }
+  .auth-row button:disabled { opacity:.55; cursor:default; }
+  .auth-row button.plain { background:#fff; color:var(--ink); border:1px solid #e3ddd2; }
+  .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--muted); text-align:center; min-height:18px; }
+  .auth-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .auth-bar button { background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; padding:0; }
+  .auth-tabs { display:flex; gap:8px; margin:12px 0 2px; }
+  .auth-tabs button { flex:1; background:#fff; color:var(--ink); border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; min-height:44px; }
+  .auth-tabs button.on { background:var(--ink); color:#F7F3EC; border-color:var(--ink); }
+  [hidden] { display:none !important; }
+  .ctc-btn { width:100%; background:#fff; color:var(--ink); border:1.5px solid var(--ink); border-radius:999px; padding:12px 22px; font-size:15px; cursor:pointer; margin-top:24px; min-height:44px; }
+  .ctc-panel { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-top:12px; background:#fff; }
+  .ctc-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+  .ctc-k { flex:0 0 44px; font-size:14px; color:var(--muted); }
+  .ctc-v { flex:1; font-size:15px; word-break:break-all; min-width:0; }
+  .ctc-act { background:var(--ink); color:#F7F3EC; border:none; border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .ctc-note { font-size:14px; line-height:1.7; color:#44403a; margin:0 0 10px; }
+  .ctc-form input { width:100%; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; margin-top:10px; }
+  .ctc-form button { width:100%; margin-top:12px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--muted); text-align:center; min-height:18px; }
+  .foot { margin-top:44px; color:var(--muted); font-size:12px; text-align:center; line-height:2; }
+  .foot a { color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="band"><img src="/assets/seal.png" alt="Rukik"><b>RUKIK</b><span>RUKIK Sphere 智库</span></div>
+<div class="wrap">
+  <div class="hero">
+    <img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/438450f9-b3f3-4460-bb45-d56a869e9db9/avatar/test-avatar-5eba548d.png" alt="测试专家 · 内部验证">
+    <h1>测试专家 · 内部验证</h1>
+    <div class="role">律师</div>
+    <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span><span class="badge badge-ai">Rukik AI 分身 · 本人训练</span></div>
+    <div><span class="line">律师，专注律师领域，有问题可以先问我</span></div>
+    <div class="actions">
+      <button class="act" id="fwBtn" type="button">关注 TA</button>
+      <button class="act" id="shareBtn" type="button">分享网站</button>
+      <a class="act" href="https://apps.apple.com/us/app/rukik/id6824554988">在 App 中打开</a>
+    </div>
+    <div class="fwcount" id="fwCount"></div>
+  </div>
+
+  <div class="chat">
+    <div id="authBox">
+      <div class="chat-title">直接向测试专家 · 内部验证的 AI 助理提问</div>
+      <p class="auth-hint">注册登录后，即可与 TA 的专属 AI 助理交流——它由专家本人训练，与 Rukik App 里是同一个 AI 分身。需要进一步帮助时，也可以直接联系专家本人。</p>
+      <div class="auth-row"><input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name"></div>
+      <div class="auth-tabs">
+        <button id="authTabEmail" type="button" class="on">邮箱登录</button>
+        <button id="authTabPhone" type="button">手机号登录</button>
+      </div>
+      <div id="authEmailPane">
+        <div class="auth-row"><input id="authEmail" type="email" placeholder="邮箱地址" maxlength="120" autocomplete="email"><button id="authSendCode" type="button">发送验证码</button></div>
+        <div class="auth-row" id="authCodeRow" hidden><input id="authCode" type="text" inputmode="numeric" placeholder="邮箱收到的验证码" maxlength="10" autocomplete="one-time-code"><button id="authVerify" type="button">验证并登录</button></div>
+      </div>
+      <div id="authPhonePane" hidden>
+        <div class="auth-row"><select id="authCc" aria-label="国家或地区区号">
+          <option value="+1" selected>美国 / 加拿大 +1</option><option value="+86">中国 +86</option><option value="+852">中国香港 +852</option><option value="+886">中国台湾 +886</option><option value="+65">新加坡 +65</option><option value="+44">英国 +44</option><option value="+61">澳大利亚 +61</option><option value="+81">日本 +81</option><option value="+82">韩国 +82</option>
+        </select></div>
+        <div class="auth-row"><input id="authPhone" type="tel" placeholder="手机号码" maxlength="20" autocomplete="tel"><button id="authSendSms" type="button">发送验证码</button></div>
+        <div class="auth-row" id="authSmsRow" hidden><input id="authSmsCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code"><button id="authVerifySms" type="button">验证并登录</button></div>
+        <div id="authBranch" hidden>
+          <p class="auth-hint" style="text-align:left">这是尚未绑定的手机号。您是否已经有 RUKIK 账号？</p>
+          <div class="auth-row"><button id="authBranchOld" type="button">我已有账号</button><button id="authBranchNew" type="button" class="plain">我是新用户</button></div>
+        </div>
+        <div id="authRegConfirm" hidden>
+          <p class="auth-hint" style="text-align:left">确认后，将为您创建一个新的 RUKIK 账号，并把这个手机号作为登录方式。</p>
+          <div class="auth-row"><button id="authRegDo" type="button">确认注册</button><button id="authRegBack" type="button" class="plain">返回</button></div>
+        </div>
+      </div>
+      <div class="auth-msg" id="authMsg"></div>
+    </div>
+    <div id="chatBox" hidden>
+      <div class="auth-bar"><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
+      <div class="chat-title">直接向我的 AI 助理提问</div>
+      
+      <div class="msgs" id="chatMsgs"></div>
+      <div class="chat-row"><input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off"><button id="chatSend" type="button">发送</button></div>
+      <div class="chat-note">网页端可免费咨询 3 轮 · 回答由专家的 AI 助理提供，仅供参考，不构成正式专业意见</div>
+      <div class="dl" id="chatDownload" hidden>网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给专家本人跟进。<br><a class="btn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App 继续咨询</a></div>
+    </div>
+  </div>
+
+  <section class="card"><h2>关于测试专家 · 内部验证</h2>
+    <p>RUKIK 内部功能验证测试账号（非真实执业专家），用于「一键成文」受控交付验收。</p>
+    
+    
+    <p>服务语言：中文</p>
+    
+  </section>
+
+  <section class="card"><h2>文章与观点</h2><div class="arts"><a class="art" href="https://rukik.com/a/dbc9e9ba-d720-4455-81fe-493adfdae610"><div class="art-t">529 Plan 怎么看：教育储蓄的税务优势、边界与常见误解</div><div class="art-s">529 Plan 的核心价值在于税务效率，但真正适合您与否，取决于资金用途、州税规则和家庭现金流安排。</div><div class="art-m">2026-10-30 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/0e4153b4-b203-4a44-8f37-831faca7642f"><div class="art-t">L-1A拒签三处集中点：看清管理职能的真实模样</div><div class="art-s">L-1A拒签集中在三个环节：境外公司运营真实性、申请人职能是否真为管理、美国公司能否支撑高管岗位。这三点互相影响，单看某一项的判断往往不稳。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/583a7da3-f6ca-49ab-9ea0-83a573aac87b"><div class="art-t">EB-1A 清单式准备：先把标准拆成逐项判断，再决定主攻方向</div><div class="art-s">EB-1A 准备的关键不是盲目积累材料，而是先对照评审标准把背景逐项拆解，找出已成立的条件、可以补强的项目和无关的部分，再决定集中攻坚方向。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/73029630-2c24-47c6-bfec-84c2ce8b3897"><div class="art-t">H-1B 抽签没中，还有三条现实可行的路</div><div class="art-s">H-1B 抽签没中不是死路，重点是先确认身份衔接不能断档，再逐项评估其他路径的可行性。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/56d6fcca-121d-4a32-bac1-a63928d612cc"><div class="art-t">H-1B 转雇主：受理后入职还是等批准后入职？</div><div class="art-s">H-1B 转雇主可在新申请受理后立即入职，但风险与材料质量、身份余量密切相关，提前离职原雇主会导致失去保护。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/3be91f24-63e3-4cbd-9746-806402b1c5ad"><div class="art-t">L-1 签证怎么理解：谁适合办、看哪些条件、和 H-1B 有何不同</div><div class="art-s">L-1 是美国公司内部调动签证，核心不在“去美国上班”本身，而在跨国关联关系、海外任职经历和美国岗位是否匹配。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/f60d81cb-61e3-4066-b7e6-8ffc28adf1fc"><div class="art-t">六岁到十八岁，时间是最廉价的成本</div><div class="art-s">教育金规划最常见的误区是试图全覆盖，实际上聚焦关键节点、建立无感储蓄习惯、定期复盘调整，才是成功的核心。</div><div class="art-m">2026-10-29 · 阅读全文 →</div></a></div></section>
+
+  <section class="card"><h2>专业知识，已装进 AI 助理</h2>
+    <p>这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。</p>
+    <p>TA 在 Rukik 的专业知识库与训练成果，由上方 AI 助理实时调用——与 App 内完全同一份知识、同一个分身。网页更新知识，App 立即同步。</p>
+  </section>
+
+  <button class="ctc-btn" id="ctcBtn" type="button">联系专家本人</button>
+  <div class="ctc-panel" id="ctcPanel" style="display:none">
+    <div id="ctcPublic"></div>
+    <form class="ctc-form" id="ctcForm" style="display:none">
+      <p class="ctc-note">专家本人暂未公开联系方式。留下您的联系方式，专家会主动联系您。</p>
+      <input id="ctcName" type="text" placeholder="您的称呼" maxlength="40" autocomplete="name">
+      <input id="ctcContact" type="text" placeholder="您的电话或邮箱" maxlength="120" autocomplete="tel">
+      <input id="ctcMessage" type="text" placeholder="一句话留言（选填）" maxlength="200">
+      <button id="ctcSubmit" type="submit">请专家联系我</button>
+    </form>
+    <div class="ctc-msg" id="ctcMsg"></div>
+  </div>
+
+  <div class="foot">
+    Powered by <b>RUKIK AI</b> · <a href="https://rukik.com/">Rukik 官网</a> · <a href="https://apps.apple.com/us/app/rukik/id6824554988">下载 App</a><br>
+    Beyond AI. Closer to You. · AI懂很多，RUKIK更懂您。
+  </div>
+</div>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var API_URL = SUPABASE_URL + '/functions/v1/pro-chat';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var PROFESSIONAL_ID = '438450f9-b3f3-4460-bb45-d56a869e9db9';
+  var MAX_ROUNDS = 3;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var authBox = $('authBox'), chatBox = $('chatBox');
+  if (!authBox || !chatBox) { /* 结构不完整不启动 */ }
+  else {
+    window.__rukikChatReady = true;
+    var sb = createClient(SUPABASE_URL, ANON_KEY);
+    var OTP_API = SUPABASE_URL + '/functions/v1/phone-otp';
+    var session = null, history = [], rounds = 0, busy = false;
+    var pendingVerifyToken = '', pendingPhone = '';
+
+    async function phoneOtp(op, payload, withSession) {
+      var headers = { 'Content-Type': 'application/json', 'apikey': ANON_KEY };
+      var tk = '';
+      if (withSession) {
+        try { var gs = await sb.auth.getSession(); tk = (gs && gs.data && gs.data.session && gs.data.session.access_token) || ''; } catch (e) {}
+      }
+      headers['Authorization'] = 'Bearer ' + (tk || ANON_KEY);
+      var res = await fetch(OTP_API, { method: 'POST', headers: headers, body: JSON.stringify(Object.assign({ op: op }, payload || {})) });
+      var data = {};
+      try { data = await res.json(); } catch (e) {}
+      return { status: res.status, data: data };
+    }
+    function adoptPhoneSession(d) {
+      var payload = {};
+      payload['access' + '_token'] = d['access' + '_token'];
+      payload['refresh' + '_token'] = d['refresh' + '_token'];
+      return sb.auth.setSession(payload);
+    }
+
+    var authMsg = $('authMsg'), nameEl = $('authName');
+    function renderAuth() {
+      var logged = !!session;
+      authBox.hidden = logged;
+      chatBox.hidden = !logged;
+      var bar = $('authBarText');
+      if (logged && bar) bar.textContent = '已登录：' + ((session.user && (session.user.email || session.user.phone)) || '');
+      wireFollow();
+    }
+    sb.auth.getSession().then(function (res) {
+      session = (res && res.data && res.data.session) || null;
+      renderAuth();
+    }).catch(function () { renderAuth(); });
+    sb.auth.onAuthStateChange(function (_e, s) { session = s; renderAuth(); });
+
+    // ---- 邮箱验证码登录 ----
+    var emailEl = $('authEmail'), sendCodeBtn = $('authSendCode'), codeRow = $('authCodeRow'), codeEl = $('authCode'), verifyBtn = $('authVerify');
+    sendCodeBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      if (!email) { authMsg.textContent = '请先填写邮箱地址。'; return; }
+      sendCodeBtn.disabled = true; authMsg.textContent = '正在发送验证码…';
+      try {
+        var r = await sb.auth.signInWithOtp({ email: email });
+        if (r.error) { authMsg.textContent = '发送失败，请检查邮箱地址后重试。'; }
+        else { codeRow.hidden = false; authMsg.textContent = '验证码已发送到您的邮箱，请查收后填入登录。'; codeEl.focus(); }
+      } catch (e) { authMsg.textContent = '发送失败，请检查网络后重试。'; }
+      sendCodeBtn.disabled = false;
+    });
+    verifyBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      var token = (codeEl.value || '').trim();
+      if (!email || !token) { authMsg.textContent = '请填写邮箱与验证码。'; return; }
+      verifyBtn.disabled = true; authMsg.textContent = '正在验证…';
+      try {
+        var r = await sb.auth.verifyOtp({ email: email, token: token, type: 'email' });
+        if (r.error) { authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。'; }
+        else {
+          session = (r.data && r.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) { try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) {} }
+          renderAuth();
+        }
+      } catch (e) { authMsg.textContent = '验证失败，请检查网络后重试。'; }
+      verifyBtn.disabled = false;
+    });
+
+    // ---- 手机号登录（phone-otp 三段分离，与 App 同一账号） ----
+    var tabEmailBtn = $('authTabEmail'), tabPhoneBtn = $('authTabPhone'), emailPane = $('authEmailPane'), phonePane = $('authPhonePane');
+    function setAuthTab(phone) {
+      emailPane.hidden = phone; phonePane.hidden = !phone;
+      tabEmailBtn.className = phone ? '' : 'on'; tabPhoneBtn.className = phone ? 'on' : '';
+      tabEmailBtn.classList.toggle('on', !phone); tabPhoneBtn.classList.toggle('on', phone);
+    }
+    tabEmailBtn.addEventListener('click', function () { setAuthTab(false); });
+    tabPhoneBtn.addEventListener('click', function () { setAuthTab(true); });
+    var ccEl = $('authCc'), phoneEl = $('authPhone'), sendSmsBtn = $('authSendSms'), smsRow = $('authSmsRow'), smsCodeEl = $('authSmsCode'), verifySmsBtn = $('authVerifySms');
+    var branchEl = $('authBranch'), regEl = $('authRegConfirm');
+    function buildPhone() {
+      var cc = (ccEl && ccEl.value) || '+1';
+      var digits = ((phoneEl && phoneEl.value) || '').replace(/[^\d]/g, '');
+      if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+      if (digits.length < 6 || digits.length > 14) return '';
+      return cc + digits;
+    }
+    var smsTimer = null;
+    function startSmsCooldown() {
+      var left = 60; sendSmsBtn.disabled = true; sendSmsBtn.textContent = '重新发送（' + left + 's）';
+      smsTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) { clearInterval(smsTimer); smsTimer = null; sendSmsBtn.disabled = false; sendSmsBtn.textContent = '发送验证码'; }
+        else sendSmsBtn.textContent = '重新发送（' + left + 's）';
+      }, 1000);
+    }
+    sendSmsBtn.addEventListener('click', async function () {
+      var phone = buildPhone();
+      if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
+      sendSmsBtn.disabled = true; authMsg.textContent = '正在发送验证码…';
+      try {
+        var r = await phoneOtp('sendPhoneOtp', { phone: phone, context: 'login' });
+        if (r.status !== 200) {
+          sendSmsBtn.disabled = false;
+          var ec = (r.data && r.data.error_code) || '';
+          if (ec === 'rate_limited') authMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (ec === 'invalid_phone') authMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          else authMsg.textContent = '发送失败，请检查手机号后重试。';
+        } else {
+          smsRow.hidden = false; branchEl.hidden = true; regEl.hidden = true;
+          authMsg.textContent = '验证码已发送到您的手机，请查收短信，然后填入验证码登录。';
+          startSmsCooldown(); smsCodeEl.focus();
+        }
+      } catch (e) { sendSmsBtn.disabled = false; authMsg.textContent = '发送失败，请检查网络后重试。'; }
+    });
+    verifySmsBtn.addEventListener('click', async function () {
+      var phone = buildPhone();
+      var token = (smsCodeEl.value || '').trim();
+      if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
+      if (!token) { authMsg.textContent = '请填写短信里收到的验证码。'; return; }
+      verifySmsBtn.disabled = true; authMsg.textContent = '正在验证…';
+      try {
+        var v = await phoneOtp('verifyPhoneOtp', { phone: phone, code: token });
+        if (v.status !== 200 || !v.data.verification_token) { authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。'; return; }
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'auto' });
+        if (r.data && r.data.status === 'needs_account_decision') {
+          pendingVerifyToken = r.data.verification_token || ''; pendingPhone = phone;
+          branchEl.hidden = false; regEl.hidden = true; authMsg.textContent = ''; return;
+        }
+        if (!r.data || r.data.status !== 'session') { authMsg.textContent = '验证失败，请重新发送验证码后再试。'; return; }
+        var sr = await adoptPhoneSession(r.data);
+        if (sr.error) { authMsg.textContent = '登录未完成，请重试。'; return; }
+        session = (sr.data && sr.data.session) || null;
+        var name = (nameEl.value || '').trim();
+        if (name) { try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) {} }
+        renderAuth();
+      } catch (e) { authMsg.textContent = '验证失败，请检查网络后重试。'; }
+      finally { verifySmsBtn.disabled = false; }
+    });
+    $('authBranchOld').addEventListener('click', function () {
+      branchEl.hidden = true; setAuthTab(false);
+      authMsg.textContent = '请先用邮箱登录已有账号；登录后可在 Rukik App 里把这个手机号绑定到同一账号。';
+    });
+    $('authBranchNew').addEventListener('click', function () { branchEl.hidden = true; regEl.hidden = false; authMsg.textContent = ''; });
+    $('authRegBack').addEventListener('click', function () { regEl.hidden = true; branchEl.hidden = false; });
+    $('authRegDo').addEventListener('click', async function () {
+      if (!pendingVerifyToken) { authMsg.textContent = '验证已过期，请重新获取验证码。'; regEl.hidden = true; return; }
+      authMsg.textContent = '正在创建账号…';
+      try {
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: pendingVerifyToken, action: 'register' });
+        if (r.data && r.data.status === 'session') {
+          pendingVerifyToken = ''; regEl.hidden = true;
+          var sr = await adoptPhoneSession(r.data);
+          if (sr.error) { authMsg.textContent = '账号已创建，但登录未完成，请重新获取验证码登录。'; return; }
+          session = (sr.data && sr.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) { try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) {} }
+          renderAuth();
+        } else if (r.data && r.data.status === 'registration_disabled') {
+          regEl.hidden = true; authMsg.textContent = '手机号注册即将开放。目前请先用邮箱注册。';
+        } else if (r.data && r.data.status === 'created_no_session') {
+          pendingVerifyToken = ''; regEl.hidden = true; authMsg.textContent = '账号已创建，请重新获取验证码登录。';
+        } else { authMsg.textContent = '注册未完成，验证可能已过期，请重新获取验证码。'; }
+      } catch (e) { authMsg.textContent = '注册失败，请检查网络后重试。'; }
+    });
+
+    var logoutBtn = $('authLogout');
+    if (logoutBtn) logoutBtn.addEventListener('click', async function () {
+      try { await sb.auth.signOut(); } catch (e) {}
+      session = null; history = []; rounds = 0;
+      var m = $('chatMsgs'); if (m) m.innerHTML = '';
+      renderAuth();
+    });
+
+    // ---- 聊天（直调 pro-chat，与 App 同一 AI 分身） ----
+    function rkMd(t){ var s=String(t==null?'':t)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      function inl(x){ return x.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
+      var lines=s.split(/\r?\n/), out=[], list=0;
+      function closeList(){ if(list===1) out.push('</ul>'); if(list===2) out.push('</ol>'); list=0; }
+      lines.forEach(function(ln){ var m;
+        if(m=ln.match(/^\s*[-*•]\s+(.*)$/)){ if(list!==1){ closeList(); out.push('<ul class="md-ul">'); list=1; }
+          out.push('<li>'+inl(m[1])+'</li>'); return; }
+        if(m=ln.match(/^\s*\d{1,2}[.、)]\s+(.*)$/)){ if(list!==2){ closeList(); out.push('<ol class="md-ol">'); list=2; }
+          out.push('<li>'+inl(m[1])+'</li>'); return; }
+        closeList();
+        if(m=ln.match(/^\s*#{1,6}\s+(.*)$/)){ out.push('<div class="md-h">'+inl(m[1])+'</div>'); return; }
+        if(/^\s*(-{3,}|={3,})\s*$/.test(ln)){ out.push('<div>&nbsp;</div>'); return; }
+        ln=ln.replace(/^\s*>\s?/,'');
+        out.push('<div>'+(ln.trim()?inl(ln):'&nbsp;')+'</div>'); });
+      closeList(); return out.join(''); }
+    function rkMdStream(t){ var s=String(t==null?'':t);
+      var nl=s.lastIndexOf('\n'); var tail=nl>=0?s.slice(nl+1):s;
+      if(/^\s*(#{1,6}|[-*•])\s*$/.test(tail)) s=nl>=0?s.slice(0,nl):'';
+      if(/\*$/.test(s) && !/\*\*$/.test(s)) s=s.slice(0,-1);
+      if((s.split('**').length-1)%2===1){ var idx=s.lastIndexOf('**'); s=s.slice(0,idx)+s.slice(idx+2); }
+      return rkMd(s); }
+
+    var msgsEl = $('chatMsgs'), inputEl = $('chatInput'), sendBtn = $('chatSend'), dlEl = $('chatDownload');
+    function addMsg(role, text) {
+      var div = document.createElement('div');
+      div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+      if (role === 'user') div.textContent = text; else div.innerHTML = rkMd(text);
+      msgsEl.appendChild(div); msgsEl.scrollTop = msgsEl.scrollHeight;
+      return div;
+    }
+    function lockWithGuide() {
+      inputEl.disabled = true; sendBtn.disabled = true;
+      inputEl.placeholder = '网页咨询已达 3 轮上限';
+      if (dlEl) dlEl.hidden = false;
+    }
+    function friendlyError(code) {
+      if (code === 'not_configured') return '助理正在开通中，暂时还不能回答。请稍后再来，或在 Rukik App 里联系专家本人。';
+      if (code === 'round_limit') { lockWithGuide(); return '网页端的 3 轮免费咨询已用完，下载 Rukik App 可以继续咨询。'; }
+      if (code === 'login_required') return '登录已过期，请重新登录后再咨询。';
+      return '暂时无法回答，请检查网络后重试。';
+    }
+    async function send() {
+      if (busy) return;
+      if (!session) { renderAuth(); return; }
+      if (rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
+      var text = inputEl.value.trim();
+      if (!text) return;
+      busy = true; sendBtn.disabled = true; inputEl.value = '';
+      addMsg('user', text);
+      history.push({ role: 'user', content: text });
+      var thinking = addMsg('ai', '正在思考…');
+      var reply = '';
+      try {
+        var tokenRes = await sb.auth.getSession();
+        var accessToken = (tokenRes && tokenRes.data && tokenRes.data.session && tokenRes.data.session.access_token) || (session && session.access_token) || '';
+        var res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + accessToken },
+          body: JSON.stringify({ professional_id: PROFESSIONAL_ID, mode: 'web', stream: true, messages: history })
+        });
+        if (!res.ok) {
+          var errData = {};
+          try { errData = await res.json(); } catch (e) {}
+          history.pop();
+          if ((errData.error || '') === 'login_required') {
+            try { await sb.auth.signOut(); } catch (e) {}
+            session = null; renderAuth();
+          }
+          thinking.textContent = friendlyError(errData.error || '');
+        } else if (res.body && typeof res.body.getReader === 'function' && (res.headers.get('Content-Type') || '').indexOf('event-stream') >= 0) {
+          var reader = res.body.getReader();
+          var decoder = new TextDecoder('utf-8');
+          var buffer = '';
+          for (;;) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            var lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i].trim();
+              if (line.indexOf('data:') !== 0) continue;
+              var payload = line.slice(5).trim();
+              if (payload === '[DONE]') continue;
+              try {
+                var delta = JSON.parse(payload).choices[0].delta.content || '';
+                if (delta) { reply += delta; thinking.innerHTML = rkMdStream(reply); msgsEl.scrollTop = msgsEl.scrollHeight; }
+              } catch (e) {}
+            }
+          }
+          if (!reply) { history.pop(); thinking.textContent = friendlyError(''); }
+          else {
+            thinking.innerHTML = rkMd(reply);
+            history.push({ role: 'assistant', content: reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        } else {
+          var data = {};
+          try { data = await res.json(); } catch (e) {}
+          if (!data.reply) { history.pop(); thinking.textContent = friendlyError(data.error || ''); }
+          else {
+            thinking.innerHTML = rkMd(data.reply);
+            history.push({ role: 'assistant', content: data.reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        }
+      } catch (e) {
+        if (reply) {
+          history.push({ role: 'assistant', content: reply });
+          rounds += 1;
+          if (rounds >= MAX_ROUNDS) lockWithGuide();
+        } else { history.pop(); thinking.textContent = friendlyError(''); }
+      } finally {
+        busy = false;
+        if (rounds < MAX_ROUNDS && session) { sendBtn.disabled = false; inputEl.focus(); }
+      }
+    }
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+    document.querySelectorAll('[data-sq]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!session) { var a = $('authBox'); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+        inputEl.value = el.getAttribute('data-sq') || '';
+        send();
+      });
+    });
+
+    // ---- 关注（expert_follows，按登录 UID） ----
+    var fwBtn = $('fwBtn'), fwCount = $('fwCount'), fwWired = false, fwState = false;
+    async function loadFwCount() {
+      try {
+        var r = await fetch(SUPABASE_URL + '/rest/v1/expert_follow_counts?professional_id=eq.' + PROFESSIONAL_ID, { headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY } });
+        var rows = await r.json();
+        if (fwCount) fwCount.textContent = (rows && rows[0] ? rows[0].follow_count : 0) + ' 人关注';
+      } catch (e) {}
+    }
+    async function wireFollow() {
+      loadFwCount();
+      if (!fwBtn || fwWired) return;
+      fwWired = true;
+      if (session && session.user) {
+        try {
+          var r = await sb.from('expert_follows').select('id').eq('professional_id', PROFESSIONAL_ID).eq('follower_uid', session.user.id).limit(1);
+          fwState = !!(r.data && r.data.length);
+        } catch (e) {}
+      }
+      fwBtn.textContent = fwState ? '已关注' : '关注 TA';
+      fwBtn.classList.toggle('on', fwState);
+    }
+    if (fwBtn) fwBtn.addEventListener('click', async function () {
+      if (!session || !session.user) {
+        var a = $('authBox'); if (a) a.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (authMsg) authMsg.textContent = '登录后即可关注这位专家，关注关系会同步到 Rukik App。';
+        return;
+      }
+      fwBtn.disabled = true;
+      try {
+        if (fwState) { await sb.from('expert_follows').delete().eq('professional_id', PROFESSIONAL_ID).eq('follower_uid', session.user.id); fwState = false; }
+        else { await sb.from('expert_follows').insert({ follower_uid: session.user.id, professional_id: PROFESSIONAL_ID }); fwState = true; }
+        fwBtn.textContent = fwState ? '已关注' : '关注 TA';
+        fwBtn.classList.toggle('on', fwState);
+        loadFwCount();
+      } catch (e) {}
+      fwBtn.disabled = false;
+    });
+    var shareBtn = $('shareBtn');
+    if (shareBtn) shareBtn.addEventListener('click', async function () {
+      var url = location.href;
+      var done = false;
+      if (navigator.share) { try { await navigator.share({ title: document.title, url: url }); done = true; } catch (e) {} }
+      if (!done) {
+        try { await navigator.clipboard.writeText(url); shareBtn.textContent = '链接已复制'; } catch (e) { shareBtn.textContent = '复制失败，请长按地址栏复制'; }
+        setTimeout(function () { shareBtn.textContent = '分享网站'; }, 2000);
+      }
+    });
+
+    // ---- 联系专家本人（仅经 get_expert_public_contact 同意门读取） ----
+    var ctcBtn = $('ctcBtn'), ctcPanel = $('ctcPanel'), ctcLoaded = false, ctcOpen = false;
+    if (ctcBtn) {
+      var pubBox = $('ctcPublic'), ctcForm = $('ctcForm'), ctcMsg = $('ctcMsg');
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+      function rowHtml(k, v, actHtml) { return '<div class="ctc-row"><span class="ctc-k">' + k + '</span><span class="ctc-v">' + esc(v) + '</span>' + actHtml + '</div>'; }
+      function renderPublic(c) {
+        var html = '';
+        if (c.phone) { var tel = String(c.phone).replace(/[^+\d]/g, ''); html += rowHtml('电话', c.phone, '<a class="ctc-act" href="tel:' + esc(tel) + '">拨打</a>'); }
+        if (c.email) { html += rowHtml('邮箱', c.email, '<a class="ctc-act" href="mailto:' + esc(c.email) + '">发邮件</a>'); }
+        if (c.wechat) { html += rowHtml('微信', c.wechat, '<button class="ctc-act" type="button" id="ctcCopyWx">复制</button>'); }
+        if (c.website) { var url = String(c.website); if (!/^https?:\/\//i.test(url)) url = 'https://' + url; html += rowHtml('官网', c.website, '<a class="ctc-act" href="' + esc(url) + '" target="_blank" rel="noopener">访问</a>'); }
+        pubBox.innerHTML = html;
+        ctcForm.style.display = 'none';
+        var cp = $('ctcCopyWx');
+        if (cp) cp.addEventListener('click', async function () {
+          var ok = false;
+          try { await navigator.clipboard.writeText(String(c.wechat)); ok = true; } catch (e) {}
+          ctcMsg.textContent = ok ? '微信号已复制，去微信添加即可。' : '微信号就在上方，长按或手动复制即可。';
+        });
+      }
+      async function loadContact() {
+        if (ctcLoaded) return;
+        ctcLoaded = true;
+        try {
+          var r = await sb.rpc('get_expert_public_contact', { p_professional_id: PROFESSIONAL_ID });
+          var c = r && r.data;
+          if (c && (c.phone || c.email || c.wechat || c.website)) renderPublic(c);
+          else { pubBox.innerHTML = ''; ctcForm.style.display = 'block'; }
+        } catch (e) { pubBox.innerHTML = ''; ctcForm.style.display = 'block'; }
+      }
+      ctcBtn.addEventListener('click', function () {
+        ctcOpen = !ctcOpen;
+        ctcPanel.style.display = ctcOpen ? 'block' : 'none';
+        if (ctcOpen) loadContact();
+      });
+      ctcForm.addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        if (!session) { ctcMsg.textContent = '请先登录后再提交，专家才能确认您的身份。'; return; }
+        var name = ($('ctcName').value || '').trim();
+        var contact = ($('ctcContact').value || '').trim();
+        var message = ($('ctcMessage').value || '').trim();
+        if (!name) { ctcMsg.textContent = '请先填写您的称呼。'; return; }
+        if (contact.length < 3) { ctcMsg.textContent = '请填写您的电话或邮箱，方便专家联系您。'; return; }
+        var submitBtn = $('ctcSubmit');
+        submitBtn.disabled = true; ctcMsg.textContent = '正在提交…';
+        try {
+          var r = await sb.rpc('submit_expert_contact_request', { p_professional_id: PROFESSIONAL_ID, p_name: name, p_contact: contact, p_message: message });
+          var d = (r && r.data) || null;
+          if (r && r.error) ctcMsg.textContent = '提交失败，请检查网络后重试。';
+          else if (d && d.ok) { ctcForm.style.display = 'none'; ctcMsg.textContent = '已提交。专家会通过您留下的联系方式联系您，请留意。'; }
+          else if (d && d.error === 'rate_limited') ctcMsg.textContent = '您提交得有点频繁了，请稍后再试。';
+          else if (d && d.error === 'login_required') ctcMsg.textContent = '登录已过期，请重新登录后再提交。';
+          else ctcMsg.textContent = '提交失败，请稍后重试。';
+        } catch (e) { ctcMsg.textContent = '提交失败，请检查网络后重试。'; }
+        finally { submitBtn.disabled = false; }
+      });
+    }
+  }
+</script>
+<script>
+  setTimeout(function () {
+    if (!window.__rukikChatReady) {
+      var m = document.getElementById('authMsg');
+      if (m && document.getElementById('authBox') && !document.getElementById('authBox').hidden) {
+        m.textContent = '登录组件加载较慢，请刷新页面重试，或下载 Rukik App 咨询。';
+      }
+    }
+  }, 8000);
+</script>
+
+</body>
+</html>
