@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>绑定新设备 · Rukik</title>
+<link rel="icon" href="/assets/apple-touch-icon.png">
+<style>
+  :root { --ivory:#F7F3EC; --navy:#142235; --ink:#202020; --gray:#8B857D; --gold:#B58A58; --line:#E3DCCF; --bad:#B3261E; --ok:#3d6b35; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
+  .wrap { max-width:640px; margin:0 auto; padding:24px 16px 64px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; padding:8px 0 20px; border-bottom:2px solid var(--navy); }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand img { width:44px; height:44px; border-radius:9px; display:block; }
+  .brand .name { font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.5px; }
+  .brand small { display:block; font-size:12px; font-weight:400; color:var(--gray); margin-top:2px; letter-spacing:0; }
+  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:11px 18px; border-radius:10px; font-size:15px; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--navy); }
+  .btn.gold { background:var(--gold); border-color:var(--gold); }
+  .btn.small { padding:5px 12px; font-size:13px; border-radius:8px; }
+  .btn.danger { background:transparent; color:var(--bad); border-color:var(--bad); }
+  .btn:disabled { opacity:.5; cursor:wait; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 20px; margin-top:20px; }
+  .card h1 { margin:0 0 12px; font-size:21px; color:var(--navy); line-height:1.4; }
+  .card h2 { margin:0 0 14px; font-size:17px; color:var(--navy); }
+  .card p { line-height:1.7; margin:8px 0; }
+  input[type=email], input[type=text], input[type=password] { width:100%; padding:11px; font-size:15px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  #codeInput { font-size:30px; letter-spacing:6px; text-align:center; font-family:ui-monospace,Menlo,Consolas,monospace; text-transform:uppercase; padding:14px 8px; }
+  .login { max-width:420px; margin:36px auto 0; }
+  .muted { color:var(--gray); font-size:13px; line-height:1.7; }
+  .err { color:var(--bad); font-size:14px; min-height:20px; margin-top:10px; white-space:pre-wrap; line-height:1.6; }
+  .ok-note { color:var(--ok); font-size:15px; margin-top:8px; white-space:pre-wrap; line-height:1.7; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mt { margin-top:14px; }
+  .big-check { font-size:44px; line-height:1; color:var(--ok); }
+  .device-line { font-size:16px; margin-top:10px; }
+  .device-line b { color:var(--navy); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <img src="/assets/seal.png" alt="Rukik">
+      <div class="name">Rukik<small>AI懂很多，Rukik更懂您。</small></div>
+    </div>
+    <div class="row">
+      <span id="who" class="muted"></span>
+      <button id="logoutBtn" class="btn ghost small" style="display:none">退出</button>
+    </div>
+  </header>
+
+  <!-- 登录 -->
+  <div id="loginView" class="card login">
+    <h2>先登录您的 Rukik 账号</h2>
+    <p class="muted">登录后输入电脑上显示的绑定码，就能把那台电脑连到您的账号。绑定码不会因为登录而丢失，登录完就能接着输入。</p>
+    <input id="email" type="email" name="email" placeholder="邮箱" autocomplete="email">
+    <div class="row mt" style="gap:8px">
+      <button id="tabOtpBtn" class="btn gold small" style="flex:1">验证码登录</button>
+      <button id="tabPwdBtn" class="btn ghost small" style="flex:1">密码登录</button>
+    </div>
+    <div id="otpPane">
+      <div class="mt"><button id="sendCodeBtn" class="btn" style="width:100%">发送验证码</button></div>
+      <div id="codeRow" style="display:none">
+        <div class="mt"><input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱收到的 6 位验证码"></div>
+        <div class="mt"><button id="verifyBtn" class="btn gold" style="width:100%">登录</button></div>
+      </div>
+    </div>
+    <div id="pwdPane" style="display:none">
+      <div class="mt"><input id="password" type="password" name="password" placeholder="密码" autocomplete="current-password"></div>
+      <div class="mt"><button id="pwdLoginBtn" class="btn" style="width:100%">密码登录</button></div>
+    </div>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <!-- 输入绑定码 -->
+  <div id="codeView" style="display:none">
+    <div class="card">
+      <h1>把这台电脑连到您的 Rukik</h1>
+      <p>打开电脑上的 Rukik 助手，点「绑定 Rukik 账号」，把助手上显示的 8 位绑定码输入下面：</p>
+      <div class="mt"><input id="codeInput" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" maxlength="9"></div>
+      <div class="mt"><button id="approveBtn" class="btn gold" style="width:100%">确认绑定</button></div>
+      <div id="codeErr" class="err"></div>
+      <p class="muted mt">绑定码 10 分钟内有效。绑定后，这台电脑上的助手就能把您确认的聊天记录导入您的账号；您可以随时在助手里解绑。</p>
+      <p class="muted">如果您没有在自己的电脑上打开过 Rukik 助手，也没见过这个绑定码，请不要输入任何码，直接关掉这个页面，再点下面的拒绝。</p>
+      <div class="mt"><button id="denyBtn" class="btn danger" style="width:100%">不是我发起的，拒绝绑定</button></div>
+    </div>
+  </div>
+
+  <!-- 成功 -->
+  <div id="doneView" class="card" style="display:none">
+    <div class="big-check">✓</div>
+    <h2 class="mt">绑定成功</h2>
+    <div class="device-line" id="deviceLine"></div>
+    <p class="ok-note">可以回到电脑上的 Rukik 助手了，它会自动完成剩下的步骤。这个页面可以关掉了。</p>
+  </div>
+
+  <!-- 已拒绝 -->
+  <div id="deniedView" class="card" style="display:none">
+    <h2>已拒绝这次绑定</h2>
+    <p>这台电脑不会连到您的账号。</p>
+    <p class="muted">如果这不是您本人操作，您的账号没有受到影响，不需要做任何处理。</p>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+const EF_URL = SUPABASE_URL + '/functions/v1/connect-device';
+
+// 与站内记忆导入页同一口径：会话只驻内存（不写 localStorage），关页即无残留。
+const memStorage = { _m: {}, getItem(k) { return this._m[k] ?? null; }, setItem(k, v) { this._m[k] = String(v); }, removeItem(k) { delete this._m[k]; } };
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: memStorage, persistSession: true, autoRefreshToken: true } });
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function show(view) {
+  $('loginView').style.display = view === 'login' ? '' : 'none';
+  $('codeView').style.display = view === 'code' ? '' : 'none';
+  $('doneView').style.display = view === 'done' ? '' : 'none';
+  $('deniedView').style.display = view === 'denied' ? '' : 'none';
+  $('logoutBtn').style.display = view === 'login' ? 'none' : '';
+}
+
+function authErrZh(error, fallback) {
+  const msg = (error && error.message) || '';
+  const code = (error && error.code) || '';
+  if (/invalid login credentials/i.test(msg) || code === 'invalid_credentials') return '邮箱或密码不正确。';
+  if (/otp_expired|expired or is invalid|token.*invalid/i.test(msg) || code === 'otp_expired') return '验证码不对或已过期，请重新发送。';
+  if (/user not found|signups not allowed/i.test(msg)) return '这个邮箱还没有注册账号，请确认邮箱无误。';
+  if (/rate limit|too many/i.test(msg)) return '操作太频繁，请稍等一分钟再试。';
+  if (/fetch|network/i.test(msg)) return '网络连接失败，请检查网络后重试。';
+  return fallback || '操作失败，请稍后重试。';
+}
+
+// 调 connect-device：与页面同款的端点、请求头与参数形态。
+async function cd(action, payload = {}) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { const e = new Error('unauthorized'); e.status = 401; throw e; }
+  let res;
+  try {
+    res = await fetch(EF_URL, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...payload }),
+    });
+  } catch { const e = new Error('network'); e.status = 0; throw e; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) {
+    const e = new Error(data.error || ('HTTP ' + res.status));
+    e.status = res.status;
+    throw e;
+  }
+  return data;
+}
+
+function bindErrZh(e) {
+  if (e.status === 0 || /network/i.test(e.message)) return '网络连接失败，请检查网络后重试。';
+  if (/code_expired/.test(e.message)) return '这个绑定码已经过期了（绑定码 10 分钟内有效）。请回到电脑上的助手，重新点一次绑定，再输入新显示的码。';
+  if (/code_not_found_or_not_pending/.test(e.message)) return '这个绑定码不对，或者已经被用过了。请看一眼电脑上助手显示的码，核对后重新输入。';
+  if (/forbidden/.test(e.message)) return '您的账号暂时还不能绑定新设备。这个功能正在小范围试用中，欢迎联系我们为您开通。';
+  return '操作失败，请稍后重试。';
+}
+
+// ---------- 登录（与站内记忆导入页同一实现） ----------
+function setLoginMode(mode) {
+  const otp = mode === 'otp';
+  $('otpPane').style.display = otp ? '' : 'none';
+  $('pwdPane').style.display = otp ? 'none' : '';
+  $('tabOtpBtn').className = 'btn small' + (otp ? ' gold' : ' ghost');
+  $('tabPwdBtn').className = 'btn small' + (otp ? ' ghost' : ' gold');
+  $('loginErr').textContent = '';
+}
+$('tabOtpBtn').onclick = () => setLoginMode('otp');
+$('tabPwdBtn').onclick = () => setLoginMode('pwd');
+
+$('sendCodeBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  if (!email) { $('loginErr').textContent = '先填邮箱。'; return; }
+  $('sendCodeBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  $('sendCodeBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error, '发送失败，请稍后重试。'); return; }
+  $('codeRow').style.display = '';
+  $('loginErr').textContent = '验证码已发到邮箱。';
+};
+$('verifyBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  const token = $('otpCode').value.trim();
+  if (!token) { $('loginErr').textContent = '先填验证码。'; return; }
+  $('verifyBtn').disabled = true;
+  const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  $('verifyBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  enterCode();
+};
+$('pwdLoginBtn').onclick = async () => {
+  $('loginErr').textContent = '';
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  if (!password) { $('loginErr').textContent = '先填密码。'; return; }
+  $('pwdLoginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  $('pwdLoginBtn').disabled = false;
+  if (error) { $('loginErr').textContent = authErrZh(error); return; }
+  enterCode();
+};
+$('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function enterCode() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { show('login'); return; }
+  $('who').textContent = user.email || '';
+  show('code');
+  $('codeInput').focus();
+}
+
+// ---------- 绑定码 ----------
+function fmtCode(v) {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+  return raw.length > 4 ? raw.slice(0, 4) + '-' + raw.slice(4) : raw;
+}
+$('codeInput').addEventListener('input', () => { $('codeInput').value = fmtCode($('codeInput').value); });
+function currentCode() { return $('codeInput').value.trim().toUpperCase(); }
+
+const PLATFORM_ZH = { macos: 'Mac', mac: 'Mac', windows: 'Windows', ios: 'iPhone', iphone: 'iPhone', android: '安卓手机' };
+function platformZh(p) { return PLATFORM_ZH[String(p || '').toLowerCase()] || (p ? String(p) : '电脑'); }
+
+$('approveBtn').onclick = async () => {
+  $('codeErr').textContent = '';
+  const user_code = currentCode();
+  if (user_code.replace('-', '').length !== 8) { $('codeErr').textContent = '绑定码是 8 位，请看一眼电脑上助手显示的码，输入完整。'; return; }
+  $('approveBtn').disabled = true; $('denyBtn').disabled = true;
+  try {
+    const r = await cd('approve_auth_request', { user_code });
+    $('deviceLine').innerHTML = '已连接：<b>' + esc(r.device_name || '您的电脑') + '</b>（' + esc(platformZh(r.platform)) + '）';
+    show('done');
+  } catch (e) {
+    if (e.status === 401) { show('login'); $('loginErr').textContent = '登录已过期，请重新登录后再输入绑定码。'; return; }
+    $('codeErr').textContent = bindErrZh(e);
+  } finally {
+    $('approveBtn').disabled = false; $('denyBtn').disabled = false;
+  }
+};
+
+$('denyBtn').onclick = async () => {
+  $('codeErr').textContent = '';
+  const user_code = currentCode();
+  if (user_code.replace('-', '').length !== 8) { $('codeErr').textContent = '先把要拒绝的绑定码输入完整，再点拒绝。'; return; }
+  if (!confirm('确定拒绝这次绑定吗？这台电脑将不会连到您的账号。')) return;
+  $('approveBtn').disabled = true; $('denyBtn').disabled = true;
+  try {
+    await cd('deny_auth_request', { user_code });
+    show('denied');
+  } catch (e) {
+    if (e.status === 401) { show('login'); $('loginErr').textContent = '登录已过期，请重新登录后再试。'; return; }
+    $('codeErr').textContent = bindErrZh(e);
+  } finally {
+    $('approveBtn').disabled = false; $('denyBtn').disabled = false;
+  }
+};
+
+// ---------- 入口：链接里带码则预填；已有会话直接进输码页 ----------
+(() => {
+  const q = new URLSearchParams(location.search);
+  const pre = q.get('code') || q.get('user_code');
+  if (pre) $('codeInput').value = fmtCode(pre);
+})();
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) enterCode(); else show('login');
+})();
+</script>
+</body>
+</html>
