@@ -1133,11 +1133,14 @@
 
 <script>
   /* 顶栏登录钮（#loginChip）与问专家面板登录组件（#authBox/#authBar）联动：
-     未登录→点击直达登录表单并聚焦邮箱输入；已登录→钮面显示「已登录」，
-     点击直达已登录条（账号＋退出登录）。登录态以登录组件显隐为准
-     （会话脚本 renderAuth 控制），MutationObserver 同步，本地会话兜底。
+     未登录→钮面「登录」，点击直达登录表单并聚焦邮箱输入；已登录→钮面
+     「退出登录」，点击触发面板内既有退出钮（#authLogout）的同一套登出
+     处理（清会话并回到未登录态），本脚本不另写登出实现。登录态以登录
+     组件显隐为准（会话脚本 renderAuth 控制），MutationObserver 同步，
+     本地会话兜底。
      修复 2026-11-07：原静态锚点只切问专家视图、在该视图内点击无反应、
-     且从不反映登录态。 */
+     且从不反映登录态；同日晚补：已登录态钮面由状态展示「已登录」改为
+     动作钮「退出登录」，顶栏自带退出出口（用户实测反馈）。 */
   (function () {
     var chip = document.getElementById('loginChip');
     if (!chip) return;
@@ -1157,15 +1160,24 @@
       } catch (e) {}
       return false;
     }
-    function sync() { chip.textContent = loggedIn() ? '已登录' : '登录'; }
+    function sync() { chip.textContent = loggedIn() ? '退出登录' : '登录'; }
     chip.addEventListener('click', function (ev) {
       ev.preventDefault();
+      var wasLoggedIn = loggedIn();
       if (window.goView) window.goView('ask');
       setTimeout(function () {
+        if (wasLoggedIn) {
+          /* 已登录：触发面板内 #authLogout 的既有登出处理（同源同逻辑）；
+             元素缺失时退回定位已登录条，仍可经面板内退出钮退出。 */
+          var lo = document.getElementById('authLogout');
+          if (lo) lo.click();
+          else if (authBar && !authBar.hidden) authBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(sync, 600);
+          setTimeout(sync, 1800);
+          return;
+        }
         sync();
-        if (loggedIn()) {
-          if (authBar && !authBar.hidden) authBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (authBox && !authBox.hidden) {
+        if (authBox && !authBox.hidden) {
           authBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
           var em = document.getElementById('authEmail');
           if (em) { try { em.focus({ preventScroll: true }); } catch (e) { em.focus(); } }
