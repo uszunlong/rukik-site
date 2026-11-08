@@ -982,5 +982,57 @@
   }, 8000);
 </script>
 
+
+<script>
+  /* 顶栏登录钮（#loginChip）与问专家面板登录组件（#authBox/#authBar）联动：
+     未登录→点击直达登录表单并聚焦邮箱输入；已登录→钮面显示「已登录」，
+     点击直达已登录条（账号＋退出登录）。登录态以登录组件显隐为准
+     （会话脚本 renderAuth 控制），MutationObserver 同步，本地会话兜底。
+     修复 2026-11-07：原静态锚点只切问专家视图、在该视图内点击无反应、
+     且从不反映登录态。 */
+  (function () {
+    var chip = document.getElementById('loginChip');
+    if (!chip) return;
+    var authBox = document.getElementById('authBox');
+    var authBar = document.getElementById('authBar');
+    function loggedIn() {
+      if (authBox) return authBox.hidden;
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0) {
+            var v = JSON.parse(localStorage.getItem(k) || 'null');
+            var s = v && (v.currentSession || v);
+            if (s && s.access_token && (!s.expires_at || s.expires_at * 1000 > Date.now())) return true;
+          }
+        }
+      } catch (e) {}
+      return false;
+    }
+    function sync() { chip.textContent = loggedIn() ? '已登录' : '登录'; }
+    chip.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      if (window.goView) window.goView('ask');
+      setTimeout(function () {
+        sync();
+        if (loggedIn()) {
+          if (authBar && !authBar.hidden) authBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (authBox && !authBox.hidden) {
+          authBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var em = document.getElementById('authEmail');
+          if (em) { try { em.focus({ preventScroll: true }); } catch (e) { em.focus(); } }
+        }
+      }, 90);
+    });
+    if (window.MutationObserver && authBox) {
+      var mo = new MutationObserver(sync);
+      mo.observe(authBox, { attributes: true, attributeFilter: ['hidden'] });
+      if (authBar) mo.observe(authBar, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    sync();
+    setTimeout(sync, 1500);
+  })();
+</script>
+
 </body>
 </html>
