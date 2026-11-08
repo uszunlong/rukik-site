@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T01:16:32Z",
+ "generated_at": "2026-11-08T03:51:03Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -18,7 +18,7 @@
    "name": "张子淇",
    "title": "中国非遗出海专家",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
-   "slug": null,
+   "slug": "ziqi-zhang",
    "follow_count": 0,
    "pro_chat": true,
    "public_contact": null
@@ -28,7 +28,7 @@
    "name": "Ophelia 奧菲",
    "title": "房产经纪",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg",
-   "slug": null,
+   "slug": "ophelia",
    "follow_count": 0,
    "pro_chat": true,
    "public_contact": null
