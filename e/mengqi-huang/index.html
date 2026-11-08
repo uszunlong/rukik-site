@@ -1,190 +1,691 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>黄梦奇 · 律师 — RUKIK Sphere 智库</title>
-<meta name="description" content="这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。">
-
-<meta property="og:type" content="profile">
-<meta property="og:site_name" content="Rukik">
-<meta property="og:title" content="黄梦奇 · 律师">
-<meta property="og:description" content="在 Rukik 与我的 AI 助理聊聊。">
-<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg">
-<meta property="og:url" content="https://rukik.com/e/mengqi-huang/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>黄梦奇 · 律师 | RUKIK 智库专家主页</title>
+<meta name="description" content="黄梦奇（律师）的专家主页：专业律师">
 <link rel="canonical" href="https://rukik.com/e/mengqi-huang/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person", "name": "黄梦奇", "jobTitle": "律师", "url": "https://rukik.com/e/mengqi-huang/", "image": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg", "memberOf": {"@type": "Organization", "name": "Rukik", "url": "https://rukik.com/"}}</script>
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="RUKIK 智库">
+<meta property="og:title" content="黄梦奇 · 律师 | RUKIK 智库">
+<meta property="og:description" content="黄梦奇（律师）的专家主页：专业律师">
+<meta property="og:url" content="https://rukik.com/e/mengqi-huang/">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <style>
-  :root { --bg:#F7F3EC; --ink:#142235; --muted:#8B857D; --accent:#B58A58; --card:#ffffff; --radius:16px; }
+  :root { --bg:#060D1F; --bg2:#0B2148; --surface:#0C1E3E; --surface2:#0A1830;
+    --ink:#F2F6FC; --muted:#93A7C4; --accent:#D9A94A; --accent2:#4EA1FF;
+    --line:rgba(120,160,220,.20); --radius:18px; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:#20242a; }
-  .band { background:linear-gradient(135deg,#142235,#24365E); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:10px; }
-  .band img { width:26px; height:26px; border-radius:7px; }
-  .band b { letter-spacing:2px; font-size:15px; }
-  .band span { margin-left:auto; font-size:12px; opacity:.85; }
-  .wrap { max-width:680px; margin:0 auto; padding:34px 20px 56px; }
-  .hero { text-align:center; }
-  img.avatar { width:112px; height:112px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); background:#fff; }
-  .avatar-fallback { width:112px; height:112px; border-radius:50%; border:3px solid var(--accent); background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto; }
-  h1 { font-family:Georgia,"Songti SC","SimSun",serif; color:var(--ink); font-size:27px; margin:18px 0 4px; }
-  .role { color:var(--muted); font-size:15px; }
-  .badges { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; line-height:1.7; }
-  .badge-verified { background:#fdf3d7; color:#7a5b00; border:1px solid #e3c565; font-weight:700; }
-  .badge-ai { background:#e8eef7; color:#33527a; border:1px solid #b9cbe4; }
-  .line { display:inline-block; background:var(--ink); color:#F7F3EC; padding:12px 22px; border-radius:999px; font-size:16px; letter-spacing:1px; margin-top:18px; }
-  .actions { display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
-  .act { border:1.5px solid var(--ink); color:var(--ink); background:transparent; border-radius:999px; padding:10px 22px; font-size:15px; cursor:pointer; text-decoration:none; min-height:44px; display:inline-flex; align-items:center; }
-  .act.on { background:var(--ink); color:#fff; }
-  .fwcount { font-size:13px; color:var(--muted); margin-top:8px; }
-  .card { background:var(--card); border-radius:var(--radius); padding:22px; margin-top:24px; text-align:left; line-height:1.9; color:#44403a; font-size:15px; box-shadow:0 2px 12px rgba(20,34,53,.06); }
-  .card h2 { font-family:Georgia,"Songti SC","SimSun",serif; color:var(--ink); font-size:18px; margin:0 0 12px; text-align:left; }
-  .chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
-  .chip { background:var(--bg); border:1px solid rgba(0,0,0,.08); border-radius:999px; padding:2px 11px; font-size:13px; color:#44403a; }
-  .creds { margin-top:10px; }
-  .cred { font-size:14px; color:#33527a; }
-  .arts { display:flex; flex-direction:column; gap:12px; }
-  .art { display:block; border:1px solid rgba(0,0,0,.07); border-radius:12px; padding:14px 16px; text-decoration:none; color:inherit; }
-  .art-t { font-weight:700; color:var(--ink); font-size:16px; line-height:1.55; }
-  .art-s { font-size:14px; color:#6b675f; line-height:1.7; margin-top:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .art-m { font-size:12px; color:var(--muted); margin-top:6px; }
-  .sq { display:block; width:100%; text-align:left; background:var(--bg); border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:10px 14px; font-size:14px; cursor:pointer; margin-top:8px; color:#44403a; }
-  .chat { background:var(--card); border-radius:var(--radius); padding:20px; margin-top:24px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
-  .chat-title { font-size:16px; font-weight:600; color:var(--ink); margin-bottom:12px; text-align:center; }
-  .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:linear-gradient(160deg,var(--bg),var(--bg2)); background-color:var(--bg); color:var(--ink); }
+  a { color:inherit; }
+  [hidden] { display:none !important; }
+  /* ---------- 顶栏 ---------- */
+  .topbar { position:sticky; top:0; z-index:60; background:color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); }
+  .topbar-in { max-width:1180px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:18px; }
+  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; flex:0 0 auto; }
+  .brand img { width:30px; height:30px; border-radius:8px; }
+  .brand b { font-size:17px; letter-spacing:1px; }
+  .brand span { font-size:15px; color:var(--muted); letter-spacing:2px; }
+  .main-nav { display:flex; gap:4px; margin:0 auto; }
+  .main-nav a { text-decoration:none; font-size:15px; padding:8px 13px; color:var(--muted); position:relative; }
+  .main-nav a.on { color:var(--ink); font-weight:600; }
+  .main-nav a.on::after { content:""; position:absolute; left:13px; right:13px; bottom:2px; height:2px; background:var(--accent); border-radius:2px; }
+  .top-right { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
+  .search-box { position:relative; }
+  .search-box input { width:210px; border:1px solid var(--line); background:var(--surface2); color:var(--ink); border-radius:999px; padding:8px 14px; font-size:14px; outline:none; }
+  .search-results { position:absolute; right:0; top:calc(100% + 8px); width:min(360px,86vw); background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:0 18px 44px rgba(0,0,0,.28); overflow:hidden; }
+  .sr-item { display:block; padding:11px 15px; text-decoration:none; border-top:1px solid var(--line); }
+  .sr-item:first-child { border-top:none; }
+  .sr-item:hover { background:var(--surface2); }
+  .sr-k { font-size:11px; color:var(--accent); letter-spacing:1px; }
+  .sr-t { font-size:14px; font-weight:600; margin-top:2px; line-height:1.45; }
+  .sr-empty { padding:13px 15px; font-size:13px; color:var(--muted); }
+  .login-chip { border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  /* ---------- Hero ---------- */
+  .hero { position:relative; overflow:hidden; border-bottom:1px solid var(--line); }
+  .hero-deco { position:absolute; inset:0; pointer-events:none; }
+  .hero-deco .globe { position:absolute; right:-90px; top:50%; transform:translateY(-50%); width:560px; height:560px; opacity:.8; }
+  .deco-grid .hero-deco { background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px); background-size:44px 44px; opacity:.35; }
+  .deco-ink .hero-deco { background:radial-gradient(420px 200px at 82% 20%, rgba(201,162,39,.12), transparent 70%),radial-gradient(520px 260px at 8% 90%, rgba(166,58,46,.10), transparent 70%); }
+  .deco-rings .hero-deco { background:radial-gradient(circle at 85% 30%, transparent 120px, var(--line) 121px, transparent 122px),radial-gradient(circle at 85% 30%, transparent 190px, var(--line) 191px, transparent 192px),radial-gradient(circle at 85% 30%, transparent 260px, var(--line) 261px, transparent 262px); }
+  .deco-blocks .hero-deco::before { content:""; position:absolute; right:6%; top:16%; width:120px; height:120px; border-radius:26px; background:var(--accent2); opacity:.16; transform:rotate(10deg); }
+  .deco-blocks .hero-deco::after { content:""; position:absolute; right:16%; bottom:10%; width:64px; height:64px; border-radius:50%; background:var(--accent); opacity:.22; }
+  .globe-arc { animation:arcflow 7s linear infinite; }
+  @keyframes arcflow { to { stroke-dashoffset:-90; } }
+  .hero-in { position:relative; max-width:1180px; margin:0 auto; padding:46px 20px 40px; }
+  .hero-split .hero-in { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:34px; align-items:center; }
+  .hero-id { display:flex; gap:22px; align-items:flex-start; }
+  .avatar-wrap { position:relative; flex:0 0 auto; }
+  img.avatar { width:128px; height:128px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 0 7px color-mix(in srgb, var(--accent2) 22%, transparent), 0 0 42px color-mix(in srgb, var(--accent2) 35%, transparent); background:var(--surface2); }
+  .avatar-fallback { width:128px; height:128px; border-radius:50%; border:3px solid var(--accent); background:var(--surface2); color:var(--ink); display:flex; align-items:center; justify-content:center; font-size:46px; }
+  .hero-center .hero-id { flex-direction:column; align-items:center; text-align:center; }
+  .hero-center .hero-main { display:flex; flex-direction:column; align-items:center; }
+  .hero-cover .hero-in { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:30px; align-items:stretch; }
+  .hero-cover img.avatar, .hero-cover .avatar-fallback { width:100%; height:100%; min-height:320px; border-radius:var(--radius); border:none; box-shadow:none; font-size:80px; }
+  .hero-cover .avatar-wrap { order:2; }
+  .hero-cover .hero-id { display:contents; }
+  .hero-cover .hero-main { align-self:center; }
+  .hero-cover h1 { font-size:52px; }
+  h1 { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; font-size:36px; margin:2px 0 6px; line-height:1.2; }
+  .hero-role { font-size:16px; color:var(--accent); font-weight:600; }
+  .hero-firm { font-size:14px; color:var(--muted); margin-top:3px; }
+  .hero-intro { font-size:15px; line-height:1.75; color:var(--muted); margin-top:12px; max-width:560px; }
+  .hero-center .hero-intro { margin-left:auto; margin-right:auto; }
+  .badges { margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
+  .hero-center .badges { justify-content:center; }
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:999px; font-size:12.5px; line-height:1.7; }
+  .badge-verified { background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent); border:1px solid color-mix(in srgb, var(--accent) 55%, transparent); font-weight:700; }
+  .badge-ai { background:color-mix(in srgb, var(--accent2) 14%, transparent); color:var(--accent2); border:1px solid color-mix(in srgb, var(--accent2) 45%, transparent); }
+  .hero-meta { margin-top:14px; display:flex; gap:8px 20px; flex-wrap:wrap; font-size:13.5px; color:var(--muted); }
+  .hero-center .hero-meta { justify-content:center; }
+  .stats-panel { background:color-mix(in srgb, var(--surface) 88%, transparent); border:1px solid var(--line); border-radius:var(--radius); padding:20px 18px 16px; backdrop-filter:blur(8px); }
+  .hero-center .stats-panel { margin:22px auto 0; max-width:520px; }
+  .stats-row { display:flex; justify-content:space-around; text-align:center; }
+  .stat-num { font-size:27px; font-weight:800; color:var(--ink); }
+  .stat-label { font-size:12.5px; color:var(--muted); margin-top:3px; }
+  .hero-actions { display:flex; gap:10px; margin-top:18px; align-items:center; }
+  .hero-center .hero-actions { justify-content:center; }
+  .stats-panel .hero-actions { justify-content:center; }
+  .act { border:1.5px solid var(--line); color:var(--ink); background:var(--surface); border-radius:999px; padding:10px 22px; font-size:15px; cursor:pointer; text-decoration:none; min-height:44px; display:inline-flex; align-items:center; justify-content:center; transition:transform .18s ease, box-shadow .18s ease; }
+  .act:hover { transform:translateY(-1px); }
+  .act-gold { background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 68%, #fff)); border-color:transparent; color:#191204; font-weight:700; }
+  .act.on { background:var(--accent2); border-color:transparent; color:#fff; }
+  .icon-act { width:44px; padding:0; border-radius:50%; font-size:16px; }
+  .fwcount { font-size:12.5px; color:var(--muted); margin-top:9px; text-align:center; }
+  /* ---------- 二级导航 ---------- */
+  .subnav { position:sticky; top:57px; z-index:55; background:color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .subnav-in { max-width:1180px; margin:0 auto; padding:0 20px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+  .subnav-in::-webkit-scrollbar { display:none; }
+  .subnav button { background:none; border:none; color:var(--muted); font-size:15px; padding:13px 15px; cursor:pointer; white-space:nowrap; position:relative; font-family:inherit; }
+  .subnav button.on { color:var(--ink); font-weight:600; }
+  .subnav button.on::after { content:""; position:absolute; left:15px; right:15px; bottom:6px; height:2px; background:var(--accent); border-radius:2px; }
+  /* ---------- 布局与卡片 ---------- */
+  .wrap { max-width:1180px; margin:0 auto; padding:30px 20px 56px; }
+  .layout { display:grid; grid-template-columns:minmax(0,1fr) 322px; gap:24px; align-items:start; }
+  .card, .side-card, .chat { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.10); }
+  .card { margin-bottom:24px; }
+  .side-card { margin-bottom:20px; }
+  .card h2, .side-card h3 { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; font-size:18px; margin:0 0 14px; color:var(--ink); }
+  .side-card h3 { font-size:16px; display:flex; align-items:center; gap:8px; }
+  .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sec-head h2 { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; font-size:18px; margin:0; }
+  .more-link { font-size:13.5px; color:var(--accent); background:none; border:none; cursor:pointer; font-family:inherit; text-decoration:none; }
+  .chips { display:flex; gap:7px; flex-wrap:wrap; }
+  .chip { background:var(--surface2); border:1px solid var(--line); border-radius:999px; padding:4px 12px; font-size:13px; color:var(--ink); }
+  .creds { margin-top:12px; }
+  .cred { font-size:14px; color:var(--accent2); line-height:1.9; }
+  .kv { display:flex; gap:12px; font-size:14.5px; line-height:1.8; padding:7px 0; border-top:1px solid var(--line); }
+  .kv:first-of-type { border-top:none; }
+  .kv .k { flex:0 0 74px; color:var(--muted); }
+  .about-txt p { margin:0 0 10px; font-size:15px; line-height:1.9; color:var(--muted); }
+  .about-txt p:first-child { color:var(--ink); }
+  .empty-note { font-size:14px; color:var(--muted); line-height:1.8; }
+  /* ---------- 精选轮播 ---------- */
+  .feat { position:relative; border-radius:var(--radius); overflow:hidden; border:1px solid var(--line); background:var(--surface2); margin-bottom:24px; }
+  .feat-slide { position:absolute; inset:0; opacity:0; transition:opacity .7s ease; pointer-events:none; }
+  .feat-slide.on { opacity:1; pointer-events:auto; }
+  .feat-slide img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .feat-shade { position:absolute; inset:0; background:linear-gradient(90deg, rgba(4,10,24,.82) 30%, rgba(4,10,24,.25) 65%, rgba(4,10,24,.05)); }
+  .feat-body { position:absolute; left:0; top:0; bottom:0; width:min(560px,88%); padding:26px 28px; display:flex; flex-direction:column; justify-content:center; color:#fff; }
+  .feat-tag { align-self:flex-start; background:var(--accent); color:#191204; font-size:12px; font-weight:700; padding:3px 11px; border-radius:999px; }
+  .feat-title { font-size:24px; font-weight:800; line-height:1.45; margin-top:12px; }
+  .feat-sum { font-size:14px; line-height:1.7; color:rgba(255,255,255,.82); margin-top:9px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .feat-meta { font-size:12.5px; color:rgba(255,255,255,.65); margin-top:12px; }
+  .feat-btn { align-self:flex-start; margin-top:14px; border:1.5px solid var(--accent); color:var(--accent); border-radius:999px; padding:8px 20px; font-size:14px; text-decoration:none; background:rgba(0,0,0,.18); }
+  .feat-ratio { padding-top:44%; }
+  .feat-arrow { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:rgba(6,12,24,.45); color:#fff; font-size:19px; cursor:pointer; z-index:3; display:flex; align-items:center; justify-content:center; }
+  .feat-prev { left:12px; } .feat-next { right:12px; }
+  .feat-dots { position:absolute; left:0; right:0; bottom:12px; display:flex; gap:6px; justify-content:center; z-index:3; }
+  .feat-dots .dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.4); border:none; padding:0; cursor:pointer; }
+  .feat-dots .dot.on { background:var(--accent); width:20px; border-radius:4px; }
+  /* ---------- 文章网格 ---------- */
+  .arts-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .art { display:flex; flex-direction:column; border:1px solid var(--line); border-radius:calc(var(--radius) - 4px); overflow:hidden; text-decoration:none; background:var(--surface); transition:transform .2s ease, box-shadow .2s ease; }
+  .art:hover { transform:translateY(-4px); box-shadow:0 16px 34px rgba(0,0,0,.18); }
+  .art-img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:var(--surface2); transition:transform .4s ease; }
+  .art:hover .art-img { transform:scale(1.03); }
+  .art-body { padding:14px 16px 16px; display:flex; flex-direction:column; gap:7px; flex:1; }
+  .art-t { font-weight:700; font-size:15.5px; line-height:1.55; color:var(--ink); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .art-s { font-size:13.5px; color:var(--muted); line-height:1.65; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .art-m { font-size:12px; color:var(--muted); margin-top:auto; display:flex; justify-content:space-between; gap:8px; }
+  .art-m .tp { color:var(--accent2); }
+  .topic-filter { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px; }
+  .topic-chip { background:var(--surface); border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:6px 14px; font-size:13.5px; cursor:pointer; font-family:inherit; }
+  .topic-chip.on { background:var(--accent); border-color:transparent; color:#191204; font-weight:600; }
+  /* ---------- AI 助理卡 ---------- */
+  .ai-card { text-align:left; }
+  .ai-orb { width:46px; height:46px; border-radius:50%; background:radial-gradient(circle at 34% 32%, color-mix(in srgb, var(--accent2) 30%, #fff), var(--accent2) 62%, color-mix(in srgb, var(--accent2) 55%, #000)); box-shadow:0 0 24px color-mix(in srgb, var(--accent2) 55%, transparent); margin-bottom:12px; animation:orb 3.6s ease-in-out infinite; }
+  @keyframes orb { 0%,100% { transform:scale(1); } 50% { transform:scale(1.07); } }
+  .ai-txt { font-size:14px; line-height:1.75; color:var(--muted); }
+  .ai-go { display:block; text-align:center; margin-top:14px; background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 68%, #fff)); color:#191204; font-weight:700; border:none; border-radius:999px; padding:12px 18px; font-size:15px; cursor:pointer; width:100%; font-family:inherit; }
+  /* ---------- 聊天与登录（e_chat.js 契约类名，令牌化） ---------- */
+  .chat { text-align:left; }
+  .chat-title { font-size:16.5px; font-weight:700; color:var(--ink); margin-bottom:12px; text-align:center; }
+  .msgs { display:flex; flex-direction:column; gap:10px; max-height:460px; overflow-y:auto; }
   .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
-  .msg.user { align-self:flex-end; background:var(--ink); color:#F7F3EC; border-bottom-right-radius:4px; }
-  .msg.ai { align-self:flex-start; background:var(--bg); color:#20242a; border-bottom-left-radius:4px; white-space:normal; }
+  .msg.user { align-self:flex-end; background:var(--accent2); color:#fff; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:var(--surface2); color:var(--ink); border:1px solid var(--line); border-bottom-left-radius:4px; white-space:normal; }
   .md-h { font-weight:800; margin:8px 0 3px; } .md-h:first-child { margin-top:0; }
   .md-ul, .md-ol { margin:4px 0; padding-left:20px; } .md-ul li, .md-ol li { margin:2px 0; }
   .chat-row { display:flex; gap:8px; margin-top:14px; }
-  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#20242a; }
-  .chat-row input:disabled { background:#f1ede4; color:var(--muted); }
-  .chat-row button { background:var(--accent); color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; min-height:44px; }
+  .chat-row input { flex:1; border:1px solid var(--line); border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#0A1830; color:#F2F6FC; }
+  .chat-row input:disabled { opacity:.55; }
+  .chat-row button { background:var(--accent); color:#191204; font-weight:700; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; min-height:44px; }
   .chat-row button:disabled { opacity:.55; cursor:default; }
-  .chat-note { margin-top:10px; font-size:12px; color:var(--muted); text-align:center; }
-  .dl { margin-top:16px; background:var(--bg); border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
-  .btn { display:inline-block; margin-top:10px; background:var(--accent); color:#fff; text-decoration:none; padding:12px 28px; border-radius:999px; font-size:15px; }
-  .auth-hint { font-size:14px; line-height:1.7; color:#44403a; text-align:center; margin:0 0 14px; }
+  .chat-note { margin-top:10px; font-size:12px; color:var(--muted); text-align:center; line-height:1.7; }
+  .dl { margin-top:16px; background:var(--surface2); border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:var(--muted); }
+  .btn { display:inline-block; margin-top:10px; background:var(--accent); color:#191204; font-weight:700; text-decoration:none; padding:12px 28px; border-radius:999px; font-size:15px; }
+  .auth-hint { font-size:14px; line-height:1.7; color:var(--muted); text-align:center; margin:0 0 14px; }
   .auth-row { display:flex; gap:8px; margin-top:10px; }
-  .auth-row input, .auth-row select { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#20242a; min-width:0; min-height:44px; }
-  .auth-row button { background:var(--ink); color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; min-height:44px; }
+  .auth-row input, .auth-row select { flex:1; border:1px solid var(--line); border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#0A1830; color:#F2F6FC; min-width:0; min-height:44px; }
+  .auth-row button { background:var(--ink); color:var(--bg); border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; min-height:44px; }
   .auth-row button:disabled { opacity:.55; cursor:default; }
-  .auth-row button.plain { background:#fff; color:var(--ink); border:1px solid #e3ddd2; }
-  .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--muted); text-align:center; min-height:18px; }
+  .auth-row button.plain { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--accent2); text-align:center; min-height:18px; }
   .auth-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin-bottom:10px; }
   .auth-bar button { background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; padding:0; }
   .auth-tabs { display:flex; gap:8px; margin:12px 0 2px; }
-  .auth-tabs button { flex:1; background:#fff; color:var(--ink); border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; min-height:44px; }
-  .auth-tabs button.on { background:var(--ink); color:#F7F3EC; border-color:var(--ink); }
-  [hidden] { display:none !important; }
-  .ctc-btn { width:100%; background:#fff; color:var(--ink); border:1.5px solid var(--ink); border-radius:999px; padding:12px 22px; font-size:15px; cursor:pointer; margin-top:24px; min-height:44px; }
-  .ctc-panel { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-top:12px; background:#fff; }
+  #authTabEmail, #authTabPhone { flex:1; background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; min-height:44px; }
+  #authTabEmail.on, #authTabPhone.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .sq { display:block; width:100%; text-align:left; background:var(--surface2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; font-size:14px; cursor:pointer; margin-top:8px; color:var(--ink); font-family:inherit; }
+  /* ---------- 联系专家 ---------- */
+  .ctc-btn { width:100%; background:var(--surface); color:var(--ink); border:1.5px solid var(--line); border-radius:999px; padding:12px 22px; font-size:15px; cursor:pointer; margin-top:4px; min-height:44px; font-family:inherit; }
+  .ctc-panel { border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:12px; background:var(--surface); }
   .ctc-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
   .ctc-k { flex:0 0 44px; font-size:14px; color:var(--muted); }
   .ctc-v { flex:1; font-size:15px; word-break:break-all; min-width:0; }
-  .ctc-act { background:var(--ink); color:#F7F3EC; border:none; border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
-  .ctc-note { font-size:14px; line-height:1.7; color:#44403a; margin:0 0 10px; }
-  .ctc-form input { width:100%; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; margin-top:10px; }
-  .ctc-form button { width:100%; margin-top:12px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
-  .ctc-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--muted); text-align:center; min-height:18px; }
-  .foot { margin-top:44px; color:var(--muted); font-size:12px; text-align:center; line-height:2; }
+  .ctc-act { background:var(--ink); color:var(--bg); border:none; border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .ctc-note { font-size:14px; line-height:1.7; color:var(--muted); margin:0 0 10px; }
+  .ctc-form input { width:100%; border:1px solid var(--line); border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#0A1830; color:#F2F6FC; margin-top:10px; }
+  .ctc-form button { width:100%; margin-top:12px; background:var(--accent); color:#191204; font-weight:700; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-msg { margin-top:10px; font-size:13px; line-height:1.6; color:var(--accent2); text-align:center; min-height:18px; }
+  /* ---------- 页脚 / 动效 / 响应式 ---------- */
+  .foot { margin-top:46px; color:var(--muted); font-size:12.5px; text-align:center; line-height:2.1; }
   .foot a { color:var(--muted); }
+  .rv { opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+  .rv.in { opacity:1; transform:none; }
+  @media (max-width:1020px) {
+    .layout { grid-template-columns:1fr; }
+    .side-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .side-card { margin-bottom:0; }
+    .hero-split .hero-in { grid-template-columns:1fr; }
+    .stats-panel { max-width:520px; }
+    .arts-grid { grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:680px) {
+    .main-nav { display:none; }
+    .search-box input { width:128px; }
+    .brand span { display:none; }
+    .hero-in { padding:30px 16px 28px; }
+    .hero-id { flex-direction:column; align-items:center; text-align:center; }
+    .badges, .hero-meta { justify-content:center; }
+    .hero-intro { margin-left:auto; margin-right:auto; }
+    h1 { font-size:29px; }
+    .hero-cover h1 { font-size:36px; }
+    .hero-cover .hero-in { grid-template-columns:1fr; }
+    .hero-cover .avatar-wrap { order:0; }
+    .hero-cover img.avatar, .hero-cover .avatar-fallback { min-height:230px; }
+    .arts-grid { grid-template-columns:1fr; }
+    .side-col { grid-template-columns:1fr; }
+    .feat-ratio { padding-top:118%; }
+    .feat-body { width:94%; padding:20px; }
+    .feat-title { font-size:20px; }
+    .subnav { top:53px; }
+    .wrap { padding:22px 14px 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior:auto; }
+    .rv { opacity:1; transform:none; transition:none; }
+    .ai-orb, .globe-arc { animation:none; }
+    .feat-slide { transition:none; }
+  }
 </style>
 </head>
-<body>
-<div class="band"><img src="/assets/seal.png" alt="Rukik"><b>RUKIK</b><span>RUKIK Sphere 智库</span></div>
-<div class="wrap">
-  <div class="hero">
-    <img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg" alt="黄梦奇">
-    <h1>黄梦奇</h1>
-    <div class="role">律师</div>
-    <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span><span class="badge badge-ai">Rukik AI 分身 · 本人训练</span></div>
-    
-    <div class="actions">
-      <button class="act" id="fwBtn" type="button">关注 TA</button>
-      <button class="act" id="shareBtn" type="button">分享网站</button>
-      <a class="act" href="https://apps.apple.com/us/app/rukik/id6824554988">在 App 中打开</a>
-    </div>
-    <div class="fwcount" id="fwCount"></div>
-  </div>
+<body class="tpl-t01">
 
-  <div class="chat">
+<header class="topbar"><div class="topbar-in">
+  <a class="brand" href="https://rukik.com/"><img src="/assets/seal.png" alt="Rukik">
+    <b>RUKIK</b><span>智库</span></a>
+  <nav class="main-nav">
+    <a href="https://rukik.com/">首页</a>
+    <a href="https://rukik.com/content/">智库</a>
+    <a href="https://rukik.com/experts/" class="on">专家</a>
+    <a href="https://rukik.com/discover/">话题</a>
+    <a href="https://rukik.com/event/">活动</a>
+  </nav>
+  <div class="top-right">
+    <div class="search-box">
+      <input id="siteSearch" type="search" placeholder="搜索专家、文章…" autocomplete="off" aria-label="搜索专家与文章">
+      <div class="search-results" id="searchResults" hidden></div>
+    </div>
+    <a class="login-chip" href="#/ask" data-goview="ask">登录</a>
+  </div>
+</div></header>
+
+<section class="hero hero-split deco-globe">
+  <div class="hero-deco">
+<svg class="globe" viewBox="0 0 600 600" fill="none" aria-hidden="true">
+  <circle cx="300" cy="300" r="218" stroke="rgba(110,165,255,.35)" stroke-width="1"/>
+  <ellipse cx="300" cy="300" rx="118" ry="218" stroke="rgba(110,165,255,.22)"/>
+  <ellipse cx="300" cy="300" rx="196" ry="218" stroke="rgba(110,165,255,.16)"/>
+  <ellipse cx="300" cy="300" rx="218" ry="86" stroke="rgba(110,165,255,.22)"/>
+  <ellipse cx="300" cy="300" rx="218" ry="168" stroke="rgba(110,165,255,.14)"/>
+  <line x1="82" y1="300" x2="518" y2="300" stroke="rgba(110,165,255,.18)"/>
+  <path class="globe-arc" d="M120 380 Q 300 180 486 300" stroke="rgba(217,169,74,.55)" stroke-width="1.2" stroke-dasharray="3 6"/>
+  <path class="globe-arc" d="M150 210 Q 330 330 470 400" stroke="rgba(78,161,255,.5)" stroke-width="1.2" stroke-dasharray="3 6"/>
+  <circle cx="150" cy="210" r="3.5" fill="#D9A94A"/><circle cx="486" cy="300" r="3.5" fill="#4EA1FF"/>
+  <circle cx="120" cy="380" r="3" fill="#4EA1FF"/><circle cx="470" cy="400" r="3" fill="#D9A94A"/>
+  <circle cx="330" cy="150" r="2.5" fill="#9CC2FF"/><circle cx="230" cy="450" r="2.5" fill="#9CC2FF"/>
+</svg></div>
+  <div class="hero-in">
+      <div class="hero-id">
+        <div class="avatar-wrap"><img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg" alt="黄梦奇" onerror="this.outerHTML=this.dataset.f" data-f='<span class=&quot;avatar-fallback&quot;>黄</span>'></div>
+        <div class="hero-main">
+          <h1>黄梦奇</h1>
+          <div class="hero-role">律师</div>
+          <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span><span class="badge badge-ai">✦ Rukik AI 分身 · 本人训练</span></div><p class="hero-intro">专业律师</p><div class="hero-meta"><span>📍 中国</span><span>🌐 中文</span><span>💼 律师</span></div>
+        </div>
+      </div>
+    <div class="stats-panel">
+      <div class="stats-row">
+        <div class="stat"><div class="stat-num">9</div><div class="stat-label">文章与观点</div></div>
+        <div class="stat"><div class="stat-num" id="fwStatNum">0</div><div class="stat-label">关注者</div></div>
+      </div>
+      <div class="hero-actions">
+        <button class="act act-gold" id="fwBtn" type="button">＋ 关注</button>
+        <button class="act icon-act" id="shareBtn" type="button" title="分享这个主页" aria-label="分享这个主页">↗</button>
+      </div>
+      <div class="fwcount" id="fwCount">0 人关注</div>
+    </div>
+  </div>
+</section>
+<nav class="subnav"><div class="subnav-in"><button type="button" data-goview="home" class="on">首页</button><button type="button" data-goview="articles" class="">文章与观点</button><button type="button" data-goview="knowledge" class="">专业知识</button><button type="button" data-goview="ask" class="">问专家</button><button type="button" data-goview="about" class="">关于 TA</button></div></nav>
+<div class="wrap">
+  <section data-view-panel="home">
+    <div class="layout">
+      <div class="main-col">
+    <section id="mod-featured">
+      <div class="sec-head"><h2>精选观点</h2></div>
+      <div class="feat" id="featBox"><div class="feat-ratio"></div>
+      <div class="feat-slide on">
+        <img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg" alt="" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+        <div class="feat-shade"></div>
+        <div class="feat-body">
+          <span class="feat-tag">✦ 精选观点 · 特朗普中期选举败选</span>
+          <div class="feat-title">特朗普中期选举败选对中国经济的影响：短期获益还是长期受损？</div>
+          <div class="feat-sum">特朗普中期选举败选对中国经济的影响是一个复杂的问题，需要考虑多种因素和情景。</div>
+          <div class="feat-meta">2026-11-05 · 黄梦奇</div>
+          <a class="feat-btn" href="https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb">阅读全文 →</a>
+        </div>
+      </div>
+      <div class="feat-slide">
+        <img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg" alt="" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+        <div class="feat-shade"></div>
+        <div class="feat-body">
+          <span class="feat-tag">✦ 精选观点 · CES 2027</span>
+          <div class="feat-title">企业为什么要认真看 CES 2027：从技术展示到美国市场落地的系统分析</div>
+          <div class="feat-sum">CES 值得认真对待，不只是因为它有流量，而是因为它把技术展示、品牌建立、渠道洽谈、资本关注与美国本地化机会压缩到同一场域。</div>
+          <div class="feat-meta">2026-11-05 · 黄梦奇</div>
+          <a class="feat-btn" href="https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca">阅读全文 →</a>
+        </div>
+      </div>
+      <div class="feat-slide">
+        <img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg" alt="" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+        <div class="feat-shade"></div>
+        <div class="feat-body">
+          <span class="feat-tag">✦ 精选观点 · 马斯克经营理念</span>
+          <div class="feat-title">如何专业看懂马斯克的经营理念：目标、组织、成本与控制权</div>
+          <div class="feat-sum">马斯克式经营的核心，不是个人英雄主义，而是以终局目标牵引、用工程逻辑重构成本与组织、再用高控制权压缩执行周期的一套系统工程。</div>
+          <div class="feat-meta">2026-11-05 · 黄梦奇</div>
+          <a class="feat-btn" href="https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75">阅读全文 →</a>
+        </div>
+      </div>
+      <div class="feat-slide">
+        <img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg" alt="" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+        <div class="feat-shade"></div>
+        <div class="feat-body">
+          <span class="feat-tag">✦ 精选观点 · 美国政治</span>
+          <div class="feat-title">川普中期选举败选，会影响什么：看懂美国政治与商业预期的传导链条</div>
+          <div class="feat-sum">我的判断是，川普在中期选举中的败势，影响的不只是个人声势，而是共和党内部权力分配、2024年大选路径、国会博弈方式以及企业与市场的预期结构。</div>
+          <div class="feat-meta">2026-11-05 · 黄梦奇</div>
+          <a class="feat-btn" href="https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da">阅读全文 →</a>
+        </div>
+      </div>
+      <div class="feat-slide">
+        <img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg" alt="" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+        <div class="feat-shade"></div>
+        <div class="feat-body">
+          <span class="feat-tag">✦ 精选观点 · 家族财富传承</span>
+          <div class="feat-title">看懂洛克菲勒家族长期影响力：财富传承背后的真正逻辑</div>
+          <div class="feat-sum">我的观点是，洛克菲勒家族之所以长期保持影响力，不在于单一财富规模，而在于把财富、企业、治理、家族价值与社会影响做成了一个长期运转的系统。</div>
+          <div class="feat-meta">2026-11-03 · 黄梦奇</div>
+          <a class="feat-btn" href="https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3">阅读全文 →</a>
+        </div>
+      </div><button type="button" class="feat-arrow feat-prev" data-feat="-1" aria-label="上一篇">‹</button><button type="button" class="feat-arrow feat-next" data-feat="1" aria-label="下一篇">›</button><div class="feat-dots"><button type="button" class="dot on" data-feat="0" aria-label="第1篇"></button><button type="button" class="dot" data-feat="1" aria-label="第2篇"></button><button type="button" class="dot" data-feat="2" aria-label="第3篇"></button><button type="button" class="dot" data-feat="3" aria-label="第4篇"></button><button type="button" class="dot" data-feat="4" aria-label="第5篇"></button></div></div>
+    </section>
+    <section id="mod-articles">
+      <div class="sec-head"><h2>最新文章</h2><button type="button" class="more-link" data-goview="articles">查看全部文章 →</button></div>
+      <div class="arts-grid">
+    <a class="art rv" href="https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb" data-topics="特朗普中期选举败选|中国经济|贸易关系|政策变化|投资环境">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">特朗普中期选举败选对中国经济的影响：短期获益还是长期受损？</span>
+        <span class="art-s">特朗普中期选举败选对中国经济的影响是一个复杂的问题，需要考虑多种因素和情景。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">特朗普中期选举败选</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca" data-topics="CES 2027|企业出海美国|品牌本地化|科技展会策略">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">企业为什么要认真看 CES 2027：从技术展示到美国市场落地的系统分析</span>
+        <span class="art-s">CES 值得认真对待，不只是因为它有流量，而是因为它把技术展示、品牌建立、渠道洽谈、资本关注与美国本地化机会压缩到同一场域。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">CES 2027</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75" data-topics="马斯克经营理念|企业治理|组织管理|创新战略">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">如何专业看懂马斯克的经营理念：目标、组织、成本与控制权</span>
+        <span class="art-s">马斯克式经营的核心，不是个人英雄主义，而是以终局目标牵引、用工程逻辑重构成本与组织、再用高控制权压缩执行周期的一套系统工程。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">马斯克经营理念</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da" data-topics="美国政治|中期选举|特朗普|国会格局|政策预期">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">川普中期选举败选，会影响什么：看懂美国政治与商业预期的传导链条</span>
+        <span class="art-s">我的判断是，川普在中期选举中的败势，影响的不只是个人声势，而是共和党内部权力分配、2024年大选路径、国会博弈方式以及企业与市场的预期结构。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">美国政治</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3" data-topics="家族财富传承|家族治理|信托与遗嘱|企业控制权">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">看懂洛克菲勒家族长期影响力：财富传承背后的真正逻辑</span>
+        <span class="art-s">我的观点是，洛克菲勒家族之所以长期保持影响力，不在于单一财富规模，而在于把财富、企业、治理、家族价值与社会影响做成了一个长期运转的系统。</span>
+        <span class="art-m"><span>2026-11-03</span><span class="tp">家族财富传承</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/b14fa91d-664b-4a50-a35e-243b3409290b" data-topics="家族财富传承|遗嘱与信托|家族治理|企业传承">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/b14fa91d-664b-4a50-a35e-243b3409290b/hero-author-1793736257762.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">家族财富传承四大模式：怎么选，关键不在工具而在目标</span>
+        <span class="art-s">家族财富传承没有万能模板，遗嘱、信托、家族持股安排与保险配置各有功能边界，真正重要的是先明确您要传的到底是财产、控制权、企业，还是家风与秩序。</span>
+        <span class="art-m"><span>2026-11-03</span><span class="tp">家族财富传承</span></span>
+      </span>
+    </a></div>
+    </section>
+    <section class="card rv" id="knowledge-sec">
+      <h2>专业知识</h2>
+      <p class="about-txt"><p style="margin:0">我的公开文章、观点与专业资料都已经装进我的专业 AI。您向 AI 助理提问时，它会结合这些公开内容回答，并在回答中注明出处；私有与未公开资料不会出现在任何回答里。</p></p>
+      <div class="chips" style="margin-top:12px"><span class="chip">家族治理 · 2 篇</span><span class="chip">家族财富传承 · 2 篇</span><span class="chip">CES 2027 · 1 篇</span><span class="chip">FDD · 1 篇</span><span class="chip">Franchise合规 · 1 篇</span><span class="chip">中国经济 · 1 篇</span><span class="chip">中期选举 · 1 篇</span><span class="chip">企业传承 · 1 篇</span><span class="chip">企业出海 · 1 篇</span><span class="chip">企业出海美国 · 1 篇</span></div>
+    </section></div>
+      <div class="side-col">
+    <aside class="side-card rv">
+      <h3>◆ 专业领域</h3>
+      <div class="chips"><span class="chip">律师</span></div>
+      <div class="creds"><div class="cred">✓ 家族治理 · 2 篇公开文章</div><div class="cred">✓ 家族财富传承 · 2 篇公开文章</div><div class="cred">✓ CES 2027 · 1 篇公开文章</div><div class="cred">✓ FDD · 1 篇公开文章</div><div class="cred">✓ Franchise合规 · 1 篇公开文章</div></div>
+    </aside>
+    <aside class="side-card ai-card rv">
+      <div class="ai-orb"></div>
+      <h3>mengqi Huang</h3>
+      <p class="ai-txt">这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。</p>
+      <p class="ai-txt" style="margin-top:8px">由专家本人训练 · 回答标注 AI 生成</p>
+      <button type="button" class="ai-go" data-goview="ask">向 TA 的 AI 助理提问</button>
+    </aside>
+    <aside class="side-card rv">
+      <h3>关于 黄梦奇</h3>
+      <p class="ai-txt">专业律师</p>
+      
+      <button type="button" class="more-link" data-goview="about" style="padding:0;margin-top:8px">查看完整介绍 →</button>
+    </aside></div>
+    </div>
+  </section>
+  <section data-view-panel="articles" hidden><div class="sec-head"><h2>全部文章与观点（9）</h2></div><div class="topic-filter"><button type="button" class="topic-chip on" data-topic="">全部</button><button type="button" class="topic-chip" data-topic="家族治理">家族治理</button><button type="button" class="topic-chip" data-topic="家族财富传承">家族财富传承</button><button type="button" class="topic-chip" data-topic="CES 2027">CES 2027</button><button type="button" class="topic-chip" data-topic="FDD">FDD</button><button type="button" class="topic-chip" data-topic="Franchise合规">Franchise合规</button><button type="button" class="topic-chip" data-topic="中国经济">中国经济</button><button type="button" class="topic-chip" data-topic="中期选举">中期选举</button><button type="button" class="topic-chip" data-topic="企业传承">企业传承</button><button type="button" class="topic-chip" data-topic="企业出海">企业出海</button><button type="button" class="topic-chip" data-topic="企业出海美国">企业出海美国</button><button type="button" class="topic-chip" data-topic="企业控制权">企业控制权</button><button type="button" class="topic-chip" data-topic="企业治理">企业治理</button></div><div class="arts-grid" id="allArtsGrid">
+    <a class="art rv" href="https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb" data-topics="特朗普中期选举败选|中国经济|贸易关系|政策变化|投资环境">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">特朗普中期选举败选对中国经济的影响：短期获益还是长期受损？</span>
+        <span class="art-s">特朗普中期选举败选对中国经济的影响是一个复杂的问题，需要考虑多种因素和情景。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">特朗普中期选举败选</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca" data-topics="CES 2027|企业出海美国|品牌本地化|科技展会策略">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">企业为什么要认真看 CES 2027：从技术展示到美国市场落地的系统分析</span>
+        <span class="art-s">CES 值得认真对待，不只是因为它有流量，而是因为它把技术展示、品牌建立、渠道洽谈、资本关注与美国本地化机会压缩到同一场域。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">CES 2027</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75" data-topics="马斯克经营理念|企业治理|组织管理|创新战略">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">如何专业看懂马斯克的经营理念：目标、组织、成本与控制权</span>
+        <span class="art-s">马斯克式经营的核心，不是个人英雄主义，而是以终局目标牵引、用工程逻辑重构成本与组织、再用高控制权压缩执行周期的一套系统工程。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">马斯克经营理念</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da" data-topics="美国政治|中期选举|特朗普|国会格局|政策预期">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">川普中期选举败选，会影响什么：看懂美国政治与商业预期的传导链条</span>
+        <span class="art-s">我的判断是，川普在中期选举中的败势，影响的不只是个人声势，而是共和党内部权力分配、2024年大选路径、国会博弈方式以及企业与市场的预期结构。</span>
+        <span class="art-m"><span>2026-11-05</span><span class="tp">美国政治</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3" data-topics="家族财富传承|家族治理|信托与遗嘱|企业控制权">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">看懂洛克菲勒家族长期影响力：财富传承背后的真正逻辑</span>
+        <span class="art-s">我的观点是，洛克菲勒家族之所以长期保持影响力，不在于单一财富规模，而在于把财富、企业、治理、家族价值与社会影响做成了一个长期运转的系统。</span>
+        <span class="art-m"><span>2026-11-03</span><span class="tp">家族财富传承</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/b14fa91d-664b-4a50-a35e-243b3409290b" data-topics="家族财富传承|遗嘱与信托|家族治理|企业传承">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/b14fa91d-664b-4a50-a35e-243b3409290b/hero-author-1793736257762.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">家族财富传承四大模式：怎么选，关键不在工具而在目标</span>
+        <span class="art-s">家族财富传承没有万能模板，遗嘱、信托、家族持股安排与保险配置各有功能边界，真正重要的是先明确您要传的到底是财产、控制权、企业，还是家风与秩序。</span>
+        <span class="art-m"><span>2026-11-03</span><span class="tp">家族财富传承</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/8e5e0149-8024-4296-920d-f3222fe96c0c" data-topics="企业出海|美国法律与税务|跨境合规|本土化运营">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/8e5e0149-8024-4296-920d-f3222fe96c0c/hero-author-1793604881434.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">中国企业出海美国：从粗放贸易到精细化合资的突围之路</span>
+        <span class="art-s">中国企业出海美国已从粗放式贸易升级为精细化本地运营，必须高度重视各州法律差异、合资模式及经济实质性要求。</span>
+        <span class="art-m"><span>2026-11-02</span><span class="tp">企业出海</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/4d349ca2-e26c-44ee-abb4-d966d3b9d5be" data-topics="美国加盟|特许经营|Franchise合规|FDD|美国商业法律">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/4d349ca2-e26c-44ee-abb4-d966d3b9d5be/hero-author-1793461333059.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">在美国做品牌授权或合作开店，为什么可能已经算 Franchise</span>
+        <span class="art-s">美国对加盟/特许经营确有明确监管，关键不在名称，而在您的商业模式是否同时涉及品牌授权、经营控制或持续支持，以及向对方收费。</span>
+        <span class="art-m"><span>2026-10-31</span><span class="tp">美国加盟</span></span>
+      </span>
+    </a>
+    <a class="art rv" href="https://rukik.com/a/19758c15-6161-4566-97fb-e6dcc8d3410d" data-topics="">
+      <img class="art-img" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/19758c15-6161-4566-97fb-e6dcc8d3410d/hero-author-1793458930279.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://rukik.com/assets/og-share-pro.png'">
+      <span class="art-body">
+        <span class="art-t">从 H-1B 到绿卡：为什么这个签证对家庭规划既便利又隐含风险</span>
+        <span class="art-s">文章指出，H-1B 是美国常见的专业工作签证之一，适合为特定雇主从事专业岗位的人，但不应被视为通往绿卡的自动路径。作者重点分析了岗位匹配、抽签、雇主支持、配偶工作权限制，以及与其他身份路线的比较，提醒读者结合家庭规划与整体路径判断。</span>
+        <span class="art-m"><span>2026-10-31</span><span></span></span>
+      </span>
+    </a></div><p class="empty-note" id="filterEmpty" hidden>这个分类下暂时没有文章。</p></section>
+  <section data-view-panel="ask" hidden><div style="max-width:780px;margin:0 auto">
+  <div class="chat" id="chatCard">
+    <div class="chat-title">向 黄梦奇 提问（AI 分身 · 本人训练）</div>
     <div id="authBox">
-      <div class="chat-title">直接向黄梦奇的 AI 助理提问</div>
-      <p class="auth-hint">注册登录后，即可与 TA 的专属 AI 助理交流——它由专家本人训练，与 Rukik App 里是同一个 AI 分身。需要进一步帮助时，也可以直接联系专家本人。</p>
-      <div class="auth-row"><input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name"></div>
+      <p class="auth-hint">先登录一下，就能免费和 mengqi Huang 聊 3 轮——它读过 黄梦奇 的公开文章，是 TA 本人训练的。登录只是为了防滥用、记住这次对话。</p>
+      <div class="auth-row" id="authNameRow" hidden><input id="authName" type="text" placeholder="您的姓名" autocomplete="name"></div>
       <div class="auth-tabs">
-        <button id="authTabEmail" type="button" class="on">邮箱登录</button>
-        <button id="authTabPhone" type="button">手机号登录</button>
+        <button type="button" id="authTabEmail" class="on">邮箱验证码</button>
+        <button type="button" id="authTabPhone">手机号验证码</button>
       </div>
       <div id="authEmailPane">
-        <div class="auth-row"><input id="authEmail" type="email" placeholder="邮箱地址" maxlength="120" autocomplete="email"><button id="authSendCode" type="button">发送验证码</button></div>
-        <div class="auth-row" id="authCodeRow" hidden><input id="authCode" type="text" inputmode="numeric" placeholder="邮箱收到的验证码" maxlength="10" autocomplete="one-time-code"><button id="authVerify" type="button">验证并登录</button></div>
+        <div class="auth-row"><input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="邮箱地址"><button id="authSendCode" type="button">发送验证码</button></div>
+        <div class="auth-row" id="authCodeRow" hidden><input id="authCode" type="text" placeholder="6 位验证码"><button id="authVerify" type="button">登录并开始</button></div>
       </div>
       <div id="authPhonePane" hidden>
-        <div class="auth-row"><select id="authCc" aria-label="国家或地区区号">
-          <option value="+1" selected>美国 / 加拿大 +1</option><option value="+86">中国 +86</option><option value="+852">中国香港 +852</option><option value="+886">中国台湾 +886</option><option value="+65">新加坡 +65</option><option value="+44">英国 +44</option><option value="+61">澳大利亚 +61</option><option value="+81">日本 +81</option><option value="+82">韩国 +82</option>
-        </select></div>
-        <div class="auth-row"><input id="authPhone" type="tel" placeholder="手机号码" maxlength="20" autocomplete="tel"><button id="authSendSms" type="button">发送验证码</button></div>
-        <div class="auth-row" id="authSmsRow" hidden><input id="authSmsCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code"><button id="authVerifySms" type="button">验证并登录</button></div>
-        <div id="authBranch" hidden>
-          <p class="auth-hint" style="text-align:left">这是尚未绑定的手机号。您是否已经有 RUKIK 账号？</p>
-          <div class="auth-row"><button id="authBranchOld" type="button">我已有账号</button><button id="authBranchNew" type="button" class="plain">我是新用户</button></div>
-        </div>
-        <div id="authRegConfirm" hidden>
-          <p class="auth-hint" style="text-align:left">确认后，将为您创建一个新的 RUKIK 账号，并把这个手机号作为登录方式。</p>
-          <div class="auth-row"><button id="authRegDo" type="button">确认注册</button><button id="authRegBack" type="button" class="plain">返回</button></div>
-        </div>
+        <div class="auth-row"><select id="authCc" aria-label="国家区号" style="flex:0 0 118px"><option value="+86">+86 中国</option><option value="+1">+1 美国</option><option value="+852">+852 香港</option><option value="+886">+886 台湾</option><option value="+65">+65 新加坡</option><option value="+44">+44 英国</option><option value="+61">+61 澳大利亚</option><option value="+81">+81 日本</option><option value="+82">+82 韩国</option></select><input id="authPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="手机号"><button id="authSendSms" type="button">发送验证码</button></div>
+        <div class="auth-row" id="authSmsRow" hidden><input id="authSmsCode" type="text" placeholder="6 位验证码"><button id="authVerifySms" type="button">登录并开始</button></div>
+      </div>
+      <div id="authBranch" hidden>
+        <p class="auth-hint">这个账号有两种进入方式，请选您这一次想用的——选哪个都不影响您的账号和主页：</p>
+        <div class="auth-row"><button type="button" id="authBranchOld" class="plain" style="flex:1">用已有的 Rukik 账号继续</button><button type="button" id="authBranchNew" class="plain" style="flex:1">这是新朋友，用刚验证的联系方式进入</button></div>
+        <div class="auth-row"><button type="button" id="authRegBack" class="plain">← 换个联系方式</button></div>
+      </div>
+      <div id="authRegConfirm" hidden>
+        <p class="auth-hint">系统没找到与刚验证的联系方式对应的已有账号——用它新进入没问题。如果您以前用别的邮箱或手机号用过 Rukik，点返回换成原来的就行。</p>
+        <div class="auth-row"><button type="button" id="authRegDo" style="flex:1">同意，用这个联系方式进入</button></div>
+        <div class="auth-row"><button type="button" id="authRegBack" class="plain">← 换个联系方式</button></div>
       </div>
       <div class="auth-msg" id="authMsg"></div>
     </div>
+    <div class="auth-bar" id="authBar" hidden><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
     <div id="chatBox" hidden>
-      <div class="auth-bar"><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
-      <div class="chat-title">直接向我的 AI 助理提问</div>
-      
       <div class="msgs" id="chatMsgs"></div>
-      <div class="chat-row"><input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off"><button id="chatSend" type="button">发送</button></div>
-      <div class="chat-note">网页端可免费咨询 3 轮 · 回答由专家的 AI 助理提供，仅供参考，不构成正式专业意见</div>
-      <div class="dl" id="chatDownload" hidden>网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给专家本人跟进。<br><a class="btn" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App 继续咨询</a></div>
+      <div class="chat-row"><input id="chatInput" type="text" placeholder="输入你的问题…" maxlength="2000"><button id="chatSend" type="button">发送</button></div>
+      <div class="chat-note">🤖 回答由 黄梦奇 本人训练的 AI 分身生成，可能不完整；重要决定请再和本人确认。回答中引用的公开文章会标注出处。</div>
+      <div class="dl">聊得顺心，可以在 Rukik App 里随时接着聊：还为你持续记住上下文，也能约 黄梦奇 本人一对一答疑。<br><a class="btn" id="chatDownload" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a></div>
+      <div style="margin-top:14px"><button class="ctc-btn" id="ctcBtn" type="button">📩 联系 黄梦奇 本人</button>
+        <div class="ctc-panel" id="ctcPanel" hidden><p class="ctc-note">正在查看 TA 公开的联系方式…</p></div></div>
     </div>
-  </div>
-
-  <section class="card"><h2>关于黄梦奇</h2>
-    <p>专业律师</p>
-    
-    <p>服务地区：CN</p>
-    <p>服务语言：中文</p>
-    
-  </section>
-
-  <section class="card"><h2>文章与观点</h2><div class="arts"><a class="art" href="https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb"><div class="art-t">特朗普中期选举败选对中国经济的影响：短期获益还是长期受损？</div><div class="art-s">特朗普中期选举败选对中国经济的影响是一个复杂的问题，需要考虑多种因素和情景。</div><div class="art-m">2026-11-05 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca"><div class="art-t">企业为什么要认真看 CES 2027：从技术展示到美国市场落地的系统分析</div><div class="art-s">CES 值得认真对待，不只是因为它有流量，而是因为它把技术展示、品牌建立、渠道洽谈、资本关注与美国本地化机会压缩到同一场域。</div><div class="art-m">2026-11-05 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75"><div class="art-t">如何专业看懂马斯克的经营理念：目标、组织、成本与控制权</div><div class="art-s">马斯克式经营的核心，不是个人英雄主义，而是以终局目标牵引、用工程逻辑重构成本与组织、再用高控制权压缩执行周期的一套系统工程。</div><div class="art-m">2026-11-05 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da"><div class="art-t">川普中期选举败选，会影响什么：看懂美国政治与商业预期的传导链条</div><div class="art-s">我的判断是，川普在中期选举中的败势，影响的不只是个人声势，而是共和党内部权力分配、2024年大选路径、国会博弈方式以及企业与市场的预期结构。</div><div class="art-m">2026-11-05 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3"><div class="art-t">看懂洛克菲勒家族长期影响力：财富传承背后的真正逻辑</div><div class="art-s">我的观点是，洛克菲勒家族之所以长期保持影响力，不在于单一财富规模，而在于把财富、企业、治理、家族价值与社会影响做成了一个长期运转的系统。</div><div class="art-m">2026-11-03 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/b14fa91d-664b-4a50-a35e-243b3409290b"><div class="art-t">家族财富传承四大模式：怎么选，关键不在工具而在目标</div><div class="art-s">家族财富传承没有万能模板，遗嘱、信托、家族持股安排与保险配置各有功能边界，真正重要的是先明确您要传的到底是财产、控制权、企业，还是家风与秩序。</div><div class="art-m">2026-11-03 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/8e5e0149-8024-4296-920d-f3222fe96c0c"><div class="art-t">中国企业出海美国：从粗放贸易到精细化合资的突围之路</div><div class="art-s">中国企业出海美国已从粗放式贸易升级为精细化本地运营，必须高度重视各州法律差异、合资模式及经济实质性要求。</div><div class="art-m">2026-11-02 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/4d349ca2-e26c-44ee-abb4-d966d3b9d5be"><div class="art-t">在美国做品牌授权或合作开店，为什么可能已经算 Franchise</div><div class="art-s">美国对加盟/特许经营确有明确监管，关键不在名称，而在您的商业模式是否同时涉及品牌授权、经营控制或持续支持，以及向对方收费。</div><div class="art-m">2026-10-31 · 阅读全文 →</div></a><a class="art" href="https://rukik.com/a/19758c15-6161-4566-97fb-e6dcc8d3410d"><div class="art-t">从 H-1B 到绿卡：为什么这个签证对家庭规划既便利又隐含风险</div><div class="art-s">文章指出，H-1B 是美国常见的专业工作签证之一，适合为特定雇主从事专业岗位的人，但不应被视为通往绿卡的自动路径。作者重点分析了岗位匹配、抽签、雇主支持、配偶工作权限制，以及与其他身份路线的比较，提醒读者结合家庭规划与整体路径判断。</div><div class="art-m">2026-10-31 · 阅读全文 →</div></a></div></section>
-
-  <section class="card"><h2>专业知识，已装进 AI 助理</h2>
-    <p>这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。</p>
-    <p>TA 在 Rukik 的专业知识库与训练成果，由上方 AI 助理实时调用——与 App 内完全同一份知识、同一个分身。网页更新知识，App 立即同步。</p>
-  </section>
-
-  <button class="ctc-btn" id="ctcBtn" type="button">联系专家本人</button>
-  <div class="ctc-panel" id="ctcPanel" style="display:none">
-    <div id="ctcPublic"></div>
-    <form class="ctc-form" id="ctcForm" style="display:none">
-      <p class="ctc-note">专家本人暂未公开联系方式。留下您的联系方式，专家会主动联系您。</p>
-      <input id="ctcName" type="text" placeholder="您的称呼" maxlength="40" autocomplete="name">
-      <input id="ctcContact" type="text" placeholder="您的电话或邮箱" maxlength="120" autocomplete="tel">
-      <input id="ctcMessage" type="text" placeholder="一句话留言（选填）" maxlength="200">
-      <button id="ctcSubmit" type="submit">请专家联系我</button>
-    </form>
-    <div class="ctc-msg" id="ctcMsg"></div>
-  </div>
-
-  <div class="foot">
-    Powered by <b>RUKIK AI</b> · <a href="https://rukik.com/">Rukik 官网</a> · <a href="https://apps.apple.com/us/app/rukik/id6824554988">下载 App</a><br>
-    Beyond AI. Closer to You. · AI懂很多，RUKIK更懂您。
-  </div>
+  </div></div></section>
+  <section data-view-panel="about" hidden><div style="max-width:860px">
+    <div class="card">
+      <h2>关于 黄梦奇</h2>
+      <div class="about-txt"><p>专业律师</p></div>
+      <div style="margin-top:14px"><div class="kv"><span class="k">姓名</span><span>黄梦奇</span></div><div class="kv"><span class="k">专业身份</span><span>律师</span></div><div class="kv"><span class="k">服务地区</span><span>中国</span></div><div class="kv"><span class="k">服务语言</span><span>中文</span></div></div>
+      
+      <div class="hero-actions" style="margin-top:18px">
+        <button type="button" class="act act-gold" data-goview="ask">向 TA 提问</button>
+        <button type="button" class="act" data-goview="articles">浏览 TA 的文章</button>
+      </div>
+    </div></div></section>
+  <p class="foot">© 2026 黄梦奇 · 本页由 Rukik 生成并托管：https://rukik.com/e/mengqi-huang/<br>
+  AI 生成内容仅供信息参考，不构成专业意见 · <a href="https://rukik.com/experts/">更多 Rukik 专家</a> · <a href="/templates/">管理我的独立站</a></p>
 </div>
+
+<script>
+(function () {
+  var views = ['home', 'articles', 'knowledge', 'ask', 'about'];
+  function panel(name) { return document.querySelector('[data-view-panel="' + name + '"]'); }
+  window.goView = function (name) {
+    if (name === 'knowledge') {
+      showView('home');
+      var k = document.getElementById('knowledge-sec');
+      if (k) setTimeout(function () { k.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+      markNav('knowledge');
+      return;
+    }
+    showView(name); markNav(name);
+  };
+  function showView(name) {
+    views.forEach(function (v) { var p = panel(v); if (p) p.hidden = v !== name; });
+    try { history.replaceState(null, '', '#/' + name); } catch (e) {}
+    window.scrollTo({ top: 0 });
+  }
+  function markNav(name) {
+    document.querySelectorAll('[data-goview]').forEach(function (b) {
+      if (b.classList.contains('subnav') || b.closest('.subnav')) b.classList.toggle('on', b.getAttribute('data-goview') === name);
+    });
+    document.querySelectorAll('.subnav [data-goview]').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-goview') === name);
+    });
+  }
+  document.querySelectorAll('[data-goview]').forEach(function (b) {
+    b.addEventListener('click', function (ev) { ev.preventDefault(); goView(b.getAttribute('data-goview')); });
+  });
+  var h = (location.hash || '').replace('#/', '');
+  if (views.indexOf(h) >= 0 && h !== 'home') goView(h);
+
+  /* 精选轮播：6 秒自动切换，与用户手动交互后暂停自动播放 */
+  var box = document.getElementById('featBox');
+  if (box) {
+    var slides = box.querySelectorAll('.feat-slide'), cur = 0, timer = null, manual = false;
+    function go(n) {
+      if (!slides.length) return;
+      cur = ((n % slides.length) + slides.length) % slides.length;
+      slides.forEach(function (s, i) { s.classList.toggle('on', i === cur); });
+      box.querySelectorAll('.dot').forEach(function (d, i) { d.classList.toggle('on', i === cur); });
+    }
+    function play() { if (!manual && slides.length > 1 && !timer) timer = setInterval(function () { go(cur + 1); }, 6000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    box.querySelectorAll('[data-feat]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = b.getAttribute('data-feat');
+        manual = true; stop();
+        go(v === '-1' ? cur - 1 : (v === '1' ? cur + 1 : parseInt(v, 10)));
+      });
+    });
+    box.addEventListener('pointerenter', stop);
+    box.addEventListener('pointerleave', play);
+    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : play(); });
+    play();
+  }
+
+  /* 文章分类筛选（文章视图，按真实 topics 过滤） */
+  document.querySelectorAll('.topic-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.topic-chip').forEach(function (c) { c.classList.toggle('on', c === chip); });
+      var t = chip.getAttribute('data-topic'), n = 0;
+      document.querySelectorAll('#allArtsGrid .art').forEach(function (card) {
+        var show = !t || ('|' + card.getAttribute('data-topics') + '|').indexOf('|' + t + '|') >= 0;
+        card.hidden = !show; if (show) n++;
+      });
+      var e = document.getElementById('filterEmpty'); if (e) e.hidden = n > 0;
+    });
+  });
+
+  /* 顶栏搜索：基于 /data/site-data.json 的真实专家与文章数据 */
+  var input = document.getElementById('siteSearch'), results = document.getElementById('searchResults'), data = null;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function render(list) {
+    if (!list.length) { results.innerHTML = '<div class="sr-empty">没有找到相关内容</div>'; results.hidden = false; return; }
+    results.innerHTML = list.map(function (r) {
+      return '<a class="sr-item" href="' + esc(r.url) + '"><div class="sr-k">' + esc(r.kind) + '</div><div class="sr-t">' + esc(r.title) + '</div></a>';
+    }).join('');
+    results.hidden = false;
+  }
+  if (input) {
+    input.addEventListener('focus', function () {
+      if (data) return;
+      fetch('/data/site-data.json').then(function (r) { return r.json(); }).then(function (j) { data = j; }).catch(function () {});
+    });
+    input.addEventListener('input', function () {
+      var kw = input.value.trim().toLowerCase();
+      if (!kw || !data) { results.hidden = true; return; }
+      var out = [];
+      (data.experts || []).forEach(function (e) {
+        if ((e.name + ' ' + (e.title || '')).toLowerCase().indexOf(kw) >= 0)
+          out.push({ kind: '专家', title: e.name + ' · ' + (e.title || ''), url: '/e/' + e.slug + '/' });
+      });
+      (data.articles || []).forEach(function (a) {
+        if (out.length < 9 && a.title.toLowerCase().indexOf(kw) >= 0)
+          out.push({ kind: '文章 · ' + a.expert_name, title: a.title, url: '/a/' + a.id });
+      });
+      render(out.slice(0, 9));
+    });
+    document.addEventListener('click', function (ev) { if (!ev.target.closest('.search-box')) results.hidden = true; });
+  }
+
+  /* 滚动渐入（支持减少动态时 CSS 已禁用） */
+  var rv = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    rv.forEach(function (el) { io.observe(el); });
+  } else { rv.forEach(function (el) { el.classList.add('in'); }); }
+})();
+</script>
+
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -512,6 +1013,8 @@
         var r = await fetch(SUPABASE_URL + '/rest/v1/expert_follow_counts?professional_id=eq.' + PROFESSIONAL_ID, { headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY } });
         var rows = await r.json();
         if (fwCount) fwCount.textContent = (rows && rows[0] ? rows[0].follow_count : 0) + ' 人关注';
+        var fwStat = $('fwStatNum');
+        if (fwStat) fwStat.textContent = rows && rows[0] ? rows[0].follow_count : 0;
       } catch (e) {}
     }
     async function wireFollow() {

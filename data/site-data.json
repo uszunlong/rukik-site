@@ -1,68 +1,44 @@
 {
- "generated_at": "2026-11-07T19:30:01.436510+00:00",
+ "generated_at": "2026-11-08T00:57:21Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-   "slug": "mengqi-huang",
    "name": "黄梦奇",
    "title": "律师",
-   "profession": "lawyer",
-   "profession_name": "律师",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-   "city": null,
-   "regions": [
-    "CN"
-   ],
-   "languages": [
-    "中文"
-   ],
-   "specialties": [],
-   "tagline": "",
-   "article_count": 9
+   "slug": "mengqi-huang",
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": {
+    "phone": "9496683909"
+   }
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
-   "slug": null,
    "name": "张子淇",
    "title": "中国非遗出海专家",
-   "profession": "other",
-   "profession_name": "专业人士",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
-   "city": "尔湾",
-   "regions": [
-    "US"
-   ],
-   "languages": [
-    "中文"
-   ],
-   "specialties": [],
-   "tagline": "博雅书院创办人，专注中国文化与非遗海外传播",
-   "article_count": 1
+   "slug": null,
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": null
   },
   {
    "id": "55987361-96af-43d8-95d2-58a2b58c00cb",
-   "slug": null,
    "name": "Ophelia 奧菲",
    "title": "房产经纪",
-   "profession": "realtor",
-   "profession_name": "房产经纪",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg",
-   "city": "新港",
-   "regions": [
-    "US-CA",
-    "US"
-   ],
-   "languages": [
-    "中文"
-   ],
-   "specialties": [],
-   "tagline": "最專業用心的美國地產經紀",
-   "article_count": 1
+   "slug": null,
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": null
   }
  ],
  "articles": [
   {
    "id": "c13afe69-5786-4de7-93d6-d3f2897dcdfb",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "特朗普中期选举败选对中国经济的影响：短期获益还是长期受损？",
    "summary": "特朗普中期选举败选对中国经济的影响是一个复杂的问题，需要考虑多种因素和情景。",
    "topics": [
@@ -72,18 +48,13 @@
     "政策变化",
     "投资环境"
    ],
-   "published_at": "2026-11-05 18:44:59.704588+00",
-   "url": "https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-05",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg"
   },
   {
    "id": "feed92e5-1894-40d9-bd36-fc251aaa39ca",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "企业为什么要认真看 CES 2027：从技术展示到美国市场落地的系统分析",
    "summary": "CES 值得认真对待，不只是因为它有流量，而是因为它把技术展示、品牌建立、渠道洽谈、资本关注与美国本地化机会压缩到同一场域。",
    "topics": [
@@ -92,18 +63,13 @@
     "品牌本地化",
     "科技展会策略"
    ],
-   "published_at": "2026-11-05 07:27:02.048492+00",
-   "url": "https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-05",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg"
   },
   {
    "id": "725817a7-625e-4665-a810-fb561e41af75",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "如何专业看懂马斯克的经营理念：目标、组织、成本与控制权",
    "summary": "马斯克式经营的核心，不是个人英雄主义，而是以终局目标牵引、用工程逻辑重构成本与组织、再用高控制权压缩执行周期的一套系统工程。",
    "topics": [
@@ -112,18 +78,13 @@
     "组织管理",
     "创新战略"
    ],
-   "published_at": "2026-11-05 06:43:50.338829+00",
-   "url": "https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-05",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg"
   },
   {
    "id": "102511dc-ff28-4346-88e8-21dcbad575da",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "川普中期选举败选，会影响什么：看懂美国政治与商业预期的传导链条",
    "summary": "我的判断是，川普在中期选举中的败势，影响的不只是个人声势，而是共和党内部权力分配、2024年大选路径、国会博弈方式以及企业与市场的预期结构。",
    "topics": [
@@ -133,39 +94,13 @@
     "国会格局",
     "政策预期"
    ],
-   "published_at": "2026-11-05 06:41:36.665988+00",
-   "url": "https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
-  },
-  {
-   "id": "b59a6d6e-a7a5-40ad-a24f-11d820877ab4",
-   "title": "数据中心限制措施升温，项目开发不再只是土地与资本问题",
-   "summary": "美国多地围绕数据中心开发的限制性措施升温，意味着这一赛道的竞争重点正从需求与资金，转向电力、水资源与地方治理许可。",
-   "topics": [
-    "数据中心",
-    "商业地产",
-    "选址开发",
-    "基础设施",
-    "美国政策趋势"
-   ],
-   "published_at": "2026-11-05 05:38:19.403856+00",
-   "url": "https://rukik.com/a/b59a6d6e-a7a5-40ad-a24f-11d820877ab4",
-   "author": {
-    "id": "55987361-96af-43d8-95d2-58a2b58c00cb",
-    "name": "Ophelia 奧菲",
-    "title": "房产经纪",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg",
-    "slug": null
-   }
+   "date": "2026-11-05",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg"
   },
   {
    "id": "bda902b3-96bb-4c4a-8752-8c0efc9f7ae3",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "看懂洛克菲勒家族长期影响力：财富传承背后的真正逻辑",
    "summary": "我的观点是，洛克菲勒家族之所以长期保持影响力，不在于单一财富规模，而在于把财富、企业、治理、家族价值与社会影响做成了一个长期运转的系统。",
    "topics": [
@@ -174,18 +109,13 @@
     "信托与遗嘱",
     "企业控制权"
    ],
-   "published_at": "2026-11-03 20:44:14.908785+00",
-   "url": "https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-03",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg"
   },
   {
    "id": "b14fa91d-664b-4a50-a35e-243b3409290b",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "家族财富传承四大模式：怎么选，关键不在工具而在目标",
    "summary": "家族财富传承没有万能模板，遗嘱、信托、家族持股安排与保险配置各有功能边界，真正重要的是先明确您要传的到底是财产、控制权、企业，还是家风与秩序。",
    "topics": [
@@ -194,18 +124,13 @@
     "家族治理",
     "企业传承"
    ],
-   "published_at": "2026-11-03 20:06:47.75503+00",
-   "url": "https://rukik.com/a/b14fa91d-664b-4a50-a35e-243b3409290b",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-03",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/b14fa91d-664b-4a50-a35e-243b3409290b/hero-author-1793736257762.jpg"
   },
   {
    "id": "8e5e0149-8024-4296-920d-f3222fe96c0c",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "中国企业出海美国：从粗放贸易到精细化合资的突围之路",
    "summary": "中国企业出海美国已从粗放式贸易升级为精细化本地运营，必须高度重视各州法律差异、合资模式及经济实质性要求。",
    "topics": [
@@ -214,18 +139,13 @@
     "跨境合规",
     "本土化运营"
    ],
-   "published_at": "2026-11-02 07:35:06.612426+00",
-   "url": "https://rukik.com/a/8e5e0149-8024-4296-920d-f3222fe96c0c",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-11-02",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/8e5e0149-8024-4296-920d-f3222fe96c0c/hero-author-1793604881434.jpg"
   },
   {
    "id": "4d349ca2-e26c-44ee-abb4-d966d3b9d5be",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "在美国做品牌授权或合作开店，为什么可能已经算 Franchise",
    "summary": "美国对加盟/特许经营确有明确监管，关键不在名称，而在您的商业模式是否同时涉及品牌授权、经营控制或持续支持，以及向对方收费。",
    "topics": [
@@ -235,33 +155,23 @@
     "FDD",
     "美国商业法律"
    ],
-   "published_at": "2026-10-31 15:45:14.97432+00",
-   "url": "https://rukik.com/a/4d349ca2-e26c-44ee-abb4-d966d3b9d5be",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-10-31",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/4d349ca2-e26c-44ee-abb4-d966d3b9d5be/hero-author-1793461333059.jpg"
   },
   {
    "id": "19758c15-6161-4566-97fb-e6dcc8d3410d",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
    "title": "从 H-1B 到绿卡：为什么这个签证对家庭规划既便利又隐含风险",
    "summary": "文章指出，H-1B 是美国常见的专业工作签证之一，适合为特定雇主从事专业岗位的人，但不应被视为通往绿卡的自动路径。作者重点分析了岗位匹配、抽签、雇主支持、配偶工作权限制，以及与其他身份路线的比较，提醒读者结合家庭规划与整体路径判断。",
    "topics": [],
-   "published_at": "2026-10-31 15:30:28.694264+00",
-   "url": "https://rukik.com/a/19758c15-6161-4566-97fb-e6dcc8d3410d",
-   "author": {
-    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
-    "name": "黄梦奇",
-    "title": "律师",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
-    "slug": "mengqi-huang"
-   }
+   "date": "2026-10-31",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/19758c15-6161-4566-97fb-e6dcc8d3410d/hero-author-1793458930279.jpg"
   },
   {
    "id": "76c2d4b7-45ba-4fe9-bb51-772bbd892640",
+   "expert_id": "69933229-f9df-4384-bf2e-86682f09fd30",
+   "expert_name": "张子淇",
    "title": "把中国纹样讲给美国主流市场听，关键是做成可体验的文化语言",
    "summary": "我的判断是，海外纹样传播的关键不在于先证明历史多深，而在于先把它转译成海外受众看得懂、愿意用、方便分享的文化语言。",
    "topics": [
@@ -270,15 +180,24 @@
     "传统文化出海",
     "文化体验设计"
    ],
-   "published_at": "2026-10-30 21:47:52.124802+00",
-   "url": "https://rukik.com/a/76c2d4b7-45ba-4fe9-bb51-772bbd892640",
-   "author": {
-    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
-    "name": "张子淇",
-    "title": "中国非遗出海专家",
-    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
-    "slug": null
-   }
+   "date": "2026-10-30",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/69933229-f9df-4384-bf2e-86682f09fd30/76c2d4b7-45ba-4fe9-bb51-772bbd892640/hero-author-1793396656033.jpg"
+  },
+  {
+   "id": "b59a6d6e-a7a5-40ad-a24f-11d820877ab4",
+   "expert_id": "55987361-96af-43d8-95d2-58a2b58c00cb",
+   "expert_name": "Ophelia 奧菲",
+   "title": "数据中心限制措施升温，项目开发不再只是土地与资本问题",
+   "summary": "美国多地围绕数据中心开发的限制性措施升温，意味着这一赛道的竞争重点正从需求与资金，转向电力、水资源与地方治理许可。",
+   "topics": [
+    "数据中心",
+    "商业地产",
+    "选址开发",
+    "基础设施",
+    "美国政策趋势"
+   ],
+   "date": "2026-11-05",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/55987361-96af-43d8-95d2-58a2b58c00cb/b59a6d6e-a7a5-40ad-a24f-11d820877ab4/hero-author-1793856815162.jpg"
   }
  ]
 }

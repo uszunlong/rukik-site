@@ -1,0 +1,321 @@
+{
+ "generated_at": "2026-11-08T00:57:21Z",
+ "default_template": "t01",
+ "templates": [
+  {
+   "id": "t01",
+   "name": "星辰科技",
+   "en": "Stellar Tech",
+   "version": 1,
+   "desc": "深蓝与香槟金交织的全球网络感，科技金融气质，适合希望呈现国际化与专业可信形象的专家。",
+   "hero": "split",
+   "deco": "globe",
+   "dark": true,
+   "tokens": {
+    "bg": "#060D1F",
+    "bg2": "#0B2148",
+    "surface": "#0C1E3E",
+    "surface2": "#0A1830",
+    "ink": "#F2F6FC",
+    "muted": "#93A7C4",
+    "accent": "#D9A94A",
+    "accent2": "#4EA1FF",
+    "line": "rgba(120,160,220,.20)",
+    "radius": "18px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#060D1F",
+    "#D9A94A",
+    "#4EA1FF"
+   ]
+  },
+  {
+   "id": "t02",
+   "name": "极简白金",
+   "en": "Minimal Platinum",
+   "version": 1,
+   "desc": "奶白与香槟金的大留白极简风，安静高级，把注意力完全留给专家本人与内容。",
+   "hero": "center",
+   "deco": "none",
+   "dark": false,
+   "tokens": {
+    "bg": "#FAF6EF",
+    "bg2": "#FAF6EF",
+    "surface": "#FFFFFF",
+    "surface2": "#F5EFE3",
+    "ink": "#2A251E",
+    "muted": "#9A8F7D",
+    "accent": "#B08D4F",
+    "accent2": "#8C6D2F",
+    "line": "#EAE1D2",
+    "radius": "14px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "Georgia,\"Songti SC\",\"STSong\",\"SimSun\",serif"
+   },
+   "swatches": [
+    "#FAF6EF",
+    "#B08D4F",
+    "#8C6D2F"
+   ]
+  },
+  {
+   "id": "t03",
+   "name": "未来 AI",
+   "en": "Future AI",
+   "version": 1,
+   "desc": "纯黑底色配霓虹蓝紫，玻璃质感与光晕，突出 AI 分身与前沿科技属性。",
+   "hero": "split",
+   "deco": "grid",
+   "dark": true,
+   "tokens": {
+    "bg": "#05060A",
+    "bg2": "#0B0E1D",
+    "surface": "#0E1120",
+    "surface2": "#0A0C16",
+    "ink": "#EDEFFF",
+    "muted": "#8B90B8",
+    "accent": "#7C5CFF",
+    "accent2": "#22D3EE",
+    "line": "rgba(124,92,255,.28)",
+    "radius": "16px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#05060A",
+    "#7C5CFF",
+    "#22D3EE"
+   ]
+  },
+  {
+   "id": "t04",
+   "name": "国际商务",
+   "en": "Global Business",
+   "version": 1,
+   "desc": "深灰与藏蓝的稳重结构感，克制、严谨，适合商务与机构型专业形象。",
+   "hero": "split",
+   "deco": "none",
+   "dark": true,
+   "tokens": {
+    "bg": "#10151D",
+    "bg2": "#141B26",
+    "surface": "#171E28",
+    "surface2": "#12181F",
+    "ink": "#EDF1F5",
+    "muted": "#94A3B2",
+    "accent": "#C8A24B",
+    "accent2": "#5B84AE",
+    "line": "#26303D",
+    "radius": "10px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#10151D",
+    "#C8A24B",
+    "#5B84AE"
+   ]
+  },
+  {
+   "id": "t05",
+   "name": "学术智库",
+   "en": "Academic",
+   "version": 1,
+   "desc": "米白纸面配墨绿与衬线标题，书卷气与研究感，适合学者与智库型专家。",
+   "hero": "center",
+   "deco": "none",
+   "dark": false,
+   "tokens": {
+    "bg": "#F7F3E9",
+    "bg2": "#F7F3E9",
+    "surface": "#FFFDF6",
+    "surface2": "#F1EBDA",
+    "ink": "#1E3327",
+    "muted": "#7A7A68",
+    "accent": "#2F5D3A",
+    "accent2": "#B08D4F",
+    "line": "#E3DCC8",
+    "radius": "8px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "Georgia,\"Songti SC\",\"STSong\",\"SimSun\",serif"
+   },
+   "swatches": [
+    "#F7F3E9",
+    "#2F5D3A",
+    "#B08D4F"
+   ]
+  },
+  {
+   "id": "t06",
+   "name": "个人品牌",
+   "en": "Personal Brand",
+   "version": 1,
+   "desc": "杂志式大幅肖像与粗排大标题，个人品牌张力最强，适合打造鲜明个人 IP 的专家。",
+   "hero": "cover",
+   "deco": "none",
+   "dark": false,
+   "tokens": {
+    "bg": "#F4EFE8",
+    "bg2": "#F4EFE8",
+    "surface": "#FFFFFF",
+    "surface2": "#EDE4D6",
+    "ink": "#14100C",
+    "muted": "#8A7D6B",
+    "accent": "#D9481C",
+    "accent2": "#14100C",
+    "line": "#E2D7C6",
+    "radius": "4px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "Georgia,\"Songti SC\",\"STSong\",\"SimSun\",serif"
+   },
+   "swatches": [
+    "#F4EFE8",
+    "#D9481C",
+    "#14100C"
+   ]
+  },
+  {
+   "id": "t07",
+   "name": "医疗健康",
+   "en": "Health & Care",
+   "version": 1,
+   "desc": "浅蓝与白的柔和配色，大圆角与平静留白，传递亲和与安心感。",
+   "hero": "split",
+   "deco": "none",
+   "dark": false,
+   "tokens": {
+    "bg": "#F2F8FC",
+    "bg2": "#F2F8FC",
+    "surface": "#FFFFFF",
+    "surface2": "#EAF4F9",
+    "ink": "#17384A",
+    "muted": "#6E93A5",
+    "accent": "#2E9CC4",
+    "accent2": "#57C4A5",
+    "line": "#DCEBF3",
+    "radius": "20px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#F2F8FC",
+    "#2E9CC4",
+    "#57C4A5"
+   ]
+  },
+  {
+   "id": "t08",
+   "name": "创意先锋",
+   "en": "Creative Edge",
+   "version": 1,
+   "desc": "大胆撞色与非对称错落布局，活力鲜明，适合创意、品牌与新兴领域专家。",
+   "hero": "split",
+   "deco": "blocks",
+   "dark": false,
+   "tokens": {
+    "bg": "#FFF6EC",
+    "bg2": "#FFF6EC",
+    "surface": "#FFFFFF",
+    "surface2": "#FFEFDB",
+    "ink": "#1D1033",
+    "muted": "#7C6F92",
+    "accent": "#FF5C38",
+    "accent2": "#6C3CE9",
+    "line": "#F0DFCE",
+    "radius": "22px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#FFF6EC",
+    "#FF5C38",
+    "#6C3CE9"
+   ]
+  },
+  {
+   "id": "t09",
+   "name": "东方雅韵",
+   "en": "Oriental Elegance",
+   "version": 1,
+   "desc": "墨黑与暖金、宋体标题与印章红点缀，东方审美的沉静与分量。",
+   "hero": "center",
+   "deco": "ink",
+   "dark": true,
+   "tokens": {
+    "bg": "#0C0B09",
+    "bg2": "#14110C",
+    "surface": "#171410",
+    "surface2": "#100E0B",
+    "ink": "#F3EAD8",
+    "muted": "#A2937A",
+    "accent": "#C9A227",
+    "accent2": "#A63A2E",
+    "line": "#2C261B",
+    "radius": "6px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "Georgia,\"Songti SC\",\"STSong\",\"SimSun\",serif"
+   },
+   "swatches": [
+    "#0C0B09",
+    "#C9A227",
+    "#A63A2E"
+   ]
+  },
+  {
+   "id": "t10",
+   "name": "全球领袖",
+   "en": "Global Leader",
+   "version": 1,
+   "desc": "黑金配色与宽字距标题，低调而有权威感，适合资深与领军型专家形象。",
+   "hero": "center",
+   "deco": "rings",
+   "dark": true,
+   "tokens": {
+    "bg": "#070707",
+    "bg2": "#0D0C09",
+    "surface": "#121110",
+    "surface2": "#0B0B0A",
+    "ink": "#F5EFE2",
+    "muted": "#9C937F",
+    "accent": "#D4AF37",
+    "accent2": "#8A7134",
+    "line": "#28241A",
+    "radius": "12px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif"
+   },
+   "swatches": [
+    "#070707",
+    "#D4AF37",
+    "#8A7134"
+   ]
+  }
+ ],
+ "modules": {
+  "all": [
+   "featured",
+   "articles",
+   "knowledge",
+   "ask",
+   "fields",
+   "ai",
+   "about"
+  ],
+  "hideable": [
+   "about",
+   "articles",
+   "featured",
+   "fields",
+   "knowledge"
+  ]
+ },
+ "legacy_map": {
+  "classic": "t01",
+  "tech": "t01",
+  "warm": "t01",
+  "dark": "t01",
+  "light": "t02"
+ }
+}
