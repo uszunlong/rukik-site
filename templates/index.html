@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的独立站 · 模板中心 | RUKIK 智库</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{--bg:#060D1F;--bg2:#0B2148;--surface:#0C1E3E;--surface2:#0A1830;--ink:#F2F6FC;--muted:#93A7C4;--gold:#D9A94A;--blue:#4EA1FF;--line:rgba(120,160,220,.2);--bad:#FF8A7A;--ok:#6FE3A5}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(160deg,var(--bg),var(--bg2));color:var(--ink);min-height:100vh}
+  a{color:var(--blue)}
+  .top{position:sticky;top:0;background:rgba(6,13,31,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:20}
+  .top-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+  .top img{width:28px;height:28px;border-radius:7px}
+  .top b{letter-spacing:1px}.top span{color:var(--muted);letter-spacing:2px;font-size:14px}
+  .top .who{margin-left:auto;font-size:13px;color:var(--muted)}
+  .top button.linkish{background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 70px}
+  h1{font-size:26px;margin:6px 0 8px}
+  .sub{color:var(--muted);font-size:14px;line-height:1.8}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:20px}
+  .card h2{font-size:17px;margin:0 0 12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=email],input[type=text],input[type=url]{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:11px 16px;font-size:15px;outline:none;min-height:44px}
+  input[type=color]{width:52px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);padding:2px}
+  button{border-radius:999px;padding:11px 22px;font-size:14.5px;cursor:pointer;min-height:44px;font-family:inherit}
+  .btn-gold{background:linear-gradient(135deg,var(--gold),#EBCB85);border:none;color:#191204;font-weight:700}
+  .btn-line{background:var(--surface);border:1.5px solid var(--line);color:var(--ink)}
+  .btn-blue{background:var(--blue);border:none;color:#fff;font-weight:600}
+  button:disabled{opacity:.5;cursor:default}
+  .msg{font-size:13.5px;line-height:1.7;min-height:20px;margin-top:10px}
+  .msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}.msg.dim{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+  .tpl{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface2)}
+  .tpl.cur{border-color:var(--gold)}
+  .tpl.draftsel{border-color:var(--blue)}
+  .sw{height:86px;display:flex}
+  .sw i{flex:1}
+  .sw i:nth-child(2){flex:.5}.sw i:nth-child(3){flex:.5}
+  .tpl-body{padding:14px 16px 16px}
+  .tpl-name{font-weight:700;font-size:16px}
+  .tpl-name .ver{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  .tpl-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-top:6px;min-height:44px}
+  .tpl-tag{display:inline-block;font-size:11.5px;padding:2px 10px;border-radius:999px;margin-left:8px;vertical-align:2px}
+  .tag-cur{background:rgba(217,169,74,.18);color:var(--gold);border:1px solid rgba(217,169,74,.5)}
+  .tag-draft{background:rgba(78,161,255,.15);color:var(--blue);border:1px solid rgba(78,161,255,.45)}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14.5px;padding:6px 0}
+  .chk input{width:18px;height:18px;accent-color:var(--gold)}
+  .ord-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:14.5px}
+  .ord-row:first-of-type{border-top:none}
+  .ord-row .sp{flex:1}
+  .ord-row button{padding:6px 12px;min-height:36px;font-size:13px}
+  .modal{position:fixed;inset:0;background:rgba(2,6,16,.78);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:26px 12px}
+  .modal-box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;max-width:1060px;width:100%}
+  .modal iframe{border:1px solid var(--line);border-radius:12px;background:#fff;width:100%;height:640px}
+  .modal iframe.mob{width:390px;height:700px;display:block;margin:0 auto}
+  .seg{display:flex;gap:8px}
+  .seg button.on{background:var(--gold);color:#191204;border:none;font-weight:700}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}.modal iframe{height:70vh}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <img src="/assets/seal.png" alt="Rukik"><b>RUKIK</b><span>智库 · 模板中心</span>
+  <div class="who" id="whoBox"></div>
+</div></header>
+
+<div class="wrap">
+  <h1>我的独立站 · 模板中心</h1>
+  <p class="sub">一套数据，十种设计，一键切换。切换模板只换外观——您的文章、关注、链接地址和 AI 分身都不会变。
+  所有模板都用您的<b>真实资料</b>渲染：文章数、关注数都是真实统计（没有可靠来源的数字不会显示）。
+  改动先存草稿，点「发布」后才对外生效；发布管线会自动生成、验活，失败时线上仍是上一版。</p>
+
+  <!-- 登录 -->
+  <div class="card" id="loginCard">
+    <h2>先登录（专家本人）</h2>
+    <div class="row">
+      <input type="email" id="liEmail" placeholder="您在 Rukik 的邮箱" style="flex:1;min-width:220px">
+      <button class="btn-gold" id="liSend">发送验证码</button>
+    </div>
+    <div class="row" id="liCodeRow" hidden style="margin-top:10px">
+      <input type="text" id="liCode" placeholder="6 位验证码" style="flex:1;min-width:160px">
+      <button class="btn-blue" id="liVerify">登录</button>
+    </div>
+    <div class="msg dim" id="liMsg"></div>
+  </div>
+
+  <!-- 工作台 -->
+  <div id="studio" hidden>
+    <div class="card">
+      <h2>我的站点</h2>
+      <div class="sub" id="siteInfo">加载中…</div>
+      <div class="msg" id="siteMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>选择模板（10 套）</h2>
+      <p class="sub">「在线预览」用您本人的真实公开资料实时渲染首页效果（桌面 / 手机可切换）。点「选为草稿」只是暂存，不影响线上站点；确认后在下方点「发布草稿」才生效。新模板上架后会自动出现在这里，无需您做任何操作。</p>
+      <div class="grid" id="tplGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>个性化（作用于草稿）</h2>
+      <div class="row">
+        <label style="font-size:14.5px">强调色</label>
+        <input type="color" id="cfgAccent" value="#D9A94A">
+        <button class="btn-line" id="cfgAccentReset">用模板默认色</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label style="font-size:14.5px">Hero 背景图（可选）</label>
+        <input type="url" id="cfgCover" placeholder="https://… 图片地址，留空用模板自带背景" style="flex:1;min-width:240px">
+      </div>
+      <h2 style="margin-top:22px">模块显隐</h2>
+      <p class="sub">身份核验徽章与 AI 身份说明属于真实性信息，不在可隐藏之列；「问专家」为核心功能，始终显示。</p>
+      <div id="cfgModules"></div>
+      <h2 style="margin-top:22px">首页模块顺序</h2>
+      <div id="cfgOrder"></div>
+      <div class="row" style="margin-top:20px">
+        <button class="btn-line" id="btnSaveDraft">保存草稿</button>
+        <button class="btn-gold" id="btnPublish">发布草稿</button>
+        <button class="btn-line" id="btnReset">恢复默认</button>
+        <button class="btn-line" id="btnRollback">回滚到上一发布版</button>
+      </div>
+      <div class="msg" id="cfgMsg"></div>
+    </div>
+  </div>
+
+  <p class="sub" style="margin-top:26px">说明：模板由 RUKIK 官方维护并按季度上新；模板升级不会丢失您的个性化设置（不兼容的个别选项会回退为模板默认值并在此提示）。如需绑定自己的域名，功能正在规划中，本页会第一时间开放。</p>
+</div>
+
+<!-- 预览弹窗 -->
+<div class="modal" id="pvModal" hidden>
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between">
+      <b id="pvTitle">模板预览</b>
+      <div class="seg">
+        <button class="btn-line on" id="pvDesk">桌面</button>
+        <button class="btn-line" id="pvMob">手机</button>
+        <button class="btn-line" id="pvClose">关闭</button>
+      </div>
+    </div>
+    <p class="sub" style="margin:10px 0">以下为该模板以<b>您的真实公开资料</b>渲染的首页核心区域预览；正式发布后为完整页面（含文章列表、问专家、关于等全部视图，同一设计系统）。</p>
+    <iframe id="pvFrame" title="模板预览"></iframe>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzc3VzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZmdid3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1NzA2NDkwOSwiZXhwIjoyMDcyNjQxOTA5fQ.6x9URWFR2RyUGhwdSk8Gbd5jywP6dTIWc1CysieD8DY';
+  var sb = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
+  var $ = function (id) { return document.getElementById(id); };
+  var MODULE_LABELS = { featured: '精选观点轮播', articles: '最新文章', knowledge: '专业知识', fields: '专业领域（侧栏）', about: '关于 TA（侧栏）' };
+  var HIDEABLE = ['featured', 'articles', 'knowledge', 'fields', 'about'];
+  var ORDERABLE = ['featured', 'articles', 'knowledge'];
+  var state = { user: null, pro: null, site: null, registry: null, pub: null, draft: null, expertPub: null };
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function msg(id, txt, cls) { var m = $(id); m.textContent = txt || ''; m.className = 'msg ' + (cls || ''); }
+  function rest(path, opts) {
+    opts = opts || {};
+    return sb.auth.getSession().then(function (r) {
+      var tok = r.data.session ? r.data.session.access_token : ANON_KEY;
+      var h = { apikey: ANON_KEY, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' };
+      if (opts.prefer) h.Prefer = opts.prefer;
+      return fetch(SUPABASE_URL + '/rest/v1/' + path, { method: opts.method || 'GET', headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined })
+        .then(function (res) { return res.text().then(function (t) { var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {} if (!res.ok) throw new Error((j && (j.message || j.hint)) || ('HTTP ' + res.status)); return j; }); });
+    });
+  }
+
+  /* ---------- 登录 ---------- */
+  $('liSend').onclick = function () {
+    var email = $('liEmail').value.trim();
+    if (!email) { msg('liMsg', '请先填邮箱。', 'err'); return; }
+    $('liSend').disabled = true; msg('liMsg', '正在发送验证码…', 'dim');
+    sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: false } }).then(function (r) {
+      $('liSend').disabled = false;
+      if (r.error) { msg('liMsg', '发送失败：' + r.error.message + '（如提示找不到账号，说明该邮箱还没有 Rukik 账号，请先在 App 注册。）', 'err'); return; }
+      $('liCodeRow').hidden = false; msg('liMsg', '验证码已发送到 ' + email + '，请查收后填入。', 'ok');
+    });
+  };
+  $('liVerify').onclick = function () {
+    var email = $('liEmail').value.trim(), code = $('liCode').value.trim();
+    if (!code) { msg('liMsg', '请填验证码。', 'err'); return; }
+    $('liVerify').disabled = true;
+    sb.auth.verifyOtp({ email: email, token: code, type: 'email' }).then(function (r) {
+      $('liVerify').disabled = false;
+      if (r.error) { msg('liMsg', '登录失败：' + r.error.message, 'err'); return; }
+      boot();
+    });
+  };
+
+  /* ---------- 数据装载 ---------- */
+  function currentConfig(site) {
+    var lc = site.layout_config || {};
+    return {
+      template_key: site.template_key || 't01',
+      theme_config: site.theme_config || {},
+      order: (lc.order && lc.order.length ? lc.order : ['featured', 'articles', 'knowledge']),
+      hidden: lc.hidden || []
+    };
+  }
+  function boot() {
+    sb.auth.getSession().then(function (r) {
+      var sess = r.data.session;
+      if (!sess) return;
+      state.user = sess.user;
+      $('loginCard').hidden = true;
+      $('whoBox').innerHTML = esc(sess.user.email || '') + ' <button class="linkish" id="btnOut">退出</button>';
+      $('btnOut').onclick = function () { sb.auth.signOut().then(function () { location.reload(); }); };
+      return rest('professionals?user_id=eq.' + sess.user.id + '&select=id,name&limit=1');
+    }).then(function (rows) {
+      if (!state.user) return;
+      if (!rows || !rows.length) { $('studio').hidden = false; $('siteInfo').textContent = '当前账号还不是认证专家，暂无独立站。'; return; }
+      state.pro = rows[0];
+      return rest('expert_sites?professional_id=eq.' + state.pro.id + '&select=*&limit=1');
+    }).then(function (rows) {
+      if (!state.pro) return;
+      if (!rows || !rows.length) { $('studio').hidden = false; $('siteInfo').innerHTML = '您还没有独立站。<a href="/build/">去一键建站 →</a>'; return; }
+      state.site = rows[0];
+      state.pub = currentConfig(state.site);
+      var lc = state.site.layout_config || {};
+      state.draft = lc.draft ? JSON.parse(JSON.stringify(lc.draft)) : JSON.parse(JSON.stringify(state.pub));
+      return Promise.all([
+        fetch('/data/expert-templates.json').then(function (x) { return x.json(); }),
+        rest('public_experts?id=eq.' + state.pro.id + '&select=name,resolved_public_title,resolved_avatar_url,avatar_url,verification_scope,ai_badge_kind&limit=1'),
+        rest('knowledge_articles?professional_id=eq.' + state.pro.id + '&status=eq.published&deleted_at=is.null&select=id&limit=500'),
+        rest('expert_follow_counts?professional_id=eq.' + state.pro.id + '&select=follow_count')
+      ]);
+    }).then(function (res) {
+      if (!state.site) return;
+      state.registry = res[0];
+      var ep = res[1] && res[1][0] || {};
+      state.expertPub = {
+        name: ep.name || state.pro.name, title: ep.resolved_public_title || '',
+        avatar: ep.resolved_avatar_url || ep.avatar_url || '',
+        verified: ep.verification_scope === 'identity' || ep.verification_scope === 'identity_and_license',
+        verifiedFull: ep.verification_scope === 'identity_and_license',
+        aiTwin: ep.ai_badge_kind === 'ai_twin',
+        articles: (res[2] || []).length,
+        follows: (res[3] && res[3][0] ? res[3][0].follow_count : 0)
+      };
+      renderAll();
+      $('studio').hidden = false;
+    }).catch(function (e) { $('studio').hidden = false; msg('siteMsg', '加载失败：' + e.message, 'err'); });
+  }
+
+  /* ---------- 渲染 ---------- */
+  function tplById(id) { return (state.registry.templates || []).filter(function (t) { return t.id === id; })[0]; }
+  function renderAll() {
+    var s = state.site, url = 'https://rukik.com/e/' + s.slug + '/';
+    var cur = tplById(state.pub.template_key), dr = tplById(state.draft.template_key);
+    $('siteInfo').innerHTML = '站点地址：<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a> · 发布状态：' +
+      esc(s.publish_status) + ' · 线上模板：<b>' + esc(cur ? cur.name : state.pub.template_key) + '</b>' +
+      (state.draft.template_key !== state.pub.template_key ? ' · 草稿模板：<b>' + esc(dr ? dr.name : state.draft.template_key) + '</b>（未发布）' : '');
+    var grid = $('tplGrid'); grid.innerHTML = '';
+    state.registry.templates.forEach(function (t) {
+      var card = document.createElement('div');
+      card.className = 'tpl' + (t.id === state.pub.template_key ? ' cur' : '') + (t.id === state.draft.template_key && t.id !== state.pub.template_key ? ' draftsel' : '');
+      var tag = t.id === state.pub.template_key ? '<span class="tpl-tag tag-cur">使用中</span>' : (t.id === state.draft.template_key ? '<span class="tpl-tag tag-draft">草稿</span>' : '');
+      card.innerHTML = '<div class="sw">' + t.swatches.map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</div>' +
+        '<div class="tpl-body"><div class="tpl-name">' + esc(t.name) + '<span class="ver">' + esc(t.en) + ' · v' + t.version + '</span>' + tag + '</div>' +
+        '<div class="tpl-desc">' + esc(t.desc) + '</div>' +
+        '<div class="row"><button class="btn-line" data-act="preview">在线预览</button><button class="btn-gold" data-act="pick">选为草稿</button></div></div>';
+      card.querySelector('[data-act="preview"]').onclick = function () { openPreview(t); };
+      card.querySelector('[data-act="pick"]').onclick = function () {
+        state.draft.template_key = t.id;
+        var tk = t.tokens || {};
+        if (!state.draft.theme_config) state.draft.theme_config = {};
+        renderAll(); msg('cfgMsg', '已选为草稿模板：' + t.name + '。别忘了点「发布草稿」才会对外生效。', 'ok');
+        $('cfgAccent').value = state.draft.theme_config.accent || tk.accent || '#D9A94A';
+      };
+      grid.appendChild(card);
+    });
+    /* 个性化表单回填（草稿） */
+    var t = tplById(state.draft.template_key);
+    $('cfgAccent').value = state.draft.theme_config.accent || (t ? t.tokens.accent : '#D9A94A');
+    $('cfgCover').value = state.draft.theme_config.cover_url || '';
+    var cm = $('cfgModules'); cm.innerHTML = '';
+    HIDEABLE.forEach(function (k) {
+      var lab = document.createElement('label'); lab.className = 'chk';
+      var on = state.draft.hidden.indexOf(k) < 0;
+      lab.innerHTML = '<input type="checkbox" ' + (on ? 'checked' : '') + '> 显示「' + MODULE_LABELS[k] + '」';
+      lab.querySelector('input').onchange = function (ev) {
+        var i = state.draft.hidden.indexOf(k);
+        if (ev.target.checked && i >= 0) state.draft.hidden.splice(i, 1);
+        if (!ev.target.checked && i < 0) state.draft.hidden.push(k);
+      };
+      cm.appendChild(lab);
+    });
+    var co = $('cfgOrder'); co.innerHTML = '';
+    state.draft.order.filter(function (k) { return ORDERABLE.indexOf(k) >= 0; }).forEach(function (k, idx, arr) {
+      var row = document.createElement('div'); row.className = 'ord-row';
+      row.innerHTML = '<span>' + (idx + 1) + '.</span><span class="sp">' + MODULE_LABELS[k] + '</span>';
+      var up = document.createElement('button'); up.className = 'btn-line'; up.textContent = '↑ 上移';
+      var dn = document.createElement('button'); dn.className = 'btn-line'; dn.textContent = '↓ 下移';
+      up.disabled = idx === 0; dn.disabled = idx === arr.length - 1;
+      up.onclick = function () { moveOrder(k, -1); };
+      dn.onclick = function () { moveOrder(k, 1); };
+      row.appendChild(up); row.appendChild(dn); co.appendChild(row);
+    });
+    $('btnRollback').disabled = !(state.site.layout_config && state.site.layout_config.prev);
+  }
+  function moveOrder(k, d) {
+    var o = state.draft.order.filter(function (x) { return ORDERABLE.indexOf(x) >= 0; });
+    var i = o.indexOf(k), j = i + d; if (j < 0 || j >= o.length) return;
+    var tmp = o[i]; o[i] = o[j]; o[j] = tmp;
+    state.draft.order = o.concat(state.draft.order.filter(function (x) { return ORDERABLE.indexOf(x) < 0; }));
+    renderAll();
+  }
+
+  /* ---------- 写操作 ---------- */
+  function patchSite(body) {
+    return rest('expert_sites?id=eq.' + state.site.id, { method: 'PATCH', prefer: 'return=representation', body: body })
+      .then(function (rows) { if (rows && rows[0]) state.site = rows[0]; return rows; });
+  }
+  function collectDraft() {
+    var tc = {};
+    var t = tplById(state.draft.template_key);
+    var acc = $('cfgAccent').value;
+    if (t && acc && acc.toLowerCase() !== String(t.tokens.accent).toLowerCase()) tc.accent = acc;
+    var cov = $('cfgCover').value.trim();
+    if (cov) tc.cover_url = cov;
+    state.draft.theme_config = tc;
+    return state.draft;
+  }
+  $('cfgAccentReset').onclick = function () { var t = tplById(state.draft.template_key); if (t) $('cfgAccent').value = t.tokens.accent; };
+  $('btnSaveDraft').onclick = function () {
+    var d = collectDraft();
+    var lc = JSON.parse(JSON.stringify(state.site.layout_config || {}));
+    lc.draft = d;
+    msg('cfgMsg', '正在保存草稿…', 'dim');
+    patchSite({ layout_config: lc }).then(function () { msg('cfgMsg', '草稿已保存。线上站点没有变化，确认后再点「发布草稿」。', 'ok'); renderAll(); })
+      .catch(function (e) { msg('cfgMsg', '保存失败:' + e.message, 'err'); });
+  };
+  $('btnPublish').onclick = function () {
+    var d = collectDraft();
+    var lc = JSON.parse(JSON.stringify(state.site.layout_config || {}));
+    lc.prev = JSON.parse(JSON.stringify(state.pub));       /* 回滚快照 */
+    lc.order = d.order; lc.hidden = d.hidden; delete lc.draft;
+    msg('cfgMsg', '正在发布…', 'dim');
+    patchSite({ template_key: d.template_key, theme_config: d.theme_config, layout_config: lc, updated_at: new Date().toISOString() })
+      .then(function () {
+        state.pub = currentConfig(state.site);
+        state.draft = JSON.parse(JSON.stringify(state.pub));
+        msg('cfgMsg', '已提交发布。发布管线会自动重新生成并验活，通常几分钟内生效；期间线上仍是上一版，不会中断。', 'ok');
+        renderAll();
+      }).catch(function (e) { msg('cfgMsg', '发布失败:' + e.message + '（线上仍是上一版，未受影响）', 'err'); });
+  };
+  $('btnReset').onclick = function () {
+    var t = tplById(state.draft.template_key);
+    state.draft.theme_config = {}; state.draft.hidden = []; state.draft.order = ['featured', 'articles', 'knowledge'];
+    renderAll(); msg('cfgMsg', '已恢复为模板默认设置（仍是草稿，发布后生效）。', 'ok');
+  };
+  $('btnRollback').onclick = function () {
+    var lc = JSON.parse(JSON.stringify(state.site.layout_config || {}));
+    var prev = lc.prev; if (!prev) return;
+    lc.order = prev.order || ['featured', 'articles', 'knowledge']; lc.hidden = prev.hidden || [];
+    delete lc.prev; delete lc.draft;
+    msg('cfgMsg', '正在回滚…', 'dim');
+    patchSite({ template_key: prev.template_key, theme_config: prev.theme_config || {}, layout_config: lc, updated_at: new Date().toISOString() })
+      .then(function () {
+        state.pub = currentConfig(state.site);
+        state.draft = JSON.parse(JSON.stringify(state.pub));
+        msg('cfgMsg', '已回滚到上一发布版，同样会在几分钟内自动生效。', 'ok'); renderAll();
+      }).catch(function (e) { msg('cfgMsg', '回滚失败：' + e.message, 'err'); });
+  };
+
+  /* ---------- 在线预览（专家本人真实资料 + 模板真实令牌） ---------- */
+  var pvTpl = null;
+  function previewHtml(t) {
+    var tk = Object.assign({}, t.tokens);
+    if (state.draft.template_key === t.id && state.draft.theme_config && state.draft.theme_config.accent) tk.accent = state.draft.theme_config.accent;
+    var e = state.expertPub;
+    var badges = '';
+    if (e.verified) badges += '<span style="display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:700;background:' + tk.accent + '22;color:' + tk.accent + ';border:1px solid ' + tk.accent + '">✓ Rukik Verified · ' + (e.verifiedFull ? '身份与资质已核验' : '身份已核验') + '</span> ';
+    if (e.aiTwin) badges += '<span style="display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;background:' + tk.accent2 + '22;color:' + tk.accent2 + ';border:1px solid ' + tk.accent2 + '">✦ Rukik AI 分身 · 本人训练</span>';
+    var av = e.avatar ? '<img src="' + esc(e.avatar) + '" style="width:104px;height:104px;border-radius:50%;object-fit:cover;border:3px solid ' + tk.accent + '">' :
+      '<span style="display:inline-flex;width:104px;height:104px;border-radius:50%;border:3px solid ' + tk.accent + ';align-items:center;justify-content:center;font-size:38px;background:' + tk.surface + '">' + esc((e.name || '专')[0]) + '</span>';
+    var center = t.hero === 'center', cover = t.hero === 'cover';
+    var idStyle = center ? 'display:flex;flex-direction:column;align-items:center;text-align:center' : 'display:flex;gap:20px;align-items:flex-start';
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;font-family:' + tk.font + ';background:linear-gradient(160deg,' + tk.bg + ',' + tk.bg2 + ');color:' + tk.ink + '}h1{font-family:' + tk.hfont + ';margin:4px 0 6px;font-size:' + (cover ? '44px' : '32px') + '}.card{background:' + tk.surface + ';border:1px solid ' + tk.line + ';border-radius:' + tk.radius + ';padding:18px}</style></head><body>' +
+      '<div style="padding:34px 30px;border-bottom:1px solid ' + tk.line + '"><div style="' + idStyle + '">' + av +
+      '<div><h1>' + esc(e.name) + '</h1><div style="color:' + tk.accent + ';font-weight:600">' + esc(e.title) + '</div>' +
+      '<div style="margin-top:12px">' + badges + '</div></div></div>' +
+      '<div style="display:flex;gap:26px;justify-content:center;margin-top:24px;text-align:center"><div><div style="font-size:24px;font-weight:800">' + e.articles + '</div><div style="font-size:12px;color:' + tk.muted + '">文章与观点</div></div>' +
+      '<div><div style="font-size:24px;font-weight:800">' + e.follows + '</div><div style="font-size:12px;color:' + tk.muted + '">关注者</div></div></div></div>' +
+      '<div style="padding:22px 30px;display:grid;grid-template-columns:1fr 300px;gap:18px"><div class="card"><b>精选观点 / 最新文章</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">发布后此处是您真实文章的轮播与网格（当前已发布 ' + e.articles + ' 篇），封面、标题、摘要均来自您的文章数据。</p></div>' +
+      '<div class="card"><b>AI 专家助理</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">由您本人训练的分身在此接待访客，回答标注 AI 生成，只引用您的公开内容。</p><div style="background:' + tk.accent + ';color:#191204;font-weight:700;text-align:center;border-radius:999px;padding:11px">向 TA 的 AI 助理提问</div></div></div>' +
+      '</body></html>';
+  }
+  function openPreview(t) {
+    pvTpl = t; $('pvTitle').textContent = '模板预览 · ' + t.name + '（' + state.expertPub.name + '）';
+    $('pvModal').hidden = false;
+    var f = $('pvFrame'); f.classList.remove('mob'); f.srcdoc = previewHtml(t);
+  }
+  $('pvClose').onclick = function () { $('pvModal').hidden = true; };
+  $('pvDesk').onclick = function () { $('pvFrame').classList.remove('mob'); $('pvDesk').classList.add('on'); $('pvMob').classList.remove('on'); };
+  $('pvMob').onclick = function () { $('pvFrame').classList.add('mob'); $('pvMob').classList.add('on'); $('pvDesk').classList.remove('on'); };
+
+  sb.auth.getSession().then(function (r) { if (r.data.session) boot(); });
+})();
+</script>
+</body>
+</html>
