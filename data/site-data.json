@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T14:18:30Z",
+ "generated_at": "2026-11-08T14:22:48Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -30,56 +30,6 @@
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg?v=20261103015506",
    "slug": "ophelia",
    "follow_count": 1,
-   "pro_chat": true,
-   "public_contact": null
-  },
-  {
-   "id": "c69bf2b9-708c-473d-a580-411fceae5e24",
-   "name": "FIX6 Expert Old",
-   "title": "律师",
-   "avatar": "",
-   "slug": "fix6-expert-old",
-   "follow_count": 0,
-   "pro_chat": true,
-   "public_contact": null
-  },
-  {
-   "id": "aaa872b3-f7fb-4c70-80a0-0b8c61afa0d5",
-   "name": "FIX6 Expert New",
-   "title": "律师",
-   "avatar": "",
-   "slug": "fix6-expert-new",
-   "follow_count": 0,
-   "pro_chat": true,
-   "public_contact": null
-  },
-  {
-   "id": "f07e8b3c-f01f-4dc1-b9a8-e047df1a6280",
-   "name": "FIX6 Gen Old",
-   "title": "律师",
-   "avatar": "",
-   "slug": "fix6-gen-old",
-   "follow_count": 0,
-   "pro_chat": true,
-   "public_contact": null
-  },
-  {
-   "id": "010899d2-b7b1-448f-8be1-ef44bb3edf58",
-   "name": "FIX6 Gen New",
-   "title": "律师",
-   "avatar": "",
-   "slug": "fix6-gen-new",
-   "follow_count": 0,
-   "pro_chat": true,
-   "public_contact": null
-  },
-  {
-   "id": "85703b1a-1d73-46f5-88f9-bc9db79a5f1e",
-   "name": "FIX6 XUnit",
-   "title": "律师",
-   "avatar": "",
-   "slug": "fix6-xunit",
-   "follow_count": 0,
    "pro_chat": true,
    "public_contact": null
   }
