@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T14:22:48Z",
+ "generated_at": "2026-11-08T16:12:52Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -30,6 +30,16 @@
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg?v=20261103015506",
    "slug": "ophelia",
    "follow_count": 1,
+   "pro_chat": true,
+   "public_contact": null
+  },
+  {
+   "id": "e952d7f8-4ead-42f9-929a-44b81ec73709",
+   "name": "John Apple",
+   "title": "律师",
+   "avatar": "",
+   "slug": "john-apple",
+   "follow_count": 0,
    "pro_chat": true,
    "public_contact": null
   }
