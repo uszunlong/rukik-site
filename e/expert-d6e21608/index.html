@@ -261,7 +261,7 @@
       <input id="siteSearch" type="search" placeholder="搜索专家、文章…" autocomplete="off" aria-label="搜索专家与文章">
       <div class="search-results" id="searchResults" hidden></div>
     </div>
-    <a class="login-chip" href="#/ask" data-goview="ask">登录</a>
+    <a class="login-chip" href="#/ask" id="loginChip">登录</a>
   </div>
 </div></header>
 
@@ -550,6 +550,8 @@
       var logged = !!session;
       authBox.hidden = logged;
       chatBox.hidden = !logged;
+      var barEl = $('authBar');
+      if (barEl) barEl.hidden = !logged;
       var bar = $('authBarText');
       if (logged && bar) bar.textContent = '已登录：' + ((session.user && (session.user.email || session.user.phone)) || '');
       wireFollow();
