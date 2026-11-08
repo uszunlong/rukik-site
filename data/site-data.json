@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T03:51:03Z",
+ "generated_at": "2026-11-08T03:58:25Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -7,7 +7,7 @@
    "title": "律师",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
    "slug": "mengqi-huang",
-   "follow_count": 0,
+   "follow_count": 1,
    "pro_chat": true,
    "public_contact": {
     "phone": "9496683909"
@@ -19,7 +19,7 @@
    "title": "中国非遗出海专家",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
    "slug": "ziqi-zhang",
-   "follow_count": 0,
+   "follow_count": 1,
    "pro_chat": true,
    "public_contact": null
   },
@@ -29,7 +29,7 @@
    "title": "房产经纪",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg",
    "slug": "ophelia",
-   "follow_count": 0,
+   "follow_count": 1,
    "pro_chat": true,
    "public_contact": null
   }
