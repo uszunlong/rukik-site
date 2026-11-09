@@ -173,6 +173,8 @@
       </div>
       <div id="networkUsers" class="mt"></div>
       <div id="networkTree" class="mt"></div>
+      <div id="inviteProfile" class="mt"></div>
+      <div id="fraudPanel" class="mt"></div>
     </section>
 <section class="card page" data-mod="growth" data-page="share" data-title="分享与推荐">
       <h2>分享与推荐（内容分享归因）</h2>
@@ -180,12 +182,16 @@
       <div id="shareStats"><div class="empty">加载中…</div></div>
       <div id="shareDetail" class="mt"></div>
       <div id="shareTop" class="mt"></div>
+      <div id="shareLinks" class="mt"></div>
+      <div id="shareLinkDetail" class="mt"></div>
     </section>
 <section class="card page" data-mod="content" data-page="cover" data-title="新闻封面覆盖">
       <h2>新闻封面覆盖（News 5.0）</h2>
       <p class="muted">口径说明：真实图＝来源原图 / 授权图 / 官方图；AI 示意图＝无源图条目由服务端按内容生成的概念图（均标注「AI 示意图」）；缺图＝封面为空或待生成；生成失败＝缺图且已尝试 3 次。封面禁止使用 Rukik Logo / 品牌卡。</p>
       <div id="coverStats"><div class="empty">加载中…</div></div>
       <div id="coverDetail" class="mt"></div>
+      <div id="coverList" class="mt"></div>
+      <div id="coverList" class="mt"></div>
     </section>
 <section class="card page" data-mod="content" data-page="newsprod" data-title="新闻生产状态">
       <h2>新闻生产状态（News 6.0）</h2>
@@ -341,6 +347,12 @@
       <h2>Reward Ledger（奖励台账 · 只读）</h2>
       <p class="muted">本阶段只建数据基础，不自动发放任何奖励。奖励规则与台账如下。</p>
       <div id="rewards"><div class="empty">加载中…</div></div>
+      <div class="row mt">
+        <input id="rewardUserQuery" type="text" placeholder="按受益人查台账：输入姓名或邮箱" style="flex:1">
+        <button id="rewardUserBtn" class="btn small">查台账</button>
+        <button id="rewardUserClear" class="btn small ghost">清除筛选</button>
+      </div>
+      <div id="rewardFilterInfo" class="cred"></div>
     </section>
 <section class="card page" data-mod="users" data-page="support" data-title="用户支持工单">
       <h2>用户支持（「联系 RUKIK」工单 · 迁移 0419）</h2>
@@ -641,11 +653,14 @@ async function loadSupDetail(id) {
 
 function renderStats(ov) {
   const items = [
-    [ov.users, '注册用户'], [ov.families, '家庭'], [ov.professionals, '专业人士'],
-    [ov.pros_unverified, '待审核认证'], [ov.pros_verified, '已认证'],
-    [ov.asks_today, '今日咨询'], [ov.consult_events, '咨询事件总数'], [ov.signups_7d, '近 7 天注册'],
+    [ov.users, '注册用户', 'users', 'users'], [ov.families, '家庭', 'users', 'users'], [ov.professionals, '专业人士', 'review', 'pros'],
+    [ov.pros_unverified, '待审核认证', 'review', 'pros'], [ov.pros_verified, '已认证', 'review', 'pros'],
+    [ov.asks_today, '今日咨询', 'consults', 'consults'], [ov.consult_events, '咨询事件总数', 'consults', 'consults'], [ov.signups_7d, '近 7 天注册', 'users', 'users'],
   ];
-  $('stats').innerHTML = items.map(([n, label]) => `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
+  $('stats').innerHTML = items.map(([n, label, mod, page]) => `<div class="stat" style="cursor:pointer" title="点击查看明细" data-goto-mod="${mod}" data-goto-page="${page}"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
+  $('stats').querySelectorAll('.stat[data-goto-mod]').forEach((el) => {
+    el.onclick = () => { if (window.__adminNavShow) window.__adminNavShow(el.dataset.gotoMod, el.dataset.gotoPage); };
+  });
 }
 
 function renderPros(list) {
@@ -706,13 +721,13 @@ function renderConsults(list) {
 
 async function loadNetwork() {
   try {
-    const [ov, apps, personas, rewards] = await Promise.all([
+    const [ov, apps, personas] = await Promise.all([
       rpc('admin_network_overview'),
       rpc('admin_list_applications', { p_status: null, p_limit: 100 }),
       rpc('admin_persona_list'),
-      rpc('admin_reward_ledger_list', { p_limit: 100 }),
     ]);
-    renderNetworkStats(ov); renderApplications(apps); renderPersonas(personas); renderRewards(rewards);
+    renderNetworkStats(ov); renderApplications(apps); renderPersonas(personas);
+    loadRewards(window.__rewardFilterUser || null);
     loadShare();
   } catch (e) {
     $('networkStats').innerHTML = '<div class="empty">关系网络加载失败：' + esc(e.message) + '</div>';
@@ -727,6 +742,7 @@ async function loadShare() {
   try {
     const ov = await rpc('admin_share_overview');
     renderShare(ov);
+    loadShareLinks(0);
   } catch (e) {
     $('shareStats').innerHTML = '<div class="empty">分享统计加载失败：' + esc(e.message) + '</div>';
   }
@@ -737,6 +753,7 @@ async function loadCover() {
   try {
     const ov = await rpc('admin_news_cover_overview');
     renderCover(ov);
+    wireCoverDrill();
   } catch (e) {
     $('coverStats').innerHTML = '<div class="empty">封面统计加载失败：' + esc(e.message) + '</div>';
   }
@@ -1857,6 +1874,8 @@ function renderShare(ov) {
     `<div class="cred">按内容类型生成：${byType}</div>` +
     `<div class="cred">分享事件分布（共 ${ov.events_total ?? 0} 条）：${byEvent}</div>` +
     `<div class="cred">近 30 天归因异常信号（共 ${ov.fraud_30d ?? 0} 条）：${fraud}</div>`;
+  $('shareDetail').insertAdjacentHTML('beforeend', '<div class="mt"><button class="btn small" id="shareFraudBtn">查看归因异常处理队列</button></div>');
+  $('shareFraudBtn').onclick = () => { if (window.__adminNavShow) window.__adminNavShow('growth', 'network'); loadFraud('OPEN', 0); };
 
   const top = ov.top_content || [];
   if (!top.length) { $('shareTop').innerHTML = '<div class="empty">暂无被分享的内容。</div>'; return; }
@@ -1896,16 +1915,26 @@ function renderApplications(list) {
 
 function renderNetworkStats(ov) {
   const items = [
-    [ov.real_users, '真实用户'], [ov.attributed_users, '经邀请加入'], [ov.organic_users, '自然加入'],
-    [ov.relationships, '邀请关系'], [ov.max_depth, '网络最大深度'], [ov.invite_clicks, '邀请点击'],
-    [ov.applications_pending, '待审申请'], [ov.personas_active, 'AI Persona（启用）'],
-    [ov.reward_pending, '奖励待审'], [ov.fraud_open, '欺诈信号（未处理）'],
+    [ov.real_users, '真实用户', 'users'], [ov.attributed_users, '经邀请加入', 'users'], [ov.organic_users, '自然加入', 'users'],
+    [ov.relationships, '邀请关系', 'users'], [ov.max_depth, '网络最大深度', 'users'], [ov.invite_clicks, '邀请点击', 'users'],
+    [ov.applications_pending, '待审申请', 'apps'], [ov.personas_active, 'AI Persona（启用）', 'personas'],
+    [ov.reward_pending, '奖励待审', 'rewards'], [ov.fraud_open, '欺诈信号（未处理）', 'fraud'],
   ];
-  $('networkStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
-    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  $('networkStats').innerHTML = '<div class="stats">' + items.map(([n, label, drill]) =>
+    `<div class="stat" style="cursor:pointer" title="点击查看明细" data-drill="${drill}"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  $('networkStats').querySelectorAll('.stat[data-drill]').forEach((el) => {
+    el.onclick = () => {
+      const d = el.dataset.drill;
+      if (d === 'users') { $('networkQuery').value = ''; doNetworkSearch(); $('networkUsers').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      else if (d === 'fraud') { loadFraud('OPEN', 0); }
+      else if (d === 'apps') { if (window.__adminNavShow) window.__adminNavShow('review', 'apps'); }
+      else if (d === 'personas') { if (window.__adminNavShow) window.__adminNavShow('knowledge', 'personas'); }
+      else if (d === 'rewards') { if (window.__adminNavShow) window.__adminNavShow('growth', 'rewards'); }
+    };
+  });
 }
 
-$('networkSearchBtn').onclick = async () => {
+async function doNetworkSearch() {
   const q = $('networkQuery').value.trim();
   $('networkUsers').innerHTML = '<div class="empty">搜索中…</div>';
   try {
@@ -1917,27 +1946,34 @@ $('networkSearchBtn').onclick = async () => {
         <td>${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</td>
         <td>${u.original_inviter_user_id ? `<b>${esc(u.inviter_display_name || u.inviter_email || '（未设称呼）')}</b>${u.inviter_display_name && u.inviter_email ? `<br><span class="muted">${esc(u.inviter_email)}</span>` : ''}` : '无（自然加入）'}</td>
         <td>${u.direct_invites ?? 0}</td><td>${u.network_size ?? 0}</td><td>${u.depth ?? '—'}</td>
-        <td><button class="btn small" data-tree="${u.id}">查看关系树</button></td>
+        <td><button class="btn small" data-profile="${u.id}">档案</button> <button class="btn small ghost" data-tree="${u.id}">查看关系树</button></td>
       </tr>`).join('') + '</table>';
     $('networkUsers').querySelectorAll('button[data-tree]').forEach((btn) => {
       btn.onclick = () => loadTree(btn.dataset.tree);
     });
+    $('networkUsers').querySelectorAll('button[data-profile]').forEach((btn) => {
+      btn.onclick = () => loadInviteProfile(btn.dataset.profile);
+    });
   } catch (e) { $('networkUsers').innerHTML = '<div class="empty">搜索失败：' + esc(e.message) + '</div>'; }
-};
+}
+$('networkSearchBtn').onclick = () => doNetworkSearch();
 
 async function loadTree(userId) {
   $('networkTree').innerHTML = '<div class="empty">加载关系树…</div>';
   try {
     const t = await rpc('admin_relationship_tree', { p_user_id: userId });
     const root = t.root || {};
-    let html = `<div class="cred">根用户：<b>${esc(root.display_name || '（未设称呼）')}</b> · ${esc(root.email || '')} · 注册 ${fmtDate(root.created_at)} · 来源 ${esc(root.acquisition_source || 'ORGANIC')} · 直接邀请 ${t.direct_invites} · 网络共 ${t.network_size} 人</div>`;
+    let html = `<div class="cred">根用户：<a href="#" data-profile="${esc(t.root_user_id || '')}"><b>${esc(root.display_name || '（未设称呼）')}</b></a> · ${esc(root.email || '')} · 注册 ${fmtDate(root.created_at)} · 来源 ${esc(root.acquisition_source || 'ORGANIC')} · 直接邀请 ${t.direct_invites} · 网络共 ${t.network_size} 人</div>`;
     const ds = t.descendants || [];
     if (ds.length === 0) html += '<div class="empty">该用户还没有邀请任何人。</div>';
     else html += ds.map((d) => `<div style="padding:3px 0 3px ${12 + (d.level - 1) * 22}px;border-left:1px solid var(--line)">
-      ${'└ '.repeat(1)}<b>${esc(d.display_name || '（未设称呼）')}</b>
+      ${'└ '.repeat(1)}<a href="#" data-profile="${esc(d.user_id || '')}"><b>${esc(d.display_name || '（未设称呼）')}</b></a>
       <span class="muted">${esc(d.email || '')} · ${d.is_professional ? (d.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'} · 第 ${d.level} 层 · 直接邀请 ${d.direct_invites} · ${fmtDate(d.registered_at)}</span>
     </div>`).join('');
     $('networkTree').innerHTML = html;
+    $('networkTree').querySelectorAll('a[data-profile]').forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); if (a.dataset.profile) loadInviteProfile(a.dataset.profile); };
+    });
   } catch (e) { $('networkTree').innerHTML = '<div class="empty">关系树加载失败：' + esc(e.message) + '</div>'; }
 }
 
@@ -1972,6 +2008,321 @@ function renderPersonas(list) {
   });
 }
 
+// ── V2.0 下钻（0633–0635）：邀请档案 / 归因异常处理 / 分享明细 / 奖励台账 / 封面明细 ──
+const FRAUD_STATUS = { OPEN: '未处理', REVIEWED: '已审阅', DISMISSED: '误报关闭', CONFIRMED: '已确认' };
+
+async function loadRewards(userId) {
+  try {
+    const r = await rpc('admin_reward_ledger_query', { p_beneficiary_user_id: userId || null });
+    renderRewards(r);
+    if (r && r.rules_enabled === 0) {
+      $('rewards').insertAdjacentHTML('afterbegin',
+        '<div class="cred">奖励规则尚未启用，目前仅记录邀请关系和归因证据。</div>');
+    }
+    const info = $('rewardFilterInfo');
+    if (info) info.textContent = userId ? '当前按受益人筛选台账；点「清除筛选」看全部。' : '';
+  } catch (e) {
+    $('rewards').innerHTML = '<div class="empty">奖励台账加载失败：' + esc(e.message) + '</div>';
+  }
+}
+if ($('rewardUserBtn')) $('rewardUserBtn').onclick = async () => {
+  const q = $('rewardUserQuery').value.trim();
+  if (!q) return;
+  try {
+    const rows = await rpc('admin_search_network_users', { p_query: q, p_limit: 10 });
+    if (!rows.length) { $('rewardFilterInfo').textContent = '未找到匹配用户。'; return; }
+    if (rows.length === 1) { window.__rewardFilterUser = rows[0].id; loadRewards(rows[0].id); return; }
+    $('rewardFilterInfo').innerHTML = '多个匹配，点击选择受益人：' + rows.map((u) =>
+      `<a href="#" data-rw="${u.id}">${esc(u.display_name || u.email || String(u.id).slice(0, 8))}</a>`).join(' · ');
+    $('rewardFilterInfo').querySelectorAll('a[data-rw]').forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); window.__rewardFilterUser = a.dataset.rw; loadRewards(a.dataset.rw); };
+    });
+  } catch (e) { $('rewardFilterInfo').textContent = '搜索失败：' + e.message; }
+};
+if ($('rewardUserClear')) $('rewardUserClear').onclick = () => {
+  window.__rewardFilterUser = null;
+  if ($('rewardUserQuery')) $('rewardUserQuery').value = '';
+  loadRewards(null);
+};
+
+async function loadInviteProfile(userId) {
+  const box = $('inviteProfile');
+  if (!box || !userId) return;
+  box.innerHTML = '<div class="empty">加载邀请档案…</div>';
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const p = await rpc('admin_user_invite_profile', { p_user_id: userId });
+    if (!p || p.error) { box.innerHTML = '<div class="empty">档案加载失败：' + esc((p && p.error) || '未知错误') + '</div>'; return; }
+    const u = p.user || {};
+    const inv = p.inviter;
+    const rel = p.incoming_relationship;
+    const evT = (label, v) => `<tr><td class="muted" style="width:140px">${label}</td><td>${v ? fmtDate(v) : '<span class="muted">历史证据不足</span>'}</td></tr>`;
+    const evV = (label, v) => `<tr><td class="muted" style="width:140px">${label}</td><td>${v ? esc(String(v)) : '<span class="muted">历史证据不足</span>'}</td></tr>`;
+    let html = `<div class="cred">邀请档案：<b>${esc(u.display_name || '（未设称呼）')}</b> · ${esc(u.email || '')}` +
+      ` · 邀请码 <b>${esc(u.referral_code || '—')}</b> · 注册 ${fmtDate(u.created_at)}` +
+      ` · 来源 ${esc(u.acquisition_source || 'ORGANIC')} · ${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</div>`;
+    html += '<table>' +
+      `<tr><td class="muted" style="width:140px">直接邀请人</td><td>${inv
+        ? `<a href="#" data-profile="${esc(inv.user_id)}"><b>${esc(inv.display_name || '（未设称呼）')}</b></a> · ${esc(inv.email || '')} · 邀请码 ${esc(inv.referral_code || '—')}`
+        : '无（自然加入）'}</td></tr></table>`;
+    const anc = p.ancestors || [];
+    if (anc.length) {
+      html += '<div class="cred" style="margin-top:8px">完整上级链（由近及远）：</div>' + anc.map((a) =>
+        `<div style="padding:2px 0 2px ${12 + (a.level - 1) * 22}px">第 ${a.level} 层 · <a href="#" data-profile="${esc(a.user_id)}"><b>${esc(a.display_name || '（未设称呼）')}</b></a> <span class="muted">${esc(a.email || '')}</span></div>`).join('');
+    }
+    html += '<div class="cred" style="margin-top:8px">入边归因证据：</div>';
+    if (rel) {
+      html += '<table>' +
+        evV('关系 ID', rel.id) + evV('邀请码', rel.invite_code) + evV('来源', rel.source) +
+        evV('状态', rel.status) + evT('点击时间', rel.clicked_at) + evT('注册时间', rel.registered_at) +
+        evT('确认时间', rel.accepted_at) + evT('关系创建时间', rel.created_at) +
+        evV('分享码', rel.share_code) + evV('首次分享码', rel.first_share_code) +
+        evV('归因路径 via', rel.via) + evV('活动类型', rel.campaign_type) +
+        evV('邀请人当时身份', rel.inviter_role_at_invitation) + '</table>';
+    } else {
+      html += '<div class="empty">无邀请关系记录（自然加入或历史证据不足）。</div>';
+    }
+    const lc = (p.level_counts || []).map((x) => `第 ${x.level} 层 ${x.users} 人`).join(' · ') || '暂无';
+    html += `<div class="cred" style="margin-top:8px">直接邀请 ${p.direct_invites ?? 0} 人 · 网络共 ${p.network_size ?? 0} 人 · 分层：${lc}</div>`;
+    html += `<div class="mt"><button class="btn small" data-act="children">直接邀请名单</button> ` +
+      `<button class="btn small ghost" data-act="descendants">全部后代（分页）</button> ` +
+      `<button class="btn small ghost" data-act="tree">查看关系树</button></div>` +
+      '<div id="profileChildren" class="mt"></div><div id="profileDescendants" class="mt"></div>';
+    box.innerHTML = html;
+    box.querySelectorAll('a[data-profile]').forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); if (a.dataset.profile) loadInviteProfile(a.dataset.profile); };
+    });
+    box.querySelectorAll('button[data-act]').forEach((btn) => {
+      btn.onclick = () => {
+        if (btn.dataset.act === 'children') loadInviteChildren(userId);
+        else if (btn.dataset.act === 'descendants') loadInviteDescendants(userId, 0);
+        else if (btn.dataset.act === 'tree') loadTree(userId);
+      };
+    });
+  } catch (e) {
+    box.innerHTML = '<div class="empty">档案加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadInviteChildren(userId) {
+  const box = $('profileChildren');
+  if (!box) return;
+  box.innerHTML = '<div class="empty">加载直接邀请名单…</div>';
+  try {
+    const rows = await rpc('admin_user_children', { p_user_id: userId });
+    if (!rows.length) { box.innerHTML = '<div class="empty">暂无直接邀请。</div>'; return; }
+    box.innerHTML = '<table><tr><th>被邀请人</th><th>身份</th><th>邀请码</th><th>来源</th><th>状态</th><th>注册时间</th><th>其直接邀请</th><th></th></tr>' +
+      rows.map((r) => `<tr>
+        <td><b>${esc(r.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.email || '')}</span></td>
+        <td>${r.is_professional ? (r.is_verified ? '专业 · 已认证' : '专业') : '普通'}</td>
+        <td>${esc(r.invite_code || '—')}</td><td>${esc(r.source || '—')}</td><td>${esc(r.status || '—')}</td>
+        <td class="muted">${fmtDate(r.registered_at)}</td><td>${r.direct_invites ?? 0}</td>
+        <td><button class="btn small" data-profile="${r.invitee_user_id}">档案</button></td></tr>`).join('') + '</table>';
+    box.querySelectorAll('button[data-profile]').forEach((btn) => {
+      btn.onclick = () => loadInviteProfile(btn.dataset.profile);
+    });
+  } catch (e) { box.innerHTML = '<div class="empty">名单加载失败：' + esc(e.message) + '</div>'; }
+}
+
+async function loadInviteDescendants(userId, offset) {
+  const box = $('profileDescendants');
+  if (!box) return;
+  box.innerHTML = '<div class="empty">加载全部后代…</div>';
+  try {
+    const rows = await rpc('admin_user_descendants', { p_user_id: userId, p_limit: 50, p_offset: offset || 0 });
+    const total = rows.length ? rows[0].total_count : 0;
+    if (!rows.length) { box.innerHTML = '<div class="empty">暂无后代。</div>'; return; }
+    let html = `<div class="cred">全部后代共 ${total} 人（第 ${(offset || 0) + 1}–${(offset || 0) + rows.length} 条）</div>` +
+      '<table><tr><th>层级</th><th>用户</th><th>邀请路径</th><th>邀请码</th><th>状态</th><th>注册时间</th><th></th></tr>' +
+      rows.map((r) => `<tr><td>第 ${r.rel_depth} 层</td>
+        <td><b>${esc(r.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.email || '')}</span></td>
+        <td class="muted">${esc(r.path_names || '')}</td><td>${esc(r.invite_code || '—')}</td>
+        <td>${esc(r.status || '—')}</td><td class="muted">${fmtDate(r.registered_at)}</td>
+        <td><button class="btn small" data-profile="${r.invitee_user_id}">档案</button></td></tr>`).join('') + '</table>';
+    html += '<div class="mt">' +
+      ((offset || 0) > 0 ? '<button class="btn small ghost" data-dpage="prev">上一页</button> ' : '') +
+      ((offset || 0) + rows.length < total ? '<button class="btn small ghost" data-dpage="next">下一页</button>' : '') + '</div>';
+    box.innerHTML = html;
+    box.querySelectorAll('button[data-profile]').forEach((btn) => {
+      btn.onclick = () => loadInviteProfile(btn.dataset.profile);
+    });
+    box.querySelectorAll('button[data-dpage]').forEach((btn) => {
+      btn.onclick = () => loadInviteDescendants(userId, (offset || 0) + (btn.dataset.dpage === 'next' ? 50 : -50));
+    });
+  } catch (e) { box.innerHTML = '<div class="empty">后代加载失败：' + esc(e.message) + '</div>'; }
+}
+
+async function loadFraud(status, offset) {
+  const box = $('fraudPanel');
+  if (!box) return;
+  window.__fraudStatus = status || null;
+  window.__fraudOffset = offset || 0;
+  box.innerHTML = '<div class="empty">加载归因异常…</div>';
+  try {
+    const rows = await rpc('admin_fraud_signals_list', {
+      p_status: window.__fraudStatus, p_limit: 50, p_offset: window.__fraudOffset });
+    const total = rows.length ? rows[0].total_count : 0;
+    const tabs = [[null, '全部'], ['OPEN', '未处理'], ['REVIEWED', '已审阅'], ['DISMISSED', '误报关闭'], ['CONFIRMED', '已确认']]
+      .map(([s, label]) => `<button class="btn small ${window.__fraudStatus === s ? '' : 'ghost'}" data-fstatus="${s || ''}">${label}</button>`).join(' ');
+    let html = `<div class="cred">归因异常处理队列（共 ${total} 条；处理动作全部留痕，不删除原始信号）</div><div class="mt" style="margin-bottom:10px">${tabs}</div>`;
+    if (!rows.length) html += '<div class="empty">该状态下暂无信号。</div>';
+    else html += '<table><tr><th>时间</th><th>用户</th><th>关联用户</th><th>类型</th><th>严重度</th><th>详情</th><th>状态</th><th>处理</th><th></th></tr>' +
+      rows.map((r) => `<tr>
+        <td class="muted">${fmtDate(r.created_at)}</td>
+        <td>${r.user_id ? `<a href="#" data-profile="${r.user_id}"><b>${esc(r.user_display_name || '（未设称呼）')}</b></a><br><span class="muted">${esc(r.user_email || '')}</span>` : '—'}</td>
+        <td>${r.related_user_id ? `<a href="#" data-profile="${r.related_user_id}">${esc(r.related_display_name || '（未设称呼）')}</a><br><span class="muted">${esc(r.related_email || '')}</span>` : '—'}</td>
+        <td>${esc(FRAUD_TYPE[r.signal_type] || r.signal_type)}</td>
+        <td>${esc(r.severity || '—')}</td>
+        <td class="muted" title="${esc(JSON.stringify(r.detail || {}))}">${esc(JSON.stringify(r.detail || {}).slice(0, 90))}</td>
+        <td>${esc(FRAUD_STATUS[r.status] || r.status)}</td>
+        <td class="muted">${r.handled_at ? `${fmtDate(r.handled_at)}${r.handle_note ? '<br>' + esc(r.handle_note) : ''}` : '—'}</td>
+        <td>${r.status === 'OPEN'
+          ? `<button class="btn small" data-fact="CONFIRMED" data-fid="${r.id}">确认</button> <button class="btn small ghost" data-fact="REVIEWED" data-fid="${r.id}">已审阅</button> <button class="btn small ghost" data-fact="DISMISSED" data-fid="${r.id}">误报</button>`
+          : `<button class="btn small ghost" data-fact="OPEN" data-fid="${r.id}">重开</button>`}</td></tr>`).join('') + '</table>';
+    html += '<div class="mt">' +
+      (window.__fraudOffset > 0 ? '<button class="btn small ghost" data-fpage="prev">上一页</button> ' : '') +
+      (window.__fraudOffset + rows.length < total ? '<button class="btn small ghost" data-fpage="next">下一页</button>' : '') + '</div>';
+    box.innerHTML = html;
+    box.querySelectorAll('button[data-fstatus]').forEach((btn) => {
+      btn.onclick = () => loadFraud(btn.dataset.fstatus || null, 0);
+    });
+    box.querySelectorAll('button[data-fpage]').forEach((btn) => {
+      btn.onclick = () => loadFraud(window.__fraudStatus, window.__fraudOffset + (btn.dataset.fpage === 'next' ? 50 : -50));
+    });
+    box.querySelectorAll('a[data-profile]').forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); loadInviteProfile(a.dataset.profile); };
+    });
+    box.querySelectorAll('button[data-fact]').forEach((btn) => {
+      btn.onclick = () => fraudHandle(btn.dataset.fid, btn.dataset.fact);
+    });
+  } catch (e) {
+    box.innerHTML = '<div class="empty">异常队列加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function fraudHandle(id, toStatus) {
+  const note = window.prompt('处理备注（可留空；操作人、时间与备注将留痕）：', '');
+  if (note === null) return;
+  try {
+    const r = await rpc('admin_fraud_signal_set_status', { p_id: id, p_status: toStatus, p_note: note || null });
+    if (r && r.error) { $('appErr').textContent = '处理失败：' + r.error; return; }
+    loadFraud(window.__fraudStatus, window.__fraudOffset);
+    const ov = await rpc('admin_network_overview');
+    renderNetworkStats(ov);
+  } catch (e) { $('appErr').textContent = '处理失败：' + e.message; }
+}
+
+async function loadShareLinks(offset) {
+  const box = $('shareLinks');
+  if (!box) return;
+  window.__shareOffset = offset || 0;
+  box.innerHTML = '<div class="empty">加载分享链接明细…</div>';
+  try {
+    const rows = await rpc('admin_share_links_list', {
+      p_content_type: window.__shareType || null, p_limit: 50, p_offset: window.__shareOffset });
+    const total = rows.length ? rows[0].total_count : 0;
+    const opts = ['<option value="">全部类型</option>'].concat(
+      Object.entries(SHARE_TYPE).map(([k, v]) => `<option value="${k}" ${window.__shareType === k ? 'selected' : ''}>${v}</option>`)).join('');
+    let html = `<div class="cred">分享链接明细（共 ${total} 条；打开 / App 打开 / 商店跳转 / 确认注册为四个独立口径）</div>` +
+      `<div class="mt" style="margin-bottom:10px"><select id="shareTypeSel">${opts}</select></div>`;
+    if (!rows.length) html += '<div class="empty">暂无分享链接。</div>';
+    else html += '<table><tr><th>创建时间</th><th>分享者</th><th>类型</th><th>内容</th><th>链接码</th><th>打开</th><th>App 打开</th><th>商店跳转</th><th>确认注册</th><th></th></tr>' +
+      rows.map((r) => `<tr>
+        <td class="muted">${fmtDate(r.created_at)}</td>
+        <td>${r.creator_id ? `<b>${esc(r.creator_display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.creator_email || '')}</span>` : '<span class="muted">系统生成 · 历史证据不足</span>'}</td>
+        <td>${esc(SHARE_TYPE[r.content_type] || r.content_type)}</td>
+        <td class="muted">${esc(String(r.content_id || '').slice(0, 18))}</td>
+        <td>${esc(r.code)}</td><td>${r.opens}</td><td>${r.app_opens}</td><td>${r.store_redirects}</td><td>${r.registrations}</td>
+        <td><button class="btn small" data-link="${r.id}">详情</button></td></tr>`).join('') + '</table>';
+    html += '<div class="mt">' +
+      (window.__shareOffset > 0 ? '<button class="btn small ghost" data-spage="prev">上一页</button> ' : '') +
+      (window.__shareOffset + rows.length < total ? '<button class="btn small ghost" data-spage="next">下一页</button>' : '') + '</div>';
+    box.innerHTML = html;
+    const sel = $('shareTypeSel');
+    if (sel) sel.onchange = () => { window.__shareType = sel.value || null; loadShareLinks(0); };
+    box.querySelectorAll('button[data-spage]').forEach((btn) => {
+      btn.onclick = () => loadShareLinks(window.__shareOffset + (btn.dataset.spage === 'next' ? 50 : -50));
+    });
+    box.querySelectorAll('button[data-link]').forEach((btn) => {
+      btn.onclick = () => loadShareLinkDetail(btn.dataset.link);
+    });
+  } catch (e) {
+    box.innerHTML = '<div class="empty">分享链接明细加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadShareLinkDetail(id) {
+  const box = $('shareLinkDetail');
+  if (!box) return;
+  box.innerHTML = '<div class="empty">加载链接详情…</div>';
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const d = await rpc('admin_share_link_detail', { p_id: id });
+    if (!d || d.error) { box.innerHTML = '<div class="empty">详情加载失败：' + esc((d && d.error) || '未知错误') + '</div>'; return; }
+    const l = d.link || {};
+    let html = `<div class="cred">链接详情：<b>${esc(l.code || '')}</b> · ${esc(SHARE_TYPE[l.content_type] || l.content_type || '')}` +
+      ` · 分享者 ${l.creator_id ? esc(l.creator_display_name || '（未设称呼）') + ' · ' + esc(l.creator_email || '') : '系统生成 · 历史证据不足'}` +
+      ` · 创建 ${fmtDate(l.created_at)}${l.destination ? ' · 去向 ' + esc(l.destination) : ''}</div>`;
+    const regs = d.registrations || [];
+    html += `<div class="cred" style="margin-top:8px">经此链接确认注册（${regs.length} 人）：</div>`;
+    html += regs.length ? regs.map((r) =>
+      `<div style="padding:2px 0"><a href="#" data-profile="${esc(r.invitee_user_id)}"><b>${esc(r.display_name || '（未设称呼）')}</b></a> <span class="muted">${esc(r.email || '')} · ${fmtDate(r.registered_at)}</span></div>`).join('')
+      : '<div class="empty">暂无。</div>';
+    const evs = d.events || [];
+    html += `<div class="cred" style="margin-top:8px">事件时间线（最近 ${evs.length} 条）：</div>`;
+    html += evs.length ? '<table><tr><th>时间</th><th>事件</th><th>元数据</th></tr>' + evs.map((e) =>
+      `<tr><td class="muted">${fmtDate(e.created_at)}</td><td>${esc(SHARE_EVENT[e.event] || e.event)}</td><td class="muted">${esc(JSON.stringify(e.meta || {}).slice(0, 120))}</td></tr>`).join('') + '</table>'
+      : '<div class="empty">暂无事件记录。</div>';
+    box.innerHTML = html;
+    box.querySelectorAll('a[data-profile]').forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); if (window.__adminNavShow) window.__adminNavShow('growth', 'network'); loadInviteProfile(a.dataset.profile); };
+    });
+  } catch (e) {
+    box.innerHTML = '<div class="empty">详情加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+const COVER_STATES = { missing: '缺图（待生成）', failed: '生成失败（≥3 次）', pending: '待处理', ai: 'AI 示意图', fallback: '品牌兜底', real: '真实图' };
+async function loadCoverList(state, offset) {
+  const box = $('coverList');
+  if (!box) return;
+  window.__coverState = state;
+  window.__coverOffset = offset || 0;
+  box.innerHTML = '<div class="empty">加载封面明细…</div>';
+  try {
+    const rows = await rpc('admin_news_cover_list', { p_state: state, p_limit: 50, p_offset: window.__coverOffset });
+    const total = rows.length ? rows[0].total_count : 0;
+    let html = `<div class="cred">封面明细 · ${esc(COVER_STATES[state] || state)}（共 ${total} 条）</div>`;
+    if (!rows.length) html += '<div class="empty">该状态下暂无新闻。</div>';
+    else html += '<table><tr><th>发布时间</th><th>标题</th><th>来源</th><th>图片类型</th><th>提供方</th><th>尝试</th><th>最后错误</th><th>图片</th></tr>' +
+      rows.map((r) => `<tr><td class="muted">${fmtDate(r.published_at)}</td>
+        <td>${esc(r.title || '')}</td><td>${esc(r.source || '—')}</td>
+        <td>${esc(r.image_type || '—')}</td><td>${esc(r.image_provider || '—')}</td>
+        <td>${r.image_attempts ?? 0}</td><td class="muted">${esc(r.image_last_error || '—')}</td>
+        <td>${r.image_url ? `<a href="${esc(r.image_url)}" target="_blank" rel="noopener">查看</a>` : '—'}</td></tr>`).join('') + '</table>';
+    html += '<div class="mt">' +
+      (window.__coverOffset > 0 ? '<button class="btn small ghost" data-cpage="prev">上一页</button> ' : '') +
+      (window.__coverOffset + rows.length < total ? '<button class="btn small ghost" data-cpage="next">下一页</button>' : '') + '</div>';
+    box.innerHTML = html;
+    box.querySelectorAll('button[data-cpage]').forEach((btn) => {
+      btn.onclick = () => loadCoverList(state, window.__coverOffset + (btn.dataset.cpage === 'next' ? 50 : -50));
+    });
+  } catch (e) {
+    box.innerHTML = '<div class="empty">封面明细加载失败：' + esc(e.message) + '</div>';
+  }
+}
+function wireCoverDrill() {
+  const cd = $('coverDetail');
+  if (!cd || $('coverDrillRow')) return;
+  cd.insertAdjacentHTML('beforeend', '<div class="mt" id="coverDrillRow">' +
+    Object.entries(COVER_STATES).map(([k, v]) =>
+      `<button class="btn small ghost" data-cstate="${k}">${v}</button>`).join(' ') + '</div>');
+  cd.querySelectorAll('button[data-cstate]').forEach((btn) => {
+    btn.onclick = () => loadCoverList(btn.dataset.cstate, 0);
+  });
+}
+
+
 function renderRewards(r) {
   const rules = (r && r.rules) || [];
   const entries = (r && r.entries) || [];
@@ -1982,7 +2333,7 @@ function renderRewards(r) {
   if (!entries.length) html += '<div class="empty">暂无奖励记录。本阶段只建台账结构，不产生、不发放任何奖励。</div>';
   else html += '<table><tr><th>时间</th><th>受益人</th><th>类型</th><th>金额 / 积分</th><th>状态</th><th>来源事件</th></tr>' +
     entries.map((e) => `<tr><td class="muted">${fmtDate(e.created_at)}</td>
-      <td class="muted">${esc(String(e.beneficiary_user_id || '').slice(0, 8))}…</td>
+      <td>${(e.beneficiary_display_name || e.beneficiary_email) ? `<b>${esc(e.beneficiary_display_name || '（未设称呼）')}</b><br><span class="muted">${esc(e.beneficiary_email || '')}</span>` : `<span class="muted">${esc(String(e.beneficiary_user_id || '').slice(0, 8))}…</span>`}</td>
       <td>${esc(e.reward_type)}</td><td>${e.amount ?? e.points ?? '—'}</td>
       <td>${esc(e.status)}</td><td>${esc(e.source_event || '—')}</td></tr>`).join('') + '</table>';
   $('rewards').innerHTML = html;
