@@ -354,6 +354,14 @@
       </div>
       <div id="rewardFilterInfo" class="cred"></div>
     </section>
+<section class="card page" data-mod="growth" data-page="cultivation" data-title="我的修炼统计">
+      <h2>我的修炼统计（成长数据 · 只读）</h2>
+      <p class="muted">数据来自成长账本统一口径（admin_growth_stats，与 App 内「我的修炼」页、问 Rukik 成长快照同源）。口径：参考日为 America/Los_Angeles 当日；「今日」按落账本地日计；XP 发放为正行之和（毛发放），括号内为净额。</p>
+      <div id="growthStats"><div class="empty">加载中…</div></div>
+      <div class="row mt">
+        <button id="growthStatsReload" class="btn small">刷新统计</button>
+      </div>
+    </section>
 <section class="card page" data-mod="users" data-page="support" data-title="用户支持工单">
       <h2>用户支持（「联系 RUKIK」工单 · 迁移 0419）</h2>
       <p class="muted">用户在 App 账号冲突提示中一键发起的协助请求。工单只是求助通道，不等于批准账号合并；合并须另行双账号验证与用户确认。冲突凭据仅显示脱敏值，目标账号标识仅本后台可见。</p>
@@ -729,6 +737,7 @@ async function loadNetwork() {
     renderNetworkStats(ov); renderApplications(apps); renderPersonas(personas);
     loadRewards(window.__rewardFilterUser || null);
     loadShare();
+    loadGrowthStats();
   } catch (e) {
     $('networkStats').innerHTML = '<div class="empty">关系网络加载失败：' + esc(e.message) + '</div>';
   }
@@ -2332,6 +2341,45 @@ function wireCoverDrill() {
   });
 }
 
+
+async function loadGrowthStats() {
+  const box = $('growthStats');
+  if (!box) return;
+  box.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const s = await rpc('admin_growth_stats');
+    renderGrowthStats(s);
+  } catch (e) {
+    box.innerHTML = '<div class="empty">成长统计加载失败：' + esc(e.message) + '</div>';
+  }
+}
+function renderGrowthStats(s) {
+  if (!s) { $('growthStats').innerHTML = '<div class="empty">暂无数据。</div>'; return; }
+  const tt = s.today_tasks || {};
+  const rate = tt.completion_rate != null ? (tt.completion_rate * 100).toFixed(1) + '%' : '—';
+  const items = [
+    [s.users_with_xp, '有修为用户'], [s.active_today, '今日有效活跃'],
+    [s.active_7d, '近 7 日有效活跃'], [s.active_30d, '近 30 日有效活跃'],
+    [s.high_active_qualified, '高活跃已达（≥' + (s.high_active_threshold ?? 25) + ' 天）'],
+    [s.culture_unlocks_total, '图鉴解锁总人次（' + (s.culture_unlock_users ?? 0) + ' 人）'],
+    [s.snapshot_reads_total, '成长快照被调用次数'],
+  ];
+  let html = '<div class="stats">' + items.map(([n, label]) =>
+    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
+  html += `<div class="cred" style="margin:14px 0 6px">参考日 ${esc(s.reference_date || '')} · 今日发放修为 ${s.xp_issued_today ?? 0}（净 ${s.xp_net_today ?? 0}） · 近 7 日发放 ${s.xp_issued_7d ?? 0}（净 ${s.xp_net_7d ?? 0}）</div>`;
+  const dist = s.realm_distribution || [];
+  if (dist.length) html += '<table><tr><th>境界</th><th>人数</th></tr>' +
+    dist.map((r) => `<tr><td>${esc(r.realm_name || r.realm_key || '')}</td><td>${r.users ?? 0}</td></tr>`).join('') + '</table>';
+  html += `<div class="cred" style="margin:14px 0 6px">今日密令：揭晓 ${tt.assigned_users ?? 0} 人 · 至少完成 1 道 ${tt.completed_users ?? 0} 人 · 全部完成 ${tt.completed_all_users ?? 0} 人 · 完成率 ${rate}</div>`;
+  const bt = s.xp_by_task_7d || [];
+  if (bt.length) html += '<div class="cred" style="margin:10px 0 6px">近 7 日修为发放（按任务）</div><table><tr><th>任务</th><th>发放修为</th><th>次数</th></tr>' +
+    bt.map((r) => `<tr><td>${esc(r.task_key || '')}</td><td>${r.xp ?? 0}</td><td>${r.awards ?? 0}</td></tr>`).join('') + '</table>';
+  const byc = s.snapshot_reads_by_consumer || {};
+  const bycTxt = Object.entries(byc).map(([k, v]) => `${esc(k)} ${v}`).join(' · ');
+  if (bycTxt) html += `<div class="cred" style="margin:10px 0 6px">快照调用留痕（按消费方）：${bycTxt}</div>`;
+  $('growthStats').innerHTML = html;
+}
+if ($('growthStatsReload')) $('growthStatsReload').onclick = () => loadGrowthStats();
 
 function renderRewards(r) {
   const rules = (r && r.rules) || [];
