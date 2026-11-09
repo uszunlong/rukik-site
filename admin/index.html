@@ -147,7 +147,27 @@
     <div class="shell">
       <aside id="sideNav"></aside>
       <main id="workspace">
-<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div></section>
+<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div><div class="card mt" id="signupCard"><h2>每日新增</h2><div class="stats" id="signupStats"><div class="empty">加载中…</div></div><p class="cred">口径：按 America/Los_Angeles 自然日统计，数据来源为真实注册记录（服务端按日聚合）；日均新增＝近 30 天新增 ÷ 30。点击任一数字或下方按钮查看每日明细与趋势。</p><div class="quickrow"><button class="btn gold small" data-goto="home:signups">查看每日新增详情 →</button></div></div></section>
+<section class="card page" data-mod="home" data-page="signups" data-title="每日新增">
+      <h2>每日新增用户</h2>
+      <p class="muted">口径说明：时区 America/Los_Angeles；按真实注册记录的注册时间以自然日汇总（服务端聚合），空日期计 0 不断档；「当日累计总数」为截至该日的注册用户总数。更新时间：<span id="suUpdated">—</span></p>
+      <div class="quickrow">
+        <button class="btn small" data-su-range="7">近 7 天</button>
+        <button class="btn small" data-su-range="30">近 30 天</button>
+        <button class="btn small" data-su-range="90">近 90 天</button>
+        <span style="display:inline-flex;gap:6px;align-items:center">自定义 <input type="date" id="suFrom"> 至 <input type="date" id="suTo"> <button class="btn small gold" id="suApply">应用</button></span>
+      </div>
+      <div id="suMsg" class="cred"></div>
+      <p style="margin:16px 0 6px"><b>每日新增趋势</b> <span class="muted" id="suRangeLabel"></span></p>
+      <div id="suBars"><div class="empty">加载中…</div></div>
+      <p style="margin:16px 0 6px"><b>累计用户增长</b></p>
+      <div id="suCurve"></div>
+      <p style="margin:16px 0 6px"><b>来源构成（近 30 天）</b></p>
+      <div id="suSources"><div class="empty">加载中…</div></div>
+      <p style="margin:16px 0 6px"><b>每日明细</b></p>
+      <div id="suTable"><div class="empty">加载中…</div></div>
+      <div class="row mt"><button class="btn small" id="suReload">刷新</button></div>
+    </section>
 <section class="card page" data-mod="review" data-page="pros" data-title="专业人士认证">
       <h2>专业人士认证审核</h2>
       <div id="pros"><div class="empty">加载中…</div></div>
@@ -553,6 +573,7 @@ async function loadAll() {
     loadSchoolAssign();
     loadReviewQueues();
     loadSupport();
+    loadSignups();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -2380,6 +2401,126 @@ function renderGrowthStats(s) {
   $('growthStats').innerHTML = html;
 }
 if ($('growthStatsReload')) $('growthStatsReload').onclick = () => loadGrowthStats();
+
+// ===== 每日新增（迁移 0647 · admin_signup_summary / admin_daily_signups / admin_signup_sources） =====
+let suToday = null; // 服务端返回的洛杉矶今日（YYYY-MM-DD），前端日期推算以此为锚，避免浏览器时区漂移
+
+function suShiftDay(dateStr, delta) {
+  const p = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(p[0], p[1] - 1, p[2] + delta)).toISOString().slice(0, 10);
+}
+function suGoDetail() { if (window.__adminNavShow) window.__adminNavShow('home', 'signups'); }
+
+async function loadSignups() {
+  try {
+    const [sum, src] = await Promise.all([rpc('admin_signup_summary'), rpc('admin_signup_sources', { p_days: 30 })]);
+    suToday = sum.today_date;
+    renderSignupPanel(sum);
+    renderSignupSources(src);
+    if ($('suUpdated')) $('suUpdated').textContent = String(sum.generated_at || '').replace('T', ' ').slice(0, 19) + ' UTC';
+    await loadSignupRange(suShiftDay(suToday, -29), suToday, 30);
+  } catch (e) {
+    if ($('signupStats')) $('signupStats').innerHTML = '<div class="empty">每日新增加载失败：' + esc(e.message) + '</div>';
+    if ($('suTable')) $('suTable').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderSignupPanel(s) {
+  const items = [
+    [s.total, '注册用户总数'], [s.last_7d, '近 7 天新增'], [s.today, '今日新增'],
+    [s.yesterday, '昨日新增'], [s.last_30d, '近 30 天新增'], [s.avg_30d, '日均新增（近 30 天）'],
+  ];
+  $('signupStats').innerHTML = items.map(([n, label]) =>
+    `<div class="stat" style="cursor:pointer" title="点击查看每日新增详情"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
+  $('signupStats').querySelectorAll('.stat').forEach((el) => { el.onclick = suGoDetail; });
+}
+
+const SU_SOURCE_LABEL = { ORGANIC: '自然注册', INVITE: '邀请注册', FAMILY_INVITE: '家庭邀请', CONTENT_SHARE: '内容分享注册' };
+function renderSignupSources(src) {
+  const rows = src.sources || [];
+  if (!rows.length) { $('suSources').innerHTML = '<div class="empty">近 30 天暂无注册记录。</div>'; return; }
+  $('suSources').innerHTML = '<table><tr><th>来源</th><th>新增用户</th><th>占比</th></tr>' + rows.map((r) => {
+    const pct = src.total ? (r.n / src.total * 100).toFixed(1) : '0.0';
+    return `<tr><td>${esc(SU_SOURCE_LABEL[r.source] || r.source)}</td><td>${r.n}</td><td>${pct}%</td></tr>`;
+  }).join('') + '</table><p class="cred">来源为注册记录中的真实归因字段（acquisition_source），与邀请关系口径互洽。</p>';
+}
+
+function suBarChart(days) {
+  const W = 720, H = 196, PL = 36, PR = 6, PT = 18, PB = 22;
+  const pw = W - PL - PR, ph = H - PT - PB;
+  const max = Math.max(1, ...days.map((d) => d.signups));
+  const bw = pw / days.length;
+  let g = '';
+  [0, 0.5, 1].forEach((f) => {
+    const y = PT + ph - ph * f;
+    g += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W - PR}" y2="${y.toFixed(1)}" stroke="#E7DCC8" stroke-width="1"/><text x="${PL - 5}" y="${(y + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.round(max * f)}</text>`;
+  });
+  days.forEach((d, i) => {
+    const h = ph * (d.signups / max);
+    const x = PL + i * bw + bw * 0.16, y = PT + ph - h, w = Math.max(1, bw * 0.68);
+    g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="2" fill="#B58A58"><title>${d.day} 新增 ${d.signups} 人，累计 ${d.cumulative} 人</title></rect>`;
+    if (days.length <= 31 || i % Math.ceil(days.length / 12) === 0)
+      g += `<text x="${(PL + i * bw + bw / 2).toFixed(1)}" y="${H - 6}" font-size="9.5" fill="#8B857D" text-anchor="middle">${d.day.slice(5)}</text>`;
+    if (d.signups > 0 && (days.length <= 31 || d.signups === max))
+      g += `<text x="${(PL + i * bw + bw / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" font-size="10" fill="#3A2C1C" text-anchor="middle">${d.signups}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="每日新增柱状图">${g}</svg>`;
+}
+
+function suCurveChart(days) {
+  const W = 720, H = 176, PL = 44, PR = 10, PT = 14, PB = 22;
+  const pw = W - PL - PR, ph = H - PT - PB;
+  const vals = days.map((d) => d.cumulative);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi === lo) hi = lo + 1;
+  const pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
+  const X = (i) => PL + (days.length === 1 ? pw / 2 : (i * pw) / (days.length - 1));
+  const Y = (v) => PT + ph - ((v - lo) / (hi - lo)) * ph;
+  const pts = days.map((d, i) => `${X(i).toFixed(1)},${Y(d.cumulative).toFixed(1)}`).join(' ');
+  let g = `<line x1="${PL}" y1="${(PT + ph).toFixed(1)}" x2="${W - PR}" y2="${(PT + ph).toFixed(1)}" stroke="#E7DCC8"/>`;
+  g += `<text x="${PL - 5}" y="${(Y(Math.max(...vals)) + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.max(...vals)}</text>`;
+  g += `<text x="${PL - 5}" y="${(Y(Math.min(...vals)) + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.min(...vals)}</text>`;
+  g += `<polyline points="${pts}" fill="none" stroke="#A52A1B" stroke-width="2"/>`;
+  [0, days.length - 1].forEach((i) => {
+    g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(days[i].cumulative).toFixed(1)}" r="3.5" fill="#A52A1B"><title>${days[i].day} 累计 ${days[i].cumulative} 人</title></circle>`;
+    g += `<text x="${X(i).toFixed(1)}" y="${H - 6}" font-size="9.5" fill="#8B857D" text-anchor="middle">${days[i].day.slice(5)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="累计用户增长曲线">${g}</svg><p class="cred">纵轴为区间内累计总数范围（非从 0 起），首尾两点为该区间起止日的累计注册用户总数。</p>`;
+}
+
+function renderSignupDetail(data) {
+  $('suRangeLabel').textContent = `（${data.from} 至 ${data.to}，共 ${(data.days || []).length} 天，区间新增 ${data.range_signups} 人）`;
+  $('suBars').innerHTML = suBarChart(data.days);
+  $('suCurve').innerHTML = suCurveChart(data.days);
+  const rows = [...data.days].reverse();
+  $('suTable').innerHTML = '<table><tr><th>日期</th><th>新增用户</th><th>当日累计总数</th></tr>' +
+    rows.map((d) => `<tr><td>${esc(d.day)}</td><td>${d.signups}</td><td>${d.cumulative}</td></tr>`).join('') + '</table>';
+}
+
+async function loadSignupRange(from, to, presetDays) {
+  try {
+    $('suMsg').textContent = '';
+    const data = await rpc('admin_daily_signups', { p_from: from, p_to: to });
+    renderSignupDetail(data);
+    document.querySelectorAll('[data-su-range]').forEach((b) =>
+      b.classList.toggle('gold', !!presetDays && Number(b.dataset.suRange) === presetDays));
+  } catch (e) {
+    $('suMsg').textContent = '明细加载失败：' + e.message;
+  }
+}
+
+document.querySelectorAll('[data-su-range]').forEach((b) => {
+  b.onclick = () => { if (!suToday) return; const n = Number(b.dataset.suRange); loadSignupRange(suShiftDay(suToday, -(n - 1)), suToday, n); };
+});
+if ($('suApply')) $('suApply').onclick = () => {
+  const f = $('suFrom').value, t = $('suTo').value;
+  if (!f || !t) { $('suMsg').textContent = '请先选择起止日期。'; return; }
+  if (f > t) { $('suMsg').textContent = '起始日期不能晚于结束日期。'; return; }
+  const span = (Date.parse(t) - Date.parse(f)) / 86400000 + 1;
+  if (span > 366) { $('suMsg').textContent = '自定义区间最长 366 天，请缩小范围。'; return; }
+  loadSignupRange(f, suToday && t > suToday ? suToday : t, null);
+};
+if ($('suReload')) $('suReload').onclick = () => loadSignups();
 
 function renderRewards(r) {
   const rules = (r && r.rules) || [];
