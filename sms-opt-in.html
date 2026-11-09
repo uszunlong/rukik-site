@@ -8,8 +8,10 @@
 <style>
   :root { --ink:#1D2735; --navy:#16283F; --gold:#B08D57; --paper:#F7F3EC; --gray:#6E675C; --line:#E4DCCF; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--paper); color:var(--ink); font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height:1.65; }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 22px 64px; }
+  /* 通用江湖底板（JIANGHU_UNIVERSAL_BG_V1）：html 铺原图（cover 固定底层），内容列叠半透明暖白保可读 */
+  html { background: var(--paper) url("assets/rukik_jianghu_universal_bg_v1.jpg") center top / cover fixed no-repeat; }
+  body { margin:0; background:transparent; color:var(--ink); font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height:1.65; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 22px 64px; background: rgba(247, 243, 236, 0.88); }
   h1 { font-size: 30px; margin: 0 0 6px; color: var(--navy); }
   .sub { color: var(--gray); margin: 0 0 30px; }
   h2 { font-size: 20px; color: var(--navy); margin: 34px 0 10px; }
