@@ -675,14 +675,22 @@ function renderPros(list) {
 
 function renderUsers(list) {
   if (!list || list.length === 0) { $('users').innerHTML = '<div class="empty">暂无用户。</div>'; return; }
-  $('users').innerHTML = '<table><tr><th>用户</th><th>登录方式</th><th>家庭数</th><th>身份</th><th>注册时间</th></tr>' +
+  $('users').innerHTML = '<table><tr><th>用户</th><th>登录方式</th><th>家庭数</th><th>身份</th><th>邀请人</th><th>注册时间</th></tr>' +
     list.map((u) => `<tr>
       <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
       <td>${esc(u.login_method || '—')}</td>
       <td>${u.family_count ?? 0}</td>
       <td>${u.is_professional ? '<span class="tag">专业人士</span>' : '<span class="muted">家庭用户</span>'}</td>
+      <td>${u.inviter_user_id ? `<a href="#" data-inviter="${esc(u.inviter_user_id)}">${esc(u.inviter_display_name || u.inviter_email || '（未设称呼）')}</a>` : '<span class="muted">自然加入</span>'}</td>
       <td class="muted">${fmtDate(u.created_at)}</td>
     </tr>`).join('') + '</table>';
+  $('users').querySelectorAll('a[data-inviter]').forEach((a) => {
+    a.onclick = (e) => {
+      e.preventDefault();
+      if (window.__adminNavShow) window.__adminNavShow('growth', 'network');
+      loadTree(a.dataset.inviter);
+    };
+  });
 }
 
 function renderConsults(list) {
@@ -1907,7 +1915,7 @@ $('networkSearchBtn').onclick = async () => {
       list.map((u) => `<tr>
         <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
         <td>${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</td>
-        <td class="muted">${u.original_inviter_user_id ? esc(String(u.original_inviter_user_id).slice(0, 8)) + '…' : '无（自然加入）'}</td>
+        <td>${u.original_inviter_user_id ? `<b>${esc(u.inviter_display_name || u.inviter_email || '（未设称呼）')}</b>${u.inviter_display_name && u.inviter_email ? `<br><span class="muted">${esc(u.inviter_email)}</span>` : ''}` : '无（自然加入）'}</td>
         <td>${u.direct_invites ?? 0}</td><td>${u.network_size ?? 0}</td><td>${u.depth ?? '—'}</td>
         <td><button class="btn small" data-tree="${u.id}">查看关系树</button></td>
       </tr>`).join('') + '</table>';
