@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T16:12:52Z",
+ "generated_at": "2026-11-09T17:06:47Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -11,7 +11,19 @@
    "pro_chat": true,
    "public_contact": {
     "phone": "9496683909"
-   }
+   },
+   "profession": "lawyer",
+   "profession_name": "律师",
+   "city": null,
+   "regions": [
+    "CN"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "",
+   "article_count": 9
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
@@ -21,7 +33,19 @@
    "slug": "ziqi-zhang",
    "follow_count": 1,
    "pro_chat": true,
-   "public_contact": null
+   "public_contact": null,
+   "profession": "other",
+   "profession_name": "专业人士",
+   "city": "尔湾",
+   "regions": [
+    "US"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "博雅书院创办人，专注中国文化与非遗海外传播",
+   "article_count": 1
   },
   {
    "id": "55987361-96af-43d8-95d2-58a2b58c00cb",
@@ -31,7 +55,20 @@
    "slug": "ophelia",
    "follow_count": 1,
    "pro_chat": true,
-   "public_contact": null
+   "public_contact": null,
+   "profession": "realtor",
+   "profession_name": "房产经纪",
+   "city": "新港",
+   "regions": [
+    "US-CA",
+    "US"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "最專業用心的美國地產經紀",
+   "article_count": 1
   },
   {
    "id": "e952d7f8-4ead-42f9-929a-44b81ec73709",
@@ -41,7 +78,19 @@
    "slug": "john-apple",
    "follow_count": 0,
    "pro_chat": true,
-   "public_contact": null
+   "public_contact": null,
+   "profession": "lawyer",
+   "profession_name": "律师",
+   "city": null,
+   "regions": [
+    "US"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "",
+   "article_count": 0
   }
  ],
  "articles": [
@@ -59,7 +108,16 @@
     "投资环境"
    ],
    "date": "2026-11-05",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/c13afe69-5786-4de7-93d6-d3f2897dcdfb/hero-author-1793926474622.jpg",
+   "published_at": "2026-11-05 18:44:59.704588+00",
+   "url": "https://rukik.com/a/c13afe69-5786-4de7-93d6-d3f2897dcdfb",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "feed92e5-1894-40d9-bd36-fc251aaa39ca",
@@ -74,7 +132,16 @@
     "科技展会策略"
    ],
    "date": "2026-11-05",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/feed92e5-1894-40d9-bd36-fc251aaa39ca/hero-author-1793863606559.jpg",
+   "published_at": "2026-11-05 07:27:02.048492+00",
+   "url": "https://rukik.com/a/feed92e5-1894-40d9-bd36-fc251aaa39ca",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "725817a7-625e-4665-a810-fb561e41af75",
@@ -89,7 +156,16 @@
     "创新战略"
    ],
    "date": "2026-11-05",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/725817a7-625e-4665-a810-fb561e41af75/hero-author-1793861016407.jpg",
+   "published_at": "2026-11-05 06:43:50.338829+00",
+   "url": "https://rukik.com/a/725817a7-625e-4665-a810-fb561e41af75",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "102511dc-ff28-4346-88e8-21dcbad575da",
@@ -105,7 +181,16 @@
     "政策预期"
    ],
    "date": "2026-11-05",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/102511dc-ff28-4346-88e8-21dcbad575da/hero-author-1793860863073.jpg",
+   "published_at": "2026-11-05 06:41:36.665988+00",
+   "url": "https://rukik.com/a/102511dc-ff28-4346-88e8-21dcbad575da",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "bda902b3-96bb-4c4a-8752-8c0efc9f7ae3",
@@ -120,7 +205,16 @@
     "企业控制权"
    ],
    "date": "2026-11-03",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3/hero-author-1793738622787.jpg",
+   "published_at": "2026-11-03 20:44:14.908785+00",
+   "url": "https://rukik.com/a/bda902b3-96bb-4c4a-8752-8c0efc9f7ae3",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "b14fa91d-664b-4a50-a35e-243b3409290b",
@@ -135,7 +229,16 @@
     "企业传承"
    ],
    "date": "2026-11-03",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/b14fa91d-664b-4a50-a35e-243b3409290b/hero-author-1793736257762.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/b14fa91d-664b-4a50-a35e-243b3409290b/hero-author-1793736257762.jpg",
+   "published_at": "2026-11-03 20:06:47.75503+00",
+   "url": "https://rukik.com/a/b14fa91d-664b-4a50-a35e-243b3409290b",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "8e5e0149-8024-4296-920d-f3222fe96c0c",
@@ -150,7 +253,16 @@
     "本土化运营"
    ],
    "date": "2026-11-02",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/8e5e0149-8024-4296-920d-f3222fe96c0c/hero-author-1793604881434.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/8e5e0149-8024-4296-920d-f3222fe96c0c/hero-author-1793604881434.jpg",
+   "published_at": "2026-11-02 07:35:06.612426+00",
+   "url": "https://rukik.com/a/8e5e0149-8024-4296-920d-f3222fe96c0c",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "4d349ca2-e26c-44ee-abb4-d966d3b9d5be",
@@ -166,7 +278,16 @@
     "美国商业法律"
    ],
    "date": "2026-10-31",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/4d349ca2-e26c-44ee-abb4-d966d3b9d5be/hero-author-1793461333059.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/4d349ca2-e26c-44ee-abb4-d966d3b9d5be/hero-author-1793461333059.jpg",
+   "published_at": "2026-10-31 15:45:14.97432+00",
+   "url": "https://rukik.com/a/4d349ca2-e26c-44ee-abb4-d966d3b9d5be",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "19758c15-6161-4566-97fb-e6dcc8d3410d",
@@ -176,7 +297,16 @@
    "summary": "文章指出，H-1B 是美国常见的专业工作签证之一，适合为特定雇主从事专业岗位的人，但不应被视为通往绿卡的自动路径。作者重点分析了岗位匹配、抽签、雇主支持、配偶工作权限制，以及与其他身份路线的比较，提醒读者结合家庭规划与整体路径判断。",
    "topics": [],
    "date": "2026-10-31",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/19758c15-6161-4566-97fb-e6dcc8d3410d/hero-author-1793458930279.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/19758c15-6161-4566-97fb-e6dcc8d3410d/hero-author-1793458930279.jpg",
+   "published_at": "2026-10-31 15:30:28.694264+00",
+   "url": "https://rukik.com/a/19758c15-6161-4566-97fb-e6dcc8d3410d",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
   },
   {
    "id": "76c2d4b7-45ba-4fe9-bb51-772bbd892640",
@@ -191,7 +321,16 @@
     "文化体验设计"
    ],
    "date": "2026-10-30",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/69933229-f9df-4384-bf2e-86682f09fd30/76c2d4b7-45ba-4fe9-bb51-772bbd892640/hero-author-1793396656033.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/69933229-f9df-4384-bf2e-86682f09fd30/76c2d4b7-45ba-4fe9-bb51-772bbd892640/hero-author-1793396656033.jpg",
+   "published_at": "2026-10-30 21:47:52.124802+00",
+   "url": "https://rukik.com/a/76c2d4b7-45ba-4fe9-bb51-772bbd892640",
+   "author": {
+    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
+    "name": "张子淇",
+    "title": "中国非遗出海专家",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
+    "slug": "ziqi-zhang"
+   }
   },
   {
    "id": "b59a6d6e-a7a5-40ad-a24f-11d820877ab4",
@@ -207,7 +346,16 @@
     "美国政策趋势"
    ],
    "date": "2026-11-05",
-   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/55987361-96af-43d8-95d2-58a2b58c00cb/b59a6d6e-a7a5-40ad-a24f-11d820877ab4/hero-author-1793856815162.jpg"
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/55987361-96af-43d8-95d2-58a2b58c00cb/b59a6d6e-a7a5-40ad-a24f-11d820877ab4/hero-author-1793856815162.jpg",
+   "published_at": "2026-11-05 05:38:19.403856+00",
+   "url": "https://rukik.com/a/b59a6d6e-a7a5-40ad-a24f-11d820877ab4",
+   "author": {
+    "id": "55987361-96af-43d8-95d2-58a2b58c00cb",
+    "name": "Ophelia 奧菲",
+    "title": "房产经纪",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg?v=20261103015506",
+    "slug": "ophelia"
+   }
   }
  ]
 }
