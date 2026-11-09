@@ -6,56 +6,100 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Rukik 管理后台</title>
 <style>
-  :root { --ivory:#F7F3EC; --navy:#142235; --ink:#202020; --gray:#8B857D; --gold:#B58A58; --line:#E3DCCF; --bad:#B3261E; }
+  :root { --paper:#F6F0E4; --paper2:#FBF7EE; --card:#FFFDF8; --ink:#2B2118; --navy:#3A2C1C; --gray:#8B857D;
+          --gold:#B58A58; --goldline:#E4D5B8; --line:#E7DCC8; --bad:#B3261E; --cinnabar:#A52A1B; --cinnabar2:#8C1F12; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
-  .wrap { max-width:1080px; margin:0 auto; padding:24px 16px 64px; }
-  header.top { display:flex; align-items:center; justify-content:space-between; padding:8px 0 20px; border-bottom:2px solid var(--navy); }
-  .brand { font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.5px; }
-  .brand small { display:block; font-size:12px; font-weight:400; color:var(--gray); margin-top:2px; }
-  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--paper); color:var(--ink); }
+  /* ── 江湖顶栏（官方母版原图顶部横幅裁切） ── */
+  header.top { position:relative; background:#2E2119 url('assets/jianghu-banner.jpg') center 22%/cover no-repeat; color:#FFF7E8;
+    padding:26px 28px 20px; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
+  header.top::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(38,24,12,.55), rgba(38,24,12,.12) 55%, rgba(38,24,12,.30)); pointer-events:none; }
+  header.top > * { position:relative; z-index:1; }
+  .brand { font-size:27px; font-weight:700; letter-spacing:2px; color:#FFF7E8; text-shadow:0 1px 8px rgba(30,16,4,.5); }
+  .brand .seal { display:inline-block; vertical-align:middle; margin-left:10px; background:var(--cinnabar); color:#FFF3E4;
+    font-size:12px; letter-spacing:2px; padding:3px 6px; border-radius:4px; font-weight:600; }
+  .brand small { display:block; font-size:12.5px; font-weight:400; color:#F3E3C2; margin-top:5px; letter-spacing:1px; }
+  header.top .who { color:#F7EBD2; font-size:13px; }
+  header.top .btn.ghost { border-color:#EBD9B4; color:#FFF3DC; background:rgba(46,29,14,.35); }
+  /* ── 顶部主导航 ── */
+  nav#topNav { position:sticky; top:0; z-index:40; display:flex; gap:2px; background:#2E2119; padding:0 18px;
+    box-shadow:0 2px 10px rgba(43,28,10,.25); overflow-x:auto; }
+  nav#topNav .tnav { appearance:none; border:0; background:transparent; color:#E9DCC2; font-size:15px; letter-spacing:1px;
+    padding:13px 20px; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent; font-family:inherit; }
+  nav#topNav .tnav:hover { color:#FFF6E3; }
+  nav#topNav .tnav.active { color:#FFF6E3; background:linear-gradient(180deg, rgba(165,42,27,.0), rgba(165,42,27,.35)); border-bottom-color:var(--cinnabar); font-weight:700; }
+  /* ── 壳：左侧二级菜单 + 右侧工作区 ── */
+  .shell { display:flex; align-items:flex-start; max-width:1460px; margin:0 auto; }
+  aside#sideNav { width:218px; flex:0 0 218px; position:sticky; top:49px; padding:18px 12px 30px; }
+  aside#sideNav .side-title { font-size:12px; color:var(--gray); letter-spacing:2px; margin:2px 10px 8px; }
+  aside#sideNav .snav { display:block; width:100%; text-align:left; appearance:none; border:1px solid transparent; background:transparent;
+    color:var(--ink); font-size:14.5px; padding:10px 12px; margin-bottom:4px; border-radius:9px; cursor:pointer; font-family:inherit; }
+  aside#sideNav .snav:hover { background:#F1E7D2; }
+  aside#sideNav .snav.active { background:#FFFDF8; border-color:var(--goldline); color:var(--cinnabar2); font-weight:700;
+    box-shadow:inset 3px 0 0 var(--cinnabar); }
+  main#workspace { flex:1; min-width:0; padding:20px 22px 70px; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .pagehead { margin:4px 0 14px; }
+  .pagetitle { font-size:23px; margin:0; color:var(--navy); letter-spacing:1px;
+    background:linear-gradient(var(--cinnabar),var(--cinnabar)) left bottom/64px 3px no-repeat; padding-bottom:7px; }
+  /* ── 沿用原类名（JS 渲染依赖） ── */
+  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; font-family:inherit; }
   .btn.ghost { background:transparent; color:var(--navy); }
-  .btn.gold { background:var(--gold); border-color:var(--gold); }
+  .btn.gold { background:var(--cinnabar); border-color:var(--cinnabar2); }
   .btn.small { padding:5px 12px; font-size:13px; border-radius:8px; }
   .btn:disabled { opacity:.5; cursor:wait; }
-  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; }
-  .card h2 { margin:0 0 14px; font-size:17px; color:var(--navy); }
-  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
-  .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; }
-  .stat b { display:block; font-size:26px; color:var(--navy); }
-  .stat span { font-size:12px; color:var(--gray); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:0;
+    box-shadow:0 1px 3px rgba(90,64,25,.06); }
+  .card h2 { margin:0 0 14px; font-size:18px; color:var(--navy); letter-spacing:.5px;
+    background:linear-gradient(var(--cinnabar),var(--cinnabar)) left bottom/52px 3px no-repeat; padding-bottom:7px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 10px 14px; text-align:center;
+    background-image:linear-gradient(180deg, rgba(181,138,88,.10), rgba(181,138,88,0) 62%); }
+  .stat b { display:block; font-size:29px; color:var(--navy); }
+  .stat span { font-size:12.5px; color:var(--gray); }
+  .quickrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   table { width:100%; border-collapse:collapse; font-size:14px; }
   th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--gray); font-weight:500; font-size:12px; }
-  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:var(--gold); }
+  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:#8A6420; }
   .tag.ok { background:var(--gold); color:#fff; }
   .tag.no { border-color:var(--gray); color:var(--gray); }
   .tag.warn { border-color:var(--bad); color:var(--bad); font-weight:600; }
   .sess { font-size:13px; margin:3px 0; line-height:1.5; }
   .cred { font-size:12px; color:#555; margin-top:4px; }
-  input[type=email], input[type=text] { width:100%; padding:12px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  input[type=email], input[type=text], input[type=password], input[type=date] { width:100%; padding:12px; font-size:15px;
+    border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; }
+  select { font-family:inherit; }
   .login { max-width:400px; margin:60px auto 0; }
+  .authwrap { max-width:1080px; margin:0 auto; padding:0 16px 40px; }
   .muted { color:var(--gray); font-size:13px; }
   .err { color:var(--bad); font-size:14px; min-height:20px; margin-top:8px; }
   .row { display:flex; gap:10px; align-items:center; }
   .mt { margin-top:14px; }
   a { color:var(--navy); }
   .empty { color:var(--gray); padding:14px 0; }
+  @media (max-width: 860px) {
+    .shell { flex-direction:column; }
+    aside#sideNav { width:100%; flex:none; position:static; display:flex; flex-wrap:wrap; gap:4px; padding:12px; }
+    aside#sideNav .side-title { width:100%; }
+    aside#sideNav .snav { width:auto; }
+    main#workspace { width:100%; padding:14px 12px 50px; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
   <header class="top">
-    <div class="brand">Rukik 管理后台<small>认证审核 · 用户与咨询数据 · 仅限管理员</small></div>
+    <div class="brand">Rukik 管理后台<span class="seal">管理员</span><small>认证审核 · 用户与咨询数据 · 仅限管理员</small></div>
     <div class="row">
-      <span id="who" class="muted"></span>
+      <span id="who" class="who"></span>
       <button id="refreshBtn" class="btn ghost small" style="display:none">刷新</button>
       <button id="logoutBtn" class="btn ghost small" style="display:none">退出</button>
     </div>
   </header>
 
-  <!-- 登录 -->
-  <div id="loginView" class="card login">
+<div class="authwrap">
+<div id="loginView" class="card login">
     <h2>管理员登录</h2>
     <p class="muted">使用管理员邮箱登录（验证码或密码均可）。非管理员账号登录后也看不到任何数据。</p>
     <input id="email" type="email" name="email" placeholder="邮箱" autocomplete="email">
@@ -96,29 +140,31 @@
   </div>
 
   <!-- 主界面 -->
-  <div id="appView" style="display:none">
-    <div class="stats mt" id="stats"></div>
+  </div>
 
-    <div class="card">
+  <div id="appView" style="display:none">
+    <nav id="topNav"><button class="tnav" data-mod="home">首页概览</button><button class="tnav" data-mod="review">认证审核</button><button class="tnav" data-mod="users">用户管理</button><button class="tnav" data-mod="consults">咨询数据</button><button class="tnav" data-mod="content">内容与新闻</button><button class="tnav" data-mod="knowledge">专家知识</button><button class="tnav" data-mod="growth">运营增长</button><button class="tnav" data-mod="system">系统设置</button></nav>
+    <div class="shell">
+      <aside id="sideNav"></aside>
+      <main id="workspace">
+<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div></section>
+<section class="card page" data-mod="review" data-page="pros" data-title="专业人士认证">
       <h2>专业人士认证审核</h2>
       <div id="pros"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="users" data-page="users" data-title="注册用户">
       <h2>注册用户</h2>
       <div id="users"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="consults" data-page="consults" data-title="最近咨询动态">
       <h2>最近咨询动态</h2>
       <div id="consults"><div class="empty">加载中…</div></div>
-    </div>
-    <div class="card">
+    </section>
+<section class="card page" data-mod="review" data-page="apps" data-title="专业人士入驻申请">
       <h2>专业人士入驻申请</h2>
       <div id="applications"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="growth" data-page="network" data-title="邀请关系网络">
       <h2>Relationship Network（邀请关系网络）</h2>
       <div id="networkStats"><div class="empty">加载中…</div></div>
       <div class="mt" style="display:flex;gap:8px">
@@ -127,73 +173,63 @@
       </div>
       <div id="networkUsers" class="mt"></div>
       <div id="networkTree" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="growth" data-page="share" data-title="分享与推荐">
       <h2>分享与推荐（内容分享归因）</h2>
       <p class="muted">口径说明：访问量、下载按钮点击量、完成注册数、已确认推荐数是四个互相独立的口径，不可互相换算。本系统没有可靠的安装数据来源，因此不提供安装统计。</p>
       <div id="shareStats"><div class="empty">加载中…</div></div>
       <div id="shareDetail" class="mt"></div>
       <div id="shareTop" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="content" data-page="cover" data-title="新闻封面覆盖">
       <h2>新闻封面覆盖（News 5.0）</h2>
       <p class="muted">口径说明：真实图＝来源原图 / 授权图 / 官方图；AI 示意图＝无源图条目由服务端按内容生成的概念图（均标注「AI 示意图」）；缺图＝封面为空或待生成；生成失败＝缺图且已尝试 3 次。封面禁止使用 Rukik Logo / 品牌卡。</p>
       <div id="coverStats"><div class="empty">加载中…</div></div>
       <div id="coverDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="content" data-page="newsprod" data-title="新闻生产状态">
       <h2>新闻生产状态（News 6.0）</h2>
       <p class="muted">口径说明：analysis_status 管专业解读就绪（ready＝解读 ≥450 汉字可展示；insufficient＝材料不足存草稿不展示；pending＝待生产）。research_status 管公开研究流程：done＝流程已执行（同事件语料交叉＋官方源优先＋内部知识检索）且产出可追溯来源；insufficient＝流程已跑但材料太薄（语料单一且无内部命中）。外部 Web 检索为 P2 可选增强、默认禁用，仅无搜索 Key 不判 insufficient。</p>
       <div id="newsProdStats"><div class="empty">加载中…</div></div>
       <div id="newsProdDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="knowledge" data-page="knowledge" data-title="专家知识">
       <h2>专家知识（Research Intelligence P0）</h2>
       <p class="muted">口径说明：内部专家知识全文检索（knowledge_chunks）＋专家知识沉淀索引（expert_material_index）。可检索资格＝专业人士授权（ai_usable 且 visibility 允许）或已发布文章；撤销授权后检索即刻不命中、沉淀标 revoked。沉淀只存来源/原创归纳/≤300 字短片段，不存全文。向量检索为 P1，本板块数字不含向量口径。</p>
       <div id="knowledgeStats"><div class="empty">加载中…</div></div>
       <div id="knowledgeDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="review" data-page="articles" data-title="文章审核">
       <h2>文章审核（专家公开发布先待审 · 迁移 0256）</h2>
       <p class="muted">口径说明：专家文章走公开发布先落「待审核」，不进智库 / 搜索 / 分发池；V3.5 负面清单自动审仍是成文管线的第一道门，命中清单照旧拦截。用户本人一键成文的私人草稿不受影响。此处通过才转 published 并按现行口径同步分发；驳回必须填原因，作者可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
       <div id="articleReviewQueue"><div class="empty">加载中…</div></div>
       <div id="articleReviewDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="content" data-page="image" data-title="配图生产">
       <h2>配图生产（Image Engine）</h2>
       <p class="muted">口径说明：三级取图——①原文页自带配图 / 官方图 ②开放许可网络图（公共领域 / CC，仅 cc0 / pdm / by / by-sa，记作者·来源·许可）③Cloudflare Workers AI 免费生图（FLUX-1-schnell，免费额度 10,000 Neurons / 日、UTC 日界，代码内每日上限 57 张，达限即停、条目留待补图）。OpenAI / Gemini 付费腿受开关门控、默认关闭。尝试统计来自 image_gen_log 近 7 天逐次记录；供图方为系统原始标识。</p>
       <div id="imageStats"><div class="empty">加载中…</div></div>
       <div id="imageDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="system" data-page="askimg" data-title="AI 创作图片成本">
       <h2>问 Rukik · AI 创作图片成本（V1.0）</h2>
       <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）；收费回退（gpt-image-1）按 2026-10-30 裁决暂时关闭，预算闸保留（单张 $0.20 / 日 $3 / 月 $50，配置在 app_private.ask_imagegen）。用户额度分层：普通用户每日 2 张、内测人员 5 张，只有成功交付才扣。全平台免费额度动态计算：池总量 10,000 − 当日全功能实际已耗 − 文本预留 5,500 − 安全余量，再按近 14 天滚动实测均价折算张数，受理时原子预占、失败释放（ask_imagegen_pool_status）。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
       <div id="askImgStats"><div class="empty">加载中…</div></div>
       <div id="askImgDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="review" data-page="listings" data-title="房源审核">
       <h2>房源审核（发布先待审 · 迁移 0256）</h2>
       <p class="muted">口径说明：经纪人提交发布后先落「待审核」、不公开（分享页 / 橱窗 / 问 Rukik 检索均不可见）；自动规则门（关键项 / 代理确认 / 照片授权 / 额度）仍在提交环节前置把关。此处通过才转 Active 公开（批准时复核额度、按默认有效期上架、刷新执照快照）；驳回必须填原因，提交人可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
       <div id="listingReviewQueue"><div class="empty">加载中…</div></div>
       <div id="listingReviewDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="review" data-page="reintel" data-title="房源情报完整度">
       <h2>房源情报完整度（房产情报引擎）</h2>
       <p class="muted">口径说明：试点房源 × 六个情报维度（学校表现 / 城市级治安 / 洪水 / 对口学校 / 街区级治安 / 价格参考）的核验状态，来自 re_listing_intel_status（迁移 0251）。状态＝已接通 / 待地址级核验 / 待数据源；「最近核验」为该维度最近一次真实查询成功或有效缓存命中的时间。区域公共数据（学校表现、城市级治安）走区域缓存共享、不逐房复制；前台不展示此技术状态、只交付结果并标注数据范围与时间。</p>
       <div id="reIntelStats"><div class="empty">加载中…</div></div>
       <div id="reIntelDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="review" data-page="school" data-title="对口学校核验补录">
       <h2>对口学校人工核验补录（房产情报引擎 · 迁移 0252）</h2>
       <p class="muted">口径说明：学区分配没有程序化官方接口，本表是过渡机制——工作人员先用学区官方地址查询工具（如 IUSD School Locator）按地址核实，再把结果连同核验来源、核验日期、适用学年与核验人员录入此处。<b>未经官方工具核实的数据不得录入</b>；证据服务 re-intel 只采用状态＝「有效」的记录作答并标注核验信息，其余地址维持「未核实＋官方入口」口径。边界调整或学年更替后，把旧记录置为「待复核 / 失效」并重新核验录入。</p>
       <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -227,16 +263,14 @@
         <button id="saReload" class="btn" type="button">刷新</button>
       </div>
       <div id="saList" class="mt"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="system" data-page="push" data-title="通知健康">
       <h2>通知健康（Push Health）</h2>
       <p class="muted">口径说明：权限状态与设备令牌状态分开统计（push_devices：客户端上报状态、reminder-dispatch 按 Expo 真实票据回写最后成功推送与最近错误）。没有令牌 ≠ 用户拒绝授权，也可能是未注册设备或同步失败。推送成功数来自 push_log（只记已发送）；发送失败看 reminder_objects 的 expo_error 暂缓行；App 内通知为 notifications 账本行数，不代表已送达或已读。</p>
       <div id="pushHealthStats"><div class="empty">加载中…</div></div>
       <div id="pushHealthDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="system" data-page="health" data-title="商用健康">
       <h2>商用健康（Health Center · 2.58.0 第八大能力）</h2>
       <p class="muted">口径说明：数据来自健康聚合层 health_metric_daily（迁移 0395，pg_cron 每日＋每 6 小时 rollup；迟缓趋势由迟缓探针 ingest 覆写）。状态三档——<b>可算</b>＝现有数据源可算比率；<b>部分可算</b>＝代理口径或仅补偿账可见（分母不完整）；<b>无数据源</b>＝现无埋点/落账，显式标注、绝不以 0 冒充。四态分开呈现：客户端实际成功（core_request 落账）／服务端成功／排队中／执行结果待确认（超时≠失败）。登录看板为代理口径（gate_settle/auth 遥测），与登录 P0 事件契约对齐项见健康线终报。</p>
       <div class="mt" style="display:flex;gap:8px;align-items:center">
@@ -247,9 +281,8 @@
       <div id="healthStats" class="mt"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">健康告警（health_alert_events · 阈值触发，统一告警出口）</div>
       <div id="healthAlerts"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="growth" data-page="events" data-title="Event 运营">
       <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
       <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④累计入群人次＝历史入群记录累计（用户×群，含已退出 / 被移出，与当前人数分开统计；总览「当前入群人数」＝当前在群且关联真实用户的去重人数、跨群去重）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：全新安装的用户可经活动落地页的「活动码」回填归因（注册页手动填入活动码、由服务端落账，渠道标记 backfill_code），②已包含这部分注册；系统仍无延迟深链自动恢复来源，不估算、不填充。每条活动分享链接归属一位具体分享用户，一笔注册同时记「活动」与「分享人」两层：下方按活动表与按分享人表为同一批归因记录、同一口径，分开统计、不混算；链接没有可验证的分享人时不猜测归属、不计入。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
@@ -272,9 +305,8 @@
       <div id="eventTzList"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
       <div id="eventReports"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="growth" data-page="groups" data-title="活动群管理">
       <h2>活动群管理（V2.0 · 按需建群）</h2>
       <p class="muted">口径说明：活动群只有两个来源——用户在活动详情页点「加入活动群」按需创建（user_on_demand），或管理员在此按活动建群（admin）；参加活动 / 收藏 / 分享都不入群。本卡仅平台管理员可见、可管理全部群；群管理员（活动主办方或被指派者）只在 App 内管理自己被授权的群，服务端同口径分级把关（group_admin_set_role：群管理员仅可授 / 撤主持人层级，ADMIN 层级仅平台管理员可授）。处置全部直调服务端管理接口、与 App 内同审计（group_admin_actions）。归档后成员不可见、不可发；「启用」经建群接口复活同一群、不新建。跨群举报队列在上方 Event 运营卡，本卡详情里可处置单个群的举报。</p>
       <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -300,20 +332,17 @@
       </div>
       <div id="grpEventResults" class="mt"></div>
       <div id="grpDetail" class="mt"></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="knowledge" data-page="personas" data-title="AI Persona 管理">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="growth" data-page="rewards" data-title="奖励台账">
       <h2>Reward Ledger（奖励台账 · 只读）</h2>
       <p class="muted">本阶段只建数据基础，不自动发放任何奖励。奖励规则与台账如下。</p>
       <div id="rewards"><div class="empty">加载中…</div></div>
-    </div>
-
-    <div class="card">
+    </section>
+<section class="card page" data-mod="users" data-page="support" data-title="用户支持工单">
       <h2>用户支持（「联系 RUKIK」工单 · 迁移 0419）</h2>
       <p class="muted">用户在 App 账号冲突提示中一键发起的协助请求。工单只是求助通道，不等于批准账号合并；合并须另行双账号验证与用户确认。冲突凭据仅显示脱敏值，目标账号标识仅本后台可见。</p>
       <div class="row">
@@ -328,10 +357,11 @@
       </div>
       <div id="supportTickets" class="mt"><div class="empty">加载中…</div></div>
       <div id="supportDetail" class="mt"></div>
+    </section>
+      <div id="appErr" class="err"></div>
+      </main>
     </div>
-    <div id="appErr" class="err"></div>
   </div>
-</div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -1959,5 +1989,40 @@ if ($('saReload')) $('saReload').onclick = () => loadSchoolAssign();
   if (session) enterApp(); else show('login');
 })();
 </script>
+
+<script>
+// ── 模块化导航（纯呈现层：只切换页面显隐，不触碰任何数据逻辑）──
+(function () {
+  var MODULES = [['home','首页概览'],['review','认证审核'],['users','用户管理'],['consults','咨询数据'],
+                 ['content','内容与新闻'],['knowledge','专家知识'],['growth','运营增长'],['system','系统设置']];
+  var pages = Array.prototype.slice.call(document.querySelectorAll('#appView .page'));
+  var side = document.getElementById('sideNav');
+  var topBtns = Array.prototype.slice.call(document.querySelectorAll('#topNav .tnav'));
+  function show(mod, page) {
+    var list = pages.filter(function (p) { return p.dataset.mod === mod; });
+    if (!list.length) return;
+    var target = list.filter(function (p) { return p.dataset.page === page; })[0] || list[0];
+    pages.forEach(function (p) { p.classList.toggle('active', p === target); });
+    topBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.mod === mod); });
+    side.innerHTML = '<div class="side-title">' + (MODULES.filter(function (m) { return m[0] === mod; })[0] || [])[1] + '</div>' +
+      list.map(function (p) {
+        return '<button class="snav' + (p === target ? ' active' : '') + '" data-page="' + p.dataset.page + '">' + p.dataset.title + '</button>';
+      }).join('');
+    side.querySelectorAll('.snav').forEach(function (b) {
+      b.onclick = function () { show(mod, b.dataset.page); };
+    });
+    try { history.replaceState(null, '', '#' + mod + '/' + target.dataset.page); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  topBtns.forEach(function (b) { b.onclick = function () { show(b.dataset.mod, null); }; });
+  document.querySelectorAll('[data-goto]').forEach(function (b) {
+    b.onclick = function () { var parts = b.dataset.goto.split(':'); show(parts[0], parts[1]); };
+  });
+  var m = (location.hash || '').match(/^#([a-z]+)\/([a-z]+)/);
+  if (m) show(m[1], m[2]); else show('home', 'overview');
+  window.__adminNavShow = show;
+})();
+</script>
+
 </body>
 </html>
