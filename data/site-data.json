@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-09T17:06:47Z",
+ "generated_at": "2026-11-10T00:07:13Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -23,7 +23,7 @@
    ],
    "specialties": [],
    "tagline": "",
-   "article_count": 9
+   "article_count": 10
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
@@ -94,6 +94,30 @@
   }
  ],
  "articles": [
+  {
+   "id": "7fd9f474-2d5d-4262-9b65-64dd2efd395e",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
+   "title": "CES 2027：一次系统性验证，而非一次性曝光",
+   "summary": "CES 2027 对计划进入美国市场的企业而言，核心价值不在曝光度，而在于能否系统验证技术表达、品牌、渠道、资本与本地化落地的综合能力。",
+   "topics": [
+    "企业出海",
+    "CES展会",
+    "美国市场",
+    "本地化合规"
+   ],
+   "date": "2026-11-10",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/7fd9f474-2d5d-4262-9b65-64dd2efd395e/hero-author-1794268062399.jpg",
+   "published_at": "2026-11-10 00:06:57.643058+00",
+   "url": "https://rukik.com/a/7fd9f474-2d5d-4262-9b65-64dd2efd395e",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
+  },
   {
    "id": "c13afe69-5786-4de7-93d6-d3f2897dcdfb",
    "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
