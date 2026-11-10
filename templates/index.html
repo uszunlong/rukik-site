@@ -59,7 +59,30 @@
   .modal iframe.mob{width:390px;height:700px;display:block;margin:0 auto}
   .seg{display:flex;gap:8px}
   .seg button.on{background:var(--gold);color:#191204;border:none;font-weight:700}
-  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  /* 网站外观（独立站换肤）：三主题卡 + 令牌驱动的微缩站型缩略图 */
+  .theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+  .theme-card{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface2);cursor:pointer}
+  .theme-card:hover{border-color:rgba(217,169,74,.65)}
+  .theme-card.cur{border-color:var(--gold)}
+  .theme-body{padding:13px 16px 15px}
+  .theme-name{font-weight:700;font-size:15.5px}
+  .theme-name .en{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  .theme-note{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .th{height:148px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .th-top{display:flex;align-items:center;gap:7px}
+  .th-dot{width:14px;height:14px;border-radius:4px;flex:0 0 auto}
+  .th-bar{height:6px;width:34px;border-radius:3px}
+  .th-bar.s{width:22px}
+  .th-hero{display:flex;align-items:center;gap:10px}
+  .th-av{width:38px;height:38px;border-radius:50%;flex:0 0 auto}
+  .th-mid{display:flex;flex-direction:column;gap:5px;align-items:flex-start;flex:1;min-width:0}
+  .th-name{height:9px;width:64px;border-radius:4px}
+  .th-role{height:6px;width:40px;border-radius:3px}
+  .th-badge{font-size:9.5px;padding:1px 7px;border-radius:999px;line-height:1.5;white-space:nowrap}
+  .th-btn{font-size:11px;font-weight:700;padding:5px 13px;border-radius:999px;white-space:nowrap}
+  .th-cards{display:flex;gap:10px;flex:1}
+  .th-card{flex:1}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.theme-grid{grid-template-columns:1fr}}
   @media(max-width:600px){.grid{grid-template-columns:1fr}.modal iframe{height:70vh}}
 </style>
 </head>
@@ -71,7 +94,7 @@
 
 <div class="wrap">
   <h1>我的独立站 · 模板中心</h1>
-  <p class="sub">一套数据，十种设计，一键切换。切换模板只换外观——您的文章、关注、链接地址和 AI 分身都不会变。
+  <p class="sub">一套数据，多套设计，一键切换。切换模板只换外观——您的文章、关注、链接地址和 AI 分身都不会变。
   所有模板都用您的<b>真实资料</b>渲染：文章数、关注数都是真实统计（没有可靠来源的数字不会显示）。
   改动先存草稿，点「发布」后才对外生效；发布管线会自动生成、验活，失败时线上仍是上一版。</p>
 
@@ -98,7 +121,14 @@
     </div>
 
     <div class="card">
-      <h2>选择模板（10 套）</h2>
+      <h2>网站外观（独立站换肤）</h2>
+      <p class="sub">三套官方主题全部免费，切换不限次、无需审核。点击主题卡，先预览它在<b>您自己站点</b>上的效果；确认后点「应用此主题」立即保存生效，站点会自动按新主题重新生成（通常几分钟内），文章、关注与网址都不变。下方「选择模板 / 个性化」是进阶设置，与这里的应用结果互通。</p>
+      <div class="theme-grid" id="themeGrid"></div>
+      <div class="msg" id="themeMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>选择模板（全部模板）</h2>
       <p class="sub">「在线预览」用您本人的真实公开资料实时渲染首页效果（桌面 / 手机可切换）。点「选为草稿」只是暂存，不影响线上站点；确认后在下方点「发布草稿」才生效。新模板上架后会自动出现在这里，无需您做任何操作。</p>
       <div class="grid" id="tplGrid"></div>
     </div>
@@ -142,6 +172,10 @@
         <button class="btn-line" id="pvMob">手机</button>
         <button class="btn-line" id="pvClose">关闭</button>
       </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn-gold" id="pvApply" hidden>应用此主题</button>
+      <span class="sub" id="pvApplyNote"></span>
     </div>
     <p class="sub" style="margin:10px 0">以下为该模板以<b>您的真实公开资料</b>渲染的首页核心区域预览；正式发布后为完整页面（含文章列表、问专家、关于等全部视图，同一设计系统）。</p>
     <iframe id="pvFrame" title="模板预览"></iframe>
@@ -252,6 +286,55 @@
 
   /* ---------- 渲染 ---------- */
   function tplById(id) { return (state.registry.templates || []).filter(function (t) { return t.id === id; })[0]; }
+  /* 网站外观三主题（用户 2026-11-09 定版）：t01 经典深蓝（即平台默认「蓝色科技」，
+     不另建第四套）/ t11 极简白 / t12 香槟金；legacy 键名按生成器同规则解析。 */
+  var LEGACY_TPL = { classic: 't01', tech: 't01', warm: 't01', dark: 't01', light: 't02' };
+  function resolvedTplId(key) { if (tplById(key)) return key; return LEGACY_TPL[key] || 't01'; }
+  var THEME_ORDER = ['t01', 't11', 't12'];
+  var THEME_META = {
+    t01: { name: '经典深蓝', en: 'Classic Navy', note: '平台默认 · 深蓝金饰，稳重专业' },
+    t11: { name: '极简白', en: 'Minimal White', note: '白底蓝点、浅灰细边框，清爽留白' },
+    t12: { name: '香槟金', en: 'Champagne Gold', note: '暖白香槟、金色点缀，高级温暖' }
+  };
+  function themeThumb(t) {
+    var tk = t.tokens, ai = tk.accent_ink || '#191204';
+    return '<div class="th" style="background:linear-gradient(160deg,' + tk.bg + ',' + tk.bg2 + ');color:' + tk.ink + '">' +
+      '<div class="th-top"><span class="th-dot" style="background:' + tk.accent + '"></span><span class="th-bar" style="background:' + tk.ink + ';opacity:.75"></span><span class="th-bar s" style="background:' + tk.muted + '"></span><span class="th-bar s" style="background:' + tk.muted + '"></span></div>' +
+      '<div class="th-hero"><span class="th-av" style="border:2.5px solid ' + tk.accent + ';background:' + tk.surface + '"></span>' +
+      '<span class="th-mid"><span class="th-name" style="background:' + tk.ink + '"></span><span class="th-role" style="background:' + tk.accent + '"></span>' +
+      '<span class="th-badge" style="color:' + tk.accent + ';border:1px solid ' + tk.accent + ';background:' + tk.accent + '22">✓ 已核验</span></span>' +
+      '<span class="th-btn" style="background:' + tk.accent + ';color:' + ai + '">关注</span></div>' +
+      '<div class="th-cards"><span class="th-card" style="background:' + tk.surface + ';border:1px solid ' + tk.line + ';border-radius:' + tk.radius + '"></span><span class="th-card" style="background:' + tk.surface + ';border:1px solid ' + tk.line + ';border-radius:' + tk.radius + '"></span></div></div>';
+  }
+  function renderThemes() {
+    var g = $('themeGrid'); if (!g || !state.registry || !state.site) return;
+    var curId = resolvedTplId(state.pub.template_key);
+    g.innerHTML = '';
+    THEME_ORDER.forEach(function (id) {
+      var t = tplById(id); if (!t) return;
+      var meta = THEME_META[id];
+      var tag = id === curId ? '<span class="tpl-tag tag-cur">当前使用</span>' : (id === 't01' ? '<span class="tpl-tag tag-draft">默认</span>' : '');
+      var card = document.createElement('div');
+      card.className = 'theme-card' + (id === curId ? ' cur' : '');
+      card.innerHTML = themeThumb(t) + '<div class="theme-body"><div class="theme-name">' + meta.name + '<span class="en">' + meta.en + '</span>' + tag + '</div><div class="theme-note">' + meta.note + ' · 点击预览</div></div>';
+      card.onclick = function () { openPreview(t); };
+      g.appendChild(card);
+    });
+  }
+  /* 应用主题：立即保存生效（不等草稿发布）。沿用既有发布口径——当前已发布
+     配置快照写入 layout_config.prev 以便回滚；草稿（layout_config.draft）原样保留。 */
+  function applyTheme(t) {
+    var meta = THEME_META[t.id] || { name: t.name };
+    var lc = JSON.parse(JSON.stringify(state.site.layout_config || {}));
+    lc.prev = JSON.parse(JSON.stringify(state.pub));
+    msg('themeMsg', '正在应用「' + meta.name + '」…', 'dim');
+    patchSite({ template_key: t.id, layout_config: lc, updated_at: new Date().toISOString() }).then(function () {
+      state.pub = currentConfig(state.site);
+      $('pvModal').hidden = true;
+      msg('themeMsg', '已应用「' + meta.name + '」。站点将自动按新主题重新生成，通常几分钟内生效；可以不限次再切换。', 'ok');
+      renderAll();
+    }).catch(function (e) { msg('themeMsg', '应用失败：' + e.message + '（线上仍是原主题，未受影响）', 'err'); });
+  }
   function renderAll() {
     var s = state.site, url = 'https://rukik.com/e/' + s.slug + '/';
     var cur = tplById(state.pub.template_key), dr = tplById(state.draft.template_key);
@@ -305,6 +388,7 @@
       row.appendChild(up); row.appendChild(dn); co.appendChild(row);
     });
     $('btnRollback').disabled = !(state.site.layout_config && state.site.layout_config.prev);
+    renderThemes();
   }
   function moveOrder(k, d) {
     var o = state.draft.order.filter(function (x) { return ORDERABLE.indexOf(x) >= 0; });
@@ -391,14 +475,20 @@
       '<div style="display:flex;gap:26px;justify-content:center;margin-top:24px;text-align:center"><div><div style="font-size:24px;font-weight:800">' + e.articles + '</div><div style="font-size:12px;color:' + tk.muted + '">文章与观点</div></div>' +
       '<div><div style="font-size:24px;font-weight:800">' + e.follows + '</div><div style="font-size:12px;color:' + tk.muted + '">关注者</div></div></div></div>' +
       '<div style="padding:22px 30px;display:grid;grid-template-columns:1fr 300px;gap:18px"><div class="card"><b>精选观点 / 最新文章</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">发布后此处是您真实文章的轮播与网格（当前已发布 ' + e.articles + ' 篇），封面、标题、摘要均来自您的文章数据。</p></div>' +
-      '<div class="card"><b>AI 专家助理</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">由您本人训练的分身在此接待访客，回答标注 AI 生成，只引用您的公开内容。</p><div style="background:' + tk.accent + ';color:#191204;font-weight:700;text-align:center;border-radius:999px;padding:11px">向 TA 的 AI 助理提问</div></div></div>' +
+      '<div class="card"><b>AI 专家助理</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">由您本人训练的分身在此接待访客，回答标注 AI 生成，只引用您的公开内容。</p><div style="background:' + tk.accent + ';color:' + (tk.accent_ink || '#191204') + ';font-weight:700;text-align:center;border-radius:999px;padding:11px">向 TA 的 AI 助理提问</div></div></div>' +
       '</body></html>';
   }
   function openPreview(t) {
     pvTpl = t; $('pvTitle').textContent = '模板预览 · ' + t.name + '（' + state.expertPub.name + '）';
+    var isTheme = THEME_ORDER.indexOf(t.id) >= 0;
+    var isCur = isTheme && resolvedTplId(state.pub.template_key) === t.id;
+    $('pvApply').hidden = !(isTheme && !isCur);
+    $('pvApply').textContent = '应用此主题';
+    $('pvApplyNote').textContent = isCur ? '这就是您当前使用的主题。' : (isTheme ? '应用后立即保存生效，站点自动按新主题重新生成（几分钟内）；三套主题免费、切换不限次、无需审核。' : '');
     $('pvModal').hidden = false;
     var f = $('pvFrame'); f.classList.remove('mob'); f.srcdoc = previewHtml(t);
   }
+  $('pvApply').onclick = function () { if (pvTpl) applyTheme(pvTpl); };
   $('pvClose').onclick = function () { $('pvModal').hidden = true; };
   $('pvDesk').onclick = function () { $('pvFrame').classList.remove('mob'); $('pvDesk').classList.add('on'); $('pvMob').classList.remove('on'); };
   $('pvMob').onclick = function () { $('pvFrame').classList.add('mob'); $('pvMob').classList.add('on'); $('pvDesk').classList.remove('on'); };
