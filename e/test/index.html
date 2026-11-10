@@ -243,6 +243,14 @@
     .ai-orb, .globe-arc { animation:none; }
     .feat-slide { transition:none; }
   }
+
+  /* ---------- 修行荣誉（九霄封神榜派生） ---------- */
+  .honor-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .honor-badge { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--accent);
+    color:var(--accent); background:var(--surface); border-radius:999px; padding:5px 13px;
+    font-size:13px; letter-spacing:.5px; }
+  .honor-badge b { font-weight:700; }
+  .honor-xp { font-size:12px; color:var(--muted); }
 </style>
 </head>
 <body class="tpl-t01">
@@ -287,7 +295,7 @@
         <div class="hero-main">
           <h1>Test</h1>
           <div class="hero-role">律师</div>
-          <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span></div><div class="hero-meta"><span>📍 美国</span><span>🌐 中文</span><span>💼 律师</span></div>
+          <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span></div><div class="honor-row"><span class="honor-badge">🏯 RUKIK 修行荣誉 · 九霄封神榜 <b>问道真人</b> · 初窥大道</span><span class="honor-xp">传道修为 0</span></div><div class="hero-meta"><span>📍 美国</span><span>🌐 中文</span><span>💼 律师</span></div>
         </div>
       </div>
     <div class="stats-panel">
