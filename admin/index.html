@@ -6,100 +6,56 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Rukik 管理后台</title>
 <style>
-  :root { --paper:#F6F0E4; --paper2:#FBF7EE; --card:#FFFDF8; --ink:#2B2118; --navy:#3A2C1C; --gray:#8B857D;
-          --gold:#B58A58; --goldline:#E4D5B8; --line:#E7DCC8; --bad:#B3261E; --cinnabar:#A52A1B; --cinnabar2:#8C1F12; }
+  :root { --ivory:#F7F3EC; --navy:#142235; --ink:#202020; --gray:#8B857D; --gold:#B58A58; --line:#E3DCCF; --bad:#B3261E; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--paper); color:var(--ink); }
-  /* ── 江湖顶栏（官方母版原图顶部横幅裁切） ── */
-  header.top { position:relative; background:#2E2119 url('assets/jianghu-banner.jpg') center 22%/cover no-repeat; color:#FFF7E8;
-    padding:26px 28px 20px; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
-  header.top::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(38,24,12,.55), rgba(38,24,12,.12) 55%, rgba(38,24,12,.30)); pointer-events:none; }
-  header.top > * { position:relative; z-index:1; }
-  .brand { font-size:27px; font-weight:700; letter-spacing:2px; color:#FFF7E8; text-shadow:0 1px 8px rgba(30,16,4,.5); }
-  .brand .seal { display:inline-block; vertical-align:middle; margin-left:10px; background:var(--cinnabar); color:#FFF3E4;
-    font-size:12px; letter-spacing:2px; padding:3px 6px; border-radius:4px; font-weight:600; }
-  .brand small { display:block; font-size:12.5px; font-weight:400; color:#F3E3C2; margin-top:5px; letter-spacing:1px; }
-  header.top .who { color:#F7EBD2; font-size:13px; }
-  header.top .btn.ghost { border-color:#EBD9B4; color:#FFF3DC; background:rgba(46,29,14,.35); }
-  /* ── 顶部主导航 ── */
-  nav#topNav { position:sticky; top:0; z-index:40; display:flex; gap:2px; background:#2E2119; padding:0 18px;
-    box-shadow:0 2px 10px rgba(43,28,10,.25); overflow-x:auto; }
-  nav#topNav .tnav { appearance:none; border:0; background:transparent; color:#E9DCC2; font-size:15px; letter-spacing:1px;
-    padding:13px 20px; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent; font-family:inherit; }
-  nav#topNav .tnav:hover { color:#FFF6E3; }
-  nav#topNav .tnav.active { color:#FFF6E3; background:linear-gradient(180deg, rgba(165,42,27,.0), rgba(165,42,27,.35)); border-bottom-color:var(--cinnabar); font-weight:700; }
-  /* ── 壳：左侧二级菜单 + 右侧工作区 ── */
-  .shell { display:flex; align-items:flex-start; max-width:1460px; margin:0 auto; }
-  aside#sideNav { width:218px; flex:0 0 218px; position:sticky; top:49px; padding:18px 12px 30px; }
-  aside#sideNav .side-title { font-size:12px; color:var(--gray); letter-spacing:2px; margin:2px 10px 8px; }
-  aside#sideNav .snav { display:block; width:100%; text-align:left; appearance:none; border:1px solid transparent; background:transparent;
-    color:var(--ink); font-size:14.5px; padding:10px 12px; margin-bottom:4px; border-radius:9px; cursor:pointer; font-family:inherit; }
-  aside#sideNav .snav:hover { background:#F1E7D2; }
-  aside#sideNav .snav.active { background:#FFFDF8; border-color:var(--goldline); color:var(--cinnabar2); font-weight:700;
-    box-shadow:inset 3px 0 0 var(--cinnabar); }
-  main#workspace { flex:1; min-width:0; padding:20px 22px 70px; }
-  .page { display:none; }
-  .page.active { display:block; }
-  .pagehead { margin:4px 0 14px; }
-  .pagetitle { font-size:23px; margin:0; color:var(--navy); letter-spacing:1px;
-    background:linear-gradient(var(--cinnabar),var(--cinnabar)) left bottom/64px 3px no-repeat; padding-bottom:7px; }
-  /* ── 沿用原类名（JS 渲染依赖） ── */
-  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; font-family:inherit; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--ivory); color:var(--ink); }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 16px 64px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; padding:8px 0 20px; border-bottom:2px solid var(--navy); }
+  .brand { font-size:22px; font-weight:700; color:var(--navy); letter-spacing:.5px; }
+  .brand small { display:block; font-size:12px; font-weight:400; color:var(--gray); margin-top:2px; }
+  .btn { appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:9px 18px; border-radius:10px; font-size:14px; cursor:pointer; }
   .btn.ghost { background:transparent; color:var(--navy); }
-  .btn.gold { background:var(--cinnabar); border-color:var(--cinnabar2); }
+  .btn.gold { background:var(--gold); border-color:var(--gold); }
   .btn.small { padding:5px 12px; font-size:13px; border-radius:8px; }
   .btn:disabled { opacity:.5; cursor:wait; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:0;
-    box-shadow:0 1px 3px rgba(90,64,25,.06); }
-  .card h2 { margin:0 0 14px; font-size:18px; color:var(--navy); letter-spacing:.5px;
-    background:linear-gradient(var(--cinnabar),var(--cinnabar)) left bottom/52px 3px no-repeat; padding-bottom:7px; }
-  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
-  .stat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 10px 14px; text-align:center;
-    background-image:linear-gradient(180deg, rgba(181,138,88,.10), rgba(181,138,88,0) 62%); }
-  .stat b { display:block; font-size:29px; color:var(--navy); }
-  .stat span { font-size:12.5px; color:var(--gray); }
-  .quickrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; margin-top:20px; }
+  .card h2 { margin:0 0 14px; font-size:17px; color:var(--navy); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; }
+  .stat b { display:block; font-size:26px; color:var(--navy); }
+  .stat span { font-size:12px; color:var(--gray); }
   table { width:100%; border-collapse:collapse; font-size:14px; }
   th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--gray); font-weight:500; font-size:12px; }
-  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:#8A6420; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; border:1px solid var(--gold); color:var(--gold); }
   .tag.ok { background:var(--gold); color:#fff; }
   .tag.no { border-color:var(--gray); color:var(--gray); }
   .tag.warn { border-color:var(--bad); color:var(--bad); font-weight:600; }
   .sess { font-size:13px; margin:3px 0; line-height:1.5; }
   .cred { font-size:12px; color:#555; margin-top:4px; }
-  input[type=email], input[type=text], input[type=password], input[type=date] { width:100%; padding:12px; font-size:15px;
-    border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; }
-  select { font-family:inherit; }
+  input[type=email], input[type=text] { width:100%; padding:12px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fff; }
   .login { max-width:400px; margin:60px auto 0; }
-  .authwrap { max-width:1080px; margin:0 auto; padding:0 16px 40px; }
   .muted { color:var(--gray); font-size:13px; }
   .err { color:var(--bad); font-size:14px; min-height:20px; margin-top:8px; }
   .row { display:flex; gap:10px; align-items:center; }
   .mt { margin-top:14px; }
   a { color:var(--navy); }
   .empty { color:var(--gray); padding:14px 0; }
-  @media (max-width: 860px) {
-    .shell { flex-direction:column; }
-    aside#sideNav { width:100%; flex:none; position:static; display:flex; flex-wrap:wrap; gap:4px; padding:12px; }
-    aside#sideNav .side-title { width:100%; }
-    aside#sideNav .snav { width:auto; }
-    main#workspace { width:100%; padding:14px 12px 50px; }
-  }
 </style>
 </head>
 <body>
+<div class="wrap">
   <header class="top">
-    <div class="brand">Rukik 管理后台<span class="seal">管理员</span><small>认证审核 · 用户与咨询数据 · 仅限管理员</small></div>
+    <div class="brand">Rukik 管理后台<small>认证审核 · 用户与咨询数据 · 仅限管理员</small></div>
     <div class="row">
-      <span id="who" class="who"></span>
+      <span id="who" class="muted"></span>
       <button id="refreshBtn" class="btn ghost small" style="display:none">刷新</button>
       <button id="logoutBtn" class="btn ghost small" style="display:none">退出</button>
     </div>
   </header>
 
-<div class="authwrap">
-<div id="loginView" class="card login">
+  <!-- 登录 -->
+  <div id="loginView" class="card login">
     <h2>管理员登录</h2>
     <p class="muted">使用管理员邮箱登录（验证码或密码均可）。非管理员账号登录后也看不到任何数据。</p>
     <input id="email" type="email" name="email" placeholder="邮箱" autocomplete="email">
@@ -140,93 +96,42 @@
   </div>
 
   <!-- 主界面 -->
-  </div>
-
   <div id="appView" style="display:none">
-    <nav id="topNav"><button class="tnav" data-mod="home">首页概览</button><button class="tnav" data-mod="review">认证审核</button><button class="tnav" data-mod="users">用户管理</button><button class="tnav" data-mod="consults">咨询数据</button><button class="tnav" data-mod="content">内容与新闻</button><button class="tnav" data-mod="knowledge">专家知识</button><button class="tnav" data-mod="growth">运营增长</button><button class="tnav" data-mod="system">系统设置</button></nav>
-    <div class="shell">
-      <aside id="sideNav"></aside>
-      <main id="workspace">
-<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div><div class="card mt" id="signupCard"><h2>每日新增</h2><div class="stats" id="signupStats"><div class="empty">加载中…</div></div><p class="cred">口径：按 America/Los_Angeles 自然日统计，数据来源为真实注册记录（服务端按日聚合）；日均新增＝近 30 天新增 ÷ 30。点击任一数字或下方按钮查看每日明细与趋势。</p><div class="quickrow"><button class="btn gold small" data-goto="home:signups">查看每日新增详情 →</button></div></div><div class="card mt" id="subsCard"><h2>订阅总览（正式环境）</h2><div class="stats" id="subOvStats"><div class="empty">加载中…</div></div><p class="cred">口径：正式环境（Production）真实订阅记录，沙盒数据不混入；金额为标价面额、非实际到账，实际收入以 App Store Connect 为准。点击任一数字或下方按钮查看分档、事件与订阅者明细。</p><div class="quickrow"><button class="btn gold small" data-goto="home:subs">查看订阅总览详情 →</button></div></div></section>
-<section class="card page" data-mod="home" data-page="signups" data-title="每日新增">
-      <h2>每日新增用户</h2>
-      <p class="muted">口径说明：时区 America/Los_Angeles；按真实注册记录的注册时间以自然日汇总（服务端聚合），空日期计 0 不断档；「当日累计总数」为截至该日的注册用户总数。更新时间：<span id="suUpdated">—</span></p>
-      <div class="quickrow">
-        <button class="btn small" data-su-range="7">近 7 天</button>
-        <button class="btn small" data-su-range="30">近 30 天</button>
-        <button class="btn small" data-su-range="90">近 90 天</button>
-        <span style="display:inline-flex;gap:6px;align-items:center">自定义 <input type="date" id="suFrom"> 至 <input type="date" id="suTo"> <button class="btn small gold" id="suApply">应用</button></span>
-      </div>
-      <div id="suMsg" class="cred"></div>
-      <p style="margin:16px 0 6px"><b>每日新增趋势</b> <span class="muted" id="suRangeLabel"></span></p>
-      <div id="suBars"><div class="empty">加载中…</div></div>
-      <p style="margin:16px 0 6px"><b>累计用户增长</b></p>
-      <div id="suCurve"></div>
-      <p style="margin:16px 0 6px"><b>来源构成（近 30 天）</b></p>
-      <div id="suSources"><div class="empty">加载中…</div></div>
-      <p style="margin:16px 0 6px"><b>每日明细</b></p>
-      <div id="suTable"><div class="empty">加载中…</div></div>
-      <div class="row mt"><button class="btn small" id="suReload">刷新</button></div>
-    </section>
-<section class="card page" data-mod="home" data-page="subs" data-title="订阅总览">
-      <h2>订阅总览</h2>
-      <p class="muted">口径说明：环境严格分离，正式环境（Production）与沙盒（Sandbox）永不混算，默认正式环境；数据来源为服务端订阅账本（订阅记录、订阅事件、点数包购买记录），服务端聚合。更新时间：<span id="subUpdated">—</span></p>
-      <div class="quickrow">
-        <button class="btn small gold" data-sub-env="Production">正式环境</button>
-        <button class="btn small" data-sub-env="Sandbox">沙盒（测试）</button>
-        <span class="muted" id="subEnvCounts"></span>
-      </div>
-      <div id="subSandboxNote" class="cred" style="display:none;color:#A52A1B">当前查看的是沙盒（测试）数据，不计入正式统计。</div>
-      <div id="subMsg" class="cred"></div>
-      <div class="stats" id="subStats"><div class="empty">加载中…</div></div>
-      <div id="subEmpty"></div>
-      <p style="margin:16px 0 6px"><b>标价面额（非实际到账）</b></p>
-      <div id="subFace"><div class="empty">加载中…</div></div>
-      <p class="cred">本页金额均为标价面额（订阅按产品定价、点数包按购买记录金额），未扣苹果抽成，非实际到账。实际收入与订阅报表请以 App Store Connect 为准：<a href="https://appstoreconnect.apple.com/apps/6824554988" target="_blank" rel="noopener">App Store Connect · Rukik 订阅报告入口</a></p>
-      <p style="margin:16px 0 6px"><b>档位构成</b></p>
-      <div id="subPlans"><div class="empty">加载中…</div></div>
-      <p style="margin:16px 0 6px"><b>近 30 天事件与状态分布</b></p>
-      <div id="subEvents"><div class="empty">加载中…</div></div>
-      <p style="margin:16px 0 6px"><b>点数包销量</b></p>
-      <div id="subPacks"><div class="empty">加载中…</div></div>
-      <p style="margin:16px 0 6px"><b>订阅者明细</b> <span class="muted" id="subListLabel"></span></p>
-      <div id="subTable"><div class="empty">加载中…</div></div>
-      <div class="quickrow">
-        <button class="btn small" id="subPrev">上一页</button>
-        <button class="btn small" id="subNext">下一页</button>
-        <button class="btn small" id="subReload">刷新</button>
-      </div>
-      <p class="cred">试用中口径：订阅记录中处于试用状态或试用期未结束者（与试用领取记录同源对齐）；试用领取总数不分环境、单列备查。邮箱为脱敏展示，口径与注册用户页一致。</p>
-    </section>
-<section class="card page" data-mod="review" data-page="pros" data-title="专业人士认证">
+    <div class="stats mt" id="stats"></div>
+
+    <div class="card">
       <h2>专业人士认证审核</h2>
       <div id="pros"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="users" data-page="users" data-title="注册用户">
+    </div>
+
+    <div class="card">
       <h2>注册用户</h2>
       <div id="users"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="consults" data-page="consults" data-title="最近咨询动态">
+    </div>
+
+    <div class="card">
       <h2>最近咨询动态</h2>
       <div id="consults"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="review" data-page="apps" data-title="专业人士入驻申请">
+    </div>
+    <div class="card">
       <h2>专业人士入驻申请</h2>
       <div id="applications"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="network" data-title="邀请关系网络">
+    </div>
+
+    <div class="card">
       <h2>Relationship Network（邀请关系网络）</h2>
       <div id="networkStats"><div class="empty">加载中…</div></div>
       <div class="mt" style="display:flex;gap:8px">
-        <input id="networkQuery" type="text" placeholder="搜索：姓名 / 邮箱 / 邀请码 / UID / 手机号" style="flex:1">
+        <input id="networkQuery" type="text" placeholder="搜索用户（姓名或邮箱）" style="flex:1">
         <button id="networkSearchBtn" class="btn">搜索</button>
       </div>
       <div id="networkUsers" class="mt"></div>
       <div id="networkTree" class="mt"></div>
       <div id="inviteProfile" class="mt"></div>
       <div id="fraudPanel" class="mt"></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="share" data-title="分享与推荐">
+    </div>
+
+    <div class="card">
       <h2>分享与推荐（内容分享归因）</h2>
       <p class="muted">口径说明：访问量、下载按钮点击量、完成注册数、已确认推荐数是四个互相独立的口径，不可互相换算。本系统没有可靠的安装数据来源，因此不提供安装统计。</p>
       <div id="shareStats"><div class="empty">加载中…</div></div>
@@ -234,58 +139,67 @@
       <div id="shareTop" class="mt"></div>
       <div id="shareLinks" class="mt"></div>
       <div id="shareLinkDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="content" data-page="cover" data-title="新闻封面覆盖">
+    </div>
+
+    <div class="card">
       <h2>新闻封面覆盖（News 5.0）</h2>
       <p class="muted">口径说明：真实图＝来源原图 / 授权图 / 官方图；AI 示意图＝无源图条目由服务端按内容生成的概念图（均标注「AI 示意图」）；缺图＝封面为空或待生成；生成失败＝缺图且已尝试 3 次。封面禁止使用 Rukik Logo / 品牌卡。</p>
       <div id="coverStats"><div class="empty">加载中…</div></div>
       <div id="coverDetail" class="mt"></div>
       <div id="coverList" class="mt"></div>
       <div id="coverList" class="mt"></div>
-    </section>
-<section class="card page" data-mod="content" data-page="newsprod" data-title="新闻生产状态">
+    </div>
+
+    <div class="card">
       <h2>新闻生产状态（News 6.0）</h2>
       <p class="muted">口径说明：analysis_status 管专业解读就绪（ready＝解读 ≥450 汉字可展示；insufficient＝材料不足存草稿不展示；pending＝待生产）。research_status 管公开研究流程：done＝流程已执行（同事件语料交叉＋官方源优先＋内部知识检索）且产出可追溯来源；insufficient＝流程已跑但材料太薄（语料单一且无内部命中）。外部 Web 检索为 P2 可选增强、默认禁用，仅无搜索 Key 不判 insufficient。</p>
       <div id="newsProdStats"><div class="empty">加载中…</div></div>
       <div id="newsProdDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="knowledge" data-page="knowledge" data-title="专家知识">
+    </div>
+
+    <div class="card">
       <h2>专家知识（Research Intelligence P0）</h2>
       <p class="muted">口径说明：内部专家知识全文检索（knowledge_chunks）＋专家知识沉淀索引（expert_material_index）。可检索资格＝专业人士授权（ai_usable 且 visibility 允许）或已发布文章；撤销授权后检索即刻不命中、沉淀标 revoked。沉淀只存来源/原创归纳/≤300 字短片段，不存全文。向量检索为 P1，本板块数字不含向量口径。</p>
       <div id="knowledgeStats"><div class="empty">加载中…</div></div>
       <div id="knowledgeDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="review" data-page="articles" data-title="文章审核">
+    </div>
+
+    <div class="card">
       <h2>文章审核（专家公开发布先待审 · 迁移 0256）</h2>
       <p class="muted">口径说明：专家文章走公开发布先落「待审核」，不进智库 / 搜索 / 分发池；V3.5 负面清单自动审仍是成文管线的第一道门，命中清单照旧拦截。用户本人一键成文的私人草稿不受影响。此处通过才转 published 并按现行口径同步分发；驳回必须填原因，作者可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
       <div id="articleReviewQueue"><div class="empty">加载中…</div></div>
       <div id="articleReviewDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="content" data-page="image" data-title="配图生产">
+    </div>
+
+    <div class="card">
       <h2>配图生产（Image Engine）</h2>
       <p class="muted">口径说明：三级取图——①原文页自带配图 / 官方图 ②开放许可网络图（公共领域 / CC，仅 cc0 / pdm / by / by-sa，记作者·来源·许可）③Cloudflare Workers AI 免费生图（FLUX-1-schnell，免费额度 10,000 Neurons / 日、UTC 日界，代码内每日上限 57 张，达限即停、条目留待补图）。OpenAI / Gemini 付费腿受开关门控、默认关闭。尝试统计来自 image_gen_log 近 7 天逐次记录；供图方为系统原始标识。</p>
       <div id="imageStats"><div class="empty">加载中…</div></div>
       <div id="imageDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="system" data-page="askimg" data-title="AI 创作图片成本">
+    </div>
+
+    <div class="card">
       <h2>问 Rukik · AI 创作图片成本（V1.0）</h2>
       <p class="muted">口径说明：数据来自 ask_imagegen_log（逐次尝试）与 ask_image_generations（任务 / 作品）近 30 天。通道纪律＝免费优先（Cloudflare FLUX-1-schnell，共享免费池）；收费回退（gpt-image-1）按 2026-10-30 裁决暂时关闭，预算闸保留（单张 $0.20 / 日 $3 / 月 $50，配置在 app_private.ask_imagegen）。用户额度分层：普通用户每日 2 张、内测人员 5 张，只有成功交付才扣。全平台免费额度动态计算：池总量 10,000 − 当日全功能实际已耗 − 文本预留 5,500 − 安全余量，再按近 14 天滚动实测均价折算张数，受理时原子预占、失败释放（ask_imagegen_pool_status）。费用为成功收费生成的估算成本（gpt-image-1 按 $0.17 / 张计）。</p>
       <div id="askImgStats"><div class="empty">加载中…</div></div>
       <div id="askImgDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="review" data-page="listings" data-title="房源审核">
+    </div>
+
+    <div class="card">
       <h2>房源审核（发布先待审 · 迁移 0256）</h2>
       <p class="muted">口径说明：经纪人提交发布后先落「待审核」、不公开（分享页 / 橱窗 / 问 Rukik 检索均不可见）；自动规则门（关键项 / 代理确认 / 照片授权 / 额度）仍在提交环节前置把关。此处通过才转 Active 公开（批准时复核额度、按默认有效期上架、刷新执照快照）；驳回必须填原因，提交人可见、可修改后重新提交。全部审核动作落审计（content_review_log：谁 / 何时 / 结论 / 原因）。</p>
       <div id="listingReviewQueue"><div class="empty">加载中…</div></div>
       <div id="listingReviewDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="review" data-page="reintel" data-title="房源情报完整度">
+    </div>
+
+    <div class="card">
       <h2>房源情报完整度（房产情报引擎）</h2>
       <p class="muted">口径说明：试点房源 × 六个情报维度（学校表现 / 城市级治安 / 洪水 / 对口学校 / 街区级治安 / 价格参考）的核验状态，来自 re_listing_intel_status（迁移 0251）。状态＝已接通 / 待地址级核验 / 待数据源；「最近核验」为该维度最近一次真实查询成功或有效缓存命中的时间。区域公共数据（学校表现、城市级治安）走区域缓存共享、不逐房复制；前台不展示此技术状态、只交付结果并标注数据范围与时间。</p>
       <div id="reIntelStats"><div class="empty">加载中…</div></div>
       <div id="reIntelDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="review" data-page="school" data-title="对口学校核验补录">
+    </div>
+
+    <div class="card">
       <h2>对口学校人工核验补录（房产情报引擎 · 迁移 0252）</h2>
       <p class="muted">口径说明：学区分配没有程序化官方接口，本表是过渡机制——工作人员先用学区官方地址查询工具（如 IUSD School Locator）按地址核实，再把结果连同核验来源、核验日期、适用学年与核验人员录入此处。<b>未经官方工具核实的数据不得录入</b>；证据服务 re-intel 只采用状态＝「有效」的记录作答并标注核验信息，其余地址维持「未核实＋官方入口」口径。边界调整或学年更替后，把旧记录置为「待复核 / 失效」并重新核验录入。</p>
       <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -319,14 +233,16 @@
         <button id="saReload" class="btn" type="button">刷新</button>
       </div>
       <div id="saList" class="mt"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="system" data-page="push" data-title="通知健康">
+    </div>
+
+    <div class="card">
       <h2>通知健康（Push Health）</h2>
       <p class="muted">口径说明：权限状态与设备令牌状态分开统计（push_devices：客户端上报状态、reminder-dispatch 按 Expo 真实票据回写最后成功推送与最近错误）。没有令牌 ≠ 用户拒绝授权，也可能是未注册设备或同步失败。推送成功数来自 push_log（只记已发送）；发送失败看 reminder_objects 的 expo_error 暂缓行；App 内通知为 notifications 账本行数，不代表已送达或已读。</p>
       <div id="pushHealthStats"><div class="empty">加载中…</div></div>
       <div id="pushHealthDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="system" data-page="health" data-title="商用健康">
+    </div>
+
+    <div class="card">
       <h2>商用健康（Health Center · 2.58.0 第八大能力）</h2>
       <p class="muted">口径说明：数据来自健康聚合层 health_metric_daily（迁移 0395，pg_cron 每日＋每 6 小时 rollup；迟缓趋势由迟缓探针 ingest 覆写）。状态三档——<b>可算</b>＝现有数据源可算比率；<b>部分可算</b>＝代理口径或仅补偿账可见（分母不完整）；<b>无数据源</b>＝现无埋点/落账，显式标注、绝不以 0 冒充。四态分开呈现：客户端实际成功（core_request 落账）／服务端成功／排队中／执行结果待确认（超时≠失败）。登录看板为代理口径（gate_settle/auth 遥测），与登录 P0 事件契约对齐项见健康线终报。</p>
       <div class="mt" style="display:flex;gap:8px;align-items:center">
@@ -337,8 +253,9 @@
       <div id="healthStats" class="mt"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">健康告警（health_alert_events · 阈值触发，统一告警出口）</div>
       <div id="healthAlerts"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="events" data-title="Event 运营">
+    </div>
+
+    <div class="card">
       <h2>Event 运营（活动 · 活动群 · 邀请漏斗）</h2>
       <p class="muted">口径说明：邀请漏斗五段，各段独立统计、不混算——①分享打开＝活动分享落地页被打开的次数（分享事件 open，所属链接为活动分享）；②注册完成＝经活动分享链接完成注册并归因的新用户数（归因记录为内容分享注册、按用户唯一计数；同一用户注册前打开过多个活动链接时，首次来源 first_touch 与最近一次来源 last_touch 分别保存，本页默认按 <b>last_touch</b> 统计、可切换）；③参加确认＝用户主动确认参加的服务端记录（全渠道）；④累计入群人次＝历史入群记录累计（用户×群，含已退出 / 被移出，与当前人数分开统计；总览「当前入群人数」＝当前在群且关联真实用户的去重人数、跨群去重）；⑤群内活跃＝在活动群内发过言的去重用户数。注意：全新安装的用户可经活动落地页的「活动码」回填归因（注册页手动填入活动码、由服务端落账，渠道标记 backfill_code），②已包含这部分注册；系统仍无延迟深链自动恢复来源，不估算、不填充。每条活动分享链接归属一位具体分享用户，一笔注册同时记「活动」与「分享人」两层：下方按活动表与按分享人表为同一批归因记录、同一口径，分开统计、不混算；链接没有可验证的分享人时不猜测归属、不计入。核验信号来自每日轻核验的最新一轮结论（官方页消失 / 出现取消字样 / 日期不一致等），不等于活动状态已变更。群处置（禁言 / 移出 / 禁入）直调活动群既有管理接口，与 App 内管理动作同审计。</p>
       <div id="eventOpsStats"><div class="empty">加载中…</div></div>
@@ -361,8 +278,9 @@
       <div id="eventTzList"><div class="empty">加载中…</div></div>
       <div class="cred" style="margin:16px 0 6px">活动群举报队列</div>
       <div id="eventReports"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="groups" data-title="活动群管理">
+    </div>
+
+    <div class="card">
       <h2>活动群管理（V2.0 · 按需建群）</h2>
       <p class="muted">口径说明：活动群只有两个来源——用户在活动详情页点「加入活动群」按需创建（user_on_demand），或管理员在此按活动建群（admin）；参加活动 / 收藏 / 分享都不入群。本卡仅平台管理员可见、可管理全部群；群管理员（活动主办方或被指派者）只在 App 内管理自己被授权的群，服务端同口径分级把关（group_admin_set_role：群管理员仅可授 / 撤主持人层级，ADMIN 层级仅平台管理员可授）。处置全部直调服务端管理接口、与 App 内同审计（group_admin_actions）。归档后成员不可见、不可发；「启用」经建群接口复活同一群、不新建。跨群举报队列在上方 Event 运营卡，本卡详情里可处置单个群的举报。</p>
       <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -388,12 +306,14 @@
       </div>
       <div id="grpEventResults" class="mt"></div>
       <div id="grpDetail" class="mt"></div>
-    </section>
-<section class="card page" data-mod="knowledge" data-page="personas" data-title="AI Persona 管理">
+    </div>
+
+    <div class="card">
       <h2>AI Persona 管理（Rukik 创建的 AI 专业角色）</h2>
       <div id="personas"><div class="empty">加载中…</div></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="rewards" data-title="奖励台账">
+    </div>
+
+    <div class="card">
       <h2>Reward Ledger（奖励台账 · 只读）</h2>
       <p class="muted">本阶段只建数据基础，不自动发放任何奖励。奖励规则与台账如下。</p>
       <div id="rewards"><div class="empty">加载中…</div></div>
@@ -403,16 +323,9 @@
         <button id="rewardUserClear" class="btn small ghost">清除筛选</button>
       </div>
       <div id="rewardFilterInfo" class="cred"></div>
-    </section>
-<section class="card page" data-mod="growth" data-page="cultivation" data-title="我的修炼统计">
-      <h2>我的修炼统计（成长数据 · 只读）</h2>
-      <p class="muted">数据来自成长账本统一口径（admin_growth_stats，与 App 内「我的修炼」页、问 Rukik 成长快照同源）。口径：参考日为 America/Los_Angeles 当日；「今日」按落账本地日计；XP 发放为正行之和（毛发放），括号内为净额。</p>
-      <div id="growthStats"><div class="empty">加载中…</div></div>
-      <div class="row mt">
-        <button id="growthStatsReload" class="btn small">刷新统计</button>
-      </div>
-    </section>
-<section class="card page" data-mod="users" data-page="support" data-title="用户支持工单">
+    </div>
+
+    <div class="card">
       <h2>用户支持（「联系 RUKIK」工单 · 迁移 0419）</h2>
       <p class="muted">用户在 App 账号冲突提示中一键发起的协助请求。工单只是求助通道，不等于批准账号合并；合并须另行双账号验证与用户确认。冲突凭据仅显示脱敏值，目标账号标识仅本后台可见。</p>
       <div class="row">
@@ -427,11 +340,10 @@
       </div>
       <div id="supportTickets" class="mt"><div class="empty">加载中…</div></div>
       <div id="supportDetail" class="mt"></div>
-    </section>
-      <div id="appErr" class="err"></div>
-      </main>
     </div>
+    <div id="appErr" class="err"></div>
   </div>
+</div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -603,8 +515,6 @@ async function loadAll() {
     loadSchoolAssign();
     loadReviewQueues();
     loadSupport();
-    loadSignups();
-    loadSubs();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -725,18 +635,33 @@ function renderStats(ov) {
 
 function renderPros(list) {
   if (!list || list.length === 0) { $('pros').innerHTML = '<div class="empty">暂无专业人士。</div>'; return; }
-  $('pros').innerHTML = '<table><tr><th>姓名 / 职业</th><th>机构 · 地区 · 语言</th><th>资质</th><th>状态</th><th></th></tr>' +
+  $('pros').innerHTML = '<table><tr><th>姓名 / 职业</th><th>机构 · 地区 · 语言</th><th>资质</th><th>状态</th><th>分享链接（只读）</th><th></th></tr>' +
     list.map((p) => {
       const creds = (p.credentials || []).map((c) =>
         `<div class="cred">${esc(c.kind)} · ${esc(c.jurisdiction)}${c.license_no ? ' · ' + esc(c.license_no) : ''}${c.verified ? ' · 已核验' : ''}${c.doc_url ? ` · <a href="${esc(c.doc_url)}" target="_blank" rel="noopener">证件</a>` : ''}</div>`).join('');
+      const shareMain = `https://rukik.com/p/${p.id}`;
+      const shareChat = `${shareMain}/chat`;
       return `<tr>
         <td><b>${esc(p.name)}</b><br><span class="muted">${esc(PROF[p.profession] || p.profession)} · ${esc(p.email || '')}</span></td>
         <td>${esc(p.firm || '—')}<br><span class="muted">${esc((p.regions || []).join('、') || '—')} · ${esc((p.languages || []).join('、'))}</span></td>
         <td>${creds || '<span class="muted">未提交</span>'}</td>
         <td>${p.verified ? '<span class="tag ok">已认证</span>' : '<span class="tag no">待审核</span>'}</td>
+        <td>
+          <div class="cred">主页 <a href="${shareMain}" target="_blank" rel="noopener">${shareMain}</a> <button class="btn small ghost" data-copy-link="${shareMain}">复制</button></div>
+          <div class="cred">纯聊天 <a href="${shareChat}" target="_blank" rel="noopener">${shareChat}</a> <button class="btn small ghost" data-copy-link="${shareChat}">复制</button></div>
+        </td>
         <td><button class="btn small ${p.verified ? 'ghost' : 'gold'}" data-pro="${p.id}" data-v="${p.verified ? '0' : '1'}">${p.verified ? '取消认证' : '通过认证'}</button></td>
       </tr>`;
     }).join('') + '</table>';
+  $('pros').querySelectorAll('button[data-copy-link]').forEach((btn) => {
+    btn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copyLink);
+        const old = btn.textContent; btn.textContent = '已复制';
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      } catch (e) { $('appErr').textContent = '复制失败，请手动复制该专家链接。'; }
+    };
+  });
   $('pros').querySelectorAll('button[data-pro]').forEach((btn) => {
     btn.onclick = async () => {
       btn.disabled = true;
@@ -752,11 +677,11 @@ function renderUsers(list) {
   if (!list || list.length === 0) { $('users').innerHTML = '<div class="empty">暂无用户。</div>'; return; }
   $('users').innerHTML = '<table><tr><th>用户</th><th>登录方式</th><th>家庭数</th><th>身份</th><th>邀请人</th><th>注册时间</th></tr>' +
     list.map((u) => `<tr>
-      <td><b>${esc(uname(u.display_name, u.user_no))}</b><br><span class="muted">${esc(u.email || '')}</span><br><span class="muted">编号 #${esc(u.user_no || '')}</span></td>
+      <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
       <td>${esc(u.login_method || '—')}</td>
       <td>${u.family_count ?? 0}</td>
-      <td>${u.is_professional ? '<span class="tag">专业人士</span>' : '<span class="muted">家庭用户</span>'}${u.is_test_account ? ' <span class="tag">测试</span>' : ''}</td>
-      <td>${u.inviter_user_id ? `<a href="#" data-inviter="${esc(u.inviter_user_id)}">${esc(uname(u.inviter_display_name, u.inviter_user_no))}</a><br><span class="muted">${esc(u.inviter_email || '')}</span>` : '<span class="muted">自然加入</span>'}</td>
+      <td>${u.is_professional ? '<span class="tag">专业人士</span>' : '<span class="muted">家庭用户</span>'}</td>
+      <td>${u.inviter_user_id ? `<a href="#" data-inviter="${esc(u.inviter_user_id)}">${esc(u.inviter_display_name || u.inviter_email || '（未设称呼）')}</a>` : '<span class="muted">自然加入</span>'}</td>
       <td class="muted">${fmtDate(u.created_at)}</td>
     </tr>`).join('') + '</table>';
   $('users').querySelectorAll('a[data-inviter]').forEach((a) => {
@@ -789,7 +714,6 @@ async function loadNetwork() {
     renderNetworkStats(ov); renderApplications(apps); renderPersonas(personas);
     loadRewards(window.__rewardFilterUser || null);
     loadShare();
-    loadGrowthStats();
   } catch (e) {
     $('networkStats').innerHTML = '<div class="empty">关系网络加载失败：' + esc(e.message) + '</div>';
   }
@@ -1995,10 +1919,6 @@ function renderNetworkStats(ov) {
   });
 }
 
-// 统一身份中心（0636/0637）：姓名来源标签 + 无姓名回退「用户 #编号」
-const NAME_SRC = { app_display_name: '用户自设', professional_verified: '专家登记（核验名）', professional_legal: '专家登记（法定名）', professional_name: '专家登记名', login_provider: '登录账号姓名', nickname: '昵称', none: '未设姓名' };
-const uname = (name, no) => name || ('用户 #' + (no || ''));
-
 async function doNetworkSearch() {
   const q = $('networkQuery').value.trim();
   $('networkUsers').innerHTML = '<div class="empty">搜索中…</div>';
@@ -2007,9 +1927,9 @@ async function doNetworkSearch() {
     if (!list || list.length === 0) { $('networkUsers').innerHTML = '<div class="empty">没有匹配的用户。</div>'; return; }
     $('networkUsers').innerHTML = '<table><tr><th>用户</th><th>身份</th><th>邀请人</th><th>直接邀请</th><th>网络规模</th><th>深度</th><th></th></tr>' +
       list.map((u) => `<tr>
-        <td><b>${esc(uname(u.display_name, u.user_no))}</b>${u.is_test_account ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(u.email_masked || u.email || '')}</span><br><span class="muted">编号 #${esc(u.user_no || '')}</span></td>
+        <td><b>${esc(u.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(u.email || '')}</span></td>
         <td>${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</td>
-        <td>${u.original_inviter_user_id ? `<a href="#" data-profile="${esc(u.original_inviter_user_id)}"><b>${esc(uname(u.inviter_display_name, u.inviter_user_no))}</b></a><br><span class="muted">${esc(u.inviter_email || '')}</span>` : '无（自然加入）'}</td>
+        <td>${u.original_inviter_user_id ? `<b>${esc(u.inviter_display_name || u.inviter_email || '（未设称呼）')}</b>${u.inviter_display_name && u.inviter_email ? `<br><span class="muted">${esc(u.inviter_email)}</span>` : ''}` : '无（自然加入）'}</td>
         <td>${u.direct_invites ?? 0}</td><td>${u.network_size ?? 0}</td><td>${u.depth ?? '—'}</td>
         <td><button class="btn small" data-profile="${u.id}">档案</button> <button class="btn small ghost" data-tree="${u.id}">查看关系树</button></td>
       </tr>`).join('') + '</table>';
@@ -2018,9 +1938,6 @@ async function doNetworkSearch() {
     });
     $('networkUsers').querySelectorAll('button[data-profile]').forEach((btn) => {
       btn.onclick = () => loadInviteProfile(btn.dataset.profile);
-    });
-    $('networkUsers').querySelectorAll('a[data-profile]').forEach((a) => {
-      a.onclick = (e) => { e.preventDefault(); loadInviteProfile(a.dataset.profile); };
     });
   } catch (e) { $('networkUsers').innerHTML = '<div class="empty">搜索失败：' + esc(e.message) + '</div>'; }
 }
@@ -2031,11 +1948,11 @@ async function loadTree(userId) {
   try {
     const t = await rpc('admin_relationship_tree', { p_user_id: userId });
     const root = t.root || {};
-    let html = `<div class="cred">根用户：<a href="#" data-profile="${esc(t.root_user_id || '')}"><b>${esc(uname(root.display_name, root.user_no))}</b></a>${root.is_test_account ? ' <span class="tag">测试</span>' : ''} · ${esc(root.email || '')} · 编号 #${esc(root.user_no || '')} · 注册 ${fmtDate(root.created_at)} · 来源 ${esc(root.acquisition_source || 'ORGANIC')} · 直接邀请 ${t.direct_invites} · 网络共 ${t.network_size} 人</div>`;
+    let html = `<div class="cred">根用户：<a href="#" data-profile="${esc(t.root_user_id || '')}"><b>${esc(root.display_name || '（未设称呼）')}</b></a> · ${esc(root.email || '')} · 注册 ${fmtDate(root.created_at)} · 来源 ${esc(root.acquisition_source || 'ORGANIC')} · 直接邀请 ${t.direct_invites} · 网络共 ${t.network_size} 人</div>`;
     const ds = t.descendants || [];
     if (ds.length === 0) html += '<div class="empty">该用户还没有邀请任何人。</div>';
     else html += ds.map((d) => `<div style="padding:3px 0 3px ${12 + (d.level - 1) * 22}px;border-left:1px solid var(--line)">
-      ${'└ '.repeat(1)}<a href="#" data-profile="${esc(d.user_id || '')}"><b>${esc(uname(d.display_name, d.user_no))}</b></a>${d.is_test_account ? ' <span class="tag">测试</span>' : ''}
+      ${'└ '.repeat(1)}<a href="#" data-profile="${esc(d.user_id || '')}"><b>${esc(d.display_name || '（未设称呼）')}</b></a>
       <span class="muted">${esc(d.email || '')} · ${d.is_professional ? (d.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'} · 第 ${d.level} 层 · 直接邀请 ${d.direct_invites} · ${fmtDate(d.registered_at)}</span>
     </div>`).join('');
     $('networkTree').innerHTML = html;
@@ -2126,20 +2043,17 @@ async function loadInviteProfile(userId) {
     const rel = p.incoming_relationship;
     const evT = (label, v) => `<tr><td class="muted" style="width:140px">${label}</td><td>${v ? fmtDate(v) : '<span class="muted">历史证据不足</span>'}</td></tr>`;
     const evV = (label, v) => `<tr><td class="muted" style="width:140px">${label}</td><td>${v ? esc(String(v)) : '<span class="muted">历史证据不足</span>'}</td></tr>`;
-    let html = `<div class="cred">邀请档案：<b>${esc(uname(u.display_name, u.user_no))}</b>${u.is_test_account ? ' <span class="tag">测试账号</span>' : ''} · ${esc(u.email_masked || u.email || '')}` +
-      ` · 编号 #${esc(u.user_no || '')} · 姓名来源 ${esc(NAME_SRC[u.display_name_source] || u.display_name_source || '—')}` +
-      (u.profile_name && u.profile_name !== u.display_name ? ` · 专家登记名 ${esc(u.profile_name)}` : '') +
-      (u.verified_legal_name ? ` · 核验实名 ${esc(u.verified_legal_name)}` : '') +
+    let html = `<div class="cred">邀请档案：<b>${esc(u.display_name || '（未设称呼）')}</b> · ${esc(u.email || '')}` +
       ` · 邀请码 <b>${esc(u.referral_code || '—')}</b> · 注册 ${fmtDate(u.created_at)}` +
       ` · 来源 ${esc(u.acquisition_source || 'ORGANIC')} · ${u.is_professional ? (u.is_verified ? '专业人士 · 已认证' : '专业人士') : '普通用户'}</div>`;
     html += '<table>' +
       `<tr><td class="muted" style="width:140px">直接邀请人</td><td>${inv
-        ? `<a href="#" data-profile="${esc(inv.user_id)}"><b>${esc(uname(inv.display_name, inv.user_no))}</b></a>${inv.is_test_account ? ' <span class="tag">测试</span>' : ''} · ${esc(inv.email || '')} · 编号 #${esc(inv.user_no || '')} · 邀请码 ${esc(inv.referral_code || '—')}`
+        ? `<a href="#" data-profile="${esc(inv.user_id)}"><b>${esc(inv.display_name || '（未设称呼）')}</b></a> · ${esc(inv.email || '')} · 邀请码 ${esc(inv.referral_code || '—')}`
         : '无（自然加入）'}</td></tr></table>`;
     const anc = p.ancestors || [];
     if (anc.length) {
       html += '<div class="cred" style="margin-top:8px">完整上级链（由近及远）：</div>' + anc.map((a) =>
-        `<div style="padding:2px 0 2px ${12 + (a.level - 1) * 22}px">第 ${a.level} 层 · <a href="#" data-profile="${esc(a.user_id)}"><b>${esc(uname(a.display_name, a.user_no))}</b></a> <span class="muted">${esc(a.email || '')} · #${esc(a.user_no || '')}</span></div>`).join('');
+        `<div style="padding:2px 0 2px ${12 + (a.level - 1) * 22}px">第 ${a.level} 层 · <a href="#" data-profile="${esc(a.user_id)}"><b>${esc(a.display_name || '（未设称呼）')}</b></a> <span class="muted">${esc(a.email || '')}</span></div>`).join('');
     }
     html += '<div class="cred" style="margin-top:8px">入边归因证据：</div>';
     if (rel) {
@@ -2184,7 +2098,7 @@ async function loadInviteChildren(userId) {
     if (!rows.length) { box.innerHTML = '<div class="empty">暂无直接邀请。</div>'; return; }
     box.innerHTML = '<table><tr><th>被邀请人</th><th>身份</th><th>邀请码</th><th>来源</th><th>状态</th><th>注册时间</th><th>其直接邀请</th><th></th></tr>' +
       rows.map((r) => `<tr>
-        <td><b>${esc(uname(r.display_name, r.user_no))}</b>${r.is_test_account ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(r.email || '')}</span></td>
+        <td><b>${esc(r.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.email || '')}</span></td>
         <td>${r.is_professional ? (r.is_verified ? '专业 · 已认证' : '专业') : '普通'}</td>
         <td>${esc(r.invite_code || '—')}</td><td>${esc(r.source || '—')}</td><td>${esc(r.status || '—')}</td>
         <td class="muted">${fmtDate(r.registered_at)}</td><td>${r.direct_invites ?? 0}</td>
@@ -2206,7 +2120,7 @@ async function loadInviteDescendants(userId, offset) {
     let html = `<div class="cred">全部后代共 ${total} 人（第 ${(offset || 0) + 1}–${(offset || 0) + rows.length} 条）</div>` +
       '<table><tr><th>层级</th><th>用户</th><th>邀请路径</th><th>邀请码</th><th>状态</th><th>注册时间</th><th></th></tr>' +
       rows.map((r) => `<tr><td>第 ${r.rel_depth} 层</td>
-        <td><b>${esc(uname(r.display_name, r.user_no))}</b>${r.is_test_account ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(r.email || '')}</span></td>
+        <td><b>${esc(r.display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.email || '')}</span></td>
         <td class="muted">${esc(r.path_names || '')}</td><td>${esc(r.invite_code || '—')}</td>
         <td>${esc(r.status || '—')}</td><td class="muted">${fmtDate(r.registered_at)}</td>
         <td><button class="btn small" data-profile="${r.invitee_user_id}">档案</button></td></tr>`).join('') + '</table>';
@@ -2240,8 +2154,8 @@ async function loadFraud(status, offset) {
     else html += '<table><tr><th>时间</th><th>用户</th><th>关联用户</th><th>类型</th><th>严重度</th><th>详情</th><th>状态</th><th>处理</th><th></th></tr>' +
       rows.map((r) => `<tr>
         <td class="muted">${fmtDate(r.created_at)}</td>
-        <td>${r.user_id ? `<a href="#" data-profile="${r.user_id}"><b>${esc(r.user_display_name || ('用户 #' + String(r.user_id).slice(0, 8).toUpperCase()))}</b></a><br><span class="muted">${esc(r.user_email || '')}</span>` : '—'}</td>
-        <td>${r.related_user_id ? `<a href="#" data-profile="${r.related_user_id}">${esc(r.related_display_name || ('用户 #' + String(r.related_user_id).slice(0, 8).toUpperCase()))}</a><br><span class="muted">${esc(r.related_email || '')}</span>` : '—'}</td>
+        <td>${r.user_id ? `<a href="#" data-profile="${r.user_id}"><b>${esc(r.user_display_name || '（未设称呼）')}</b></a><br><span class="muted">${esc(r.user_email || '')}</span>` : '—'}</td>
+        <td>${r.related_user_id ? `<a href="#" data-profile="${r.related_user_id}">${esc(r.related_display_name || '（未设称呼）')}</a><br><span class="muted">${esc(r.related_email || '')}</span>` : '—'}</td>
         <td>${esc(FRAUD_TYPE[r.signal_type] || r.signal_type)}</td>
         <td>${esc(r.severity || '—')}</td>
         <td class="muted" title="${esc(JSON.stringify(r.detail || {}))}">${esc(JSON.stringify(r.detail || {}).slice(0, 90))}</td>
@@ -2300,7 +2214,7 @@ async function loadShareLinks(offset) {
     else html += '<table><tr><th>创建时间</th><th>分享者</th><th>类型</th><th>内容</th><th>链接码</th><th>打开</th><th>App 打开</th><th>商店跳转</th><th>确认注册</th><th></th></tr>' +
       rows.map((r) => `<tr>
         <td class="muted">${fmtDate(r.created_at)}</td>
-        <td>${r.creator_id ? `<b>${esc(r.creator_display_name || ('用户 #' + String(r.creator_id).slice(0, 8).toUpperCase()))}</b><br><span class="muted">${esc(r.creator_email || '')}</span>` : '<span class="muted">系统生成 · 历史证据不足</span>'}</td>
+        <td>${r.creator_id ? `<b>${esc(r.creator_display_name || '（未设称呼）')}</b><br><span class="muted">${esc(r.creator_email || '')}</span>` : '<span class="muted">系统生成 · 历史证据不足</span>'}</td>
         <td>${esc(SHARE_TYPE[r.content_type] || r.content_type)}</td>
         <td class="muted">${esc(String(r.content_id || '').slice(0, 18))}</td>
         <td>${esc(r.code)}</td><td>${r.opens}</td><td>${r.app_opens}</td><td>${r.store_redirects}</td><td>${r.registrations}</td>
@@ -2332,12 +2246,12 @@ async function loadShareLinkDetail(id) {
     if (!d || d.error) { box.innerHTML = '<div class="empty">详情加载失败：' + esc((d && d.error) || '未知错误') + '</div>'; return; }
     const l = d.link || {};
     let html = `<div class="cred">链接详情：<b>${esc(l.code || '')}</b> · ${esc(SHARE_TYPE[l.content_type] || l.content_type || '')}` +
-      ` · 分享者 ${l.creator_id ? esc(l.creator_display_name || ('用户 #' + String(l.creator_id).slice(0, 8).toUpperCase())) + ' · ' + esc(l.creator_email || '') : '系统生成 · 历史证据不足'}` +
+      ` · 分享者 ${l.creator_id ? esc(l.creator_display_name || '（未设称呼）') + ' · ' + esc(l.creator_email || '') : '系统生成 · 历史证据不足'}` +
       ` · 创建 ${fmtDate(l.created_at)}${l.destination ? ' · 去向 ' + esc(l.destination) : ''}</div>`;
     const regs = d.registrations || [];
     html += `<div class="cred" style="margin-top:8px">经此链接确认注册（${regs.length} 人）：</div>`;
     html += regs.length ? regs.map((r) =>
-      `<div style="padding:2px 0"><a href="#" data-profile="${esc(r.invitee_user_id)}"><b>${esc(r.display_name || ('用户 #' + String(r.invitee_user_id).slice(0, 8).toUpperCase()))}</b></a> <span class="muted">${esc(r.email || '')} · ${fmtDate(r.registered_at)}</span></div>`).join('')
+      `<div style="padding:2px 0"><a href="#" data-profile="${esc(r.invitee_user_id)}"><b>${esc(r.display_name || '（未设称呼）')}</b></a> <span class="muted">${esc(r.email || '')} · ${fmtDate(r.registered_at)}</span></div>`).join('')
       : '<div class="empty">暂无。</div>';
     const evs = d.events || [];
     html += `<div class="cred" style="margin-top:8px">事件时间线（最近 ${evs.length} 条）：</div>`;
@@ -2394,280 +2308,6 @@ function wireCoverDrill() {
 }
 
 
-async function loadGrowthStats() {
-  const box = $('growthStats');
-  if (!box) return;
-  box.innerHTML = '<div class="empty">加载中…</div>';
-  try {
-    const s = await rpc('admin_growth_stats');
-    renderGrowthStats(s);
-  } catch (e) {
-    box.innerHTML = '<div class="empty">成长统计加载失败：' + esc(e.message) + '</div>';
-  }
-}
-function renderGrowthStats(s) {
-  if (!s) { $('growthStats').innerHTML = '<div class="empty">暂无数据。</div>'; return; }
-  const tt = s.today_tasks || {};
-  const rate = tt.completion_rate != null ? (tt.completion_rate * 100).toFixed(1) + '%' : '—';
-  const items = [
-    [s.users_with_xp, '有修为用户'], [s.active_today, '今日有效活跃'],
-    [s.active_7d, '近 7 日有效活跃'], [s.active_30d, '近 30 日有效活跃'],
-    [s.high_active_qualified, '高活跃已达（≥' + (s.high_active_threshold ?? 25) + ' 天）'],
-    [s.culture_unlocks_total, '图鉴解锁总人次（' + (s.culture_unlock_users ?? 0) + ' 人）'],
-    [s.snapshot_reads_total, '成长快照被调用次数'],
-  ];
-  let html = '<div class="stats">' + items.map(([n, label]) =>
-    `<div class="stat"><b>${n ?? 0}</b><span>${label}</span></div>`).join('') + '</div>';
-  html += `<div class="cred" style="margin:14px 0 6px">参考日 ${esc(s.reference_date || '')} · 今日发放修为 ${s.xp_issued_today ?? 0}（净 ${s.xp_net_today ?? 0}） · 近 7 日发放 ${s.xp_issued_7d ?? 0}（净 ${s.xp_net_7d ?? 0}）</div>`;
-  const dist = s.realm_distribution || [];
-  if (dist.length) html += '<table><tr><th>境界</th><th>人数</th></tr>' +
-    dist.map((r) => `<tr><td>${esc(r.realm_name || r.realm_key || '')}</td><td>${r.users ?? 0}</td></tr>`).join('') + '</table>';
-  html += `<div class="cred" style="margin:14px 0 6px">今日密令：揭晓 ${tt.assigned_users ?? 0} 人 · 至少完成 1 道 ${tt.completed_users ?? 0} 人 · 全部完成 ${tt.completed_all_users ?? 0} 人 · 完成率 ${rate}</div>`;
-  const bt = s.xp_by_task_7d || [];
-  if (bt.length) html += '<div class="cred" style="margin:10px 0 6px">近 7 日修为发放（按任务）</div><table><tr><th>任务</th><th>发放修为</th><th>次数</th></tr>' +
-    bt.map((r) => `<tr><td>${esc(r.task_key || '')}</td><td>${r.xp ?? 0}</td><td>${r.awards ?? 0}</td></tr>`).join('') + '</table>';
-  const byc = s.snapshot_reads_by_consumer || {};
-  const bycTxt = Object.entries(byc).map(([k, v]) => `${esc(k)} ${v}`).join(' · ');
-  if (bycTxt) html += `<div class="cred" style="margin:10px 0 6px">快照调用留痕（按消费方）：${bycTxt}</div>`;
-  $('growthStats').innerHTML = html;
-}
-if ($('growthStatsReload')) $('growthStatsReload').onclick = () => loadGrowthStats();
-
-// ===== 每日新增（迁移 0647 · admin_signup_summary / admin_daily_signups / admin_signup_sources） =====
-let suToday = null; // 服务端返回的洛杉矶今日（YYYY-MM-DD），前端日期推算以此为锚，避免浏览器时区漂移
-
-function suShiftDay(dateStr, delta) {
-  const p = dateStr.split('-').map(Number);
-  return new Date(Date.UTC(p[0], p[1] - 1, p[2] + delta)).toISOString().slice(0, 10);
-}
-function suGoDetail() { if (window.__adminNavShow) window.__adminNavShow('home', 'signups'); }
-
-async function loadSignups() {
-  try {
-    const [sum, src] = await Promise.all([rpc('admin_signup_summary'), rpc('admin_signup_sources', { p_days: 30 })]);
-    suToday = sum.today_date;
-    renderSignupPanel(sum);
-    renderSignupSources(src);
-    if ($('suUpdated')) $('suUpdated').textContent = String(sum.generated_at || '').replace('T', ' ').slice(0, 19) + ' UTC';
-    await loadSignupRange(suShiftDay(suToday, -29), suToday, 30);
-  } catch (e) {
-    if ($('signupStats')) $('signupStats').innerHTML = '<div class="empty">每日新增加载失败：' + esc(e.message) + '</div>';
-    if ($('suTable')) $('suTable').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
-  }
-}
-
-function renderSignupPanel(s) {
-  const items = [
-    [s.total, '注册用户总数'], [s.last_7d, '近 7 天新增'], [s.today, '今日新增'],
-    [s.yesterday, '昨日新增'], [s.last_30d, '近 30 天新增'], [s.avg_30d, '日均新增（近 30 天）'],
-  ];
-  $('signupStats').innerHTML = items.map(([n, label]) =>
-    `<div class="stat" style="cursor:pointer" title="点击查看每日新增详情"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
-  $('signupStats').querySelectorAll('.stat').forEach((el) => { el.onclick = suGoDetail; });
-}
-
-const SU_SOURCE_LABEL = { ORGANIC: '自然注册', INVITE: '邀请注册', FAMILY_INVITE: '家庭邀请', CONTENT_SHARE: '内容分享注册' };
-function renderSignupSources(src) {
-  const rows = src.sources || [];
-  if (!rows.length) { $('suSources').innerHTML = '<div class="empty">近 30 天暂无注册记录。</div>'; return; }
-  $('suSources').innerHTML = '<table><tr><th>来源</th><th>新增用户</th><th>占比</th></tr>' + rows.map((r) => {
-    const pct = src.total ? (r.n / src.total * 100).toFixed(1) : '0.0';
-    return `<tr><td>${esc(SU_SOURCE_LABEL[r.source] || r.source)}</td><td>${r.n}</td><td>${pct}%</td></tr>`;
-  }).join('') + '</table><p class="cred">来源为注册记录中的真实归因字段（acquisition_source），与邀请关系口径互洽。</p>';
-}
-
-function suBarChart(days) {
-  const W = 720, H = 196, PL = 36, PR = 6, PT = 18, PB = 22;
-  const pw = W - PL - PR, ph = H - PT - PB;
-  const max = Math.max(1, ...days.map((d) => d.signups));
-  const bw = pw / days.length;
-  let g = '';
-  [0, 0.5, 1].forEach((f) => {
-    const y = PT + ph - ph * f;
-    g += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W - PR}" y2="${y.toFixed(1)}" stroke="#E7DCC8" stroke-width="1"/><text x="${PL - 5}" y="${(y + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.round(max * f)}</text>`;
-  });
-  days.forEach((d, i) => {
-    const h = ph * (d.signups / max);
-    const x = PL + i * bw + bw * 0.16, y = PT + ph - h, w = Math.max(1, bw * 0.68);
-    g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="2" fill="#B58A58"><title>${d.day} 新增 ${d.signups} 人，累计 ${d.cumulative} 人</title></rect>`;
-    if (days.length <= 31 || i % Math.ceil(days.length / 12) === 0)
-      g += `<text x="${(PL + i * bw + bw / 2).toFixed(1)}" y="${H - 6}" font-size="9.5" fill="#8B857D" text-anchor="middle">${d.day.slice(5)}</text>`;
-    if (d.signups > 0 && (days.length <= 31 || d.signups === max))
-      g += `<text x="${(PL + i * bw + bw / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" font-size="10" fill="#3A2C1C" text-anchor="middle">${d.signups}</text>`;
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="每日新增柱状图">${g}</svg>`;
-}
-
-function suCurveChart(days) {
-  const W = 720, H = 176, PL = 44, PR = 10, PT = 14, PB = 22;
-  const pw = W - PL - PR, ph = H - PT - PB;
-  const vals = days.map((d) => d.cumulative);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  if (hi === lo) hi = lo + 1;
-  const pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
-  const X = (i) => PL + (days.length === 1 ? pw / 2 : (i * pw) / (days.length - 1));
-  const Y = (v) => PT + ph - ((v - lo) / (hi - lo)) * ph;
-  const pts = days.map((d, i) => `${X(i).toFixed(1)},${Y(d.cumulative).toFixed(1)}`).join(' ');
-  let g = `<line x1="${PL}" y1="${(PT + ph).toFixed(1)}" x2="${W - PR}" y2="${(PT + ph).toFixed(1)}" stroke="#E7DCC8"/>`;
-  g += `<text x="${PL - 5}" y="${(Y(Math.max(...vals)) + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.max(...vals)}</text>`;
-  g += `<text x="${PL - 5}" y="${(Y(Math.min(...vals)) + 4).toFixed(1)}" font-size="10" fill="#8B857D" text-anchor="end">${Math.min(...vals)}</text>`;
-  g += `<polyline points="${pts}" fill="none" stroke="#A52A1B" stroke-width="2"/>`;
-  [0, days.length - 1].forEach((i) => {
-    g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(days[i].cumulative).toFixed(1)}" r="3.5" fill="#A52A1B"><title>${days[i].day} 累计 ${days[i].cumulative} 人</title></circle>`;
-    g += `<text x="${X(i).toFixed(1)}" y="${H - 6}" font-size="9.5" fill="#8B857D" text-anchor="middle">${days[i].day.slice(5)}</text>`;
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="累计用户增长曲线">${g}</svg><p class="cred">纵轴为区间内累计总数范围（非从 0 起），首尾两点为该区间起止日的累计注册用户总数。</p>`;
-}
-
-function renderSignupDetail(data) {
-  $('suRangeLabel').textContent = `（${data.from} 至 ${data.to}，共 ${(data.days || []).length} 天，区间新增 ${data.range_signups} 人）`;
-  $('suBars').innerHTML = suBarChart(data.days);
-  $('suCurve').innerHTML = suCurveChart(data.days);
-  const rows = [...data.days].reverse();
-  $('suTable').innerHTML = '<table><tr><th>日期</th><th>新增用户</th><th>当日累计总数</th></tr>' +
-    rows.map((d) => `<tr><td>${esc(d.day)}</td><td>${d.signups}</td><td>${d.cumulative}</td></tr>`).join('') + '</table>';
-}
-
-async function loadSignupRange(from, to, presetDays) {
-  try {
-    $('suMsg').textContent = '';
-    const data = await rpc('admin_daily_signups', { p_from: from, p_to: to });
-    renderSignupDetail(data);
-    document.querySelectorAll('[data-su-range]').forEach((b) =>
-      b.classList.toggle('gold', !!presetDays && Number(b.dataset.suRange) === presetDays));
-  } catch (e) {
-    $('suMsg').textContent = '明细加载失败：' + e.message;
-  }
-}
-
-document.querySelectorAll('[data-su-range]').forEach((b) => {
-  b.onclick = () => { if (!suToday) return; const n = Number(b.dataset.suRange); loadSignupRange(suShiftDay(suToday, -(n - 1)), suToday, n); };
-});
-if ($('suApply')) $('suApply').onclick = () => {
-  const f = $('suFrom').value, t = $('suTo').value;
-  if (!f || !t) { $('suMsg').textContent = '请先选择起止日期。'; return; }
-  if (f > t) { $('suMsg').textContent = '起始日期不能晚于结束日期。'; return; }
-  const span = (Date.parse(t) - Date.parse(f)) / 86400000 + 1;
-  if (span > 366) { $('suMsg').textContent = '自定义区间最长 366 天，请缩小范围。'; return; }
-  loadSignupRange(f, suToday && t > suToday ? suToday : t, null);
-};
-if ($('suReload')) $('suReload').onclick = () => loadSignups();
-
-// ===== 订阅总览（0654 · admin_subscription_* RPC，与 App 管理区共用同一口径） =====
-const SUB_PLAN_LABEL = { pro: '专业版', starter: '入门版' };
-const SUB_PERIOD_LABEL = { monthly: '月付', yearly: '年付', other: '其他周期' };
-const SUB_STATUS_LABEL = { active: '生效中', trialing: '试用中', expired: '已过期', cancelled: '已取消', canceled: '已取消', grace_period: '宽限期', billing_retry: '扣费重试中', revoked: '已撤销' };
-const SUB_EVENT_LABEL = { renewed: '续订', trial_started: '试用开始', trial_expired: '试用到期', subscribed: '新订阅', expired: '过期', cancelled: '取消', canceled: '取消', refund: '退款', refunded: '退款', revoked: '撤销', did_fail_to_renew: '续订扣费失败' };
-let subEnv = 'Production';
-let subOffset = 0;
-const SUB_PAGE_SIZE = 50;
-let subListTotal = 0;
-
-function subUsd(cents) {
-  const v = Math.round(Number(cents) || 0);
-  const sign = v < 0 ? '-' : '';
-  const abs = Math.abs(v);
-  const d = Math.floor(abs / 100), r = abs % 100;
-  return sign + '$' + d.toLocaleString('en-US') + (r ? '.' + String(r).padStart(2, '0') : '');
-}
-function subDate(iso) { return iso ? String(iso).slice(0, 10) : '—'; }
-
-async function loadSubs() {
-  try {
-    const [ov, sum] = await Promise.all([
-      rpc('admin_subscription_summary', { p_environment: 'Production' }),
-      rpc('admin_subscription_summary', { p_environment: subEnv }),
-    ]);
-    renderSubOverview(ov);
-    renderSubSummary(sum);
-    await loadSubList();
-  } catch (e) {
-    if ($('subOvStats')) $('subOvStats').innerHTML = '<div class="empty">订阅总览加载失败：' + esc(e.message) + '</div>';
-    if ($('subStats')) $('subStats').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
-    if ($('subTable')) $('subTable').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
-  }
-}
-
-function subTiles(s) {
-  return [
-    [s.active, '活跃订阅'], [s.trialing, '试用中'], [s.new_7d, '近 7 天新增'],
-    [s.new_30d, '近 30 天新增'], [s.renewed_30d, '近 30 天续订'], [s.ended_30d, '近 30 天取消/过期/退款'],
-  ].map(([n, label]) => `<div class="stat" style="cursor:pointer" title="点击查看订阅总览详情"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
-}
-
-function renderSubOverview(s) {
-  if (!$('subOvStats')) return;
-  $('subOvStats').innerHTML = subTiles(s);
-  $('subOvStats').querySelectorAll('.stat').forEach((el) => {
-    el.onclick = () => { const b = document.querySelector('[data-goto="home:subs"]'); if (b) b.click(); };
-  });
-}
-
-function renderSubSummary(s) {
-  document.querySelectorAll('[data-sub-env]').forEach((b) =>
-    b.classList.toggle('gold', b.dataset.subEnv === subEnv));
-  if ($('subEnvCounts')) $('subEnvCounts').textContent =
-    `订阅记录：正式 ${s.env_counts?.Production ?? 0} 条 · 沙盒 ${s.env_counts?.Sandbox ?? 0} 条（分开统计）`;
-  if ($('subSandboxNote')) $('subSandboxNote').style.display = subEnv === 'Sandbox' ? '' : 'none';
-  if ($('subUpdated')) $('subUpdated').textContent = String(s.generated_at || '').replace('T', ' ').slice(0, 19) + ' UTC';
-  $('subStats').innerHTML = subTiles(s);
-  $('subEmpty').innerHTML = (subEnv === 'Production' && s.subs_total === 0)
-    ? '<div class="empty" style="margin-top:10px">暂无生产订阅：正式环境暂无订阅记录，有真实订阅后这里会显示人数、档位与事件计数。</div>' : '';
-  const f = s.active_face || {};
-  $('subFace').innerHTML =
-    `<p style="margin:4px 0">活跃订阅 · 月付合计 <b>${subUsd(f.monthly_cents)}</b> / 月 · 年付合计 <b>${subUsd(f.yearly_cents)}</b> / 年` +
-    `${(f.unpriced_active || 0) > 0 ? ` · 另有 ${f.unpriced_active} 个活跃订阅不在定价表内，未计入面额` : ''}</p>` +
-    `<p style="margin:4px 0">点数包购买 <b>${s.packs?.total ?? 0}</b> 笔（近 30 天 ${s.packs?.last_30d ?? 0} 笔）· 累计发放 ${s.packs?.points_total ?? 0} 点 · 交易额 <b>${subUsd(s.packs?.gross_cents_total)}</b>（标价口径）</p>` +
-    `<p class="cred" style="margin:4px 0">试用领取总数 ${s.trial_claims_total ?? 0}（不分环境，备查）。</p>`;
-  const plans = s.by_plan || [];
-  $('subPlans').innerHTML = plans.length
-    ? '<table><tr><th>档位</th><th>产品</th><th>周期</th><th>状态</th><th>人数</th><th>标价</th></tr>' + plans.map((r) =>
-        `<tr><td>${esc(SUB_PLAN_LABEL[r.plan_key] || r.plan_key || '')}</td><td>${esc(r.product_id || '')}</td><td>${esc(SUB_PERIOD_LABEL[r.period] || r.period || '')}</td><td>${esc(SUB_STATUS_LABEL[r.status] || r.status || '')}</td><td>${r.n}</td><td>${r.unit_price_cents != null ? subUsd(r.unit_price_cents) : '—'}</td></tr>`).join('') + '</table>'
-    : '<div class="empty">暂无订阅记录。</div>';
-  const evs = s.events_30d || [];
-  const sts = s.status_breakdown || [];
-  $('subEvents').innerHTML =
-    (evs.length
-      ? '<table><tr><th>事件</th><th>来源</th><th>近 30 天次数</th></tr>' + evs.map((r) =>
-          `<tr><td>${esc(SUB_EVENT_LABEL[r.notification_type] || r.notification_type || '')}</td><td>${esc(r.source || '')}</td><td>${r.n}</td></tr>`).join('') + '</table>'
-      : '<div class="empty">近 30 天暂无订阅事件。</div>') +
-    (sts.length ? `<p class="cred">状态分布：${sts.map((x) => `${esc(SUB_STATUS_LABEL[x.status] || x.status || '')} ${x.n}`).join(' · ')}</p>` : '');
-  const pk = (s.packs && s.packs.by_product) || [];
-  $('subPacks').innerHTML = pk.length
-    ? '<table><tr><th>产品</th><th>购买笔数</th><th>发放点数</th><th>交易额（标价口径）</th></tr>' + pk.map((r) =>
-        `<tr><td>${esc(r.product_id || '')}</td><td>${r.n}</td><td>${r.points}</td><td>${subUsd(r.gross_cents)}</td></tr>`).join('') + '</table>'
-    : '<div class="empty">暂无点数包购买记录。</div>';
-}
-
-async function loadSubList() {
-  try {
-    const data = await rpc('admin_subscription_list', { p_environment: subEnv, p_limit: SUB_PAGE_SIZE, p_offset: subOffset });
-    subListTotal = data.total || 0;
-    const rows = data.rows || [];
-    if ($('subListLabel')) $('subListLabel').textContent = `（${subEnv === 'Production' ? '正式环境' : '沙盒'}，共 ${subListTotal} 条，第 ${subListTotal ? Math.floor(subOffset / SUB_PAGE_SIZE) + 1 : 0} 页）`;
-    $('subTable').innerHTML = rows.length
-      ? '<table><tr><th>用户</th><th>档位</th><th>周期</th><th>状态</th><th>当前周期</th><th>最近事件</th><th>订阅创建</th></tr>' + rows.map((r) =>
-          `<tr><td><b>${esc(r.display_name || '未设姓名')}</b>${r.is_test_account ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(r.email_masked || '')}</span>${r.user_no ? `<br><span class="muted">编号 #${esc(r.user_no)}</span>` : ''}</td>` +
-          `<td>${esc(SUB_PLAN_LABEL[r.plan_key] || r.plan_key || '')}</td><td>${esc(SUB_PERIOD_LABEL[r.period] || '')}</td>` +
-          `<td>${esc(SUB_STATUS_LABEL[r.status] || r.status || '')}${r.auto_renew === false ? '<br><span class="muted">已关自动续订</span>' : ''}</td>` +
-          `<td>${subDate(r.period_start)} 至 ${subDate(r.period_end)}${r.trial_end_at ? `<br><span class="muted">试用截止 ${subDate(r.trial_end_at)}</span>` : ''}</td>` +
-          `<td>${r.last_event_type ? esc(SUB_EVENT_LABEL[r.last_event_type] || r.last_event_type) + '<br><span class="muted">' + subDate(r.last_event_at) + '</span>' : '—'}</td>` +
-          `<td>${subDate(r.created_at)}</td></tr>`).join('') + '</table>'
-      : `<div class="empty">${subEnv === 'Production' ? '正式环境暂无订阅者记录。' : '沙盒环境暂无订阅者记录。'}</div>`;
-    if ($('subPrev')) $('subPrev').disabled = subOffset <= 0;
-    if ($('subNext')) $('subNext').disabled = subOffset + SUB_PAGE_SIZE >= subListTotal;
-  } catch (e) {
-    $('subTable').innerHTML = '<div class="empty">明细加载失败：' + esc(e.message) + '</div>';
-  }
-}
-
-document.querySelectorAll('[data-sub-env]').forEach((b) => {
-  b.onclick = () => { subEnv = b.dataset.subEnv; subOffset = 0; loadSubs(); };
-});
-if ($('subPrev')) $('subPrev').onclick = () => { if (subOffset > 0) { subOffset -= SUB_PAGE_SIZE; loadSubList(); } };
-if ($('subNext')) $('subNext').onclick = () => { if (subOffset + SUB_PAGE_SIZE < subListTotal) { subOffset += SUB_PAGE_SIZE; loadSubList(); } };
-if ($('subReload')) $('subReload').onclick = () => loadSubs();
-
 function renderRewards(r) {
   const rules = (r && r.rules) || [];
   const entries = (r && r.entries) || [];
@@ -2678,7 +2318,7 @@ function renderRewards(r) {
   if (!entries.length) html += '<div class="empty">暂无奖励记录。本阶段只建台账结构，不产生、不发放任何奖励。</div>';
   else html += '<table><tr><th>时间</th><th>受益人</th><th>类型</th><th>金额 / 积分</th><th>状态</th><th>来源事件</th></tr>' +
     entries.map((e) => `<tr><td class="muted">${fmtDate(e.created_at)}</td>
-      <td><b>${esc(uname(e.beneficiary_display_name, e.beneficiary_user_no))}</b>${e.beneficiary_is_test ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(e.beneficiary_email || '')}</span><br><span class="muted">编号 #${esc(e.beneficiary_user_no || '')}</span></td>
+      <td>${(e.beneficiary_display_name || e.beneficiary_email) ? `<b>${esc(e.beneficiary_display_name || '（未设称呼）')}</b><br><span class="muted">${esc(e.beneficiary_email || '')}</span>` : `<span class="muted">${esc(String(e.beneficiary_user_id || '').slice(0, 8))}…</span>`}</td>
       <td>${esc(e.reward_type)}</td><td>${e.amount ?? e.points ?? '—'}</td>
       <td>${esc(e.status)}</td><td>${esc(e.source_event || '—')}</td></tr>`).join('') + '</table>';
   $('rewards').innerHTML = html;
@@ -2693,40 +2333,5 @@ if ($('saReload')) $('saReload').onclick = () => loadSchoolAssign();
   if (session) enterApp(); else show('login');
 })();
 </script>
-
-<script>
-// ── 模块化导航（纯呈现层：只切换页面显隐，不触碰任何数据逻辑）──
-(function () {
-  var MODULES = [['home','首页概览'],['review','认证审核'],['users','用户管理'],['consults','咨询数据'],
-                 ['content','内容与新闻'],['knowledge','专家知识'],['growth','运营增长'],['system','系统设置']];
-  var pages = Array.prototype.slice.call(document.querySelectorAll('#appView .page'));
-  var side = document.getElementById('sideNav');
-  var topBtns = Array.prototype.slice.call(document.querySelectorAll('#topNav .tnav'));
-  function show(mod, page) {
-    var list = pages.filter(function (p) { return p.dataset.mod === mod; });
-    if (!list.length) return;
-    var target = list.filter(function (p) { return p.dataset.page === page; })[0] || list[0];
-    pages.forEach(function (p) { p.classList.toggle('active', p === target); });
-    topBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.mod === mod); });
-    side.innerHTML = '<div class="side-title">' + (MODULES.filter(function (m) { return m[0] === mod; })[0] || [])[1] + '</div>' +
-      list.map(function (p) {
-        return '<button class="snav' + (p === target ? ' active' : '') + '" data-page="' + p.dataset.page + '">' + p.dataset.title + '</button>';
-      }).join('');
-    side.querySelectorAll('.snav').forEach(function (b) {
-      b.onclick = function () { show(mod, b.dataset.page); };
-    });
-    try { history.replaceState(null, '', '#' + mod + '/' + target.dataset.page); } catch (e) {}
-    window.scrollTo(0, 0);
-  }
-  topBtns.forEach(function (b) { b.onclick = function () { show(b.dataset.mod, null); }; });
-  document.querySelectorAll('[data-goto]').forEach(function (b) {
-    b.onclick = function () { var parts = b.dataset.goto.split(':'); show(parts[0], parts[1]); };
-  });
-  var m = (location.hash || '').match(/^#([a-z]+)\/([a-z]+)/);
-  if (m) show(m[1], m[2]); else show('home', 'overview');
-  window.__adminNavShow = show;
-})();
-</script>
-
 </body>
 </html>

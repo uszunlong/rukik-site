@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>William Brown 的 AI 分身 · 直接咨询 — Rukik</title>
+<meta name="description" content="帮你理清赴英路径与准备">
+<meta property="og:type" content="website">
+<meta property="og:title" content="William Brown 的 AI 团队">
+<meta property="og:description" content="帮你理清赴英路径与准备">
+<meta property="og:url" content="https://rukik.com/p/4d11733d-a7e1-41af-a514-b8bd1b31861d/chat">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/4d11733d-a7e1-41af-a514-b8bd1b31861d/4d11733d-a7e1-41af-a514-b8bd1b31861d/hero-1025db88.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="800">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/4d11733d-a7e1-41af-a514-b8bd1b31861d/4d11733d-a7e1-41af-a514-b8bd1b31861d/hero-1025db88.jpg">
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#F7F3EC; color:#202020; }
+  .wrap { max-width:640px; margin:0 auto; padding:56px 24px; text-align:center; }
+  img.avatar { width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid #B58A58; }
+  h1 { color:#142235; font-size:26px; margin:20px 0 4px; }
+  .role { color:#8B857D; font-size:15px; margin-bottom:20px; }
+  .line { display:inline-block; background:#142235; color:#F7F3EC; padding:12px 22px; border-radius:999px; font-size:16px; letter-spacing:1px; }
+  .card { background:#fff; border-radius:16px; padding:22px; margin-top:28px; text-align:left; line-height:1.9; color:#44403a; font-size:15px; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .btn { display:inline-block; margin-top:24px; background:#B58A58; color:#fff; text-decoration:none; padding:13px 30px; border-radius:999px; font-size:16px; }
+  .co { margin-top:14px; color:#8B857D; font-size:13px; }
+  .co img { width:18px; height:18px; vertical-align:-4px; border-radius:4px; }
+  .foot { margin-top:44px; color:#8B857D; font-size:12px; }
+  [hidden] { display:none !important; }
+  .chat { background:#fff; border-radius:16px; padding:20px; margin-top:28px; text-align:left; box-shadow:0 2px 12px rgba(20,34,53,.06); }
+  .chat-title { font-size:16px; font-weight:600; color:#142235; margin-bottom:12px; text-align:center; }
+  .msgs { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; }
+  .msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+  .msg.user { align-self:flex-end; background:#142235; color:#F7F3EC; border-bottom-right-radius:4px; }
+  .msg.ai { align-self:flex-start; background:#F7F3EC; color:#202020; border-bottom-left-radius:4px; white-space:normal; }
+  .md-h { font-weight:800; margin:8px 0 3px; }
+  .md-h:first-child { margin-top:0; }
+  .md-ul, .md-ol { margin:4px 0; padding-left:20px; }
+  .md-ul li, .md-ol li { margin:2px 0; }
+  .chat-row { display:flex; gap:8px; margin-top:14px; }
+  .chat-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; }
+  .chat-row input:disabled { background:#f1ede4; color:#8B857D; }
+  .chat-row button { background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; min-height:44px; box-sizing:border-box; }
+  .chat-row button:disabled { opacity:.55; cursor:default; }
+  .chat-note { margin-top:10px; font-size:12px; color:#8B857D; text-align:center; }
+  .dl { margin-top:16px; background:#F7F3EC; border-radius:12px; padding:16px; text-align:center; font-size:14px; line-height:1.8; color:#44403a; }
+  .dl .btn { margin-top:10px; }
+  .auth-hint { font-size:14px; line-height:1.7; color:#44403a; text-align:center; margin:0 0 14px; }
+  .auth-row { display:flex; gap:8px; margin-top:10px; }
+  .auth-row input { flex:1; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; min-width:0; min-height:44px; box-sizing:border-box; }
+  .auth-row button { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:11px 18px; font-size:15px; cursor:pointer; white-space:nowrap; min-height:44px; box-sizing:border-box; }
+  .auth-row button:disabled { opacity:.55; cursor:default; }
+  .auth-msg { margin-top:10px; font-size:13px; line-height:1.6; color:#8B857D; text-align:center; min-height:18px; }
+  .auth-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#8B857D; margin-bottom:10px; }
+  .auth-bar button { background:none; border:none; color:#B58A58; font-size:12px; cursor:pointer; padding:0; }
+
+  .auth-tabs { display:flex; gap:8px; margin:12px 0 2px; }
+  .auth-tabs button { flex:1; background:#fff; color:#142235; border:1px solid #e3ddd2; border-radius:999px; padding:10px 0; font-size:15px; cursor:pointer; min-height:44px; box-sizing:border-box; }
+  .auth-tabs button.on { background:#142235; color:#F7F3EC; border-color:#142235; }
+  .auth-row select { flex:1; min-width:0; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; min-height:44px; box-sizing:border-box; }
+  .auth-row button.plain { background:#fff; color:#142235; border:1px solid #e3ddd2; }
+  #bindBar { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-bottom:14px; }
+
+  :root { --acc:#D9A94A; --accink:#191204; }
+  .wrap { padding:30px 20px 46px; }
+  img.avatar { width:76px; height:76px; border-color:var(--acc); }
+  h1 { font-size:22px; margin:12px 0 2px; }
+  .role { margin-bottom:10px; }
+  .badges { justify-content:center; }
+  .line { background:var(--acc); color:var(--accink); }
+  .ai-note { margin:14px auto 0; font-size:12.5px; color:#8B857D; line-height:1.7; max-width:520px; }
+  .chat { margin-top:22px; }
+  .chat-row button { background:var(--acc); color:var(--accink); }
+  .ctc-form button { background:var(--acc); color:var(--accink); }
+  .qs { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+  .qs button { background:#fff; border:1px solid #e3ddd2; color:#142235; border-radius:999px; padding:8px 14px; font-size:13.5px; line-height:1.5; cursor:pointer; text-align:left; }
+  .qs button:hover { border-color:var(--acc); }
+  .foot a { color:var(--acc); font-weight:600; }
+</style>
+<style>.badges{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;line-height:1.7}.badge-verified{background:#fdf3d7;color:#7a5b00;border:1px solid #e3c565;font-weight:700}.badge-ai{background:#e8eef7;color:#33527a;border:1px solid #b9cbe4}</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/persona-avatars/persona-29.webp" alt="William Brown">
+  <h1>William Brown</h1>
+  <div class="role">身份规划师 · 英国</div><div class="badges"><span class="badge badge-ai">Rukik AI · AI 专业角色（非真人）</span></div>
+  <div class="line">帮你理清赴英路径与准备</div>
+  <div class="ai-note">这是William Brown本人训练的 AI 分身，回答由 AI 生成，仅供参考，不构成正式专业意见。</div>
+  <div class="chat">
+  <div id="authBox">
+    <div class="chat-title">您的每一个问题，都值得专业解答。</div>
+    <p class="auth-hint">注册登录后，即可与我的专属 AI 智能团队交流，获得专业、贴心的解答。需要进一步帮助时，也可以直接联系我本人。</p>
+    <div class="auth-row">
+      <input id="authName" type="text" placeholder="您的称呼（选填）" maxlength="40" autocomplete="name">
+    </div>
+    <div class="auth-tabs">
+      <button id="authTabEmail" type="button" class="on">邮箱登录</button>
+      <button id="authTabPhone" type="button">手机号登录</button>
+    </div>
+    <div id="authEmailPane">
+    <div class="auth-row">
+      <input id="authEmail" type="email" placeholder="邮箱地址" maxlength="120" autocomplete="email">
+      <button id="authSendCode" type="button">发送验证码</button>
+    </div>
+    <div class="auth-row" id="authCodeRow" hidden>
+      <input id="authCode" type="text" inputmode="numeric" placeholder="邮箱收到的验证码" maxlength="10" autocomplete="one-time-code">
+      <button id="authVerify" type="button">验证并登录</button>
+    </div>
+    </div>
+    <div id="authPhonePane" hidden>
+    <div class="auth-row">
+      <select id="authCc" aria-label="国家或地区区号">
+        <option value="+1" selected>美国 / 加拿大 +1</option>
+        <option value="+86">中国 +86</option>
+        <option value="+852">中国香港 +852</option>
+        <option value="+886">中国台湾 +886</option>
+        <option value="+65">新加坡 +65</option>
+        <option value="+44">英国 +44</option>
+        <option value="+61">澳大利亚 +61</option>
+        <option value="+81">日本 +81</option>
+        <option value="+82">韩国 +82</option>
+      </select>
+    </div>
+    <div class="auth-row">
+      <input id="authPhone" type="tel" placeholder="手机号码" maxlength="20" autocomplete="tel">
+      <button id="authSendSms" type="button">发送验证码</button>
+    </div>
+    <div class="auth-row" id="authSmsRow" hidden>
+      <input id="authSmsCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code">
+      <button id="authVerifySms" type="button">验证并登录</button>
+    </div>
+    <div id="authBranch" hidden>
+    <p class="auth-hint" style="text-align:left">这是尚未绑定的手机号。您是否已经有 RUKIK 账号？</p>
+    <div class="auth-row">
+      <button id="authBranchOld" type="button">我已有账号</button>
+      <button id="authBranchNew" type="button" class="plain">我是新用户</button>
+    </div>
+    </div>
+    <div id="authRegConfirm" hidden>
+    <p class="auth-hint" style="text-align:left">确认后，将为您创建一个新的 RUKIK 账号，并把这个手机号作为登录方式。创建后，您也可以再绑定邮箱。</p>
+    <div class="auth-row">
+      <button id="authRegDo" type="button">确认注册</button>
+      <button id="authRegBack" type="button" class="plain">返回</button>
+    </div>
+    </div>
+    </div>
+    <div class="auth-msg" id="authMsg">正在准备登录…</div>
+  </div>
+  <div id="chatBox" hidden>
+    <div class="auth-bar"><span id="authBarText"></span><button id="authLogout" type="button">退出登录</button></div>
+    <div id="bindBar" hidden>
+    <p class="auth-hint" style="text-align:left;margin:0 0 10px">绑定手机号后，下次可以直接用手机号登录这个账号。</p>
+    <div id="bindForm">
+    <div class="auth-row">
+      <select id="bindCc" aria-label="国家或地区区号">
+        <option value="+1" selected>美国 / 加拿大 +1</option>
+        <option value="+86">中国 +86</option>
+        <option value="+852">中国香港 +852</option>
+        <option value="+886">中国台湾 +886</option>
+        <option value="+65">新加坡 +65</option>
+        <option value="+44">英国 +44</option>
+        <option value="+61">澳大利亚 +61</option>
+        <option value="+81">日本 +81</option>
+        <option value="+82">韩国 +82</option>
+      </select>
+    </div>
+    <div class="auth-row">
+      <input id="bindPhone" type="tel" placeholder="手机号码" maxlength="20" autocomplete="tel">
+      <button id="bindSend" type="button">发送验证码</button>
+    </div>
+    <div class="auth-row" id="bindRow" hidden>
+      <input id="bindCode" type="text" inputmode="numeric" placeholder="短信收到的验证码" maxlength="10" autocomplete="one-time-code">
+      <button id="bindVerify" type="button">确认绑定</button>
+    </div>
+    </div>
+    <div class="auth-msg" id="bindMsg"></div>
+    </div>
+    <div class="chat-title">直接向我的 AI 助理提问</div>
+    <div class="qs" id="chatQs"></div>
+    <div class="msgs" id="chatMsgs"></div>
+    <div class="chat-row">
+      <input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off">
+      <button id="chatSend" type="button">发送</button>
+    </div>
+    <div class="chat-note">网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见</div>
+    <div class="dl" id="chatDownload" hidden>
+      网页端的 3 轮免费咨询已用完。下载 Rukik App，可以继续不限轮次地咨询，需要时还能把问题转给我本人跟进。<br>
+      <a class="btn" href="https://apps.apple.com/app/id6824554988">下载 Rukik App 继续咨询</a>
+    </div>
+  </div>
+<!-- ===== 联系专家本人（0260）独立增量块：自带样式/脚本，不依赖聊天模块内部变量 ===== -->
+<style>
+  .ctc { margin-top:16px; }
+  .ctc-btn { width:100%; background:#fff; color:#142235; border:1px solid #142235; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-btn:disabled { opacity:.55; cursor:default; }
+  .ctc-panel { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-top:12px; }
+  .ctc-note { font-size:14px; line-height:1.7; color:#44403a; margin:0 0 10px; }
+  .ctc-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+  .ctc-row .ctc-k { flex:0 0 44px; font-size:14px; color:#8B857D; }
+  .ctc-row .ctc-v { flex:1; font-size:15px; color:#202020; word-break:break-all; min-width:0; }
+  .ctc-row a.ctc-act, .ctc-row button.ctc-act { background:#142235; color:#F7F3EC; border:none; border-radius:999px; padding:8px 16px; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .ctc-form input { width:100%; box-sizing:border-box; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:15px; outline:none; background:#fff; color:#202020; margin-top:10px; }
+  .ctc-form button { width:100%; margin-top:12px; background:#B58A58; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-size:15px; cursor:pointer; }
+  .ctc-form button:disabled { opacity:.55; cursor:default; }
+  .ctc-msg { margin-top:10px; font-size:13px; line-height:1.6; color:#8B857D; text-align:center; min-height:18px; }
+</style>
+<div class="ctc" id="ctcWrap" style="display:none">
+  <button class="ctc-btn" id="ctcBtn" type="button">联系专家本人</button>
+  <div class="ctc-panel" id="ctcPanel" style="display:none">
+    <div id="ctcPublic"></div>
+    <form class="ctc-form" id="ctcForm" style="display:none">
+      <p class="ctc-note">专家本人暂未公开联系方式。留下您的联系方式，专家会主动联系您。</p>
+      <input id="ctcName" type="text" placeholder="您的称呼" maxlength="40" autocomplete="name">
+      <input id="ctcContact" type="text" placeholder="您的电话或邮箱" maxlength="120" autocomplete="tel">
+      <input id="ctcMessage" type="text" placeholder="一句话留言（选填）" maxlength="200">
+      <button id="ctcSubmit" type="submit">请专家联系我</button>
+    </form>
+    <div class="ctc-msg" id="ctcMsg"></div>
+  </div>
+</div>
+</div>
+
+  <div class="foot">想先了解William Brown的背景与文章？<a href="/p/4d11733d-a7e1-41af-a514-b8bd1b31861d/">查看完整主页 →</a></div>
+
+<script>
+  // 看门狗：登录模块（type=module）若因网络等原因没能启动，给出兜底提示，避免页面静默无反应
+  setTimeout(function () {
+    if (!window.__rukikChatReady) {
+      var m = document.getElementById('authMsg');
+      if (m && !document.getElementById('authBox').hidden) {
+        m.textContent = '登录组件加载较慢，请刷新页面重试，或下载 Rukik App 咨询。';
+      }
+    }
+  }, 8000);
+</script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var API_URL = SUPABASE_URL + '/functions/v1/pro-chat';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var PROFESSIONAL_ID = '4d11733d-a7e1-41af-a514-b8bd1b31861d';
+  var MAX_ROUNDS = 3;
+
+  var authBox = document.getElementById('authBox');
+  var chatBox = document.getElementById('chatBox');
+  var nameEl = document.getElementById('authName');
+  var emailEl = document.getElementById('authEmail');
+  var sendCodeBtn = document.getElementById('authSendCode');
+  var codeRow = document.getElementById('authCodeRow');
+  var codeEl = document.getElementById('authCode');
+  var verifyBtn = document.getElementById('authVerify');
+  var tabEmailBtn = document.getElementById('authTabEmail');
+  var tabPhoneBtn = document.getElementById('authTabPhone');
+  var emailPane = document.getElementById('authEmailPane');
+  var phonePane = document.getElementById('authPhonePane');
+  var ccEl = document.getElementById('authCc');
+  var phoneEl = document.getElementById('authPhone');
+  var sendSmsBtn = document.getElementById('authSendSms');
+  var smsRow = document.getElementById('authSmsRow');
+  var smsCodeEl = document.getElementById('authSmsCode');
+  var verifySmsBtn = document.getElementById('authVerifySms');
+  var branchEl = document.getElementById('authBranch');
+  var branchOldBtn = document.getElementById('authBranchOld');
+  var branchNewBtn = document.getElementById('authBranchNew');
+  var regEl = document.getElementById('authRegConfirm');
+  var regDoBtn = document.getElementById('authRegDo');
+  var regBackBtn = document.getElementById('authRegBack');
+  var bindBar = document.getElementById('bindBar');
+  var bindForm = document.getElementById('bindForm');
+  var bindCcEl = document.getElementById('bindCc');
+  var bindPhoneEl = document.getElementById('bindPhone');
+  var bindSendBtn = document.getElementById('bindSend');
+  var bindRow = document.getElementById('bindRow');
+  var bindCodeEl = document.getElementById('bindCode');
+  var bindVerifyBtn = document.getElementById('bindVerify');
+  var bindMsg = document.getElementById('bindMsg');
+  var authMsg = document.getElementById('authMsg');
+  var authBarText = document.getElementById('authBarText');
+  var logoutBtn = document.getElementById('authLogout');
+  var msgsEl = document.getElementById('chatMsgs');
+  var inputEl = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('chatSend');
+  var dlEl = document.getElementById('chatDownload');
+  if (!authBox || !chatBox || !msgsEl || !inputEl || !sendBtn) { /* 页面结构不完整则不启动 */ }
+  else {
+    window.__rukikChatReady = true;
+    var sb = createClient(SUPABASE_URL, ANON_KEY);
+    var OTP_API = SUPABASE_URL + '/functions/v1/phone-otp';
+    var pendingVerifyToken = '';
+    // 三段分离服务调用：发码 sendPhoneOtp / 验码 verifyPhoneOtp / 身份解析
+    // resolvePhoneIdentity。withSession 时带当前会话 JWT（bind 的 UID 只认它）。
+    async function phoneOtp(op, payload, withSession) {
+      var headers = { 'Content-Type': 'application/json', 'apikey': ANON_KEY };
+      var tk = '';
+      if (withSession) {
+        try { var gs = await sb.auth.getSession(); tk = (gs && gs.data && gs.data.session && gs.data.session['access' + '_token']) || ''; } catch (e) { /* 取不到会话按未登录处理 */ }
+      }
+      headers['Authorization'] = 'Bearer ' + (tk || ANON_KEY);
+      var res = await fetch(OTP_API, { method: 'POST', headers: headers, body: JSON.stringify(Object.assign({ op: op }, payload || {})) });
+      var data = {};
+      try { data = await res.json(); } catch (e) { /* 非 JSON 响应按空处理 */ }
+      return { status: res.status, data: data };
+    }
+    function adoptPhoneSession(d) {
+      var payload = {};
+      payload['access' + '_token'] = d['access' + '_token'];
+      payload['refresh' + '_token'] = d['refresh' + '_token'];
+      return sb.auth.setSession(payload);
+    }
+    var session = null;
+    var history = [];
+    var rounds = 0;
+    var busy = false;
+
+    function renderAuth() {
+      var logged = !!session;
+      authBox.hidden = logged;
+      chatBox.hidden = !logged;
+      if (logged) {
+        authBarText.textContent = '已登录：' + ((session.user && (session.user.email || session.user.phone)) || '');
+        if (authMsg) authMsg.textContent = '';
+        if (bindBar) { var hasPh = !!(session.user && session.user.phone); bindBar.hidden = hasPh || boundDone; if (!bindBar.hidden) prefillBind(); }
+      }
+    }
+
+    sb.auth.getSession().then(function (res) {
+      session = (res && res.data && res.data.session) || null;
+      if (authMsg && !session) authMsg.textContent = '';
+      renderAuth();
+    }).catch(function () { renderAuth(); });
+    sb.auth.onAuthStateChange(function (_event, s) {
+      session = s;
+      renderAuth();
+    });
+
+    sendCodeBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      if (!email) { authMsg.textContent = '请先填写邮箱地址。'; return; }
+      sendCodeBtn.disabled = true;
+      authMsg.textContent = '正在发送验证码…';
+      try {
+        var r = await sb.auth.signInWithOtp({ email: email });
+        if (r.error) { authMsg.textContent = '发送失败，请检查邮箱地址后重试。'; }
+        else {
+          codeRow.hidden = false;
+          authMsg.textContent = '验证码已发送到您的邮箱，请查收（也可能在垃圾邮件里），然后填入验证码登录。';
+          codeEl.focus();
+        }
+      } catch (e) {
+        authMsg.textContent = '发送失败，请检查网络后重试。';
+      } finally {
+        sendCodeBtn.disabled = false;
+      }
+    });
+
+    verifyBtn.addEventListener('click', async function () {
+      var email = (emailEl.value || '').trim();
+      var token = (codeEl.value || '').trim();
+      if (!email) { authMsg.textContent = '请先填写邮箱地址。'; return; }
+      if (!token) { authMsg.textContent = '请填写邮箱里收到的验证码。'; return; }
+      verifyBtn.disabled = true;
+      authMsg.textContent = '正在验证…';
+      try {
+        var r = await sb.auth.verifyOtp({ email: email, token: token, type: 'email' });
+        if (r.error) {
+          authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。';
+        } else {
+          session = (r.data && r.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) {
+            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+          }
+          renderAuth();
+          if (inputEl) inputEl.focus();
+        }
+      } catch (e) {
+        authMsg.textContent = '验证失败，请检查网络后重试。';
+      } finally {
+        verifyBtn.disabled = false;
+      }
+    });
+
+    function setAuthTab(phone) {
+      if (tabEmailBtn) tabEmailBtn.classList.toggle('on', !phone);
+      if (tabPhoneBtn) tabPhoneBtn.classList.toggle('on', phone);
+      if (emailPane) emailPane.hidden = phone;
+      if (phonePane) phonePane.hidden = !phone;
+      if (branchEl) branchEl.hidden = true;
+      if (regEl) regEl.hidden = true;
+      if (authMsg) authMsg.textContent = '';
+    }
+    if (tabEmailBtn) tabEmailBtn.addEventListener('click', function () { setAuthTab(false); });
+    if (tabPhoneBtn) tabPhoneBtn.addEventListener('click', function () { setAuthTab(true); });
+
+    function buildPhone() {
+      var cc = (ccEl && ccEl.value) || '+1';
+      var digits = ((phoneEl && phoneEl.value) || '').replace(/[^\d]/g, '');
+      if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+      if (digits.length < 6 || digits.length > 14) return '';
+      return cc + digits;
+    }
+    var smsTimer = null;
+    var pendingPhone = '';
+    var pendingBindPhone = '';
+    var boundDone = false;
+    function startSmsCooldown() {
+      var left = 60;
+      sendSmsBtn.disabled = true;
+      sendSmsBtn.textContent = '重新发送（' + left + 's）';
+      smsTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(smsTimer); smsTimer = null;
+          sendSmsBtn.disabled = false;
+          sendSmsBtn.textContent = '发送验证码';
+        } else {
+          sendSmsBtn.textContent = '重新发送（' + left + 's）';
+        }
+      }, 1000);
+    }
+    if (sendSmsBtn) sendSmsBtn.addEventListener('click', async function () {
+      var phone = buildPhone();
+      if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
+      sendSmsBtn.disabled = true;
+      authMsg.textContent = '正在发送验证码…';
+      try {
+        // 三段分离第一段：发码与账号是否存在无关，响应不泄露绑定状态
+        var r = await phoneOtp('sendPhoneOtp', { phone: phone, context: 'login' });
+        if (r.status !== 200) {
+          sendSmsBtn.disabled = false;
+          var ec = (r.data && r.data.error_code) || '';
+          if (ec === 'rate_limited') authMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (ec === 'invalid_phone') authMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          else authMsg.textContent = '发送失败，请检查手机号后重试。';
+        } else {
+          smsRow.hidden = false;
+          if (branchEl) branchEl.hidden = true;
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '验证码已发送到您的手机，请查收短信，然后填入验证码登录。';
+          startSmsCooldown();
+          smsCodeEl.focus();
+        }
+      } catch (e) {
+        sendSmsBtn.disabled = false;
+        authMsg.textContent = '发送失败，请检查网络后重试。';
+      }
+    });
+
+    if (verifySmsBtn) verifySmsBtn.addEventListener('click', async function () {
+      var phone = buildPhone();
+      var token = (smsCodeEl.value || '').trim();
+      if (!phone) { authMsg.textContent = '请先填写正确的手机号码。'; return; }
+      if (!token) { authMsg.textContent = '请填写短信里收到的验证码。'; return; }
+      verifySmsBtn.disabled = true;
+      authMsg.textContent = '正在验证…';
+      try {
+        // 第二段：验码，只换短时一次性验证凭证（不建号、不登录）
+        var v = await phoneOtp('verifyPhoneOtp', { phone: phone, code: token });
+        if (v.status !== 200 || !v.data.verification_token) {
+          authMsg.textContent = '验证失败：验证码不正确或已过期，请重新发送。';
+          return;
+        }
+        // 第三段：身份解析（已绑→原账号会话；未绑→验码后才出现分支）
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'auto' });
+        if (r.data && r.data.status === 'needs_account_decision') {
+          pendingVerifyToken = r.data.verification_token || '';
+          pendingPhone = phone;
+          if (branchEl) branchEl.hidden = false;
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '';
+          return;
+        }
+        if (!r.data || r.data.status !== 'session') {
+          authMsg.textContent = '验证失败，请重新发送验证码后再试。';
+          return;
+        }
+        var sr = await adoptPhoneSession(r.data);
+        if (sr.error) { authMsg.textContent = '登录未完成，请重试。'; return; }
+        session = (sr.data && sr.data.session) || null;
+        var name = (nameEl.value || '').trim();
+        if (name) {
+          try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+        }
+        renderAuth();
+        if (inputEl) inputEl.focus();
+      } catch (e) {
+        authMsg.textContent = '验证失败，请检查网络后重试。';
+      } finally {
+        verifySmsBtn.disabled = false;
+      }
+    });
+
+    if (branchOldBtn) branchOldBtn.addEventListener('click', function () {
+      pendingBindPhone = pendingPhone;
+      if (branchEl) branchEl.hidden = true;
+      setAuthTab(false);
+      authMsg.textContent = '请先用邮箱登录。登录后，可以在页面上方把这个手机号绑定到您的账号。';
+    });
+    if (branchNewBtn) branchNewBtn.addEventListener('click', function () {
+      if (branchEl) branchEl.hidden = true;
+      if (regEl) regEl.hidden = false;
+      authMsg.textContent = '';
+    });
+    if (regBackBtn) regBackBtn.addEventListener('click', function () {
+      if (regEl) regEl.hidden = true;
+      if (branchEl) branchEl.hidden = false;
+    });
+    if (regDoBtn) regDoBtn.addEventListener('click', async function () {
+      if (!pendingVerifyToken) { authMsg.textContent = '验证已过期，请重新获取验证码。'; if (regEl) regEl.hidden = true; return; }
+      regDoBtn.disabled = true;
+      authMsg.textContent = '正在创建账号…';
+      try {
+        // 显式确认后才由服务端建号（且受注册开关把门）；已绑号码直接登录原账号
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: pendingVerifyToken, action: 'register' });
+        if (r.data && r.data.status === 'session') {
+          pendingVerifyToken = '';
+          if (regEl) regEl.hidden = true;
+          var sr = await adoptPhoneSession(r.data);
+          if (sr.error) { authMsg.textContent = '账号已创建，但登录未完成，请重新获取验证码登录。'; return; }
+          session = (sr.data && sr.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) {
+            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+          }
+          renderAuth();
+          if (inputEl) inputEl.focus();
+        } else if (r.data && r.data.status === 'registration_disabled') {
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '手机号注册即将开放。目前请先用邮箱注册，注册后可以在页面上方绑定这个手机号。';
+        } else if (r.data && r.data.status === 'created_no_session') {
+          pendingVerifyToken = '';
+          if (regEl) regEl.hidden = true;
+          authMsg.textContent = '账号已创建，请重新获取验证码登录。';
+        } else {
+          authMsg.textContent = '注册未完成，验证可能已过期，请重新获取验证码。';
+        }
+      } catch (e) {
+        authMsg.textContent = '注册失败，请检查网络后重试。';
+      } finally {
+        regDoBtn.disabled = false;
+      }
+    });
+
+    function prefillBind() {
+      if (!pendingBindPhone || !bindPhoneEl || bindPhoneEl.value) return;
+      var codes = ['+852', '+886', '+86', '+65', '+44', '+61', '+81', '+82', '+1'];
+      for (var i = 0; i < codes.length; i++) {
+        if (pendingBindPhone.indexOf(codes[i]) === 0) {
+          if (bindCcEl) bindCcEl.value = codes[i];
+          bindPhoneEl.value = pendingBindPhone.slice(codes[i].length);
+          break;
+        }
+      }
+    }
+    function buildBindPhone() {
+      var cc = (bindCcEl && bindCcEl.value) || '+1';
+      var digits = ((bindPhoneEl && bindPhoneEl.value) || '').replace(/[^\d]/g, '');
+      if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+      if (digits.length < 6 || digits.length > 14) return '';
+      return cc + digits;
+    }
+    var bindTimer = null;
+    function startBindCooldown() {
+      var left = 60;
+      bindSendBtn.disabled = true;
+      bindSendBtn.textContent = '重新发送（' + left + 's）';
+      bindTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(bindTimer); bindTimer = null;
+          bindSendBtn.disabled = false;
+          bindSendBtn.textContent = '发送验证码';
+        } else {
+          bindSendBtn.textContent = '重新发送（' + left + 's）';
+        }
+      }, 1000);
+    }
+    if (bindSendBtn) bindSendBtn.addEventListener('click', async function () {
+      var p = buildBindPhone();
+      if (!p) { bindMsg.textContent = '请先填写正确的手机号码。'; return; }
+      bindSendBtn.disabled = true;
+      bindMsg.textContent = '正在发送验证码…';
+      try {
+        // 绑定发码同样不泄露号码是否已被占用，冲突在确认阶段由服务端判定
+        var r = await phoneOtp('sendPhoneOtp', { phone: p, context: 'bind' }, true);
+        if (r.status !== 200) {
+          bindSendBtn.disabled = false;
+          var ec = (r.data && r.data.error_code) || '';
+          if (ec === 'rate_limited') bindMsg.textContent = '发送太频繁了，请过一分钟再试。';
+          else if (ec === 'invalid_phone') bindMsg.textContent = '这个号码暂时无法接收验证码，请检查区号与号码后重试。';
+          else bindMsg.textContent = '发送失败，请检查手机号后重试。';
+        } else {
+          bindRow.hidden = false;
+          bindMsg.textContent = '验证码已发送到您的手机，请填入验证码确认绑定。';
+          startBindCooldown();
+          bindCodeEl.focus();
+        }
+      } catch (e) {
+        bindSendBtn.disabled = false;
+        bindMsg.textContent = '发送失败，请检查网络后重试。';
+      }
+    });
+
+    if (bindVerifyBtn) bindVerifyBtn.addEventListener('click', async function () {
+      var p = buildBindPhone();
+      var token = (bindCodeEl.value || '').trim();
+      if (!p) { bindMsg.textContent = '请先填写正确的手机号码。'; return; }
+      if (!token) { bindMsg.textContent = '请填写短信里收到的验证码。'; return; }
+      bindVerifyBtn.disabled = true;
+      bindMsg.textContent = '正在确认…';
+      try {
+        var v = await phoneOtp('verifyPhoneOtp', { phone: p, code: token });
+        if (v.status !== 200 || !v.data.verification_token) {
+          bindMsg.textContent = '确认失败：验证码不正确或已过期，请重新发送。';
+          return;
+        }
+        // 身份解析（bind）：UID 只认当前会话、服务端核验；成败审计由服务端统一落账
+        var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'bind' }, true);
+        if (r.data && r.data.status === 'conflict') {
+          bindMsg.textContent = '这个手机号已经属于另一个 RUKIK 账号了，本次没有做任何变更。';
+          return;
+        }
+        if (!r.data || r.data.status !== 'bound') {
+          bindMsg.textContent = '确认失败，请重新发送验证码后再试。';
+          return;
+        }
+        var gs = await sb.auth.getSession();
+        if (gs && gs.data && gs.data.session) session = gs.data.session;
+        boundDone = true;
+        pendingBindPhone = '';
+        if (bindForm) bindForm.hidden = true;
+        bindMsg.textContent = '手机号已绑定，下次可以直接用手机号登录这个账号。';
+        renderAuth();
+      } catch (e) {
+        bindMsg.textContent = '确认失败，请检查网络后重试。';
+      } finally {
+        bindVerifyBtn.disabled = false;
+      }
+    });
+
+    logoutBtn.addEventListener('click', async function () {
+      try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
+      session = null;
+      history = [];
+      rounds = 0;
+      msgsEl.innerHTML = '';
+      renderAuth();
+    });
+
+  // 轻量 Markdown 渲染：AI 回复是 Markdown 源码（## / ** / - 列表），原样
+  // textContent 会把标记当普通文字露出。先转义 HTML 再做标记替换（访客与
+  // AI 文本都不可信），只支持加粗/标题/有序无序列表/分段，不引任何库。
+  function rkMd(t){ var s=String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function inl(x){ return x.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
+    var lines=s.split(/\r?\n/), out=[], list=0;
+    function closeList(){ if(list===1) out.push('</ul>'); if(list===2) out.push('</ol>'); list=0; }
+    lines.forEach(function(ln){ var m;
+      if(m=ln.match(/^\s*[-*•]\s+(.*)$/)){ if(list!==1){ closeList(); out.push('<ul class="md-ul">'); list=1; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      if(m=ln.match(/^\s*\d{1,2}[.、)]\s+(.*)$/)){ if(list!==2){ closeList(); out.push('<ol class="md-ol">'); list=2; }
+        out.push('<li>'+inl(m[1])+'</li>'); return; }
+      closeList();
+      if(m=ln.match(/^\s*#{1,6}\s+(.*)$/)){ out.push('<div class="md-h">'+inl(m[1])+'</div>'); return; }
+      if(/^\s*(-{3,}|={3,})\s*$/.test(ln)){ out.push('<div>&nbsp;</div>'); return; }
+      ln=ln.replace(/^\s*>\s?/,'');
+      out.push('<div>'+(ln.trim()?inl(ln):'&nbsp;')+'</div>'); });
+    closeList(); return out.join(''); }
+  // 流式中途专用（专家页为流式回复）：未闭合的 ** 与末行未成形的标记
+  // 前缀先不露出原始符号——仅处理显示副本，缓冲原文不动；流结束时
+  // 再以 rkMd 按完整文本重渲染。与房源页「只渲染成形文本」同口径。
+  function rkMdStream(t){ var s=String(t==null?'':t);
+    var nl=s.lastIndexOf('\n'); var tail=nl>=0?s.slice(nl+1):s;
+    if(/^\s*(#{1,6}|[-*•])\s*$/.test(tail)) s=nl>=0?s.slice(0,nl):'';
+    if(/\*$/.test(s) && !/\*\*$/.test(s)) s=s.slice(0,-1);
+    if((s.split('**').length-1)%2===1){ var idx=s.lastIndexOf('**'); s=s.slice(0,idx)+s.slice(idx+2); }
+    return rkMd(s); }
+
+    function addMsg(role, text) {
+      var div = document.createElement('div');
+      div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+      if (role === 'user') div.textContent = text; else div.innerHTML = rkMd(text);
+      msgsEl.appendChild(div);
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+      return div;
+    }
+
+    function lockWithGuide() {
+      inputEl.disabled = true;
+      sendBtn.disabled = true;
+      inputEl.placeholder = '网页咨询已达 3 轮上限';
+      if (dlEl) dlEl.hidden = false;
+    }
+
+    function friendlyError(code) {
+      if (code === 'not_configured') return '助理正在开通中，暂时还不能回答。请稍后再来，或点下方按钮在 Rukik App 里联系我本人。';
+      if (code === 'round_limit') { lockWithGuide(); return '网页端的 3 轮免费咨询已用完，下载 Rukik App 可以继续咨询。'; }
+      if (code === 'login_required') return '登录已过期，请重新登录后再咨询。';
+      return '暂时无法回答，请检查网络后重试。';
+    }
+
+    async function send() {
+      if (busy) return;
+      if (!session) { renderAuth(); return; }
+      if (rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
+      var text = inputEl.value.trim();
+      if (!text) return;
+      busy = true;
+      sendBtn.disabled = true;
+      inputEl.value = '';
+      addMsg('user', text);
+      history.push({ role: 'user', content: text });
+      var thinking = addMsg('ai', '正在思考…');
+      var reply = '';
+      try {
+        var tokenRes = await sb.auth.getSession();
+        var accessToken = (tokenRes && tokenRes.data && tokenRes.data.session && tokenRes.data.session.access_token) || (session && session.access_token) || '';
+        var res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': ANON_KEY,
+            'Authorization': 'Bearer ' + accessToken
+          },
+          body: JSON.stringify({ professional_id: PROFESSIONAL_ID, mode: 'web', stream: true, messages: history })
+        });
+        if (!res.ok) {
+          var errData = {};
+          try { errData = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+          history.pop();
+          if ((errData.error || '') === 'login_required') {
+            try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
+            session = null;
+            renderAuth();
+          }
+          thinking.textContent = friendlyError(errData.error || '');
+        } else if (res.body && typeof res.body.getReader === 'function' && (res.headers.get('Content-Type') || '').indexOf('event-stream') >= 0) {
+          // 流式接收：逐段追加显示，不再等整段生成完
+          var reader = res.body.getReader();
+          var decoder = new TextDecoder('utf-8');
+          var buffer = '';
+          for (;;) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            var lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i].trim();
+              if (line.indexOf('data:') !== 0) continue;
+              var payload = line.slice(5).trim();
+              if (payload === '[DONE]') continue;
+              try {
+                var delta = JSON.parse(payload).choices[0].delta.content || '';
+                if (delta) {
+                  reply += delta;
+                  thinking.innerHTML = rkMdStream(reply);
+                  msgsEl.scrollTop = msgsEl.scrollHeight;
+                }
+              } catch (e) { /* 非数据行忽略 */ }
+            }
+          }
+          if (!reply) {
+            history.pop();
+            thinking.textContent = friendlyError('');
+          } else {
+            thinking.innerHTML = rkMd(reply);
+            history.push({ role: 'assistant', content: reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        } else {
+          var data = {};
+          try { data = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
+          if (!data.reply) {
+            history.pop();
+            thinking.textContent = friendlyError(data.error || '');
+          } else {
+            thinking.innerHTML = rkMd(data.reply);
+            history.push({ role: 'assistant', content: data.reply });
+            rounds += 1;
+            if (rounds >= MAX_ROUNDS) lockWithGuide();
+          }
+        }
+      } catch (e) {
+        if (reply) {
+          // 已流出部分内容后断线：保留已显示的部分作为本轮回答
+          history.push({ role: 'assistant', content: reply });
+          rounds += 1;
+          if (rounds >= MAX_ROUNDS) lockWithGuide();
+        } else {
+          history.pop();
+          thinking.textContent = friendlyError('');
+        }
+      } finally {
+        busy = false;
+        if (rounds < MAX_ROUNDS && session) { sendBtn.disabled = false; inputEl.focus(); }
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+  }
+</script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  var CTC_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+  var CTC_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+  var CTC_PRO = '8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee';
+  var wrap = document.getElementById('ctcWrap');
+  if (wrap) {
+    var btn = document.getElementById('ctcBtn');
+    var panel = document.getElementById('ctcPanel');
+    var pubBox = document.getElementById('ctcPublic');
+    var form = document.getElementById('ctcForm');
+    var msg = document.getElementById('ctcMsg');
+    var nameEl = document.getElementById('ctcName');
+    var contactEl = document.getElementById('ctcContact');
+    var messageEl = document.getElementById('ctcMessage');
+    var submitBtn = document.getElementById('ctcSubmit');
+    var sb2 = createClient(CTC_URL, CTC_ANON);
+    var ctcSession = null;
+    var ctcLoaded = false;
+    var ctcOpen = false;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function rowHtml(k, v, actHtml) {
+      return '<div class="ctc-row"><span class="ctc-k">' + k + '</span><span class="ctc-v">' + esc(v) + '</span>' + actHtml + '</div>';
+    }
+    function renderPublic(c) {
+      var html = '';
+      if (c.phone) {
+        var tel = String(c.phone).replace(/[^+\d]/g, '');
+        html += rowHtml('电话', c.phone, '<a class="ctc-act" href="tel:' + esc(tel) + '">拨打</a>');
+      }
+      if (c.email) {
+        html += rowHtml('邮箱', c.email, '<a class="ctc-act" href="mailto:' + esc(c.email) + '">发邮件</a>');
+      }
+      if (c.wechat) {
+        html += rowHtml('微信', c.wechat, '<button class="ctc-act" type="button" id="ctcCopyWx">复制</button>');
+      }
+      if (c.website) {
+        var url = String(c.website);
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        html += rowHtml('官网', c.website, '<a class="ctc-act" href="' + esc(url) + '" target="_blank" rel="noopener">访问</a>');
+      }
+      pubBox.innerHTML = html;
+      form.style.display = 'none';
+      var cp = document.getElementById('ctcCopyWx');
+      if (cp) cp.addEventListener('click', async function () {
+        var ok = false;
+        try { await navigator.clipboard.writeText(String(c.wechat)); ok = true; } catch (e) { /* 剪贴板不可用时退回手动复制 */ }
+        msg.textContent = ok ? '微信号已复制，去微信添加即可。' : '微信号就在上方，长按或手动复制即可。';
+      });
+    }
+    async function loadContact() {
+      if (ctcLoaded) return;
+      ctcLoaded = true;
+      try {
+        var r = await sb2.rpc('get_expert_public_contact', { p_professional_id: CTC_PRO });
+        var c = r && r.data;
+        if (c && (c.phone || c.email || c.wechat || c.website)) renderPublic(c);
+        else { pubBox.innerHTML = ''; form.style.display = 'block'; }
+      } catch (e) {
+        pubBox.innerHTML = '';
+        form.style.display = 'block';
+      }
+    }
+    function renderCtc() {
+      // 2026-11-04 用户裁决：已同意公开的联系方式对未登录访客开放——本区不再按登录态显隐，
+      // 任何访客打开页面即可见（字段仍只经 get_expert_public_contact 的逐字段同意门读取）。
+      // 留资表单行为不变：提交时仍按既有逻辑校验登录（见下方 submit 处理），本次未动。
+      wrap.style.display = 'block';
+    }
+    sb2.auth.getSession().then(function (res) {
+      ctcSession = (res && res.data && res.data.session) || null;
+      renderCtc();
+    }).catch(function () { renderCtc(); });
+    sb2.auth.onAuthStateChange(function (_e, s) { ctcSession = s; renderCtc(); });
+
+    btn.addEventListener('click', function () {
+      ctcOpen = !ctcOpen;
+      panel.style.display = ctcOpen ? 'block' : 'none';
+      if (ctcOpen) loadContact();
+    });
+
+    form.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      if (!ctcSession) { msg.textContent = '登录已过期，请重新登录后再提交。'; return; }
+      var name = (nameEl.value || '').trim();
+      var contact = (contactEl.value || '').trim();
+      var message = (messageEl.value || '').trim();
+      if (!name) { msg.textContent = '请先填写您的称呼。'; return; }
+      if (contact.length < 3) { msg.textContent = '请填写您的电话或邮箱，方便专家联系您。'; return; }
+      submitBtn.disabled = true;
+      msg.textContent = '正在提交…';
+      try {
+        var r = await sb2.rpc('submit_expert_contact_request', {
+          p_professional_id: CTC_PRO, p_name: name, p_contact: contact, p_message: message
+        });
+        var d = (r && r.data) || null;
+        if (r && r.error) {
+          msg.textContent = '提交失败，请检查网络后重试。';
+        } else if (d && d.ok) {
+          form.style.display = 'none';
+          msg.textContent = '已提交。专家会通过您留下的联系方式联系您，请留意。';
+        } else if (d && d.error === 'rate_limited') {
+          msg.textContent = '您提交得有点频繁了，请稍后再试。';
+        } else if (d && d.error === 'login_required') {
+          msg.textContent = '登录已过期，请重新登录后再提交。';
+        } else {
+          msg.textContent = '提交失败，请稍后重试。';
+        }
+      } catch (e) {
+        msg.textContent = '提交失败，请检查网络后重试。';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+</script>
+
+<script>
+(function () {
+  var QS = ["英国常见的工作类签证有哪些类别？", "想在英国开展业务有哪些常见路径？", "准备英国签证材料要提前多久？"];
+  var box = document.getElementById('chatQs');
+  if (!box || !QS.length) return;
+  QS.forEach(function (q) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = q;
+    b.onclick = function () {
+      var i = document.getElementById('chatInput'), s = document.getElementById('chatSend');
+      if (!i || !s || s.disabled) return;
+      i.value = q; box.style.display = 'none'; s.click();
+    };
+    box.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

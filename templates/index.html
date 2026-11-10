@@ -83,6 +83,15 @@
   .th-btn{font-size:11px;font-weight:700;padding:5px 13px;border-radius:999px;white-space:nowrap}
   .th-cards{display:flex;gap:10px;flex:1}
   .th-card{flex:1}
+  /* 我的分享（2026-11-10 补入口）：双链接 + 二维码，链接与 App「我的分享」同串 */
+  .share-row{display:flex;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+  .share-row.first{border-top:none;padding-top:2px}
+  .share-meta{flex:1;min-width:0}
+  .share-name{font-weight:700;font-size:15.5px}
+  .share-tag{font-size:11.5px;font-weight:400;color:var(--gold);border:1px solid rgba(217,169,74,.5);background:rgba(217,169,74,.15);padding:2px 10px;border-radius:999px;margin-left:8px;vertical-align:2px;white-space:nowrap}
+  .share-link{font-size:13.5px;color:var(--muted);word-break:break-all;margin-top:5px}
+  .share-qr{background:#fff;border-radius:10px;padding:5px;width:108px;height:108px;flex:0 0 auto}
+  a.share-open{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
   @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.theme-grid{grid-template-columns:1fr}}
   @media(max-width:600px){.grid{grid-template-columns:1fr}.modal iframe{height:70vh}}
 </style>
@@ -151,6 +160,34 @@
       <h2>我的站点</h2>
       <div class="sub" id="siteInfo">加载中…</div>
       <div class="msg" id="siteMsg"></div>
+    </div>
+
+    <div class="card" id="shareCard">
+      <h2>我的分享</h2>
+      <p class="sub">把链接或二维码发给客户（与 App 里「我的分享」是同一条链接）：<b>专家主页</b>适合让客户先了解您；<b>AI 分身纯聊天</b>适合直接咨询——客户打开就能和您的 AI 分身对话，登录后即可聊，网页端可免费咨询 3 轮，需要您本人时还能在页面里联系您。</p>
+      <div class="share-row first">
+        <div class="share-meta">
+          <div class="share-name">专家主页<span class="share-tag">先了解专家</span></div>
+          <div class="share-link" id="shareMainLink">—</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn-gold" data-copy="shareMainLink">复制链接</button>
+            <a class="btn-line share-open" id="shareMainOpen" href="#" target="_blank" rel="noopener">打开页面</a>
+          </div>
+        </div>
+        <img class="share-qr" id="shareMainQr" alt="专家主页二维码" width="108" height="108">
+      </div>
+      <div class="share-row">
+        <div class="share-meta">
+          <div class="share-name">AI 分身纯聊天<span class="share-tag">直接咨询转化</span></div>
+          <div class="share-link" id="shareChatLink">—</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn-gold" data-copy="shareChatLink">复制链接</button>
+            <a class="btn-line share-open" id="shareChatOpen" href="#" target="_blank" rel="noopener">打开页面</a>
+          </div>
+        </div>
+        <img class="share-qr" id="shareChatQr" alt="AI 分身纯聊天页二维码" width="108" height="108">
+      </div>
+      <div class="msg" id="shareMsg"></div>
     </div>
 
     <div class="card">
@@ -350,8 +387,9 @@
       return rest('professionals?user_id=eq.' + sess.user.id + '&select=id,name&limit=1');
     }).then(function (rows) {
       if (!state.user) return;
-      if (!rows || !rows.length) { $('studio').hidden = false; $('siteInfo').textContent = '当前账号还不是认证专家，暂无独立站。'; return; }
+      if (!rows || !rows.length) { $('studio').hidden = false; $('shareCard').hidden = true; $('siteInfo').textContent = '当前账号还不是认证专家，暂无独立站。'; return; }
       state.pro = rows[0];
+      renderShare();
       return rest('expert_sites?professional_id=eq.' + state.pro.id + '&select=*&limit=1');
     }).then(function (rows) {
       if (!state.pro) return;
@@ -382,6 +420,40 @@
       renderAll();
       $('studio').hidden = false;
     }).catch(function (e) { $('studio').hidden = false; msg('siteMsg', '加载失败：' + e.message, 'err'); });
+  }
+
+  /* ---------- 我的分享（本人专属双链接 + 二维码） ----------
+     链接与 App pro/share.tsx 逐字同形态：主页 https://rukik.com/p/<pro.id>
+     （profile.id 同源：均按 user_id 解析本人 professionals 行）；纯聊天为主页
+     + /chat。二维码为生成器预置的 SVG（载荷即对应链接，与 App 同形态），
+     按本人 pro.id 取图，天然只见本人、不串号。 */
+  function copyShareText(txt) {
+    function ok() { msg('shareMsg', '链接已复制，可以粘贴发给客户了。', 'ok'); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); ok(); }
+      catch (e) { msg('shareMsg', '复制失败，请长按链接手动复制。', 'err'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(ok).catch(fallback);
+    } else fallback();
+  }
+  function renderShare() {
+    if (!state.pro) return;
+    var main = 'https://rukik.com/p/' + state.pro.id;
+    var chat = main + '/chat';
+    $('shareMainLink').textContent = main;
+    $('shareChatLink').textContent = chat;
+    $('shareMainOpen').href = main;
+    $('shareChatOpen').href = chat;
+    $('shareMainQr').src = '/p/' + state.pro.id + '/qr-main.svg';
+    $('shareChatQr').src = '/p/' + state.pro.id + '/qr-chat.svg';
+    document.querySelectorAll('#shareCard [data-copy]').forEach(function (b) {
+      b.onclick = function () { copyShareText($(b.getAttribute('data-copy')).textContent); };
+    });
   }
 
   /* ---------- 渲染 ---------- */
