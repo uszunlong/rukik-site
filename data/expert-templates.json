@@ -1,5 +1,5 @@
 {
- "registry_version": "t01v1.t02v1.t03v1.t04v1.t05v1.t06v1.t07v1.t08v1.t09v1.t10v1",
+ "registry_version": "t01v1.t02v1.t03v1.t04v1.t05v1.t06v1.t07v1.t08v1.t09v1.t10v1.t11v1.t12v1",
  "default_template": "t01",
  "templates": [
   {
@@ -290,6 +290,66 @@
     "#070707",
     "#D4AF37",
     "#8A7134"
+   ]
+  },
+  {
+   "id": "t11",
+   "name": "极简白",
+   "en": "Minimal White",
+   "version": 1,
+   "desc": "纯白底、深色字、蓝色点缀，浅灰细边框与大量留白，安静清爽，把注意力完全留给专家本人与内容。",
+   "hero": "split",
+   "deco": "none",
+   "dark": false,
+   "tokens": {
+    "bg": "#FFFFFF",
+    "bg2": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "surface2": "#F3F6FA",
+    "ink": "#182639",
+    "muted": "#68768C",
+    "accent": "#2563EB",
+    "accent2": "#2563EB",
+    "line": "#E3E9F1",
+    "radius": "16px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "accent_ink": "#FFFFFF"
+   },
+   "swatches": [
+    "#FFFFFF",
+    "#2563EB",
+    "#2563EB"
+   ]
+  },
+  {
+   "id": "t12",
+   "name": "香槟金",
+   "en": "Champagne Gold",
+   "version": 1,
+   "desc": "暖白与浅香槟铺底，柔和金色光晕与金色按钮，温暖精致、高级感强，适合希望传递信任与品质感的专家。",
+   "hero": "split",
+   "deco": "silk",
+   "dark": false,
+   "tokens": {
+    "bg": "#FBF6EC",
+    "bg2": "#F6ECD7",
+    "surface": "#FFFDF8",
+    "surface2": "#F6EDDA",
+    "ink": "#2B2118",
+    "muted": "#97836A",
+    "accent": "#B98A2F",
+    "accent2": "#A67C2E",
+    "line": "#EADFC6",
+    "radius": "18px",
+    "font": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "hfont": "-apple-system,\"PingFang SC\",\"Microsoft YaHei\",sans-serif",
+    "accent_ink": "#FFFFFF"
+   },
+   "swatches": [
+    "#FBF6EC",
+    "#B98A2F",
+    "#A67C2E"
    ]
   }
  ],
