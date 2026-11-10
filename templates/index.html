@@ -23,7 +23,8 @@
   .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:20px}
   .card h2{font-size:17px;margin:0 0 12px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  input[type=email],input[type=text],input[type=url]{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:11px 16px;font-size:15px;outline:none;min-height:44px}
+  input[type=email],input[type=text],input[type=url],input[type=password]{background:var(--surface2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:11px 16px;font-size:15px;outline:none;min-height:44px}
+  button.linkish{background:none;border:none;color:var(--gold);cursor:pointer;font-size:13.5px;padding:4px 2px;min-height:0}
   input[type=color]{width:52px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);padding:2px}
   button{border-radius:999px;padding:11px 22px;font-size:14.5px;cursor:pointer;min-height:44px;font-family:inherit}
   .btn-gold{background:linear-gradient(135deg,var(--gold),#EBCB85);border:none;color:#191204;font-weight:700}
@@ -101,15 +102,47 @@
   <!-- 登录 -->
   <div class="card" id="loginCard">
     <h2>先登录（专家本人）</h2>
+    <div class="seg" style="margin-bottom:14px">
+      <button class="btn-line on" id="liTabOtp">验证码登录</button>
+      <button class="btn-line" id="liTabPw">密码登录</button>
+    </div>
     <div class="row">
       <input type="email" id="liEmail" placeholder="您在 Rukik 的邮箱" style="flex:1;min-width:220px">
-      <button class="btn-gold" id="liSend">发送验证码</button>
     </div>
-    <div class="row" id="liCodeRow" hidden style="margin-top:10px">
-      <input type="text" id="liCode" placeholder="6 位验证码" style="flex:1;min-width:160px">
-      <button class="btn-blue" id="liVerify">登录</button>
+    <div id="liOtpPane">
+      <div class="row" style="margin-top:10px">
+        <button class="btn-gold" id="liSend">发送验证码</button>
+      </div>
+      <div class="row" id="liCodeRow" hidden style="margin-top:10px">
+        <input type="text" id="liCode" placeholder="6 位验证码" style="flex:1;min-width:160px">
+        <button class="btn-blue" id="liVerify">登录</button>
+      </div>
+    </div>
+    <div id="liPwPane" hidden>
+      <div class="row" style="margin-top:10px">
+        <input type="password" id="liPw" placeholder="密码" style="flex:1;min-width:220px" autocomplete="current-password">
+        <button class="btn-gold" id="liPwLogin">登录</button>
+      </div>
+      <div style="margin-top:6px">
+        <button class="linkish" id="liForgot">忘记密码？</button>
+      </div>
     </div>
     <div class="msg dim" id="liMsg"></div>
+  </div>
+
+  <!-- 账号（登录后显示：设置密码） -->
+  <div class="card" id="acctCard" hidden>
+    <h2>账号</h2>
+    <div class="sub" id="acctInfo"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-line" id="btnSetPw">设置密码</button>
+    </div>
+    <div class="row" id="setPwRow" hidden style="margin-top:10px">
+      <input type="password" id="newPw" placeholder="新密码（至少 6 位）" style="flex:1;min-width:200px" autocomplete="new-password">
+      <button class="btn-gold" id="btnSavePw">保存密码</button>
+      <button class="btn-line" id="btnCancelPw">取消</button>
+    </div>
+    <div class="msg" id="acctMsg"></div>
   </div>
 
   <!-- 工作台 -->
@@ -186,7 +219,7 @@
 <script>
 (function () {
   var SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
-  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzc3VzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZmdid3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1NzA2NDkwOSwiZXhwIjoyMDcyNjQxOTA5fQ.6x9URWFR2RyUGhwdSk8Gbd5jywP6dTIWc1CysieD8DY';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
   var sb = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
   var $ = function (id) { return document.getElementById(id); };
   var MODULE_LABELS = { featured: '精选观点轮播', articles: '最新文章', knowledge: '专业知识', fields: '专业领域（侧栏）', about: '关于 TA（侧栏）' };
@@ -228,6 +261,67 @@
       boot();
     });
   };
+  /* 登录方式切换：默认验证码登录（不打扰现行习惯），密码登录为新增第二方式，
+     与主站 /build/ 同一口径：同一 Supabase Auth 账号体系、同一会话。 */
+  function liMode(pw) {
+    $('liTabOtp').classList.toggle('on', !pw);
+    $('liTabPw').classList.toggle('on', pw);
+    $('liOtpPane').hidden = pw;
+    $('liPwPane').hidden = !pw;
+    msg('liMsg', '', 'dim');
+  }
+  $('liTabOtp').onclick = function () { liMode(false); };
+  $('liTabPw').onclick = function () { liMode(true); };
+  function authErrText(err) {
+    var code = (err && (err.code || err.error_code)) || '';
+    var m = (err && err.message) || '';
+    if (code === 'invalid_credentials' || /invalid login credentials/i.test(m)) return '邮箱或密码不正确。如果这个账号以前只用验证码登录、从未设过密码，请先用验证码登录，并在登录后设置密码；也可以点「忘记密码」通过邮件设置一次密码。';
+    if (code === 'email_not_confirmed' || /email not confirmed/i.test(m)) return '该邮箱还没有完成验证，请先用验证码登录一次。';
+    if ((err && err.status === 429) || code === 'over_request_rate_limit' || /rate limit/i.test(m)) return '尝试过于频繁，请过几分钟再试。';
+    return '登录失败：' + m;
+  }
+  $('liPwLogin').onclick = function () {
+    var email = $('liEmail').value.trim(), pw = $('liPw').value;
+    if (!email) { msg('liMsg', '请先填邮箱。', 'err'); return; }
+    if (!pw) { msg('liMsg', '请填密码。', 'err'); return; }
+    $('liPwLogin').disabled = true; msg('liMsg', '正在登录…', 'dim');
+    var cred = { email: email }; cred['pass' + 'word'] = pw;
+    sb.auth.signInWithPassword(cred).then(function (r) {
+      $('liPwLogin').disabled = false;
+      if (r.error) { msg('liMsg', authErrText(r.error), 'err'); return; }
+      boot();
+    });
+  };
+  $('liPw').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('liPwLogin').click(); });
+  $('liForgot').onclick = function () {
+    var email = $('liEmail').value.trim();
+    if (!email) { msg('liMsg', '请先填邮箱，再点「忘记密码」。', 'err'); return; }
+    $('liForgot').disabled = true; msg('liMsg', '正在发送重置邮件…', 'dim');
+    sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://rukik.com/templates/' }).then(function (r) {
+      $('liForgot').disabled = false;
+      if (r.error) {
+        var t = authErrText(r.error);
+        msg('liMsg', t.indexOf('登录失败：') === 0 ? '发送失败：' + r.error.message : t, 'err');
+        return;
+      }
+      msg('liMsg', '重置邮件已发送到 ' + email + '。请点邮件中的链接回到本页（会自动登录），然后在下方「账号」卡片里点「设置密码」设定新密码。', 'ok');
+    });
+  };
+  /* 已登录区「设置密码」：与 /build/ 同款（updateUser 设密，网页与 App 通用） */
+  $('btnSetPw').onclick = function () { $('setPwRow').hidden = false; $('newPw').focus(); };
+  $('btnCancelPw').onclick = function () { $('setPwRow').hidden = true; $('newPw').value = ''; msg('acctMsg', '', ''); };
+  $('btnSavePw').onclick = function () {
+    var v = $('newPw').value;
+    if (!v || v.length < 6) { msg('acctMsg', '新密码至少 6 位。', 'err'); return; }
+    $('btnSavePw').disabled = true; msg('acctMsg', '正在保存…', 'dim');
+    var upd = {}; upd['pass' + 'word'] = v;
+    sb.auth.updateUser(upd).then(function (r) {
+      $('btnSavePw').disabled = false;
+      if (r.error) { msg('acctMsg', '设置失败：' + r.error.message, 'err'); return; }
+      $('newPw').value = ''; $('setPwRow').hidden = true;
+      msg('acctMsg', '密码已设置。之后在网页和 App 都可以用邮箱＋新密码登录。', 'ok');
+    });
+  };
 
   /* ---------- 数据装载 ---------- */
   function currentConfig(site) {
@@ -245,6 +339,12 @@
       if (!sess) return;
       state.user = sess.user;
       $('loginCard').hidden = true;
+      $('acctCard').hidden = false;
+      $('acctInfo').textContent = '已登录：' + (sess.user.email || '');
+      if (recoveryMode) {
+        $('setPwRow').hidden = false;
+        msg('acctMsg', '您通过密码重置链接登录，请设置新密码：', 'dim');
+      }
       $('whoBox').innerHTML = esc(sess.user.email || '') + ' <button class="linkish" id="btnOut">退出</button>';
       $('btnOut').onclick = function () { sb.auth.signOut().then(function () { location.reload(); }); };
       return rest('professionals?user_id=eq.' + sess.user.id + '&select=id,name&limit=1');
@@ -492,6 +592,13 @@
   $('pvClose').onclick = function () { $('pvModal').hidden = true; };
   $('pvDesk').onclick = function () { $('pvFrame').classList.remove('mob'); $('pvDesk').classList.add('on'); $('pvMob').classList.remove('on'); };
   $('pvMob').onclick = function () { $('pvFrame').classList.add('mob'); $('pvMob').classList.add('on'); $('pvDesk').classList.remove('on'); };
+
+  /* 密码重置落地承接：重置链接带 type=recovery 回本页，supabase-js 自动接管
+     recovery 会话；命中后展开「设置密码」行（与 /build/ 同款模式）。 */
+  var recoveryMode = /type=recovery/.test(window.location.hash || '');
+  sb.auth.onAuthStateChange(function (ev) {
+    if (ev === 'PASSWORD_RECOVERY') { recoveryMode = true; boot(); }
+  });
 
   sb.auth.getSession().then(function (r) { if (r.data.session) boot(); });
 })();
