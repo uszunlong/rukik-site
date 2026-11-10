@@ -147,7 +147,7 @@
     <div class="shell">
       <aside id="sideNav"></aside>
       <main id="workspace">
-<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div><div class="card mt" id="signupCard"><h2>每日新增</h2><div class="stats" id="signupStats"><div class="empty">加载中…</div></div><p class="cred">口径：按 America/Los_Angeles 自然日统计，数据来源为真实注册记录（服务端按日聚合）；日均新增＝近 30 天新增 ÷ 30。点击任一数字或下方按钮查看每日明细与趋势。</p><div class="quickrow"><button class="btn gold small" data-goto="home:signups">查看每日新增详情 →</button></div></div></section>
+<section class="page" data-mod="home" data-page="overview" data-title="平台概览"><div class="pagehead"><h2 class="pagetitle">平台概览</h2><p class="muted">注册用户 · 家庭 · 专家 · 待审核与咨询总览（与原后台同一数据口径）</p></div><div class="stats mt" id="stats"></div><div class="quickrow"><button class="btn ghost small" data-goto="review:pros">去审核认证</button><button class="btn ghost small" data-goto="users:support">看支持工单</button><button class="btn ghost small" data-goto="growth:events">Event 运营</button><button class="btn ghost small" data-goto="system:health">商用健康</button></div><div class="card mt" id="signupCard"><h2>每日新增</h2><div class="stats" id="signupStats"><div class="empty">加载中…</div></div><p class="cred">口径：按 America/Los_Angeles 自然日统计，数据来源为真实注册记录（服务端按日聚合）；日均新增＝近 30 天新增 ÷ 30。点击任一数字或下方按钮查看每日明细与趋势。</p><div class="quickrow"><button class="btn gold small" data-goto="home:signups">查看每日新增详情 →</button></div></div><div class="card mt" id="subsCard"><h2>订阅总览（正式环境）</h2><div class="stats" id="subOvStats"><div class="empty">加载中…</div></div><p class="cred">口径：正式环境（Production）真实订阅记录，沙盒数据不混入；金额为标价面额、非实际到账，实际收入以 App Store Connect 为准。点击任一数字或下方按钮查看分档、事件与订阅者明细。</p><div class="quickrow"><button class="btn gold small" data-goto="home:subs">查看订阅总览详情 →</button></div></div></section>
 <section class="card page" data-mod="home" data-page="signups" data-title="每日新增">
       <h2>每日新增用户</h2>
       <p class="muted">口径说明：时区 America/Los_Angeles；按真实注册记录的注册时间以自然日汇总（服务端聚合），空日期计 0 不断档；「当日累计总数」为截至该日的注册用户总数。更新时间：<span id="suUpdated">—</span></p>
@@ -167,6 +167,36 @@
       <p style="margin:16px 0 6px"><b>每日明细</b></p>
       <div id="suTable"><div class="empty">加载中…</div></div>
       <div class="row mt"><button class="btn small" id="suReload">刷新</button></div>
+    </section>
+<section class="card page" data-mod="home" data-page="subs" data-title="订阅总览">
+      <h2>订阅总览</h2>
+      <p class="muted">口径说明：环境严格分离，正式环境（Production）与沙盒（Sandbox）永不混算，默认正式环境；数据来源为服务端订阅账本（订阅记录、订阅事件、点数包购买记录），服务端聚合。更新时间：<span id="subUpdated">—</span></p>
+      <div class="quickrow">
+        <button class="btn small gold" data-sub-env="Production">正式环境</button>
+        <button class="btn small" data-sub-env="Sandbox">沙盒（测试）</button>
+        <span class="muted" id="subEnvCounts"></span>
+      </div>
+      <div id="subSandboxNote" class="cred" style="display:none;color:#A52A1B">当前查看的是沙盒（测试）数据，不计入正式统计。</div>
+      <div id="subMsg" class="cred"></div>
+      <div class="stats" id="subStats"><div class="empty">加载中…</div></div>
+      <div id="subEmpty"></div>
+      <p style="margin:16px 0 6px"><b>标价面额（非实际到账）</b></p>
+      <div id="subFace"><div class="empty">加载中…</div></div>
+      <p class="cred">本页金额均为标价面额（订阅按产品定价、点数包按购买记录金额），未扣苹果抽成，非实际到账。实际收入与订阅报表请以 App Store Connect 为准：<a href="https://appstoreconnect.apple.com/apps/6824554988" target="_blank" rel="noopener">App Store Connect · Rukik 订阅报告入口</a></p>
+      <p style="margin:16px 0 6px"><b>档位构成</b></p>
+      <div id="subPlans"><div class="empty">加载中…</div></div>
+      <p style="margin:16px 0 6px"><b>近 30 天事件与状态分布</b></p>
+      <div id="subEvents"><div class="empty">加载中…</div></div>
+      <p style="margin:16px 0 6px"><b>点数包销量</b></p>
+      <div id="subPacks"><div class="empty">加载中…</div></div>
+      <p style="margin:16px 0 6px"><b>订阅者明细</b> <span class="muted" id="subListLabel"></span></p>
+      <div id="subTable"><div class="empty">加载中…</div></div>
+      <div class="quickrow">
+        <button class="btn small" id="subPrev">上一页</button>
+        <button class="btn small" id="subNext">下一页</button>
+        <button class="btn small" id="subReload">刷新</button>
+      </div>
+      <p class="cred">试用中口径：订阅记录中处于试用状态或试用期未结束者（与试用领取记录同源对齐）；试用领取总数不分环境、单列备查。邮箱为脱敏展示，口径与注册用户页一致。</p>
     </section>
 <section class="card page" data-mod="review" data-page="pros" data-title="专业人士认证">
       <h2>专业人士认证审核</h2>
@@ -574,6 +604,7 @@ async function loadAll() {
     loadReviewQueues();
     loadSupport();
     loadSignups();
+    loadSubs();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -2521,6 +2552,121 @@ if ($('suApply')) $('suApply').onclick = () => {
   loadSignupRange(f, suToday && t > suToday ? suToday : t, null);
 };
 if ($('suReload')) $('suReload').onclick = () => loadSignups();
+
+// ===== 订阅总览（0654 · admin_subscription_* RPC，与 App 管理区共用同一口径） =====
+const SUB_PLAN_LABEL = { pro: '专业版', starter: '入门版' };
+const SUB_PERIOD_LABEL = { monthly: '月付', yearly: '年付', other: '其他周期' };
+const SUB_STATUS_LABEL = { active: '生效中', trialing: '试用中', expired: '已过期', cancelled: '已取消', canceled: '已取消', grace_period: '宽限期', billing_retry: '扣费重试中', revoked: '已撤销' };
+const SUB_EVENT_LABEL = { renewed: '续订', trial_started: '试用开始', trial_expired: '试用到期', subscribed: '新订阅', expired: '过期', cancelled: '取消', canceled: '取消', refund: '退款', refunded: '退款', revoked: '撤销', did_fail_to_renew: '续订扣费失败' };
+let subEnv = 'Production';
+let subOffset = 0;
+const SUB_PAGE_SIZE = 50;
+let subListTotal = 0;
+
+function subUsd(cents) {
+  const v = Math.round(Number(cents) || 0);
+  const sign = v < 0 ? '-' : '';
+  const abs = Math.abs(v);
+  const d = Math.floor(abs / 100), r = abs % 100;
+  return sign + '$' + d.toLocaleString('en-US') + (r ? '.' + String(r).padStart(2, '0') : '');
+}
+function subDate(iso) { return iso ? String(iso).slice(0, 10) : '—'; }
+
+async function loadSubs() {
+  try {
+    const [ov, sum] = await Promise.all([
+      rpc('admin_subscription_summary', { p_environment: 'Production' }),
+      rpc('admin_subscription_summary', { p_environment: subEnv }),
+    ]);
+    renderSubOverview(ov);
+    renderSubSummary(sum);
+    await loadSubList();
+  } catch (e) {
+    if ($('subOvStats')) $('subOvStats').innerHTML = '<div class="empty">订阅总览加载失败：' + esc(e.message) + '</div>';
+    if ($('subStats')) $('subStats').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+    if ($('subTable')) $('subTable').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function subTiles(s) {
+  return [
+    [s.active, '活跃订阅'], [s.trialing, '试用中'], [s.new_7d, '近 7 天新增'],
+    [s.new_30d, '近 30 天新增'], [s.renewed_30d, '近 30 天续订'], [s.ended_30d, '近 30 天取消/过期/退款'],
+  ].map(([n, label]) => `<div class="stat" style="cursor:pointer" title="点击查看订阅总览详情"><b>${n ?? 0}</b><span>${label}</span></div>`).join('');
+}
+
+function renderSubOverview(s) {
+  if (!$('subOvStats')) return;
+  $('subOvStats').innerHTML = subTiles(s);
+  $('subOvStats').querySelectorAll('.stat').forEach((el) => {
+    el.onclick = () => { const b = document.querySelector('[data-goto="home:subs"]'); if (b) b.click(); };
+  });
+}
+
+function renderSubSummary(s) {
+  document.querySelectorAll('[data-sub-env]').forEach((b) =>
+    b.classList.toggle('gold', b.dataset.subEnv === subEnv));
+  if ($('subEnvCounts')) $('subEnvCounts').textContent =
+    `订阅记录：正式 ${s.env_counts?.Production ?? 0} 条 · 沙盒 ${s.env_counts?.Sandbox ?? 0} 条（分开统计）`;
+  if ($('subSandboxNote')) $('subSandboxNote').style.display = subEnv === 'Sandbox' ? '' : 'none';
+  if ($('subUpdated')) $('subUpdated').textContent = String(s.generated_at || '').replace('T', ' ').slice(0, 19) + ' UTC';
+  $('subStats').innerHTML = subTiles(s);
+  $('subEmpty').innerHTML = (subEnv === 'Production' && s.subs_total === 0)
+    ? '<div class="empty" style="margin-top:10px">暂无生产订阅：正式环境暂无订阅记录，有真实订阅后这里会显示人数、档位与事件计数。</div>' : '';
+  const f = s.active_face || {};
+  $('subFace').innerHTML =
+    `<p style="margin:4px 0">活跃订阅 · 月付合计 <b>${subUsd(f.monthly_cents)}</b> / 月 · 年付合计 <b>${subUsd(f.yearly_cents)}</b> / 年` +
+    `${(f.unpriced_active || 0) > 0 ? ` · 另有 ${f.unpriced_active} 个活跃订阅不在定价表内，未计入面额` : ''}</p>` +
+    `<p style="margin:4px 0">点数包购买 <b>${s.packs?.total ?? 0}</b> 笔（近 30 天 ${s.packs?.last_30d ?? 0} 笔）· 累计发放 ${s.packs?.points_total ?? 0} 点 · 交易额 <b>${subUsd(s.packs?.gross_cents_total)}</b>（标价口径）</p>` +
+    `<p class="cred" style="margin:4px 0">试用领取总数 ${s.trial_claims_total ?? 0}（不分环境，备查）。</p>`;
+  const plans = s.by_plan || [];
+  $('subPlans').innerHTML = plans.length
+    ? '<table><tr><th>档位</th><th>产品</th><th>周期</th><th>状态</th><th>人数</th><th>标价</th></tr>' + plans.map((r) =>
+        `<tr><td>${esc(SUB_PLAN_LABEL[r.plan_key] || r.plan_key || '')}</td><td>${esc(r.product_id || '')}</td><td>${esc(SUB_PERIOD_LABEL[r.period] || r.period || '')}</td><td>${esc(SUB_STATUS_LABEL[r.status] || r.status || '')}</td><td>${r.n}</td><td>${r.unit_price_cents != null ? subUsd(r.unit_price_cents) : '—'}</td></tr>`).join('') + '</table>'
+    : '<div class="empty">暂无订阅记录。</div>';
+  const evs = s.events_30d || [];
+  const sts = s.status_breakdown || [];
+  $('subEvents').innerHTML =
+    (evs.length
+      ? '<table><tr><th>事件</th><th>来源</th><th>近 30 天次数</th></tr>' + evs.map((r) =>
+          `<tr><td>${esc(SUB_EVENT_LABEL[r.notification_type] || r.notification_type || '')}</td><td>${esc(r.source || '')}</td><td>${r.n}</td></tr>`).join('') + '</table>'
+      : '<div class="empty">近 30 天暂无订阅事件。</div>') +
+    (sts.length ? `<p class="cred">状态分布：${sts.map((x) => `${esc(SUB_STATUS_LABEL[x.status] || x.status || '')} ${x.n}`).join(' · ')}</p>` : '');
+  const pk = (s.packs && s.packs.by_product) || [];
+  $('subPacks').innerHTML = pk.length
+    ? '<table><tr><th>产品</th><th>购买笔数</th><th>发放点数</th><th>交易额（标价口径）</th></tr>' + pk.map((r) =>
+        `<tr><td>${esc(r.product_id || '')}</td><td>${r.n}</td><td>${r.points}</td><td>${subUsd(r.gross_cents)}</td></tr>`).join('') + '</table>'
+    : '<div class="empty">暂无点数包购买记录。</div>';
+}
+
+async function loadSubList() {
+  try {
+    const data = await rpc('admin_subscription_list', { p_environment: subEnv, p_limit: SUB_PAGE_SIZE, p_offset: subOffset });
+    subListTotal = data.total || 0;
+    const rows = data.rows || [];
+    if ($('subListLabel')) $('subListLabel').textContent = `（${subEnv === 'Production' ? '正式环境' : '沙盒'}，共 ${subListTotal} 条，第 ${subListTotal ? Math.floor(subOffset / SUB_PAGE_SIZE) + 1 : 0} 页）`;
+    $('subTable').innerHTML = rows.length
+      ? '<table><tr><th>用户</th><th>档位</th><th>周期</th><th>状态</th><th>当前周期</th><th>最近事件</th><th>订阅创建</th></tr>' + rows.map((r) =>
+          `<tr><td><b>${esc(r.display_name || '未设姓名')}</b>${r.is_test_account ? ' <span class="tag">测试</span>' : ''}<br><span class="muted">${esc(r.email_masked || '')}</span>${r.user_no ? `<br><span class="muted">编号 #${esc(r.user_no)}</span>` : ''}</td>` +
+          `<td>${esc(SUB_PLAN_LABEL[r.plan_key] || r.plan_key || '')}</td><td>${esc(SUB_PERIOD_LABEL[r.period] || '')}</td>` +
+          `<td>${esc(SUB_STATUS_LABEL[r.status] || r.status || '')}${r.auto_renew === false ? '<br><span class="muted">已关自动续订</span>' : ''}</td>` +
+          `<td>${subDate(r.period_start)} 至 ${subDate(r.period_end)}${r.trial_end_at ? `<br><span class="muted">试用截止 ${subDate(r.trial_end_at)}</span>` : ''}</td>` +
+          `<td>${r.last_event_type ? esc(SUB_EVENT_LABEL[r.last_event_type] || r.last_event_type) + '<br><span class="muted">' + subDate(r.last_event_at) + '</span>' : '—'}</td>` +
+          `<td>${subDate(r.created_at)}</td></tr>`).join('') + '</table>'
+      : `<div class="empty">${subEnv === 'Production' ? '正式环境暂无订阅者记录。' : '沙盒环境暂无订阅者记录。'}</div>`;
+    if ($('subPrev')) $('subPrev').disabled = subOffset <= 0;
+    if ($('subNext')) $('subNext').disabled = subOffset + SUB_PAGE_SIZE >= subListTotal;
+  } catch (e) {
+    $('subTable').innerHTML = '<div class="empty">明细加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+document.querySelectorAll('[data-sub-env]').forEach((b) => {
+  b.onclick = () => { subEnv = b.dataset.subEnv; subOffset = 0; loadSubs(); };
+});
+if ($('subPrev')) $('subPrev').onclick = () => { if (subOffset > 0) { subOffset -= SUB_PAGE_SIZE; loadSubList(); } };
+if ($('subNext')) $('subNext').onclick = () => { if (subOffset + SUB_PAGE_SIZE < subListTotal) { subOffset += SUB_PAGE_SIZE; loadSubList(); } };
+if ($('subReload')) $('subReload').onclick = () => loadSubs();
 
 function renderRewards(r) {
   const rules = (r && r.rules) || [];
