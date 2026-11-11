@@ -443,7 +443,7 @@ function renderFunc(board) {
     pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
   }
   el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + pairHtml +
-    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="caddie.html?e=' + encodeURIComponent(eventId) + '&ret=event">🤖 问 AI 球童</a>' +
+    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="caddie.html?e=' + encodeURIComponent(eventId) + '&ret=event">问RUKIK｜本场赛事AI球童</a>' +
     (eventId ? '<a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜</a>' : '') + '</div></div>';
 }
 // ---- Golf Live · 精彩瞬间（极简改版 2026-11-11）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
