@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RUKIK Golf · 实时排行榜大屏</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0b1f14; color:#eef7ee; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  header { padding:28px 40px 8px; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; }
+  h1 { font-size:40px; margin:0; letter-spacing:1px; }
+  .brand { color:#9fd08a; font-size:16px; letter-spacing:3px; }
+  .status { font-size:20px; padding:6px 18px; border-radius:999px; background:#7a5b12; color:#ffe9a8; }
+  .status.final { background:#14532d; color:#bbf7d0; }
+  main { padding:10px 40px 30px; }
+  table { width:100%; border-collapse:collapse; font-size:26px; }
+  th { text-align:left; color:#9fd08a; font-weight:600; padding:10px 14px; border-bottom:2px solid #2b4a33; }
+  td { padding:12px 14px; border-bottom:1px solid #1d3524; }
+  tr.leader td { background:rgba(159,208,138,.12); font-weight:700; }
+  .sponsors { padding:0 40px 26px; display:flex; gap:26px; flex-wrap:wrap; align-items:center; }
+  .sponsors img { height:44px; background:#fff; border-radius:8px; padding:4px 10px; }
+  .sponsors span { font-size:20px; color:#cfe6c8; }
+  .empty { font-size:24px; color:#b9d3ae; padding:30px 0; }
+  footer { padding:0 40px 26px; color:#6f8f66; font-size:15px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">RUKIK GOLF ｜ 懂比赛，更懂每一位球员</div>
+    <h1 id="title">排行榜</h1>
+  </div>
+  <div class="status" id="status">实时排名 · 未最终确认</div>
+</header>
+<main>
+  <table>
+    <thead><tr><th style="width:90px">名次</th><th>球员 / 球队</th><th style="width:180px">成绩</th><th style="width:150px">完成洞数</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="4" class="empty">正在加载…</td></tr></tbody>
+  </table>
+</main>
+<div class="sponsors" id="sponsors"></div>
+<footer>成绩由 RUKIK Golf 确定性规则引擎计算；未锁定成绩为实时排名，不作为正式名次。每 20 秒自动刷新。</footer>
+<script>
+var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var eventId = new URLSearchParams(location.search).get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
+function call(action, body) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + ANON }, body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
+}
+function scoreText(e, scope) {
+  if (e.total != null) return e.total + (scope === 'team_points' ? ' 分' : ' 杆');
+  if (e.totalPoints != null) return e.totalPoints + ' 分';
+  if (e.totalGross != null) return e.totalGross + ' 杆';
+  if (e.totalNet != null) return '净 ' + e.totalNet + ' 杆';
+  if (e.points != null) return e.points + ' 分';
+  if (e.statusText) return e.statusText;
+  if (e.result) return e.result;
+  return '—';
+}
+function render() {
+  if (!eventId) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">缺少赛事参数</td></tr>'; return; }
+  call('event_get', { event_id: eventId }).then(function (d) {
+    if (d.event) {
+      document.getElementById('title').textContent = d.event.title;
+      var sp = document.getElementById('sponsors');
+      sp.innerHTML = (d.sponsors || []).map(function (s) { return s.logo_url ? '<img src="' + s.logo_url + '" alt="' + s.name + '">' : '<span>' + s.name + '</span>'; }).join('');
+    }
+  });
+  call('leaderboard_get', { event_id: eventId }).then(function (d) {
+    var st = document.getElementById('status');
+    if (d.is_final) { st.textContent = '正式排名'; st.classList.add('final'); } else { st.textContent = '实时排名 · 未最终确认'; st.classList.remove('final'); }
+    var rows = (d.entries || []);
+    if (!rows.length) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">暂无成绩</td></tr>'; return; }
+    document.getElementById('rows').innerHTML = rows.map(function (e, i) {
+      var rank = e.rank != null ? e.rank : (i + 1);
+      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
+    }).join('');
+  }).catch(function () {});
+}
+render();
+setInterval(render, 20000);
+</script>
+</body>
+</html>
