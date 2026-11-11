@@ -107,6 +107,11 @@ async function loadAlbum() {
   var d = await lp({ action: 'photo_list', event_kind: 'golf', event_id: eventId(), limit: 100 });
   CLS = d.cls;
   $('roleMsg').textContent = '当前身份：' + ({ manager: '管理方', photographer: '摄影师', member: '参赛球员', visitor: '访客' }[CLS] || CLS);
+  if (d.album_enabled === false) {
+    $('albumCount').textContent = '本赛事尚未开通 Golf Live 相册：开通后才可上传与展示照片（赛事其他功能不受影响）。';
+    $('grid').innerHTML = '';
+    return;
+  }
   $('albumCount').textContent = '共 ' + d.album_count + ' 张（与手机端同一相册，计数一致）';
   renderGrid(d.photos || []);
 }
@@ -132,7 +137,7 @@ function renderGrid(photos) {
       try {
         if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
-        else await lp({ action: 'photo_moderate', photo_id: id, action: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
+        else await lp({ action: 'photo_moderate', photo_id: id, op: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
         loadAlbum();
       } catch (e) { alert('操作失败：' + e.message); }
     };

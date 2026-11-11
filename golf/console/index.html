@@ -101,7 +101,14 @@
         <button class="ghost" id="annBtn">发布公告</button>
         <label>添加赞助商</label><input id="spName" placeholder="赞助商名称"><input id="spLogo" placeholder="Logo 图片地址（可选）">
         <button class="ghost" id="spBtn">添加赞助商</button>
-        <pre id="out" style="display:none"></pre>
+        <div id="orgCard" style="margin-top:14px">
+        <label>机构（主办必填；协办/赞助有才展示，同步活动页统一维护）</label>
+        <div id="orgRows"></div>
+        <button class="ghost" id="orgAdd" type="button">＋ 添加机构</button>
+        <button class="ghost" id="orgSave" type="button">保存机构</button>
+        <span id="orgMsg" style="font-size:13px;color:#5c7260"></span>
+      </div>
+      <pre id="out" style="display:none"></pre>
       </details>
     </div>
   </div>
@@ -150,9 +157,46 @@ function openEvent(id) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
     document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
-    refreshDash();
+    refreshDash(); loadOrgs();
   });
 }
+var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
+function orgRowHtml(o) {
+  var opts = ORG_TYPES.map(function (t) { return '<option' + (t === (o.type || '合作伙伴') ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+  return '<div class="orgrow" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' +
+    '<select class="o-type">' + opts + '</select>' +
+    '<input class="o-name" placeholder="机构名称" value="' + String(o.name || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
+    '<input class="o-logo" placeholder="Logo 地址（可选）" value="' + String(o.logo_url || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
+    '<input class="o-web" placeholder="官网（可选）" value="' + String(o.website || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
+    '<input class="o-intro" placeholder="简介（可选）" value="' + String(o.intro || '').replace(/"/g, '&quot;') + '" style="flex:3;min-width:180px">' +
+    '<button class="ghost o-del" type="button">删除</button></div>';
+}
+function loadOrgs() {
+  if (!currentEvent) return;
+  call('orgs_get', { event_id: currentEvent.id }).then(function (d) {
+    var box = document.getElementById('orgRows');
+    if (!d.linked) { box.innerHTML = '<p style="color:#8c2f2f;font-size:13px">本赛事尚未关联活动页，机构维护不可用。</p>'; return; }
+    box.innerHTML = (d.organizations || []).map(orgRowHtml).join('');
+    bindOrgDel();
+  });
+}
+function bindOrgDel() {
+  Array.prototype.forEach.call(document.querySelectorAll('.o-del'), function (b) { b.onclick = function () { b.closest('.orgrow').remove(); }; });
+}
+document.getElementById('orgAdd').onclick = function () {
+  var box = document.getElementById('orgRows');
+  box.insertAdjacentHTML('beforeend', orgRowHtml({}));
+  bindOrgDel();
+};
+document.getElementById('orgSave').onclick = function () {
+  var rows = Array.prototype.map.call(document.querySelectorAll('.orgrow'), function (r) {
+    return { type: r.querySelector('.o-type').value, name: r.querySelector('.o-name').value.trim(), logo_url: r.querySelector('.o-logo').value.trim() || null, website: r.querySelector('.o-web').value.trim() || null, intro: r.querySelector('.o-intro').value.trim() || null };
+  }).filter(function (o) { return o.name; });
+  call('orgs_update', { event_id: currentEvent.id, organizations: rows }).then(function (d) {
+    document.getElementById('orgMsg').textContent = d.ok ? '已保存，赛事页刷新即可见。' : ('保存失败：' + (d.message || d.error || '未知错误'));
+    if (d.ok) loadOrgs();
+  });
+};
 function refreshDash() {
   if (!currentEvent) return;
   call('registrations_list', { event_id: currentEvent.id }).then(function (d) {
