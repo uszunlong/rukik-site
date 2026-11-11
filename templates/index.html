@@ -92,6 +92,11 @@
   .share-link{font-size:13.5px;color:var(--muted);word-break:break-all;margin-top:5px}
   .share-qr{background:#fff;border-radius:10px;padding:5px;width:108px;height:108px;flex:0 0 auto}
   a.share-open{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+  /* 微信卡片物料（2026-11-10 B 线）：名片/海报在页内按本人公开资料现场生成 PNG/PDF */
+  .mat-row{display:flex;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+  .mat-meta{flex:1;min-width:0}
+  .mat-name{font-weight:700;font-size:15.5px}
+  .mat-desc{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.7}
   @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.theme-grid{grid-template-columns:1fr}}
   @media(max-width:600px){.grid{grid-template-columns:1fr}.modal iframe{height:70vh}}
 </style>
@@ -164,7 +169,7 @@
 
     <div class="card" id="shareCard">
       <h2>我的分享</h2>
-      <p class="sub">把链接或二维码发给客户（与 App 里「我的分享」是同一条链接）：<b>专家主页</b>适合让客户先了解您；<b>AI 分身纯聊天</b>适合直接咨询——客户打开就能和您的 AI 分身对话，登录后即可聊，网页端可免费咨询 3 轮，需要您本人时还能在页面里联系您。</p>
+      <p class="sub">把链接或二维码发给客户（与 App 里「我的分享」同源）：<b>专家主页</b>适合让客户先了解您；<b>AI 分身纯聊天</b>适合直接咨询——客户打开就能和您的 AI 分身对话，登录后即可聊，网页端可免费咨询 3 轮，需要您本人时还能在页面里联系您。链接与二维码带有来源标识，便于在「分享效果」里区分微信好友、群、朋友圈与扫码访问。</p>
       <div class="share-row first">
         <div class="share-meta">
           <div class="share-name">专家主页<span class="share-tag">先了解专家</span></div>
@@ -172,6 +177,7 @@
           <div class="row" style="margin-top:8px">
             <button class="btn-gold" data-copy="shareMainLink">复制链接</button>
             <a class="btn-line share-open" id="shareMainOpen" href="#" target="_blank" rel="noopener">打开页面</a>
+            <button class="btn-line" id="dlMainQr">下载二维码 PNG</button>
           </div>
         </div>
         <img class="share-qr" id="shareMainQr" alt="专家主页二维码" width="108" height="108">
@@ -183,9 +189,30 @@
           <div class="row" style="margin-top:8px">
             <button class="btn-gold" data-copy="shareChatLink">复制链接</button>
             <a class="btn-line share-open" id="shareChatOpen" href="#" target="_blank" rel="noopener">打开页面</a>
+            <button class="btn-line" id="dlChatQr">下载二维码 PNG</button>
           </div>
         </div>
         <img class="share-qr" id="shareChatQr" alt="AI 分身纯聊天页二维码" width="108" height="108">
+      </div>
+      <div class="mat-row">
+        <div class="mat-meta">
+          <div class="mat-name">电子名片<span class="share-tag">微信发送 / 存手机</span></div>
+          <div class="mat-desc">您的公开头像、姓名、专业身份与简介 + 主页二维码，按您独立站的现行主题配色现场生成，随公开资料自动更新。</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn-gold" id="dlCardPng">下载名片 PNG</button>
+            <button class="btn-line" id="dlCardPdf">下载名片 PDF</button>
+          </div>
+        </div>
+      </div>
+      <div class="mat-row">
+        <div class="mat-meta">
+          <div class="mat-name">线下海报（A4）<span class="share-tag">打印张贴</span></div>
+          <div class="mat-desc">A4 比例、打印分辨率，含您的公开资料与 AI 分身聊天二维码——客户扫码即可直接和您的 AI 分身对话。</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn-gold" id="dlPosterPng">下载海报 PNG</button>
+            <button class="btn-line" id="dlPosterPdf">下载海报 PDF</button>
+          </div>
+        </div>
       </div>
       <div class="msg" id="shareMsg"></div>
     </div>
@@ -393,14 +420,20 @@
       return rest('expert_sites?professional_id=eq.' + state.pro.id + '&select=*&limit=1');
     }).then(function (rows) {
       if (!state.pro) return;
-      if (!rows || !rows.length) { $('studio').hidden = false; $('siteInfo').innerHTML = '您还没有独立站。<a href="/build/">去一键建站 →</a>'; return; }
+      if (!rows || !rows.length) { $('studio').hidden = false; $('siteInfo').innerHTML = '您还没有独立站。<a href="/build/">去一键建站 →</a>';
+        rest('public_experts?id=eq.' + state.pro.id + '&select=name,resolved_public_title,resolved_avatar_url,avatar_url,verification_scope,ai_badge_kind,bio,profession,regions,city,ai_tagline&limit=1').then(function (pr) {
+          var ep = pr && pr[0] || {};
+          state.expertPub = { name: ep.name || state.pro.name, title: ep.resolved_public_title || '', avatar: ep.resolved_avatar_url || ep.avatar_url || '', verified: ep.verification_scope === 'identity' || ep.verification_scope === 'identity_and_license', verifiedFull: ep.verification_scope === 'identity_and_license', aiTwin: ep.ai_badge_kind === 'ai_twin', bio: ep.bio || '', profession: ep.profession || '', regions: ep.regions || [], city: ep.city || '', aiTagline: ep.ai_tagline || '', articles: 0, follows: 0 };
+          bindMaterials();
+        }).catch(function () {});
+        return; }
       state.site = rows[0];
       state.pub = currentConfig(state.site);
       var lc = state.site.layout_config || {};
       state.draft = lc.draft ? JSON.parse(JSON.stringify(lc.draft)) : JSON.parse(JSON.stringify(state.pub));
       return Promise.all([
         fetch('/data/expert-templates.json').then(function (x) { return x.json(); }),
-        rest('public_experts?id=eq.' + state.pro.id + '&select=name,resolved_public_title,resolved_avatar_url,avatar_url,verification_scope,ai_badge_kind&limit=1'),
+        rest('public_experts?id=eq.' + state.pro.id + '&select=name,resolved_public_title,resolved_avatar_url,avatar_url,verification_scope,ai_badge_kind,bio,profession,regions,city,ai_tagline&limit=1'),
         rest('knowledge_articles?professional_id=eq.' + state.pro.id + '&status=eq.published&deleted_at=is.null&select=id&limit=500'),
         rest('expert_follow_counts?professional_id=eq.' + state.pro.id + '&select=follow_count')
       ]);
@@ -414,19 +447,25 @@
         verified: ep.verification_scope === 'identity' || ep.verification_scope === 'identity_and_license',
         verifiedFull: ep.verification_scope === 'identity_and_license',
         aiTwin: ep.ai_badge_kind === 'ai_twin',
+        bio: ep.bio || '', profession: ep.profession || '', regions: ep.regions || [],
+        city: ep.city || '', aiTagline: ep.ai_tagline || '',
         articles: (res[2] || []).length,
         follows: (res[3] && res[3][0] ? res[3][0].follow_count : 0)
       };
+      bindMaterials();
       renderAll();
       $('studio').hidden = false;
     }).catch(function (e) { $('studio').hidden = false; msg('siteMsg', '加载失败：' + e.message, 'err'); });
   }
 
   /* ---------- 我的分享（本人专属双链接 + 二维码） ----------
-     链接与 App pro/share.tsx 逐字同形态：主页 https://rukik.com/p/<pro.id>
-     （profile.id 同源：均按 user_id 解析本人 professionals 行）；纯聊天为主页
-     + /chat。二维码为生成器预置的 SVG（载荷即对应链接，与 App 同形态），
-     按本人 pro.id 取图，天然只见本人、不串号。 */
+     稳定地址以 professional_id 为键（与 App pro/share.tsx 同源：均按
+     user_id 解析本人 professionals 行），专家改名/换独立站 slug 不失效：
+     主页 https://rukik.com/p/<pro.id>、纯聊天 + /chat。
+     2026-11-10 B 线归因升级（统一归因契约）：复制/打开的链接带 src=link；
+     屏上二维码改为预置的归因 SVG（qr-home-attr/qr-chat-attr，载荷分别带
+     src=qr_home / src=qr_chat）；原无参数 qr-main/qr-chat.svg 保留在位、
+     App 仍在用，本页不再引用。物料码另有 qr-namecard/qr-poster.svg。 */
   function copyShareText(txt) {
     function ok() { msg('shareMsg', '链接已复制，可以粘贴发给客户了。', 'ok'); }
     function fallback() {
@@ -443,17 +482,263 @@
   }
   function renderShare() {
     if (!state.pro) return;
-    var main = 'https://rukik.com/p/' + state.pro.id;
-    var chat = main + '/chat';
+    var base = 'https://rukik.com/p/' + state.pro.id;
+    var main = base + '?src=link';
+    var chat = base + '/chat?src=link';
     $('shareMainLink').textContent = main;
     $('shareChatLink').textContent = chat;
     $('shareMainOpen').href = main;
     $('shareChatOpen').href = chat;
-    $('shareMainQr').src = '/p/' + state.pro.id + '/qr-main.svg';
-    $('shareChatQr').src = '/p/' + state.pro.id + '/qr-chat.svg';
+    $('shareMainQr').src = '/p/' + state.pro.id + '/qr-home-attr.svg';
+    $('shareChatQr').src = '/p/' + state.pro.id + '/qr-chat-attr.svg';
     document.querySelectorAll('#shareCard [data-copy]').forEach(function (b) {
       b.onclick = function () { copyShareText($(b.getAttribute('data-copy')).textContent); };
     });
+    $('dlMainQr').onclick = function () { downloadQrPng('qr-home-attr', '主页二维码'); };
+    $('dlChatQr').onclick = function () { downloadQrPng('qr-chat-attr', '聊天二维码'); };
+  }
+
+  /* ---------- 二维码 PNG 下载（预置 SVG → canvas → PNG） ---------- */
+  function loadSvgImage(svgPath) {
+    return fetch(svgPath).then(function (r) {
+      if (!r.ok) throw new Error('二维码加载失败');
+      return r.blob();
+    }).then(function (blob) {
+      return new Promise(function (res, rej) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () { res({ img: img, url: url }); };
+        img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('二维码加载失败')); };
+        img.src = url;
+      });
+    });
+  }
+  function downloadQrPng(kind, label) {
+    if (!state.pro) return;
+    loadSvgImage('/p/' + state.pro.id + '/' + kind + '.svg').then(function (o) {
+      var S = 720, c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      var x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, S, S);
+      x.drawImage(o.img, 0, 0, S, S);
+      URL.revokeObjectURL(o.url);
+      saveBlob(canvasBlob(c), 'rukik-' + kind + '.png');
+      msg('shareMsg', label + ' PNG 已下载。', 'ok');
+    }).catch(function () { msg('shareMsg', '二维码下载失败，请稍后再试。', 'err'); });
+  }
+  function canvasBlob(c) {
+    return new Promise(function (res) { c.toBlob(res, 'image/png'); });
+  }
+  function saveBlob(promise, filename) {
+    return promise.then(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+    });
+  }
+
+  /* ---------- 微信卡片物料：电子名片 / 线下海报（页内 Canvas 现场生成） ----------
+     为什么在页内生成：名片/海报是二进制成品，静态站仓库不适合逐专家预置
+     二进制（入仓通道会把二进制写坏）；页内按本人公开资料 + 当前主题令牌
+     现场绘制，资料改了下载即新版，零服务端成本。版式与 B 线 PIL 样张
+     （line-b/samples）同构：t01 深蓝渐变 + 金饰为缺省，专家已选主题时
+     跟随其 tokens。数据只用 public_experts 公开面（与 /p 页同源）。 */
+  var PROFESSION_NAMES_MAT = { lawyer: '律师', cpa: '会计师', advisor: '财富顾问', realtor: '房产经纪', insurance: '保险顾问', trust: '信托专家', immigration: '身份规划师', education: '教育顾问', doctor: '医生', counselor: '心理咨询师', other: '专业顾问' };
+  var REGION_NAMES_MAT = { 'US': '美国', 'US-CA': '加州', 'US-NY': '纽约', 'US-TX': '德州', 'US-WA': '华盛顿州', 'CN': '中国大陆', 'HK': '中国香港', 'TW': '中国台湾', 'SG': '新加坡', 'GB': '英国', 'AU': '澳大利亚', 'CA': '加拿大', 'JP': '日本', 'KR': '韩国' };
+  function matData() {
+    var ep = state.expertPub || {};
+    var field = PROFESSION_NAMES_MAT[ep.profession] || ep.title || '专业顾问';
+    var role = ep.title || field;
+    var regs = (ep.regions || []).map(function (r) { return REGION_NAMES_MAT[r] || ''; }).filter(Boolean);
+    var roleLine = role + (regs.length ? ' · ' + regs.join(' · ') : '') + (ep.city ? ' · ' + ep.city : '');
+    var tk = { bg: '#060D1F', bg2: '#0B2148', surface: '#0C1E3E', ink: '#F2F6FC', muted: '#93A7C4', accent: '#D9A94A' };
+    try {
+      var t = state.site && tplById(resolvedTplId(state.site.template_key));
+      if (t && t.tokens) tk = { bg: t.tokens.bg, bg2: t.tokens.bg2, surface: t.tokens.surface, ink: t.tokens.ink, muted: t.tokens.muted, accent: t.tokens.accent };
+    } catch (e) {}
+    return {
+      name: ep.name || (state.pro && state.pro.name) || '', field: field, roleLine: roleLine,
+      verified: !!ep.verified,
+      intro: ep.bio || ep.aiTagline || '这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。24 小时在线，随时为您解答。',
+      shareLine: '有' + field + '问题，先问问我的24小时专业助理！',
+      avatar: ep.avatar || '', tk: tk
+    };
+  }
+  function loadAvatar(url) {
+    return new Promise(function (res) {
+      if (!url) { res(null); return; }
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { res(img); };
+      img.onerror = function () { res(null); };
+      img.src = url;
+    });
+  }
+  function drawAvatar(x, img, name, cx, cy, r, tk) {
+    x.save();
+    x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.closePath(); x.clip();
+    if (img) {
+      var s = Math.max((r * 2) / img.width, (r * 2) / img.height);
+      x.drawImage(img, cx - img.width * s / 2, cy - img.height * s / 2, img.width * s, img.height * s);
+    } else {
+      x.fillStyle = tk.surface; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+      x.fillStyle = tk.ink;
+      x.font = '700 ' + Math.round(r * 1.0) + 'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText((name || '我').charAt(0), cx, cy + r * 0.04);
+    }
+    x.restore();
+    x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2);
+    x.lineWidth = Math.max(4, r * 0.06); x.strokeStyle = tk.accent; x.stroke();
+    x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+  }
+  function wrapText(x, text, maxw) {
+    var lines = [], cur = '';
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (x.measureText(cur + ch).width > maxw && cur) { lines.push(cur); cur = ch; }
+      else cur += ch;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function gradBg(x, W, H, tk) {
+    var g = x.createLinearGradient(0, 0, W * 0.3, H);
+    g.addColorStop(0, tk.bg); g.addColorStop(1, tk.bg2);
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+  }
+  function roundRect(x, a, b, w, h, r) {
+    x.beginPath();
+    x.moveTo(a + r, b);
+    x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r);
+    x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r);
+    x.closePath();
+  }
+  var MAT_FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  function drawNamecard(d, avatarImg, qr) {
+    var W = 1080, H = 680, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var x = c.getContext('2d'), tk = d.tk;
+    gradBg(x, W, H, tk);
+    x.fillStyle = tk.accent; x.font = '700 34px ' + MAT_FONT;
+    x.fillText('RUKIK', 56, 78);
+    x.fillStyle = tk.muted; x.font = '22px ' + MAT_FONT;
+    x.fillText('更懂你的智能搭子', 56, 114);
+    drawAvatar(x, avatarImg, d.name, 140, 300, 84, tk);
+    x.fillStyle = tk.ink; x.font = '700 54px ' + MAT_FONT;
+    x.fillText(d.name, 268, 272);
+    x.fillStyle = tk.accent; x.font = '30px ' + MAT_FONT;
+    x.fillText(d.roleLine, 268, 322);
+    if (d.verified) { x.fillStyle = tk.muted; x.font = '24px ' + MAT_FONT; x.fillText('✓ Rukik Verified · 身份已核验', 268, 364); }
+    x.fillStyle = tk.ink; x.font = '27px ' + MAT_FONT;
+    var y = 448;
+    wrapText(x, d.intro, 470).slice(0, 4).forEach(function (ln) { x.fillText(ln, 268, y); y += 42; });
+    roundRect(x, 764, 356, 272, 272, 18);
+    x.fillStyle = '#fff'; x.fill();
+    x.drawImage(qr, 780, 372, 240, 240);
+    x.fillStyle = tk.muted; x.font = '22px ' + MAT_FONT; x.textAlign = 'center';
+    x.fillText('扫码访问我的主页', 900, 658);
+    x.textAlign = 'left';
+    return c;
+  }
+  function drawPoster(d, avatarImg, qr) {
+    var W = 1754, H = 2480, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var x = c.getContext('2d'), tk = d.tk;
+    gradBg(x, W, H, tk);
+    x.fillStyle = tk.accent; x.font = '700 64px ' + MAT_FONT;
+    x.fillText('RUKIK', 110, 160);
+    x.fillStyle = tk.muted; x.font = '36px ' + MAT_FONT; x.textAlign = 'right';
+    x.fillText('更懂你的智能搭子', W - 110, 152);
+    x.textAlign = 'left';
+    drawAvatar(x, avatarImg, d.name, W / 2, 560, 210, tk);
+    x.textAlign = 'center';
+    x.fillStyle = tk.ink; x.font = '700 108px ' + MAT_FONT;
+    x.fillText(d.name, W / 2, 938);
+    x.fillStyle = tk.accent; x.font = '52px ' + MAT_FONT;
+    x.fillText(d.roleLine, W / 2, 1032);
+    if (d.verified) { x.fillStyle = tk.muted; x.font = '40px ' + MAT_FONT; x.fillText('✓ Rukik Verified · 身份已核验', W / 2, 1104); }
+    x.fillStyle = tk.ink; x.font = '700 76px ' + MAT_FONT;
+    var y = 1306;
+    wrapText(x, d.shareLine, 1400).forEach(function (ln) { x.fillText(ln, W / 2, y); y += 108; });
+    roundRect(x, W / 2 - 360, 1560, 720, 720, 36);
+    x.fillStyle = '#fff'; x.fill();
+    x.drawImage(qr, W / 2 - 310, 1610, 620, 620);
+    x.fillStyle = tk.ink; x.font = '700 44px ' + MAT_FONT;
+    x.fillText('扫码和我的 AI 分身聊聊', W / 2, 2374);
+    x.fillStyle = tk.muted; x.font = '34px ' + MAT_FONT;
+    x.fillText('rukik.com/p/' + state.pro.id, W / 2, 2434);
+    x.textAlign = 'left';
+    return c;
+  }
+  /* 单图 PDF（JPEG 内嵌，页尺寸按 mm 指定）：名片 85×55、A4 210×297 */
+  function canvasToPdf(canvas, wMm, hMm) {
+    var jpeg = canvas.toDataURL('image/jpeg', 0.92);
+    var b64 = jpeg.split(',')[1];
+    var bin = atob(b64);
+    var imgLen = bin.length;
+    var wPt = (wMm * 72 / 25.4).toFixed(2), hPt = (hMm * 72 / 25.4).toFixed(2);
+    var objs = [];
+    objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    objs[2] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
+    objs[3] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + wPt + ' ' + hPt + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>';
+    objs[4] = '<< /Type /XObject /Subtype /Image /Width ' + canvas.width + ' /Height ' + canvas.height + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + imgLen + ' >>';
+    var content = 'q ' + wPt + ' 0 0 ' + hPt + ' 0 0 cm /Im0 Do Q';
+    objs[5] = '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream';
+    var parts = [], offsets = [], pos = 0;
+    function pushStr(s) { parts.push(s); pos += s.length; }
+    function pushBin(s) { parts.push(s); pos += s.length; }
+    pushStr('%PDF-1.4\n');
+    for (var i = 1; i <= 5; i++) {
+      offsets[i] = pos;
+      pushStr(i + ' 0 obj\n');
+      if (i === 4) {
+        pushStr(objs[4] + '\nstream\n');
+        pushBin(bin);
+        pushStr('\nendstream\n');
+      } else {
+        pushStr(objs[i] + '\n');
+      }
+      pushStr('endobj\n');
+    }
+    var xrefPos = pos;
+    var xref = 'xref\n0 6\n0000000000 65535 f \n';
+    for (var j = 1; j <= 5; j++) xref += ('0000000000' + offsets[j]).slice(-10) + ' 00000 n \n';
+    pushStr(xref + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xrefPos + '\n%%EOF');
+    var bytes = new Uint8Array(pos);
+    var off = 0;
+    parts.forEach(function (p) {
+      for (var k = 0; k < p.length; k++) bytes[off++] = p.charCodeAt(k) & 0xff;
+    });
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
+  function makeMaterial(kind, asPdf) {
+    if (!state.pro || !state.expertPub) { msg('shareMsg', '资料还在加载，请稍候再试。', 'err'); return; }
+    var d = matData();
+    var qrKind = kind === 'card' ? 'qr-namecard' : 'qr-poster';
+    Promise.all([loadAvatar(d.avatar), loadSvgImage('/p/' + state.pro.id + '/' + qrKind + '.svg')]).then(function (r) {
+      var canvas = kind === 'card' ? drawNamecard(d, r[0], r[1].img) : drawPoster(d, r[0], r[1].img);
+      URL.revokeObjectURL(r[1].url);
+      if (asPdf) {
+        var pdf = kind === 'card' ? canvasToPdf(canvas, 85, 55) : canvasToPdf(canvas, 210, 297);
+        saveBlob(Promise.resolve(pdf), 'rukik-' + kind + '.pdf');
+        msg('shareMsg', (kind === 'card' ? '电子名片' : '线下海报') + ' PDF 已下载。', 'ok');
+      } else {
+        saveBlob(canvasBlob(canvas), 'rukik-' + kind + '.png');
+        msg('shareMsg', (kind === 'card' ? '电子名片' : '线下海报') + ' PNG 已下载。', 'ok');
+      }
+    }).catch(function () { msg('shareMsg', '物料生成失败，请稍后再试。', 'err'); });
+  }
+  var materialsBound = false;
+  function bindMaterials() {
+    if (materialsBound || !state.pro) return;
+    materialsBound = true;
+    $('dlCardPng').onclick = function () { makeMaterial('card', false); };
+    $('dlCardPdf').onclick = function () { makeMaterial('card', true); };
+    $('dlPosterPng').onclick = function () { makeMaterial('poster', false); };
+    $('dlPosterPdf').onclick = function () { makeMaterial('poster', true); };
   }
 
   /* ---------- 渲染 ---------- */
