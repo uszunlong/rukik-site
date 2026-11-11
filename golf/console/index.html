@@ -52,8 +52,15 @@
         <summary>＋ 快速创建赛事（5 项必填）</summary>
         <label>赛事名称 *</label><input id="fTitle">
         <div class="row">
-          <div><label>球场 *</label><select id="fCourse"></select></div>
-          <div><label>日期 *</label><input id="fDate" type="date"></div>
+          <div><label>球场 *（可搜全美 1.4 万家球场库）</label>
+            <input id="fCourseQ" placeholder="输入球场名搜索，如 Friendly Hills" autocomplete="off">
+            <div id="fCourseResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:220px;overflow:auto;background:#fff"></div>
+            <select id="fCourse" style="margin-top:6px"></select>
+            <div id="fCourseInfo" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+          </div>
+          <div><label>日期 *</label><input id="fDate" type="date">
+            <label style="margin-top:8px">默认发球台</label><select id="fTee"></select>
+          </div>
         </div>
         <div class="row">
           <div><label>赛制 *</label><select id="fFormat">
@@ -229,9 +236,46 @@ function updateStatus(s) {
     else show(d);
   });
 }
+var courseSearchTimer = null;
+document.getElementById('fCourseQ').addEventListener('input', function () {
+  var qv = this.value.trim();
+  var box = document.getElementById('fCourseResults');
+  clearTimeout(courseSearchTimer);
+  if (qv.length < 2) { box.style.display = 'none'; return; }
+  courseSearchTimer = setTimeout(function () {
+    call('course_search', { q: qv, limit: 10 }).then(function (d) {
+      var list = d.courses || [];
+      if (!list.length) { box.innerHTML = '<div style="padding:8px;color:#888">未找到，可换关键词或用下方已有球场。</div>'; box.style.display = 'block'; return; }
+      box.innerHTML = list.map(function (c, i) {
+        var tier = c.completeness.tier === 'L3' ? '发球台详情全' : c.completeness.tier === 'L2' ? '记分卡 Par/SI' : '仅位置';
+        var trust = c.completeness.trust === 'lead' ? ' · 资料待核实' : (c.completeness.suspect ? ' · 部分数据待核实' : '');
+        return '<div class="csr" data-i="' + i + '" style="padding:8px;cursor:pointer;border-bottom:1px solid #eef2ee"><b>' + c.name + '</b><br><span style="font-size:12px;color:#5c7260">' + (c.city || '') + (c.state ? ', ' + c.state : '') + ' · ' + tier + (c.completeness.total_par ? ' · Par ' + c.completeness.total_par : '') + trust + '</span></div>';
+      }).join('');
+      box.style.display = 'block';
+      Array.prototype.forEach.call(box.querySelectorAll('.csr'), function (el) {
+        el.onclick = function () { pickCourse(list[Number(el.getAttribute('data-i'))]); box.style.display = 'none'; };
+      });
+    });
+  }, 300);
+});
+function pickCourse(c) {
+  var sel = document.getElementById('fCourse');
+  if (!Array.prototype.some.call(sel.options, function (o) { return o.value === c.id; })) {
+    var opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; sel.appendChild(opt);
+  }
+  sel.value = c.id;
+  document.getElementById('fCourseQ').value = c.name;
+  call('course_get', { course_id: c.id }).then(function (d) {
+    var tees = (d.tees || []).slice().sort(function (a, b) { return (b.total_yards || 0) - (a.total_yards || 0); });
+    document.getElementById('fTee').innerHTML = tees.map(function (t) { return '<option value="' + t.id + '">' + t.name + (t.slope ? '（Slope ' + t.slope + '）' : '（无 Slope/码数）') + '</option>'; }).join('') || '<option value="">（该场暂无发球台资料）</option>';
+    var tierTxt = c.completeness.tier === 'L3' ? '发球台详情完整' : c.completeness.tier === 'L2' ? '记分卡 Par/差点指数已备，暂无发球台码数' : '仅有位置资料，逐洞资料待补充';
+    document.getElementById('fCourseInfo').textContent = '已带入：' + (c.address || '') + ' · ' + tierTxt + (c.completeness.trust === 'lead' ? ' · 线索级资料，待核实' : '') + ' · 选中后自动带入地址/坐标/Par/发球台，记分与 18 洞预览直接可用（有资料范围内）。';
+  });
+}
 document.getElementById('createBtn').onclick = function () {
   call('event_create', {
     title: document.getElementById('fTitle').value, course_id: document.getElementById('fCourse').value,
+    default_tee_id: document.getElementById('fTee').value || undefined,
     starts_at: document.getElementById('fDate').value + 'T09:00:00', play_dates: [document.getElementById('fDate').value],
     format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40)
   }).then(function (d) {
