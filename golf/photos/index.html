@@ -132,7 +132,7 @@ function renderGrid(photos) {
       try {
         if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
-        else await lp({ action: 'photo_moderate', photo_id: id, action: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
+        else await lp({ action: 'photo_moderate', photo_id: id, op: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
         loadAlbum();
       } catch (e) { alert('操作失败：' + e.message); }
     };
