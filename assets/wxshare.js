@@ -31,6 +31,14 @@
     return url.split("#")[0];
   }
 
+  function signingUrl() {
+    // WeChat verifies the signature against the URL the page was actually
+    // opened with (location.href, fragment stripped) — NOT the canonical
+    // link, which can differ (e.g. news pages: canonical has no trailing
+    // slash while the opened URL does). Sign exactly what WeChat checks.
+    return location.href.split("#")[0];
+  }
+
   function shareData() {
     return {
       title: meta("og:title") || document.title || "Rukik",
@@ -64,7 +72,7 @@
     fetch(SIGN_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: pageUrl() }),
+      body: JSON.stringify({ url: signingUrl() }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null;
