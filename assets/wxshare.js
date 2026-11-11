@@ -11,9 +11,58 @@
  *     og:image), falling back to document.title / canonical URL.
  *   - Every failure path is silent (share falls back to WeChat's default
  *     link behaviour); this script must never break a page.
+ *   - Diagnostic probe: ONLY when the page URL carries ?wxdbg=1 does the
+ *     script beacon its execution stages (script_start / sdk_loaded /
+ *     ef_ok / ef_fail / wx_ready / wx_error / share_set) to the wx-debug
+ *     Edge Function, so a real-device failure can be read server-side.
+ *     Without the marker the probe is a strict no-op: no beacons, no
+ *     fetches, identical behaviour. Beacons carry the page path and short
+ *     status/error text only — never a signature, ticket or token.
  */
 (function () {
   "use strict";
+
+  var DEBUG_ENDPOINT =
+    "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/wx-debug";
+  var DBG = /[?&]wxdbg=1(?:[&#]|$)/.test(location.href || "");
+
+  function pagePath() {
+    var u = (location.href || "").split("#")[0].split("?")[0];
+    return u.replace(/^https?:\/\/[^/]+/i, "") || "/";
+  }
+
+  function dbg(stage, detail) {
+    if (!DBG) return;
+    try {
+      var body = JSON.stringify({
+        page: pagePath(),
+        stage: stage,
+        detail: detail || "",
+      });
+      var sent = false;
+      try {
+        sent = !!(navigator.sendBeacon &&
+          navigator.sendBeacon(DEBUG_ENDPOINT, body));
+      } catch (e) { sent = false; }
+      if (!sent) {
+        try {
+          var pr = fetch(DEBUG_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: body,
+            keepalive: true,
+          });
+          if (pr && pr.catch) pr.catch(function () { /* silent */ });
+        } catch (e) { /* silent by design */ }
+      }
+    } catch (e) { /* the probe must never break the page */ }
+  }
+
+  // Fired before the UA gate on purpose: with the marker set, a lone
+  // script_start row proves the script file itself executed, and its
+  // absence proves it never ran (stale cache, missing tag, parse block).
+  dbg("script_start", "readyState=" + (document.readyState || "unknown"));
+
   if (!/MicroMessenger/i.test(navigator.userAgent || "")) return;
 
   var SIGN_ENDPOINT =
@@ -60,12 +109,16 @@
       jsApiList: ["updateAppMessageShareData", "updateTimelineShareData"],
     });
     window.wx.ready(function () {
+      dbg("wx_ready");
       try {
         window.wx.updateAppMessageShareData(data);
         window.wx.updateTimelineShareData(data);
+        dbg("share_set", "appmsg+timeline");
       } catch (e) { /* silent by design */ }
     });
-    window.wx.error(function () { /* silent by design */ });
+    window.wx.error(function (res) {
+      dbg("wx_error", res && res.errMsg ? String(res.errMsg) : "unknown");
+    });
   }
 
   function requestSignature() {
@@ -75,20 +128,28 @@
       body: JSON.stringify({ url: signingUrl() }),
     })
       .then(function (r) {
+        dbg(r.ok ? "ef_ok" : "ef_fail", "http " + r.status);
         return r.ok ? r.json() : null;
       })
       .then(configure)
-      .catch(function () { /* silent by design */ });
+      .catch(function () {
+        dbg("ef_fail", "network_error");
+        /* silent by design */
+      });
   }
 
   function loadSdk() {
     if (window.wx && window.wx.config) {
+      dbg("sdk_loaded", "preexisting");
       requestSignature();
       return;
     }
     var s = document.createElement("script");
     s.src = JWEIXIN_SRC;
-    s.onload = requestSignature;
+    s.onload = function () {
+      dbg("sdk_loaded", "cdn");
+      requestSignature();
+    };
     s.onerror = function () { /* silent by design */ };
     document.head.appendChild(s);
   }
