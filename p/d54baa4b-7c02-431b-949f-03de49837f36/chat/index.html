@@ -944,6 +944,6 @@
 })();
 </script>
 <script>/*rk-share-track*/(function(){try{var mm=location.pathname.match(/\/p\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/chat)?/i);if(!mm)return;var q=new URLSearchParams(location.search);var AL=['wx_friend','wx_group','moments','qr_home','qr_chat','link'];var src=q.get('src')||'link';if(AL.indexOf(src)<0)src='link';var vid=null;try{vid=localStorage.getItem('rk_vid')}catch(e){}if(!vid){vid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8);return v.toString(16)});try{localStorage.setItem('rk_vid',vid)}catch(e){}try{document.cookie='rk_vid='+vid+';path=/;max-age=31536000;SameSite=Lax'}catch(e){}}var body=JSON.stringify({professional_id:mm[1],page_type:mm[2]?'clone_chat':'homepage',src:src,m:q.get('m'),visitor_id:vid});var url='https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/share-track';if(navigator.sendBeacon){navigator.sendBeacon(url,new Blob([body],{type:'text/plain;charset=UTF-8'}));}else{fetch(url,{method:'POST',body:body,keepalive:true}).catch(function(){})}}catch(e){}})();</script>
-<script src="/assets/wxshare.js" defer></script>
+<script src="/assets/wxshare.js"></script>
 </body>
 </html>
