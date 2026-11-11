@@ -35,6 +35,18 @@
   .badge.err { background:#fbe9e7; color:#b3261e; }
   .note { color:#5c7260; font-size:13px; line-height:1.7; }
   .hidden { display:none; }
+  /* 公开照片池（?e= 模式）：只保留浏览/查看/下载 */
+  .pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .pgrid .pph { border-radius:12px; overflow:hidden; background:#e7eee8; cursor:pointer; }
+  .pgrid .pph img { width:100%; height:150px; object-fit:cover; display:block; }
+  .moreBtn { display:block; margin:18px auto 4px; background:#eef1ee; color:#33503a; padding:11px 26px; font-size:15px; }
+  .lb { position:fixed; inset:0; background:rgba(10,18,12,.95); z-index:60; display:flex; flex-direction:column; }
+  .lb .stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+  .lb .stage img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+  .lb .bar { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 14px calc(12px + env(safe-area-inset-bottom)); color:#fff; }
+  .lb button { background:rgba(255,255,255,.16); color:#fff; border:0; border-radius:10px; padding:10px 16px; font-size:15px; cursor:pointer; }
+  .lb .x { position:absolute; top:10px; right:12px; }
+  .lb .cnt { font-size:13.5px; color:#cfd8cc; }
 </style>
 </head>
 <body>
@@ -42,6 +54,14 @@
   <div class="brand">RUKIK LIVE · 相册引擎</div>
   <h1>赛事摄影管理</h1>
   <div class="sub">摄影师只管拍，RUKIK 负责美，球员随时看。手机与网页共用同一赛事相册。</div>
+
+  <div id="poolSec" class="hidden">
+    <div class="pgrid" id="poolGrid"></div>
+    <div id="poolSentinel"></div>
+    <button class="moreBtn hidden" id="poolMore" type="button">加载更多照片</button>
+    <p class="note" id="poolMsg" style="text-align:center;margin-top:12px"></p>
+    <p class="note" style="text-align:center;margin-top:20px">照片仅用于本赛事展示与回忆。下载默认保存美化版；撤回或删除的照片会立即退出照片池。<br><a href="https://rukik.com/golf/photos.html" style="color:#1d7a3a">摄影师 / 主办方管理入口 →</a></p>
+  </div>
 
   <div class="card" id="loginCard">
     <div style="margin-bottom:10px"><b>登录</b>（RUKIK 账号，与 App / 专家工作台同一账号体系）</div>
@@ -213,6 +233,132 @@ $('pickBtn').onclick = function () { $('fileInput').click(); };
 $('pickDirBtn').onclick = function () { $('dirInput').click(); };
 $('fileInput').onchange = function () { addFiles($('fileInput').files); $('fileInput').value = ''; };
 $('dirInput').onchange = function () { addFiles($('dirInput').files); $('dirInput').value = ''; };
+</script>
+<div class="lb hidden" id="lightbox">
+  <button class="x" id="lbClose" type="button">✕ 关闭</button>
+  <div class="stage" id="lbStage"><img id="lbImg" alt="赛事照片"></div>
+  <div class="bar">
+    <button id="lbPrev" type="button">← 上一张</button>
+    <span class="cnt" id="lbCnt"></span>
+    <button id="lbDl" type="button">⬇ 下载</button>
+    <button id="lbNext" type="button">下一张 →</button>
+  </div>
+</div>
+<script>
+// ---------- 公开照片池模式（?e=<event_id>）：与赛事页共用 golf-api wall_get（服务端权益校验：
+// 相册未开通/赛事非公开在服务端拦截）。本模式只做浏览（网格按需分页）/查看（全屏滑动）/下载（默认美化版），
+// 上传与举报/隐藏/删除等管理能力保留在无 ?e= 的管理台，不在本页重复实现。
+var poolEventId = new URLSearchParams(location.search).get('e');
+if (poolEventId) initPool();
+function initPool() {
+  document.title = '赛事相册 · RUKIK Golf Live';
+  document.querySelector('h1').textContent = '赛事相册';
+  document.querySelector('.sub').textContent = 'Golf Live · 精彩瞬间 — 点击照片全屏查看，喜欢哪张就保存哪张。';
+  $('loginCard').classList.add('hidden');
+  $('mainCard').classList.add('hidden');
+  $('poolSec').classList.remove('hidden');
+  var GAPI = SUPA + '/functions/v1/golf-api';
+  var ptoken = null;
+  try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); if (raw) ptoken = JSON.parse(raw).access_token || null; } catch (e) {}
+  var POOL = { items: [], offset: 0, hasMore: true, loading: false, PAGE: 24 };
+  function aliveItems() { return POOL.items.filter(function (p) { return !p._dead; }); }
+  async function api(body) {
+    var headers = { 'Content-Type': 'application/json', apikey: ANON };
+    if (ptoken) headers.Authorization = 'Bearer ' + ptoken;
+    var res = await fetch(GAPI, { method: 'POST', headers: headers, body: JSON.stringify(body) });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(d.error || ('HTTP ' + res.status));
+    return d;
+  }
+  // 赛事名（best-effort，失败保持通用标题）
+  api({ action: 'event_get', event_id: poolEventId }).then(function (d) {
+    if (d && d.event && d.event.title) { document.querySelector('h1').textContent = d.event.title + ' · 相册'; document.title = d.event.title + ' · 相册'; }
+  }).catch(function () {});
+  async function loadNext() {
+    if (POOL.loading || !POOL.hasMore) return;
+    POOL.loading = true;
+    $('poolMsg').textContent = '加载中…';
+    try {
+      var d = await api({ action: 'wall_get', event_id: poolEventId, pool_limit: POOL.PAGE, pool_offset: POOL.offset });
+      var wall = d.wall || {};
+      if (!wall.album_enabled) {
+        $('poolMsg').textContent = '本赛事尚未开通 Golf Live 相册：开通后照片会在这里汇聚展示（赛事其他功能不受影响）。';
+        POOL.hasMore = false;
+        return;
+      }
+      var pool = wall.pool || { photos: [], has_more: false };
+      var photos = pool.photos || [];
+      photos.forEach(function (p) { POOL.items.push(p); appendCard(p); });
+      POOL.offset += photos.length;
+      POOL.hasMore = !!pool.has_more && photos.length > 0;
+      $('poolMsg').textContent = POOL.items.length ? ('共 ' + aliveItems().length + ' 张' + (POOL.hasMore ? '，继续下滑加载更多' : '')) : '暂无现场照片。';
+      $('poolMore').classList.toggle('hidden', !POOL.hasMore);
+    } catch (e) {
+      $('poolMsg').textContent = '照片加载失败：' + e.message + '（点「加载更多照片」重试）';
+      $('poolMore').classList.remove('hidden');
+    } finally { POOL.loading = false; }
+  }
+  function appendCard(p) {
+    var d = document.createElement('div');
+    d.className = 'pph';
+    var img = document.createElement('img');
+    img.loading = 'lazy';
+    img.src = p.thumb_url || p.url;
+    img.alt = '';
+    img.addEventListener('error', function () { p._dead = true; d.remove(); }); // 坏图自动退出网格，不留破损占位
+    d.appendChild(img);
+    d.addEventListener('click', function () { openLb(aliveItems().indexOf(p)); });
+    $('poolGrid').appendChild(d);
+  }
+  $('poolMore').addEventListener('click', loadNext);
+  if (window.IntersectionObserver) {
+    var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) loadNext(); }, { rootMargin: '400px' });
+    io.observe($('poolSentinel'));
+  }
+  // ---- 全屏查看 ----
+  var lbIdx = 0;
+  function openLb(i) { if (i < 0) return; lbIdx = i; showLb(); $('lightbox').classList.remove('hidden'); }
+  function closeLb() { $('lightbox').classList.add('hidden'); }
+  function showLb() {
+    var items = aliveItems();
+    if (!items.length) { closeLb(); return; }
+    lbIdx = ((lbIdx % items.length) + items.length) % items.length;
+    $('lbImg').src = items[lbIdx].url;
+    $('lbCnt').textContent = '第 ' + (lbIdx + 1) + ' / ' + items.length + ' 张';
+  }
+  $('lbClose').addEventListener('click', closeLb);
+  $('lbPrev').addEventListener('click', function () { lbIdx--; showLb(); });
+  $('lbNext').addEventListener('click', function () { lbIdx++; showLb(); });
+  $('lbImg').addEventListener('error', function () { var it = aliveItems()[lbIdx]; if (it) it._dead = true; lbIdx++; showLb(); });
+  var tx = null;
+  $('lbStage').addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  $('lbStage').addEventListener('touchend', function (e) {
+    if (tx == null) return;
+    var dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 40) { lbIdx += dx < 0 ? 1 : -1; showLb(); }
+  }, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    if ($('lightbox').classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLb();
+    else if (e.key === 'ArrowLeft') { lbIdx--; showLb(); }
+    else if (e.key === 'ArrowRight') { lbIdx++; showLb(); }
+  });
+  $('lbDl').addEventListener('click', async function () {
+    var it = aliveItems()[lbIdx];
+    if (!it) return;
+    var url = it.url; // 默认美化版：服务端 feed 的 url 已按「调色版 → 展示图 → 原图」给出
+    try {
+      var r = await fetch(url);
+      var b = await r.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'rukik-golf-' + String(it.id || 'photo').slice(0, 8) + '.jpg';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    } catch (e) { window.open(url, '_blank'); }
+  });
+  loadNext();
+}
 </script>
 </body>
 </html>

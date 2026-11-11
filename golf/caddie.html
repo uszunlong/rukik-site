@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RUKIK Golf AI球童 · RUKIK Golf</title>
+<meta name="description" content="RUKIK 平台官方 AI 球童：高尔夫专业知识 · 赛事陪伴 · 个人成长">
+<style>
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#f6f7f5;color:#1c2a1e;display:flex;flex-direction:column;min-height:100dvh}
+  header{position:sticky;top:0;z-index:10;background:#14532d;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(20,83,45,.25)}
+  header a.back{color:#fff;text-decoration:none;font-size:15px;font-weight:600;white-space:nowrap;padding:6px 10px;border:1px solid rgba(255,255,255,.45);border-radius:999px}
+  header .ttl{min-width:0}
+  header .ttl .name{font-size:16px;font-weight:700;line-height:1.25}
+  header .ttl .sub{font-size:11.5px;opacity:.85;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{display:inline-block;background:#eef4ef;color:#14532d;border-radius:999px;font-size:10.5px;padding:1px 7px;margin-left:6px;vertical-align:2px;font-weight:600}
+  #authBar{background:#eef4ef;font-size:12.5px;padding:6px 14px;color:#33513a}
+  #authBar button{background:none;border:1px solid #b9cfbc;color:#14532d;border-radius:999px;padding:2px 10px;font-size:12px;margin-left:8px}
+  main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:14px 12px 8px;display:flex;flex-direction:column;gap:10px}
+  .evname{font-size:12.5px;color:#5b7263}
+  .msg{max-width:86%;padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.65;word-break:break-word;white-space:pre-wrap}
+  .msg.u{align-self:flex-end;background:#14532d;color:#fff;border-bottom-right-radius:4px}
+  .msg.a{align-self:flex-start;background:#fff;border:1px solid #dde7dd;border-bottom-left-radius:4px}
+  .msg.a .h{font-weight:700;font-size:15px;margin:8px 0 2px}
+  .msg.a .h:first-child{margin-top:0}
+  .msg.a ul{margin:4px 0 4px 2px;padding-left:18px}
+  .msg.a li{margin:2px 0}
+  .msg.a p{margin:4px 0}
+  .tag{display:inline-block;font-size:10.5px;color:#14532d;background:#eef4ef;border-radius:999px;padding:1px 7px;margin-bottom:6px;font-weight:600}
+  .sys{align-self:center;font-size:12.5px;color:#7a8a7e;background:none;text-align:center;max-width:92%}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips button{background:#fff;border:1px solid #cfe0d2;color:#14532d;border-radius:999px;padding:7px 12px;font-size:13px}
+  .chips button:active{background:#eef4ef}
+  #loginBox{background:#fff;border:1px solid #dde7dd;border-radius:14px;padding:14px}
+  #loginBox .lt{font-weight:700;margin-bottom:6px}
+  #loginBox .ld{font-size:13px;color:#5b7263;margin-bottom:10px;line-height:1.6}
+  footer{position:sticky;bottom:0;background:#f6f7f5;border-top:1px solid #e2eae2;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .inrow{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+  textarea{flex:1;resize:none;border:1px solid #cfe0d2;border-radius:12px;padding:10px 12px;font-size:15px;font-family:inherit;max-height:110px;background:#fff}
+  #sendBtn{background:#16a34a;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:15px;font-weight:600}
+  #sendBtn:disabled{background:#a7c4ac}
+  .hint{max-width:760px;margin:6px auto 0;font-size:11.5px;color:#8a9a8e;text-align:center}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" id="backBtn" href="#">← 返回比赛</a>
+  <div class="ttl">
+    <div class="name">RUKIK Golf AI球童<span class="badge">平台官方 AI</span></div>
+    <div class="sub">高尔夫专业知识 · 赛事陪伴 · 个人成长</div>
+  </div>
+</header>
+<div id="authBar"></div>
+<main id="main">
+  <div class="evname" id="evName"></div>
+  <div id="loginBox" class="hidden">
+    <div class="lt">登录后即可问 AI 球童</div>
+    <div class="ld">AI 球童需要读取您在本场赛事的真实成绩与分组信息，因此需要登录。与 RUKIK App 同一账号（手机号或邮箱），同一 UID。</div>
+    <div id="loginMount"></div>
+  </div>
+  <div id="msgs"></div>
+  <div class="chips" id="chips"></div>
+</main>
+<footer id="composer" class="hidden">
+  <div class="inrow">
+    <textarea id="input" rows="1" placeholder="问球童：规则、球场、我的成绩……"></textarea>
+    <button id="sendBtn">发送</button>
+  </div>
+  <div class="hint">AI 球童是平台官方 AI，不是真人教练；成绩与排名以赛事正式发布为准。</div>
+</footer>
+
+<script>
+  window.__caddieCfg = (function () {
+    var q = new URLSearchParams(location.search);
+    return {
+      eventId: q.get('e') || '',
+      hole: parseInt(q.get('h') || '', 10) || null,
+      ret: q.get('ret') || ''
+    };
+  })();
+</script>
+<script type="module">
+import { initAuth, mountLogin, renderAuthBar, getAccessToken } from './auth.js';
+
+var CFG = window.__caddieCfg;
+var PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
+var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var WELCOME = '您好！我是您的RUKIK Golf AI球童。我可以帮您了解球场、解释规则、回顾成绩，也会记住您在每一场比赛中的真实进步。';
+var SUGGESTED = ['我这场比赛打得怎么样？现在排第几？', '下一洞是什么情况？', '球出界（OB）了该怎么处理？', '比杆赛和 Stableford 有什么区别？', '打高尔夫有哪些基本礼仪？'];
+
+var msgsEl = document.getElementById('msgs');
+var chipsEl = document.getElementById('chips');
+var inputEl = document.getElementById('input');
+var sendBtn = document.getElementById('sendBtn');
+var composer = document.getElementById('composer');
+var loginBox = document.getElementById('loginBox');
+var loggedIn = false;
+var sending = false;
+var history = []; // 只含真实问答轮（role/content），欢迎语不入会话
+
+// 返回比赛：默认回「我的比赛」（play.html），ret=event 时回赛事公开页
+var backUrl = (CFG.ret === 'event' ? 'event.html' : 'play.html') + (CFG.eventId ? '?e=' + encodeURIComponent(CFG.eventId) : '');
+document.getElementById('backBtn').setAttribute('href', backUrl);
+
+// 会话留存（同标签页内返回比赛再进来不丢线程）
+var storeKey = 'golf_caddie_msgs_' + (CFG.eventId || 'none');
+try {
+  var saved = sessionStorage.getItem(storeKey);
+  if (saved) history = JSON.parse(saved) || [];
+} catch (e) { history = []; }
+function persist() { try { sessionStorage.setItem(storeKey, JSON.stringify(history.slice(-20))); } catch (e) {} }
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+// 轻量结构渲染：## 标题 / - 列表 / **加粗** / 段落（先转义再套格式，用户文本永不注入 HTML）
+function renderRich(text) {
+  var lines = esc(text).split('\n');
+  var out = '', inList = false;
+  function closeList() { if (inList) { out += '</ul>'; inList = false; } }
+  lines.forEach(function (ln) {
+    var t = ln.trim();
+    var bold = function (s) { return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); };
+    if (/^##\s+/.test(t)) { closeList(); out += '<div class="h">' + bold(t.replace(/^##\s+/, '')) + '</div>'; }
+    else if (/^-\s+/.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + bold(t.replace(/^-\s+/, '')) + '</li>'; }
+    else if (t === '') { closeList(); }
+    else { closeList(); out += '<p>' + bold(t) + '</p>'; }
+  });
+  closeList();
+  return out;
+}
+function addMsg(role, text, rich) {
+  var d = document.createElement('div');
+  d.className = 'msg ' + (role === 'user' ? 'u' : 'a');
+  if (role === 'assistant' && rich) d.innerHTML = renderRich(text); else d.textContent = text;
+  msgsEl.appendChild(d);
+  window.scrollTo(0, document.body.scrollHeight);
+  return d;
+}
+function addSys(text) {
+  var d = document.createElement('div');
+  d.className = 'sys'; d.textContent = text;
+  msgsEl.appendChild(d);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+function paintWelcome() {
+  var d = document.createElement('div');
+  d.className = 'msg a';
+  d.innerHTML = '<span class="tag">平台官方 AI · 不是真人教练</span><div>' + esc(WELCOME) + '</div>';
+  msgsEl.appendChild(d);
+}
+function paintHistory() {
+  msgsEl.innerHTML = '';
+  paintWelcome();
+  history.forEach(function (m) { addMsg(m.role, m.content, m.role === 'assistant'); });
+}
+function paintChips() {
+  chipsEl.innerHTML = '';
+  if (!loggedIn) return;
+  SUGGESTED.forEach(function (q) {
+    var b = document.createElement('button');
+    b.textContent = q;
+    b.addEventListener('click', function () { if (!sending) { inputEl.value = q; send(); } });
+    chipsEl.appendChild(b);
+  });
+}
+
+// 赛事名（公开数据，只读；失败静默）
+if (CFG.eventId) {
+  fetch(API + '/golf-api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + ANON },
+    body: JSON.stringify({ action: 'event_get', event_id: CFG.eventId })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    var t = (j && j.event && j.event.title) || (j && j.title) || '';
+    if (t) document.getElementById('evName').textContent = '当前赛事：' + t;
+  }).catch(function () {});
+}
+
+function setLoggedIn(on) {
+  loggedIn = on;
+  loginBox.classList.toggle('hidden', on);
+  composer.classList.toggle('hidden', !on);
+  paintChips();
+}
+
+async function send() {
+  var text = (inputEl.value || '').trim();
+  if (!text || sending) return;
+  sending = true; sendBtn.disabled = true; inputEl.value = '';
+  history.push({ role: 'user', content: text });
+  addMsg('user', text, false); persist();
+  var bubble = addMsg('assistant', '正在思考…', false);
+  var acc = '';
+  try {
+    var tk = await getAccessToken();
+    if (!tk) { bubble.textContent = '登录状态已过期，请重新登录后再问我。'; setLoggedIn(false); return; }
+    var payload = { professional_id: PRO_ID, mode: 'web', stream: true, messages: history.slice(-10) };
+    if (CFG.eventId) payload.golf_event_id = CFG.eventId;
+    if (CFG.hole) payload.golf_hole = CFG.hole;
+    var res = await fetch(API + '/pro-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + tk },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      var ej = await res.json().catch(function () { return null; });
+      var code = ej && ej.error;
+      if (res.status === 401 || code === 'login_required') { bubble.textContent = '登录状态已过期，请重新登录后再问我。'; setLoggedIn(false); }
+      else if (code === 'round_limit') { bubble.textContent = '这轮会话的问题已经比较多了，请回比赛页后重新进入球童会话继续问我。'; }
+      else { bubble.textContent = '这次没能连上（' + (code || res.status) + '），请稍后再试一次。'; }
+      history.pop(); persist();
+      return;
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    bubble.textContent = '';
+    for (;;) {
+      var step = await reader.read();
+      if (step.done) break;
+      buf += dec.decode(step.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        var line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+        if (line.indexOf('data:') !== 0) continue;
+        var data = line.slice(5).trim();
+        if (!data || data === '[DONE]') continue;
+        try {
+          var j = JSON.parse(data);
+          var c = j && j.choices && j.choices[0] && j.choices[0].delta ? j.choices[0].delta.content : '';
+          if (typeof c === 'string' && c) { acc += c; bubble.innerHTML = renderRich(acc); window.scrollTo(0, document.body.scrollHeight); }
+        } catch (e) {}
+      }
+    }
+    if (!acc) { bubble.textContent = '这次没有拿到回答，请再问一次。'; history.pop(); persist(); return; }
+    bubble.innerHTML = renderRich(acc);
+    history.push({ role: 'assistant', content: acc });
+    persist();
+  } catch (e) {
+    bubble.textContent = '网络好像不太顺，请稍后再试一次。';
+    history.pop(); persist();
+  } finally {
+    sending = false; sendBtn.disabled = false;
+  }
+}
+sendBtn.addEventListener('click', send);
+inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+
+paintHistory();
+initAuth(function (s) {
+  setLoggedIn(!!s);
+  if (!s) mountLogin(document.getElementById('loginMount'), { onDone: function () { setLoggedIn(true); } });
+});
+renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setLoggedIn(false); } });
+</script>
+</body>
+</html>

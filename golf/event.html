@@ -16,6 +16,8 @@
 <meta name="twitter:description" content="首届美国菁英高尔夫邀请赛：高尔夫球队、商会球队与企业代表队同场竞技。">
 <meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/live/golf/11564c2e-9c4f-40de-a54a-9803a0ae024c/b8744985-251f-485c-a88e-af47fe046365.jpg">
 <script src="/assets/wxshare.js?v=20261111a"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#f6f7f5;color:#1c2a1e}
   .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
@@ -72,6 +74,15 @@
   .funcrow{display:flex;gap:10px;flex-wrap:wrap}
   .funcrow a{flex:1;min-width:140px;text-align:center;background:#eef4ef;color:#14532d;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none}
   iframe.osm{width:100%;height:230px;border:0;border-radius:14px}
+  .lmap{width:100%;height:230px;border-radius:14px;overflow:hidden;background:#eef4ef;z-index:0}
+  .holebar button.all.on{background:#14532d;color:#fff;border-color:#14532d}
+  .car{position:relative;border-radius:14px;overflow:hidden;background:#0e2416}
+  .carTrack{display:flex;transition:transform .45s ease}
+  .carSlide{flex:0 0 100%;margin:0}
+  .carSlide img{width:100%;height:230px;object-fit:cover;display:block;cursor:pointer;background:#1c3a26}
+  .carDots{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:5px;justify-content:center;pointer-events:none}
+  .carDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
+  .carDots i.on{background:#fff}
   .hidden{display:none}
 </style>
 </head>
@@ -86,7 +97,7 @@
   <div id="liveSec"></div>
   <p class="src" style="margin-top:18px">成绩由确定性规则引擎计算；未最终确认的成绩会明确标注。照片仅在赛事开通 Golf Live 相册后展示。</p>
 </div>
-<div class="cta hidden" id="ctaBar"><a id="ctaBtn" href="https://rukik.com/download/">打开 RUKIK App</a></div>
+<div class="cta hidden" id="ctaBar"><a id="ctaBtn" href="play.html">打开 RUKIK App</a></div>
 <script>
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
@@ -199,6 +210,7 @@ function renderHero() {
   cta.classList.remove('hidden');
   btn.className = st;
   btn.textContent = st === 'pre' ? '立即报名' : st === 'live' ? '进入我的比赛' : '查看赛事结果';
+  btn.setAttribute('href', 'play.html?e=' + encodeURIComponent(eventId));
 }
 function renderOrgs() {
   var el = document.getElementById('orgSec');
@@ -298,8 +310,8 @@ function renderMap() {
   var dots = '';
   for (var i = 1; i <= 18; i++) dots += '<button type="button" data-hole="' + i + '"' + (i === curHole ? ' class="on"' : '') + '>' + i + '</button>';
   el.innerHTML = '<div class="card"><h2>球场地图 · 18 洞预览</h2>' +
-    (PREVIEW.latitude != null ? '<iframe class="osm" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (PREVIEW.longitude - 0.013) + ',' + (PREVIEW.latitude - 0.008) + ',' + (PREVIEW.longitude + 0.013) + ',' + (PREVIEW.latitude + 0.008) + '&layer=mapnik&marker=' + PREVIEW.latitude + ',' + PREVIEW.longitude + '"></iframe>' : '') +
-    '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><strong>第 ' + curHole + ' 洞</strong><button type="button" id="nextHole">下一洞 →</button>' +
+    '<div id="lmapBox"></div>' +
+    '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button><button type="button" id="prevHole">← 上一洞</button><strong>第 ' + curHole + ' 洞</strong><button type="button" id="nextHole">下一洞 →</button>' +
     (teeOpts ? '<select id="teeSel">' + teeOpts + '</select>' : '') + '</div>' +
     '<div class="dots">' + dots + '</div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
@@ -307,20 +319,104 @@ function renderMap() {
     '<div class="src">资料来源：记分卡 OpenGolfAPI（署名 © OpenStreetMap contributors (ODbL 1.0) via OpenGolfAPI）；球洞几何 © OpenStreetMap contributors（ODbL）。' + esc(comp.note || '') + (PREVIEW.data_quality && PREVIEW.data_quality.trust ? '<br>' + esc(PREVIEW.data_quality.trust) + '。' : '') + '</div></div>';
   el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
   el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
+  el.querySelector('#allHoles').addEventListener('click', function () { resetBigMap(); });
   el.querySelectorAll('.dots button').forEach(function (b) { b.addEventListener('click', function () { setHole(Number(b.getAttribute('data-hole'))); }); });
   var sel = el.querySelector('#teeSel');
   if (sel) sel.addEventListener('change', function () { curTee = sel.value; renderMap(); });
+  setupBigMap();
   loadHoleSvg();
+}
+// ---- 上方大图（Leaflet）：默认全场总览；点选某洞后平移/缩放聚焦该洞并叠加其几何高亮；「全场」回总览。
+// Leaflet 加载失败（CDN 不可达）时降级回原 OSM 嵌入 iframe，行为不劣于改版前。无几何的洞不画假图、相机不乱动。
+var lmap = null, holeLayer = null, overviewBounds = null, mapFocused = false;
+function fitOverview() {
+  if (!lmap) return;
+  try { lmap.invalidateSize(); } catch (e) {}
+  if (overviewBounds && overviewBounds.isValid()) lmap.fitBounds(overviewBounds);
+  else if (PREVIEW && PREVIEW.latitude != null) lmap.setView([PREVIEW.latitude, PREVIEW.longitude], 15);
+}
+function setupBigMap() {
+  var box = document.getElementById('lmapBox');
+  if (!box || !PREVIEW || PREVIEW.latitude == null) return;
+  var lat = PREVIEW.latitude, lng = PREVIEW.longitude;
+  if (!window.L) {
+    box.innerHTML = '<iframe class="osm" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (lng - 0.013) + ',' + (lat - 0.008) + ',' + (lng + 0.013) + ',' + (lat + 0.008) + '&layer=mapnik&marker=' + lat + ',' + lng + '"></iframe>';
+    return;
+  }
+  if (lmap) { try { lmap.remove(); } catch (e) {} lmap = null; }
+  var div = document.createElement('div');
+  div.className = 'lmap';
+  box.appendChild(div);
+  lmap = L.map(div, { scrollWheelZoom: false });
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(lmap);
+  overviewBounds = L.latLngBounds([lat - 0.008, lng - 0.013], [lat + 0.008, lng + 0.013]);
+  fitOverview();
+  // 容器刚写入 DOM 时 Leaflet 尺寸缓存可能未就绪，立即 fitBounds 会停在世界视图：
+  // 下一帧尺寸稳定后再 fit 一次全场（其后由所选洞的聚焦逻辑接管）。
+  if (window.requestAnimationFrame) requestAnimationFrame(function () {
+    if (!lmap || mapFocused) return;
+    fitOverview();
+    if (geomCache[curHole]) applyHoleFocus(geomCache[curHole]);
+  });
+  L.marker([lat, lng]).addTo(lmap);
+  holeLayer = L.layerGroup().addTo(lmap);
+  mapFocused = false;
+  syncAllBtn();
+  if (geomCache[curHole]) applyHoleFocus(geomCache[curHole]);
+}
+function syncAllBtn() {
+  var b = document.getElementById('allHoles');
+  if (b) b.className = 'all' + (mapFocused ? '' : ' on');
+}
+function resetBigMap() {
+  if (!lmap) return;
+  if (holeLayer) holeLayer.clearLayers();
+  mapFocused = false;
+  fitOverview();
+  syncAllBtn();
+}
+function applyHoleFocus(data) {
+  if (!lmap || !holeLayer) return;
+  holeLayer.clearLayers();
+  mapFocused = false;
+  if (!data || !data.available || !(data.features || []).length) { syncAllBtn(); return; } // 无几何：清掉旧高亮即可，不画假图、相机保持原位
+  var feats = (data.features || []).map(function (f) { return { type: 'Feature', properties: { ftype: f.type }, geometry: f.geojson && f.geojson.geometry }; }).filter(function (f) { return !!f.geometry; });
+  if (data.boundary) feats.push({ type: 'Feature', properties: { ftype: 'boundary' }, geometry: data.boundary.geometry });
+  if (!feats.length) { syncAllBtn(); return; }
+  var gj = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+    style: function (f) {
+      var t = f.properties.ftype;
+      if (t === 'hole') return { color: '#14532d', weight: 4.5, fill: false };
+      if (t === 'boundary') return { color: '#9db8a2', weight: 1.5, dashArray: '5 4', fill: false };
+      if (t === 'cartpath') return { color: '#c9cfc9', weight: 2, fill: false };
+      return { color: '#ffffff', weight: 1, fillColor: FILLS[t] || '#dfe9df', fillOpacity: 0.9 };
+    },
+    pointToLayer: function (f, latlng) { return L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 2, fillColor: '#dc2626', fillOpacity: 1 }); }
+  });
+  holeLayer.addLayer(gj);
+  var b = gj.getBounds();
+  if (b && b.isValid()) { lmap.fitBounds(b.pad(0.3)); mapFocused = true; }
+  syncAllBtn();
+}
+function prefetchAround(h) {
+  [h - 1, h + 1].forEach(function (n) {
+    if (n < 1 || n > 18 || geomCache[n]) return;
+    callRetry('course_geometry', { hole: n }).then(function (j) { geomCache[n] = j; }).catch(function () {});
+  });
 }
 function setHole(n) { curHole = n; renderMap(); }
 function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
-  if (geomCache[curHole]) { box.innerHTML = renderHoleSvg(geomCache[curHole]); return; }
+  var holeAtCall = curHole;
+  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞暂无地形几何，展示记分卡资料（见上方）。</div>'; prefetchAround(curHole); return; }
   callRetry('course_geometry', { hole: curHole }).then(function (j) {
-    geomCache[curHole] = j;
+    geomCache[holeAtCall] = j;
+    if (holeAtCall !== curHole) return; // 用户已切到别的洞，本洞结果只入缓存，不动当前画面与大图
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
     b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞暂无地形几何，展示记分卡资料（见上方）。</div>';
+    applyHoleFocus(j);
+    prefetchAround(holeAtCall);
   }).catch(function () {
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
     b2.innerHTML = '<div class="err">本洞地图加载失败。<br><button class="retry" type="button">重试</button></div>';
@@ -347,20 +443,103 @@ function renderFunc(board) {
     pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
   }
   el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + pairHtml +
-    '<div class="funcrow" style="margin-top:12px"><a href="https://rukik.com/download/">📝 记分（打开 App）</a><a href="https://rukik.com/download/">🤖 问 RUKIK 球童</a>' +
+    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="caddie.html?e=' + encodeURIComponent(eventId) + '&ret=event">🤖 问 AI 球童</a>' +
     (eventId ? '<a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜</a>' : '') + '</div></div>';
+}
+// ---- Golf Live · 精彩瞬间（极简改版 2026-11-11）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
+// 点击任意照片或「查看全部照片」进入完整照片池（photos.html?e=）。坏图自动剔除不占位；手动滑动暂停；
+// 页面不可见或 prefers-reduced-motion 时不自动播放。相册未开通整区不渲染（口径不变）。
+var CAR = { list: [], idx: 0, timer: null, resumeTo: null, manualPause: false };
+var CARDEAD = {}; // 已实测加载失败的照片 id：重渲染（含新照片轮询）时继续排除，避免坏图复活
+function poolUrl() { return 'https://rukik.com/golf/photos.html?e=' + encodeURIComponent(eventId); }
+function carStop() { if (CAR.timer) { clearInterval(CAR.timer); CAR.timer = null; } }
+function carStart() {
+  carStop();
+  if (CAR.list.length < 2) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  CAR.timer = setInterval(function () {
+    if (document.hidden || CAR.manualPause) return;
+    carGo(CAR.idx + 1);
+  }, 2000);
+}
+function carEnsure(i) {
+  var track = document.getElementById('carTrack');
+  if (!track) return;
+  [i, i + 1].forEach(function (k) {
+    var fig = track.children[(k + CAR.list.length) % CAR.list.length];
+    if (!fig) return;
+    var img = fig.querySelector('img');
+    if (img && !img.getAttribute('src') && img.getAttribute('data-src')) img.setAttribute('src', img.getAttribute('data-src'));
+  });
+}
+function carGo(i) {
+  if (!CAR.list.length) return;
+  CAR.idx = ((i % CAR.list.length) + CAR.list.length) % CAR.list.length;
+  var track = document.getElementById('carTrack');
+  if (track) track.style.transform = 'translateX(-' + (CAR.idx * 100) + '%)';
+  var dots = document.getElementById('carDots');
+  if (dots) for (var k = 0; k < dots.children.length; k++) dots.children[k].className = k === CAR.idx ? 'on' : '';
+  carEnsure(CAR.idx);
+}
+function carNoteManual() {
+  CAR.manualPause = true;
+  if (CAR.resumeTo) clearTimeout(CAR.resumeTo);
+  CAR.resumeTo = setTimeout(function () { CAR.manualPause = false; }, 8000);
+}
+function carRemoveAt(i) {
+  CAR.list.splice(i, 1);
+  var track = document.getElementById('carTrack');
+  if (track && track.children[i]) track.removeChild(track.children[i]);
+  var dots = document.getElementById('carDots');
+  if (dots && dots.children[i]) dots.removeChild(dots.children[i]);
+  if (!CAR.list.length) { renderLive(); return; }
+  if (CAR.idx >= CAR.list.length) CAR.idx = CAR.list.length - 1;
+  carGo(CAR.idx);
+  carStart();
 }
 function renderLive() {
   var el = document.getElementById('liveSec');
+  carStop();
   if (!WALL || !WALL.album_enabled) { el.innerHTML = ''; return; }
-  var feed = WALL.feed || [];
-  var stats = WALL.stats || {};
-  el.innerHTML = '<div class="stats"><div class="stat"><b>' + (stats.players != null ? stats.players : '—') + '</b><span>参赛球员</span></div><div class="stat"><b>' + (stats.photos != null ? stats.photos : '—') + '</b><span>现场照片</span></div><div class="stat"><b>' + (stats.progress_hole ? '第 ' + stats.progress_hole + ' 洞' : '—') + '</b><span>当前进度</span></div></div>' +
-    '<div class="card"><h2>Golf Live · 精彩瞬间</h2>' +
-    (feed.length ? '<div class="feed">' + feed.map(function (f) {
-      return '<figure>' + (f.url ? '<img loading="lazy" src="' + esc(f.thumb_url || f.url) + '" alt="">' : '') + '<figcaption>' + esc(f.caption || '现场分享') + '<div class="m">' + (f.hole_number ? '第 ' + f.hole_number + ' 洞 · ' : '') + '现场分享' + (f.author ? ' · ' + esc(f.author) : '') + (f.like_count ? ' · ❤ ' + f.like_count : '') + '</div></figcaption></figure>';
-    }).join('') + '</div>' : '<div class="empty">暂无现场照片。</div>') +
-    '<div class="funcrow" style="margin-top:12px"><a href="https://rukik.com/golf/photos.html">📷 分享现场精彩瞬间</a></div></div>';
+  var feed = (WALL.feed || []).filter(function (f) { return f && f.type === 'photo' && f.url && (f.status == null || f.status === 'visible') && !CARDEAD[f.id]; });
+  var keepId = CAR.list[CAR.idx] && CAR.list[CAR.idx].id;
+  CAR.list = feed;
+  CAR.idx = 0;
+  if (keepId) for (var ki = 0; ki < feed.length; ki++) if (feed[ki].id === keepId) { CAR.idx = ki; break; }
+  var head = '<div class="card"><h2>Golf Live · 精彩瞬间</h2><div class="sub" style="margin-bottom:10px">赛事照片自动汇聚，记录每个精彩时刻</div>';
+  if (!feed.length) {
+    el.innerHTML = head + '<div class="empty">暂无现场照片。</div></div>';
+    return;
+  }
+  el.innerHTML = head +
+    '<div class="car" id="carBox"><div class="carTrack" id="carTrack">' +
+    feed.map(function (f, i) {
+      var src = esc(f.thumb_url || f.url);
+      return '<figure class="carSlide"><img data-ci="' + i + '" data-src="' + src + '"' + (i < 3 ? ' src="' + src + '"' : '') + ' alt=""></figure>';
+    }).join('') +
+    '</div><div class="carDots" id="carDots">' + feed.map(function (f, i) { return '<i' + (i === CAR.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div>' +
+    '<div class="funcrow" style="margin-top:12px"><a href="' + poolUrl() + '">📷 查看全部照片</a></div></div>';
+  var box = document.getElementById('carBox');
+  Array.prototype.forEach.call(box.querySelectorAll('img'), function (img) {
+    img.addEventListener('error', function () {
+      var fig = img.parentNode, track = document.getElementById('carTrack');
+      if (!fig || !track) return;
+      var i = Array.prototype.indexOf.call(track.children, fig);
+      var item = CAR.list[i];
+      if (item) { CARDEAD[item.id] = true; carRemoveAt(i); }
+    });
+    img.addEventListener('click', function () { location.href = poolUrl(); });
+  });
+  var downX = null;
+  box.addEventListener('pointerdown', function (e) { downX = e.clientX; });
+  box.addEventListener('pointerup', function (e) {
+    if (downX == null) return;
+    var dx = e.clientX - downX; downX = null;
+    if (Math.abs(dx) > 40) { carNoteManual(); carGo(CAR.idx + (dx < 0 ? 1 : -1)); }
+  });
+  box.addEventListener('touchstart', function () { carNoteManual(); }, { passive: true });
+  carGo(CAR.idx);
+  carStart();
 }
 var LASTBOARD = null;
 function loadBoardIntoFunc() {
@@ -379,10 +558,29 @@ function loadWall() {
   dyn('wall_get', {}).then(function (j) {
     WALL = j.wall || null;
     if (EV) { renderHero(); renderLive(); }
+    startWallPoll();
   }).catch(function () {
     var el = document.getElementById('liveSec');
     if (el && ((EV && EV.album_enabled) || (SNAP && SNAP.album_enabled))) errBox(el, '精彩瞬间加载失败，请重试。', loadWall);
   });
+}
+// 比赛进行中（state=live）每 60 秒静默刷新一次照片墙：新照片自动进轮播，无需刷新整页；
+// 页面不可见时跳过，dyn() 已做在飞去重＋重试上限，不会形成请求风暴。
+var WALL_POLL_STARTED = false;
+function startWallPoll() {
+  if (WALL_POLL_STARTED) return;
+  WALL_POLL_STARTED = true;
+  setInterval(function () {
+    if (document.hidden || !WALL || WALL.state !== 'live') return;
+    dyn('wall_get', {}).then(function (j) {
+      var nw = j.wall || null;
+      if (!nw) return;
+      var oldIds = ((WALL && WALL.feed) || []).map(function (f) { return f.id; }).join(',');
+      var newIds = (nw.feed || []).map(function (f) { return f.id; }).join(',');
+      WALL = nw;
+      if (oldIds !== newIds) renderLive();
+    }).catch(function () {});
+  }, 60000);
 }
 var SNAP = null, WALL_STARTED = false;
 var SNAP_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/golf-snapshots/' + eventId + '.json';
