@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的赛事回忆 · RUKIK Golf</title>
+<meta property="og:title" content="我的赛事回忆 · RUKIK Golf">
+<meta property="og:description" content="今天留下的不只是成绩，还有一段值得珍藏的球场时光。">
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#0b1f14; color:#eef7ee; }
+  .card { max-width:560px; margin:0 auto; padding:38px 24px 46px; }
+  .brand { color:#9fd08a; letter-spacing:2px; font-size:13px; text-align:center; }
+  h1 { text-align:center; font-size:26px; margin:12px 0 4px; line-height:1.4; }
+  .sub { text-align:center; color:#cfe6c8; font-size:15px; }
+  .stats { display:flex; gap:12px; justify-content:center; margin:26px 0; flex-wrap:wrap; }
+  .stat { background:#14301d; border:1px solid #2b4a33; border-radius:14px; padding:14px 18px; text-align:center; min-width:96px; }
+  .stat b { display:block; font-size:26px; }
+  .stat span { color:#9fd08a; font-size:13px; }
+  .hl { background:#14301d; border:1px solid #2b4a33; border-radius:14px; padding:16px 18px; line-height:1.9; font-size:15px; }
+  .badge { display:inline-block; background:#7a5b12; color:#ffe9a8; border-radius:999px; padding:2px 10px; font-size:12px; margin-right:6px; }
+  .award { display:inline-block; background:#14532d; color:#bbf7d0; border-radius:999px; padding:2px 10px; font-size:12px; margin-right:6px; }
+  .closing { text-align:center; color:#e9f5df; font-size:17px; margin-top:28px; line-height:1.8; }
+  .foot { text-align:center; color:#6f8f66; font-size:12px; margin-top:22px; line-height:1.7; }
+  img.photo { width:100%; border-radius:14px; margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">RUKIK GOLF · 赛事回忆</div>
+  <h1 id="title">回忆加载中…</h1>
+  <div class="sub" id="sub"></div>
+  <div class="stats" id="stats"></div>
+  <div class="hl" id="highlights" style="display:none"></div>
+  <div id="photos"></div>
+  <div class="closing" id="closing"></div>
+  <div class="foot">纪念徽章为非官方纪念，依据真实成绩生成；官方奖项以赛事正式公布为准。<br>由 RUKIK Golf 生成 · 懂比赛，更懂每一位球员</div>
+</div>
+<script>
+var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var slug = new URLSearchParams(location.search).get('s');
+function call(action, body) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + ANON }, body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
+}
+if (slug) {
+  call('memory_get', { share_slug: slug }).then(function (d) {
+    var p = (d.memory || {}).payload || {};
+    document.getElementById('title').textContent = p.event_title || '赛事回忆';
+    document.title = (p.event_title || '赛事回忆') + ' · RUKIK Golf';
+    document.getElementById('sub').textContent = [p.course_name, p.date ? String(p.date).slice(0, 10) : ''].filter(Boolean).join(' · ');
+    var stats = [];
+    if (p.gross_total != null) stats.push(['总杆', p.gross_total]);
+    if (p.net_total != null) stats.push(['净杆', p.net_total]);
+    if (p.points_total != null) stats.push(['积分', p.points_total]);
+    if (p.highlights && p.highlights.birdieCount) stats.push(['Birdie', p.highlights.birdieCount]);
+    document.getElementById('stats').innerHTML = stats.map(function (s) { return '<div class="stat"><b>' + s[1] + '</b><span>' + s[0] + '</span></div>'; }).join('');
+    var lines = [];
+    (p.badges || []).forEach(function (b) { lines.push('<span class="badge">纪念</span>' + b); });
+    (p.awards || []).forEach(function (a) { lines.push('<span class="award">官方奖项</span>' + a); });
+    if (p.groupmates && p.groupmates.length) lines.push('同组球友：' + p.groupmates.join('、'));
+    if (lines.length) { var hl = document.getElementById('highlights'); hl.style.display = 'block'; hl.innerHTML = lines.join('<br>'); }
+    document.getElementById('photos').innerHTML = (p.photos || []).map(function (u) { return '<img class="photo" src="' + u + '">'; }).join('');
+    document.getElementById('closing').textContent = p.closing_line || '今天留下的不只是成绩，还有一段值得珍藏的球场时光。';
+  });
+}
+</script>
+</body>
+</html>
