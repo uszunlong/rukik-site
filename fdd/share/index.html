@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FDD 加盟分析摘要 · RUKIK</title>
+<meta name="description" content="RUKIK FDD 智能分析脱敏摘要：加盟费、总投资、版税、广告基金、Item 19 与风险提示。阅读免注册，互动问专家需登录。"/>
+<meta property="og:title" content="FDD 加盟分析摘要 · RUKIK"/>
+<meta property="og:description" content="带原文页码依据的中文加盟分析摘要：费用、投资、版税与关键风险一页看清。"/>
+<meta property="og:image" content="https://rukik.com/assets/og-share.png"/>
+<meta property="og:type" content="article"/>
+<link rel="icon" href="/assets/seal.png"/>
+<style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;color:#1a2332;background:#f6f8fb}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+.card{background:#fff;border:1px solid #e3e9f2;border-radius:14px;padding:22px;margin:16px 0}
+.sec{white-space:pre-wrap;line-height:1.8;font-size:15px}
+.note{color:#5a6a80;font-size:13px;line-height:1.7}
+a{color:#1262f4}
+.cta{background:#1262f4;color:#fff;border-radius:10px;padding:14px 18px;text-align:center;font-size:16px}
+.cta a{color:#fff;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p><a href="/">RUKIK</a> · <a href="/fdd/">FDD 智能分析</a></p>
+<h1 id="title">FDD 加盟分析摘要</h1>
+<p class="note" id="meta">正在加载…</p>
+<div id="report"></div>
+<div class="card cta">对这份 FDD 还有疑问？<a href="https://rukik.com/ask/">返回 RUKIK 咨询 →</a><br/><span style="font-size:13px">阅读免注册；向 AI 与专家提问需登录 RUKIK。</span></div>
+<p class="note">本页为报告所有者主动分享的脱敏摘要：不含分享者身份与原始 FDD 文件。数据来源可信度见各节标注；本摘要不构成投资建议。</p>
+</div>
+<script>
+const SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+(async () => {
+  const code = new URLSearchParams(location.search).get("c");
+  const el = document.getElementById("report"), meta = document.getElementById("meta");
+  if (!code) { meta.textContent = "分享链接无效。"; return; }
+  const r = await fetch(SB_URL + "/functions/v1/fdd-analyze", { method: "POST", headers: { Authorization: "Bearer " + ANON, apikey: ANON, "Content-Type": "application/json" }, body: JSON.stringify({ action: "shared_get", share_code: code }) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status !== 200 || !j.summary) { meta.textContent = "该分享已失效或已被分享者撤销。"; document.title = "分享已失效 · RUKIK"; return; }
+  const s = j.summary;
+  document.getElementById("title").textContent = (s.brand_name || "FDD") + " 加盟分析摘要（" + (s.fdd_year || "") + " 版）";
+  document.title = (s.brand_name || "FDD") + " 加盟分析摘要 · RUKIK";
+  meta.textContent = (s.source_note || "") + " · 摘要生成于 " + new Date(s.created_at).toLocaleDateString("zh-CN");
+  el.innerHTML = s.sections.map(x => `<div class="card"><h3 style="margin-top:0">${x.no}. ${esc(x.title)}</h3><div class="sec">${esc(x.body)}</div></div>`).join("");
+})();
+</script>
+<script src="/assets/wxshare.js" defer></script>
+</body>
+</html>

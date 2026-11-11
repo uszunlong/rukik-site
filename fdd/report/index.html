@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FDD 分析报告 · RUKIK</title>
+<meta name="description" content="FDD 中文加盟分析报告（仅报告所有者登录后可见）。"/>
+<meta property="og:title" content="FDD 分析报告 · RUKIK"/>
+<meta property="og:description" content="带原文页码与摘录的中文加盟分析报告。"/>
+<meta property="og:image" content="https://rukik.com/assets/og-share.png"/>
+<link rel="icon" href="/assets/seal.png"/>
+<style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;color:#1a2332;background:#f6f8fb}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+.card{background:#fff;border:1px solid #e3e9f2;border-radius:14px;padding:22px;margin:16px 0}
+button{background:#1262f4;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:15px;cursor:pointer}
+button.ghost{background:#eef3fb;color:#1262f4}
+.sec{white-space:pre-wrap;line-height:1.8;font-size:15px}
+.note{color:#5a6a80;font-size:13px;line-height:1.7}
+a{color:#1262f4}
+@media print{ .noprint{display:none!important} body{background:#fff} .card{border:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="noprint"><a href="/fdd/">← FDD 智能分析</a> · <a href="/ask/">问 Rukik</a></p>
+<h1 id="title">FDD 分析报告</h1>
+<p class="note" id="meta"></p>
+<div class="card noprint">
+  <button id="pdfBtn">下载中文 PDF</button>
+  <button class="ghost" id="shareBtn">创建脱敏分享</button>
+  <button class="ghost" id="revokeBtn" style="display:none">撤销分享</button>
+  <span id="shareBox" style="margin-left:12px"></span>
+  <div id="qr" style="margin-top:12px"></div>
+  <p class="note">分享为脱敏摘要页：公开可读，不含您的身份、原始文件与私人备注；可随时撤销，撤销后立即失效。下载 PDF 将打开打印对话框，选择「另存为 PDF」即可。</p>
+</div>
+<div id="report"></div>
+<p class="note" id="foot"></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+pdfjsLibFix = null;
+const SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+const sb = supabase.createClient(SB_URL, ANON);
+const id = new URLSearchParams(location.search).get("id");
+let myShare = null;
+async function ef(body) {
+  const { data } = await sb.auth.getSession();
+  const tok = data.session ? data.session.access_token : ANON;
+  const r = await fetch(SB_URL + "/functions/v1/fdd-analyze", { method: "POST", headers: { Authorization: "Bearer " + tok, apikey: ANON, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { document.getElementById("report").innerHTML = '<div class="card">请先在 <a href="/fdd/">FDD 智能分析页</a> 登录后查看报告（报告默认仅本人可见）。</div>'; return; }
+  const r = await ef({ action: "get", report_id: id });
+  if (r.status !== 200) { document.getElementById("report").innerHTML = '<div class="card">报告不存在或无权访问。</div>'; return; }
+  const rep = r.body.report;
+  document.getElementById("title").textContent = rep.report.title || "FDD 分析报告";
+  document.getElementById("meta").textContent = (rep.report.source_note || "") + " · 生成时间：" + new Date(rep.created_at).toLocaleString("zh-CN");
+  document.getElementById("report").innerHTML = rep.report.sections.map(s => `<div class="card"><h3 style="margin-top:0">${s.no}. ${esc(s.title)}</h3><div class="sec">${esc(s.body)}</div></div>`).join("");
+  document.getElementById("foot").textContent = rep.report.disclaimer || "";
+  const sl = await ef({ action: "share_list" });
+  myShare = (sl.body.shares || []).find(x => x.report_id === id && !x.revoked_at) || null;
+  renderShare();
+})();
+function renderShare() {
+  const box = document.getElementById("shareBox"), qr = document.getElementById("qr");
+  document.getElementById("revokeBtn").style.display = myShare ? "inline-block" : "none";
+  if (myShare) {
+    const url = "https://rukik.com/fdd/share/?c=" + myShare.share_code;
+    box.innerHTML = `分享链接：<a href="${url}">${url}</a>`;
+    qr.innerHTML = "<p class='note'>报告二维码（扫码打开脱敏摘要页）：</p>";
+    new QRCode(qr, { text: url, width: 140, height: 140 });
+  } else { box.textContent = "当前未分享（仅自己看）。"; qr.innerHTML = ""; }
+}
+document.getElementById("pdfBtn").onclick = () => window.print();
+document.getElementById("shareBtn").onclick = async () => {
+  const r = await ef({ action: "share_create", report_id: id });
+  if (r.body.share) { myShare = r.body.share; renderShare(); }
+};
+document.getElementById("revokeBtn").onclick = async () => {
+  if (!myShare) return;
+  await ef({ action: "share_revoke", share_id: myShare.id });
+  myShare = null; renderShare();
+};
+</script>
+<script src="/assets/wxshare.js" defer></script>
+</body>
+</html>

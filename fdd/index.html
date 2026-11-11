@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FDD 智能分析 · RUKIK</title>
+<meta name="description" content="上传美国特许经营披露文件（FDD），自动生成带原文页码与摘录的中文加盟分析报告。文件默认仅本人可见，不公开、不入公共知识库。"/>
+<meta property="og:title" content="FDD 智能分析 · RUKIK"/>
+<meta property="og:description" content="上传 FDD，生成带原文依据的中文加盟分析报告。"/>
+<meta property="og:image" content="https://rukik.com/assets/og-share.png"/>
+<link rel="icon" href="/assets/seal.png"/>
+<style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;color:#1a2332;background:#f6f8fb}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:26px;margin:6px 0}
+.card{background:#fff;border:1px solid #e3e9f2;border-radius:14px;padding:20px;margin:16px 0}
+button{background:#1262f4;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:15px;cursor:pointer}
+button.ghost{background:#eef3fb;color:#1262f4}
+input[type=email],input[type=password]{padding:10px;border:1px solid #c9d4e4;border-radius:9px;width:260px;font-size:15px}
+.note{color:#5a6a80;font-size:13px;line-height:1.7}
+.rep{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eef1f6;padding:12px 0}
+a{color:#1262f4}
+#status{white-space:pre-wrap;color:#345}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p><a href="/">← RUKIK 首页</a> · <a href="/ask/">问 Rukik</a> · <a href="/experts/">专家 AI</a></p>
+<h1>FDD 智能分析</h1>
+<p class="note">上传美国特许经营披露文件（FDD，PDF），系统自动抽取关键字段（加盟费、总投资、版税、广告基金、Item 19、期限等），生成 12 部分中文加盟分析报告，每项结论附原文页码与摘录；原文未披露的字段如实标注，绝不猜测填值。<br/>隐私承诺：您上传的文件与报告<strong>默认仅您本人可见</strong>，不公开、不进入全平台知识库；只有您主动创建分享时，才会生成一份脱敏摘要页（不含原始文件）。</p>
+
+<div class="card" id="authCard">
+  <h3 style="margin-top:0">登录后使用</h3>
+  <div id="authForm">
+    <input type="email" id="email" placeholder="邮箱"/>
+    <input type="password" id="pw" placeholder="密码"/>
+    <button id="loginBtn">登录</button>
+    <p class="note">使用您的 RUKIK 账号登录（与 App 同一账号体系）。没有账号？请先在 RUKIK App 注册。</p>
+  </div>
+  <div id="userBox" style="display:none"><span id="userEmail"></span> <button class="ghost" id="logoutBtn">退出</button></div>
+  <p id="authMsg" class="note"></p>
+</div>
+
+<div class="card" id="upCard" style="display:none">
+  <h3 style="margin-top:0">上传 FDD（PDF）</h3>
+  <input type="file" id="file" accept="application/pdf"/>
+  <button id="upBtn">开始分析</button>
+  <p id="status"></p>
+  <p class="note">同一文件重复上传会自动复用已有报告，不重复计费。分析约需 20–60 秒，请勿关闭页面。</p>
+</div>
+
+<div class="card" id="listCard" style="display:none">
+  <h3 style="margin-top:0">我的报告</h3>
+  <div id="list"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+const sb = supabase.createClient(SB_URL, ANON);
+const $ = (id) => document.getElementById(id);
+async function ef(body) {
+  const { data } = await sb.auth.getSession();
+  const tok = data.session ? data.session.access_token : ANON;
+  const r = await fetch(SB_URL + "/functions/v1/fdd-analyze", { method: "POST", headers: { Authorization: "Bearer " + tok, apikey: ANON, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+async function refresh() {
+  const { data } = await sb.auth.getSession();
+  const u = data.session && data.session.user;
+  $("userBox").style.display = u ? "block" : "none";
+  $("authForm").style.display = u ? "none" : "block";
+  $("upCard").style.display = u ? "block" : "none";
+  $("listCard").style.display = u ? "block" : "none";
+  if (u) { $("userEmail").textContent = u.email || u.id; loadList(); }
+}
+async function loadList() {
+  const r = await ef({ action: "list" });
+  const el = $("list");
+  if (!r.body.reports || !r.body.reports.length) { el.innerHTML = '<p class="note">暂无报告，上传一份 FDD 开始分析。</p>'; return; }
+  el.innerHTML = r.body.reports.map(x => `<div class="rep"><div><b>${(x.brand_name||"未知品牌")}</b> · ${x.fdd_year||""} 版<br/><span class="note">${new Date(x.created_at).toLocaleString("zh-CN")}</span></div><a href="/fdd/report/?id=${x.id}">查看报告 →</a></div>`).join("");
+}
+$("loginBtn").onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pw").value });
+  $("authMsg").textContent = error ? ("登录失败：" + error.message) : "";
+  refresh();
+};
+$("logoutBtn").onclick = async () => { await sb.auth.signOut(); refresh(); };
+$("upBtn").onclick = async () => {
+  const file = $("file").files[0];
+  if (!file) { $("status").textContent = "请先选择 PDF 文件。"; return; }
+  try {
+    $("status").textContent = "正在计算文件指纹…";
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+    const hash = [...new Uint8Array(hashBuf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    let r = await ef({ action: "signed_upload", content_hash: hash });
+    if (r.status !== 200) throw new Error("获取上传地址失败");
+    $("status").textContent = "正在上传原件（私有存储）…";
+    const put = await fetch(r.body.signed_url, { method: "PUT", headers: { "Content-Type": "application/pdf", "x-upsert": "true" }, body: buf });
+    if (!put.ok) throw new Error("上传失败 " + put.status);
+    $("status").textContent = "正在提取原文文本（本地浏览器解析，保留页码）…";
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pages_text = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent();
+      let lastY = null, s = "";
+      for (const it of tc.items) { const y = it.transform[5]; if (lastY !== null && Math.abs(y - lastY) > 2) s += "\n"; s += it.str + " "; lastY = y; }
+      pages_text.push(s);
+      if (i % 50 === 0) $("status").textContent = `正在提取原文文本… ${i}/${pdf.numPages} 页`;
+    }
+    $("status").textContent = "正在生成中文分析报告（约 20–60 秒）…";
+    r = await ef({ action: "analyze", storage_path: r.body.storage_path, content_hash: hash, filename: file.name, file_size: file.size, pages_text });
+    if (r.status !== 200 || !r.body.report) throw new Error("分析失败：" + JSON.stringify(r.body).slice(0, 200));
+    $("status").textContent = r.body.reused ? "该文件已分析过，已复用已有报告。" : "分析完成！";
+    location.href = "/fdd/report/?id=" + r.body.report.id;
+  } catch (e) { $("status").textContent = "出错：" + e.message; }
+};
+refresh();
+</script>
+<script src="/assets/wxshare.js" defer></script>
+</body>
+</html>

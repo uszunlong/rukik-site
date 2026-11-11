@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WXTEST · 微信分享签名诊断页</title>
+<link rel="canonical" href="https://rukik.com/wxtest/">
+<meta property="og:title" content="WXTEST 诊断页">
+<meta property="og:description" content="WeChat JS-SDK signature diagnostic page">
+<meta property="og:url" content="https://rukik.com/wxtest/">
+<style>
+  body { font-family: -apple-system, "PingFang SC", sans-serif; margin: 12px; font-size: 14px; line-height: 1.55; color: #111; }
+  h1 { font-size: 18px; } h2 { font-size: 16px; margin-top: 22px; border-top: 2px solid #333; padding-top: 8px; }
+  .row { margin: 4px 0; word-break: break-all; }
+  .k { color: #555; } .ok { color: #0a7d00; font-weight: 700; }
+  .bad { color: #c00; font-weight: 700; } .wait { color: #b60; }
+  .errmsg { color: #c00; font-weight: 700; font-size: 16px; word-break: break-all; }
+  pre { background: #f4f4f4; padding: 8px; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>WXTEST · 微信 JS-SDK 签名诊断</h1>
+<p>本页会自动跑完 A / B / C 三组测试（约 1 分钟内）。跑完请<b>整页长截图</b>回传。
+若下方各行长时间停在「等待」或整页只有本段文字，说明页面脚本未执行——也请截图回传。</p>
+
+<h2>0 · 环境与信标</h2>
+<div id="sec0">
+  <div class="row"><span class="k">页面脚本：</span><span id="s0-script" class="wait">未运行</span></div>
+  <div class="row"><span class="k">User-Agent：</span><span id="s0-ua">-</span></div>
+  <div class="row"><span class="k">location.href（原文）：</span><span id="s0-href">-</span></div>
+  <div class="row"><span class="k">canonical：</span><span id="s0-canon">-</span></div>
+  <div class="row"><span class="k">信标→抓取点 healthz：</span><span id="s0-b1" class="wait">未发出</span></div>
+  <div class="row"><span class="k">信标→签名 EF：</span><span id="s0-b2" class="wait">未发出</span></div>
+  <div class="row"><span class="k">jweixin-1.6.0.js 加载：</span><span id="s0-sdk" class="wait">等待</span></div>
+</div>
+
+<h2>A 组 · 生产逻辑复刻（按 canonical 送签，即线上 wxshare.js 现行做法）</h2>
+<div id="secA">
+  <div class="row"><span class="k">送签 URL：</span><span id="a-url">-</span></div>
+  <div class="row"><span class="k">EF 返回：</span><span id="a-ef" class="wait">等待</span></div>
+  <div class="row"><span class="k">wx.ready：</span><span id="a-ready" class="wait">等待</span></div>
+  <div class="row"><span class="k">wx.error errMsg（微信判词原文）：</span><span id="a-err" class="errmsg">（尚无）</span></div>
+  <div class="row"><span class="k">checkJsApi：</span><span id="a-check">-</span></div>
+  <div class="row"><span class="k">updateAppMessageShareData / Timeline：</span><span id="a-share">-</span></div>
+  <div class="row"><span class="k">A 组结论：</span><span id="a-verdict" class="wait">等待</span></div>
+</div>
+
+<h2>B 组 · 对照（强制按 location.href 送签，忽略 canonical）</h2>
+<div id="secB">
+  <div class="row"><span class="k">送签 URL：</span><span id="b-url">-</span></div>
+  <div class="row"><span class="k">EF 返回：</span><span id="b-ef" class="wait">等待</span></div>
+  <div class="row"><span class="k">wx.ready：</span><span id="b-ready" class="wait">等待</span></div>
+  <div class="row"><span class="k">wx.error errMsg（微信判词原文）：</span><span id="b-err" class="errmsg">（尚无）</span></div>
+  <div class="row"><span class="k">checkJsApi：</span><span id="b-check">-</span></div>
+  <div class="row"><span class="k">updateAppMessageShareData / Timeline：</span><span id="b-share">-</span></div>
+  <div class="row"><span class="k">B 组结论：</span><span id="b-verdict" class="wait">等待</span></div>
+</div>
+
+<h2>C 组 · 线上 wxshare.js 原件探针（监控它的 EF 请求与 wx.config 入参）</h2>
+<div id="secC">
+  <div class="row"><span class="k">注入 /assets/wxshare.js：</span><span id="c-load" class="wait">等待</span></div>
+  <div class="row"><span class="k">它发出的 EF 请求：</span><span id="c-fetch">-</span></div>
+  <div class="row"><span class="k">它调用 wx.config 的入参：</span><span id="c-config">-</span></div>
+  <div class="row"><span class="k">其后 wx.ready：</span><span id="c-ready" class="wait">等待</span></div>
+  <div class="row"><span class="k">其后 wx.error errMsg：</span><span id="c-err" class="errmsg">（尚无）</span></div>
+  <div class="row"><span class="k">C 组结论：</span><span id="c-verdict" class="wait">等待</span></div>
+</div>
+
+<h2>原始事件流水</h2>
+<pre id="log"></pre>
+
+<script>
+(function () {
+  "use strict";
+  var SIGN_ENDPOINT = "https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/wx-jssdk-sign";
+  var FETCHPOINT = "https://wxsign.rukik.com/healthz";
+  var JWEIXIN_SRC = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
+  var PAGE_T0 = Date.now();
+
+  function $(id) { return document.getElementById(id); }
+  function now() { return new Date().toISOString(); }
+  function set(id, text, cls) {
+    var el = $(id);
+    if (!el) return;
+    el.textContent = text;
+    if (cls) el.className = cls;
+  }
+  function log(msg) {
+    var el = $("log");
+    if (el) el.textContent += "[" + now() + " +" + (Date.now() - PAGE_T0) + "ms] " + msg + "\n";
+  }
+
+  // ---- 0. environment + beacons (fire immediately) ----
+  set("s0-script", "已运行 @" + now(), "ok");
+  set("s0-ua", navigator.userAgent || "(empty)");
+  set("s0-href", location.href);
+  var canonEl = document.querySelector('link[rel="canonical"]');
+  var CANONICAL = canonEl ? canonEl.href : "";
+  set("s0-canon", CANONICAL || "(none)");
+  log("page script start; href=" + location.href);
+
+  var diagTs = String(Date.now());
+  try {
+    fetch(FETCHPOINT + "?diag=" + diagTs, { mode: "no-cors" }).then(function () {
+      set("s0-b1", "已发出并完成（no-cors）@" + now(), "ok"); log("beacon fetchpoint done");
+    }, function (e) {
+      set("s0-b1", "发出失败：" + String(e && e.message || e), "bad"); log("beacon fetchpoint failed: " + e);
+    });
+    set("s0-b1", "已发出 @" + now(), "wait");
+  } catch (e) { set("s0-b1", "异常：" + String(e), "bad"); }
+  try {
+    fetch(SIGN_ENDPOINT + "?diag=" + diagTs, { mode: "no-cors" }).then(function () {
+      set("s0-b2", "已发出并完成（no-cors）@" + now(), "ok"); log("beacon EF done");
+    }, function (e) {
+      set("s0-b2", "发出失败：" + String(e && e.message || e), "bad"); log("beacon EF failed: " + e);
+    });
+    set("s0-b2", "已发出 @" + now(), "wait");
+  } catch (e) { set("s0-b2", "异常：" + String(e), "bad"); }
+
+  // ---- helpers ----
+  function postEf(url) {
+    var t0 = Date.now();
+    return fetch(SIGN_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: url })
+    }).then(function (r) {
+      return r.text().then(function (txt) {
+        var data = null;
+        try { data = JSON.parse(txt); } catch (e) { /* keep null */ }
+        return { status: r.status, ms: Date.now() - t0, data: data, raw: txt };
+      });
+    });
+  }
+
+  function describeSign(res) {
+    if (!res.data) return "HTTP " + res.status + " (" + res.ms + "ms) 非 JSON：" + String(res.raw).slice(0, 120);
+    if (res.data.error) return "HTTP " + res.status + " (" + res.ms + "ms) error=" + res.data.error;
+    var d = res.data;
+    return "HTTP " + res.status + " (" + res.ms + "ms) appId=" + d.appId +
+      " timestamp=" + d.timestamp +
+      " nonceStr[0:8]=" + String(d.nonceStr).slice(0, 8) +
+      " signature[0:8]=" + String(d.signature).slice(0, 8);
+  }
+
+  // Run one wx.config attempt; resolves with {outcome: 'ready'|'error'|'timeout', errMsg}
+  // NOTE: jweixin accumulates wx.ready callbacks across config attempts, so a
+  // later group's successful config would also fire this group's stale ready
+  // callback. The `failed` flag makes the wx.error verdict authoritative.
+  function runConfig(prefix, sign, shareTitle) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      var failed = false;
+      var timer = setTimeout(function () {
+        if (!settled) {
+          settled = true;
+          set(prefix + "-verdict", "超时：12 秒内 wx.ready 未触发、wx.error 未回", "bad");
+          log(prefix + " config timeout");
+          resolve({ outcome: "timeout" });
+        }
+      }, 12000);
+      function done(outcome, errMsg) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve({ outcome: outcome, errMsg: errMsg });
+      }
+      try {
+        window.wx.error(function (res) {
+          var msg = (res && res.errMsg) || "(errMsg 为空)";
+          failed = true;
+          set(prefix + "-err", msg, "errmsg");
+          set(prefix + "-verdict", "失败：wx.config 被微信拒绝（判词见 errMsg 原文）", "bad");
+          log(prefix + " wx.error: " + msg);
+          done("error", msg);
+        });
+        window.wx.config({
+          debug: false,
+          appId: sign.appId,
+          timestamp: sign.timestamp,
+          nonceStr: sign.nonceStr,
+          signature: sign.signature,
+          jsApiList: ["updateAppMessageShareData", "updateTimelineShareData"]
+        });
+        log(prefix + " wx.config called");
+        window.wx.ready(function () {
+          if (failed) { log(prefix + " stale ready ignored (this group already errored)"); return; }
+          set(prefix + "-ready", "已触发 @" + now(), "ok");
+          log(prefix + " wx.ready fired");
+          try {
+            window.wx.checkJsApi({
+              jsApiList: ["updateAppMessageShareData", "updateTimelineShareData"],
+              success: function (res) {
+                set(prefix + "-check", JSON.stringify(res && res.checkResult || res));
+                log(prefix + " checkJsApi: " + JSON.stringify(res && res.checkResult || res));
+              },
+              fail: function (res) {
+                set(prefix + "-check", "fail: " + ((res && res.errMsg) || "?"));
+              }
+            });
+          } catch (e) { set(prefix + "-check", "异常：" + String(e)); }
+          var data = {
+            title: shareTitle,
+            desc: "WXTEST diagnostic share data",
+            link: location.href.split("#")[0],
+            imgUrl: "https://rukik.com/assets/wxshare.js"
+          };
+          try {
+            var r1 = window.wx.updateAppMessageShareData(data);
+            var r2 = window.wx.updateTimelineShareData(data);
+            set(prefix + "-share", "已调用（同步返回：" + String(r1) + " / " + String(r2) + "）@" + now(), "ok");
+            log(prefix + " share data set");
+          } catch (e) {
+            set(prefix + "-share", "调用异常：" + String(e), "bad");
+          }
+          set(prefix + "-verdict", "成功：wx.config 被微信接受（ready 已触发）", "ok");
+          done("ready");
+        });
+      } catch (e) {
+        set(prefix + "-verdict", "异常：" + String(e), "bad");
+        done("error", String(e));
+      }
+    });
+  }
+
+  function runGroup(prefix, signedUrl, shareTitle) {
+    set(prefix + "-url", signedUrl);
+    log(prefix + " signing url=" + signedUrl);
+    return postEf(signedUrl).then(function (res) {
+      set(prefix + "-ef", describeSign(res), res.data && res.data.signature ? "ok" : "bad");
+      log(prefix + " EF: " + describeSign(res));
+      if (!res.data || !res.data.signature) {
+        set(prefix + "-verdict", "EF 未返回签名，跳过 wx.config", "bad");
+        return { outcome: "ef_fail" };
+      }
+      return runConfig(prefix, res.data, shareTitle);
+    }, function (e) {
+      set(prefix + "-ef", "fetch 失败：" + String(e && e.message || e), "bad");
+      set(prefix + "-verdict", "EF 请求失败（网络/CORS）", "bad");
+      log(prefix + " EF fetch failed: " + e);
+      return { outcome: "ef_fetch_fail" };
+    });
+  }
+
+  // ---- SDK load, then groups A -> B -> C ----
+  function loadSdk() {
+    return new Promise(function (resolve) {
+      if (window.wx && window.wx.config) { set("s0-sdk", "页面已有 wx 对象", "ok"); resolve(true); return; }
+      var done = false;
+      var s = document.createElement("script");
+      var timer = setTimeout(function () {
+        if (!done) { done = true; set("s0-sdk", "加载超时（10 秒）", "bad"); log("sdk load timeout"); resolve(false); }
+      }, 10000);
+      s.src = JWEIXIN_SRC;
+      s.onload = function () {
+        if (done) return; done = true; clearTimeout(timer);
+        set("s0-sdk", "加载成功 @" + now(), "ok"); log("sdk loaded");
+        resolve(true);
+      };
+      s.onerror = function () {
+        if (done) return; done = true; clearTimeout(timer);
+        set("s0-sdk", "加载失败（onerror）", "bad"); log("sdk load error");
+        resolve(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  function runGroupC() {
+    // Wrap fetch to observe wxshare.js's own EF traffic.
+    var origFetch = window.fetch;
+    var saw = [];
+    window.fetch = function () {
+      var u = arguments[0];
+      var p = origFetch.apply(this, arguments);
+      try {
+        if (typeof u === "string" && u.indexOf("wx-jssdk-sign") >= 0) {
+          p.then(function (r) {
+            saw.push(u + " -> HTTP " + r.status);
+            set("c-fetch", saw.join(" ; "), "ok");
+            log("C observed fetch: " + u + " -> " + r.status);
+          }, function (e) {
+            saw.push(u + " -> FAILED " + String(e));
+            set("c-fetch", saw.join(" ; "), "bad");
+          });
+        }
+      } catch (e) { /* ignore */ }
+      return p;
+    };
+    // Wrap wx.config to capture wxshare.js's arguments.
+    var configSeen = false;
+    var origConfig = window.wx.config;
+    window.wx.config = function (cfg) {
+      configSeen = true;
+      try {
+        set("c-config", "appId=" + cfg.appId + " timestamp=" + cfg.timestamp +
+          " nonceStr[0:8]=" + String(cfg.nonceStr).slice(0, 8) +
+          " signature[0:8]=" + String(cfg.signature).slice(0, 8) +
+          " jsApiList=" + JSON.stringify(cfg.jsApiList), "ok");
+        log("C captured wx.config args");
+      } catch (e) { /* ignore */ }
+      return origConfig.call(window.wx, cfg);
+    };
+    return new Promise(function (resolve) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (!settled) {
+          settled = true;
+          set("c-verdict", "18 秒内未见其 config 成功/失败回执（见上方各行）", "bad");
+          window.fetch = origFetch;
+          resolve();
+        }
+      }, 18000);
+      window.wx.error(function (res) {
+        var msg = (res && res.errMsg) || "(errMsg 为空)";
+        set("c-err", msg, "errmsg");
+        log("C wx.error: " + msg);
+        if (!settled) {
+          settled = true; clearTimeout(timer);
+          set("c-verdict", "wxshare.js 的 config 被拒：见 errMsg", "bad");
+          window.fetch = origFetch;
+          resolve();
+        }
+      });
+      window.wx.ready(function () {
+        if (!configSeen) { log("C ready ignored (fires from an earlier group's config)"); return; }
+        set("c-ready", "已触发 @" + now(), "ok");
+        log("C wx.ready fired");
+        if (!settled) {
+          settled = true; clearTimeout(timer);
+          set("c-verdict", "wxshare.js 的 config 被接受（ready 触发）", "ok");
+          window.fetch = origFetch;
+          resolve();
+        }
+      });
+      var s = document.createElement("script");
+      s.src = "/assets/wxshare.js";
+      s.onload = function () { set("c-load", "已加载执行 @" + now(), "ok"); log("C wxshare.js loaded"); };
+      s.onerror = function () {
+        set("c-load", "加载失败（onerror）", "bad");
+        if (!settled) { settled = true; clearTimeout(timer); set("c-verdict", "wxshare.js 加载失败", "bad"); resolve(); }
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  loadSdk().then(function (ok) {
+    if (!ok) {
+      set("a-verdict", "SDK 未加载，A 组中止", "bad");
+      set("b-verdict", "SDK 未加载，B 组中止", "bad");
+      set("c-verdict", "SDK 未加载，C 组中止", "bad");
+      return;
+    }
+    var urlA = (CANONICAL || location.href).split("#")[0];
+    runGroup("a", urlA, "WXTEST A组（canonical 送签）").then(function () {
+      var urlB = location.href.split("#")[0];
+      return runGroup("b", urlB, "WXTEST B组（location 送签）");
+    }).then(function () {
+      return runGroupC();
+    }).then(function () {
+      log("all groups settled");
+    });
+  });
+})();
+</script>
+</body>
+</html>

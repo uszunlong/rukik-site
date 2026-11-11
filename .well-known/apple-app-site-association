@@ -29,6 +29,14 @@
           {
             "/": "/s/*",
             "comment": "Shared content links (query form /s/?c=...) open in the Rukik app when installed."
+          },
+          {
+            "/": "/p/*",
+            "comment": "Expert public profile and AI chat pages (rukik.com/p/<id> and /p/<id>/chat) open in the Rukik app when installed."
+          },
+          {
+            "/": "/e/*",
+            "comment": "Expert pages (rukik.com/e/...) open in the Rukik app when installed."
           }
         ]
       }
