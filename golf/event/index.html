@@ -8,40 +8,67 @@
 <meta property="og:description" content="RUKIK Golf｜懂比赛，更懂每一位球员。打开就能比赛，打完就有回忆。">
 <meta name="description" content="RUKIK Golf｜懂比赛，更懂每一位球员。">
 <style>
-  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f4f8f2; color:#17301c; }
-  .hero { background:linear-gradient(135deg,#0b1f14,#1d4a2a); color:#fff; padding:34px 22px 26px; }
-  .brand { color:#9fd08a; letter-spacing:2px; font-size:13px; }
-  h1 { margin:8px 0 6px; font-size:27px; line-height:1.3; }
-  .meta { color:#cfe6c8; font-size:15px; line-height:1.7; }
-  main { padding:18px 22px 40px; max-width:760px; margin:0 auto; }
-  h2 { font-size:19px; margin:26px 0 10px; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#fff; color:#17251b; }
+  .wrap { max-width:860px; margin:0 auto; padding:20px 18px 44px; }
+  .toprow { display:flex; justify-content:space-between; align-items:center; }
+  .brand { color:#6b7a6e; letter-spacing:2px; font-size:13px; font-weight:600; }
+  .pill { background:#e4f3e2; color:#177245; border-radius:999px; padding:5px 14px; font-size:13px; font-weight:600; }
+  .pill.pre { background:#eef1ee; color:#5c7260; }
+  .pill.post { background:#fdf3d8; color:#7a5b12; }
+  h1 { margin:12px 0 4px; font-size:30px; line-height:1.3; }
+  .sub { color:#7a8a7e; font-size:15px; margin-bottom:16px; }
+  .hero { border-radius:18px; overflow:hidden; background:linear-gradient(135deg,#0b1f14,#1d4a2a); min-height:180px; display:flex; align-items:flex-end; }
+  .hero img { width:100%; height:100%; object-fit:cover; display:block; max-height:420px; }
+  .hero .cap { color:#cfe6c8; padding:22px; font-size:15px; line-height:1.8; }
+  .stats { display:flex; gap:12px; margin:16px 0; }
+  .stat { flex:1; background:#f4f5f3; border-radius:14px; text-align:center; padding:16px 6px; }
+  .stat b { font-size:27px; display:block; font-weight:700; }
+  .stat span { color:#7a8a7e; font-size:13px; }
+  .sharebtn { display:block; text-align:center; background:#14181d; color:#fff; padding:15px; border-radius:999px; text-decoration:none; font-size:16px; font-weight:600; margin:6px 0 20px; }
+  h2 { font-size:19px; margin:26px 0 12px; }
+  .feed { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .card { border-radius:14px; overflow:hidden; background:#fff; }
+  .card img { width:100%; height:190px; object-fit:cover; display:block; border-radius:14px; }
+  .card .t { font-weight:600; font-size:15px; margin-top:8px; }
+  .card .m { color:#8a978c; font-size:12.5px; margin-top:2px; line-height:1.5; }
+  .pinbadge { display:inline-block; background:#fdf3d8; color:#7a5b12; border-radius:6px; padding:1px 7px; font-size:11.5px; margin-right:6px; }
   table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; }
-  td, th { padding:10px 12px; border-bottom:1px solid #e5eee1; text-align:left; font-size:15px; }
+  td, th { padding:10px 12px; border-bottom:1px solid #e8ede7; text-align:left; font-size:15px; }
   .tag { display:inline-block; background:#7a5b12; color:#ffe9a8; border-radius:999px; padding:2px 10px; font-size:12px; }
   .tag.final { background:#14532d; color:#bbf7d0; }
-  .cta { display:block; text-align:center; background:#1d7a3a; color:#fff; padding:14px; border-radius:12px; text-decoration:none; font-size:17px; margin-top:22px; }
+  .ann { background:#f7f9f5; border-radius:12px; padding:12px 14px; margin-bottom:10px; font-size:14.5px; line-height:1.6; }
+  .ann b { display:block; margin-bottom:2px; }
   .sponsor { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
-  .sponsor img { height:36px; background:#fff; border-radius:6px; padding:3px 8px; }
+  .sponsor img { height:36px; border-radius:6px; }
   .note { color:#5c7260; font-size:13px; line-height:1.7; }
-  .ann { background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .cta { display:block; text-align:center; background:#1d7a3a; color:#fff; padding:14px; border-radius:12px; text-decoration:none; font-size:16px; margin-top:20px; }
 </style>
 </head>
 <body>
-<div class="hero">
-  <div class="brand">RUKIK GOLF ｜ 懂比赛，更懂每一位球员</div>
+<div class="wrap">
+  <div class="toprow">
+    <div class="brand">RUKIK GOLF · LIVE</div>
+    <div class="pill pre" id="statePill">加载中</div>
+  </div>
   <h1 id="title">赛事加载中…</h1>
-  <div class="meta" id="meta"></div>
-</div>
-<main>
+  <div class="sub">赛事互动 · 精彩瞬间 · 实时成绩</div>
+  <div class="hero" id="hero"><div class="cap" id="heroCap"></div></div>
+  <div class="stats">
+    <div class="stat"><b id="stPlayers">—</b><span>参赛球员</span></div>
+    <div class="stat"><b id="stPhotos">—</b><span>现场照片</span></div>
+    <div class="stat"><b id="stProgress">—</b><span>当前进度</span></div>
+  </div>
+  <a class="sharebtn" id="shareBtn" href="https://rukik.com/download/" style="display:none">📷 分享现场精彩瞬间</a>
+  <div id="annBox"></div>
+  <h2 id="feedTitle" style="display:none">赛事动态</h2>
+  <div class="feed" id="feed"></div>
   <h2>排行榜 <span class="tag" id="boardTag">实时 · 未最终确认</span></h2>
   <table><thead><tr><th>名次</th><th>球员 / 球队</th><th>成绩</th></tr></thead><tbody id="rows"><tr><td colspan="3">加载中…</td></tr></tbody></table>
-  <h2>赛事公告</h2>
-  <div id="anns"><p class="note">暂无公告</p></div>
   <h2>赞助伙伴</h2>
   <div class="sponsor" id="sponsors"><p class="note">—</p></div>
-  <a class="cta" href="https://rukik.com/download/">打开 RUKIK App 报名 / 记分</a>
-  <p class="note">报名、记分与个人赛事主页在 RUKIK App 内完成；本页为公开赛事信息与实时排行榜。未锁定的成绩为实时排名，不作为正式名次。</p>
-</main>
+  <a class="cta" href="https://rukik.com/download/">打开 RUKIK App 报名 / 记分 / 我的赛事主页</a>
+  <p class="note" id="footNote">报名、记分与个人赛事主页在 RUKIK App 内完成；本页为赛事海报与实时互动墙。未锁定的成绩为实时排名，不作为正式名次。照片由参赛球员与摄影师上传，上传即表示已注意他人肖像与隐私。</p>
+</div>
 <script>
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
@@ -49,36 +76,73 @@ var eventId = new URLSearchParams(location.search).get('e');
 function call(action, body) {
   return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + ANON }, body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
 }
-function scoreText(e) {
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function scoreText(e, scope) {
+  if (e.total != null) return e.total + (scope === 'team_points' ? ' 分' : ' 杆');
   if (e.totalPoints != null) return e.totalPoints + ' 分';
-  if (e.netTotal != null) return '净 ' + e.netTotal + ' 杆';
-  if (e.totalStrokes != null) return e.totalStrokes + ' 杆';
-  if (e.grossTotal != null) return e.grossTotal + ' 杆';
+  if (e.totalGross != null) return e.totalGross + ' 杆';
+  if (e.totalNet != null) return '净 ' + e.totalNet + ' 杆';
   if (e.points != null) return e.points + ' 分';
   if (e.result) return e.result;
   return '—';
 }
+function renderBoard(d) {
+  var tag = document.getElementById('boardTag');
+  if (d.is_final) { tag.textContent = '正式排名'; tag.classList.add('final'); }
+  var rows = d.entries || [];
+  document.getElementById('rows').innerHTML = rows.length ? rows.map(function (e, i) {
+    var extra = e.counted ? '<div style="color:#8a978c;font-size:12px">计入 ' + e.counted.length + ' 人汇总</div>' : '';
+    return '<tr><td>' + (e.rank != null ? e.rank : i + 1) + '</td><td>' + esc(e.name || '') + extra + '</td><td>' + scoreText(e, d.scope) + '</td></tr>';
+  }).join('') : '<tr><td colspan="3">暂无成绩</td></tr>';
+}
+function renderEvent(d) {
+  if (!d.event) return;
+  document.title = d.event.title + ' · RUKIK Golf';
+  document.getElementById('title').textContent = d.event.title;
+  var bits = [];
+  if (d.course) bits.push('球场：' + d.course.name);
+  if (d.event.starts_at) bits.push('时间：' + String(d.event.starts_at).slice(0, 16).replace('T', ' '));
+  bits.push('赛制：' + d.event.format);
+  document.getElementById('heroCap').innerHTML = bits.join('<br>');
+  if (d.event.cover_url) document.getElementById('hero').innerHTML = '<img src="' + esc(d.event.cover_url) + '" alt="">';
+  var sp = document.getElementById('sponsors');
+  if ((d.sponsors || []).length) sp.innerHTML = d.sponsors.map(function (s) { return s.logo_url ? '<img src="' + esc(s.logo_url) + '" alt="' + esc(s.name) + '">' : '<span>' + esc(s.name) + '</span>'; }).join('');
+}
+function renderWall(w) {
+  var pill = document.getElementById('statePill');
+  var label = w.state === 'live' ? '比赛进行中' : w.state === 'post' ? '赛事回忆馆' : '赛前 · 敬请期待';
+  pill.textContent = label;
+  pill.className = 'pill' + (w.state === 'pre' ? ' pre' : w.state === 'post' ? ' post' : '');
+  document.getElementById('stPlayers').textContent = w.stats && w.stats.players != null ? w.stats.players + '人' : '—';
+  document.getElementById('stPhotos').textContent = w.stats && w.stats.photos != null ? w.stats.photos + '张' : '—';
+  document.getElementById('stProgress').textContent = w.stats && w.stats.progress_hole ? '第' + w.stats.progress_hole + '洞' : '—';
+  document.getElementById('shareBtn').style.display = w.state === 'live' ? 'block' : 'none';
+  var anns = w.announcements || [];
+  document.getElementById('annBox').innerHTML = anns.length ? '<h2>赛事公告</h2>' + anns.map(function (a) {
+    return '<div class="ann">' + (a.pinned ? '<span class="pinbadge">置顶</span>' : '') + '<b>' + esc(a.title) + '</b>' + esc(a.body || '') + '</div>';
+  }).join('') : '';
+  var feed = w.feed || [];
+  document.getElementById('feedTitle').style.display = feed.length ? 'block' : 'none';
+  document.getElementById('feedTitle').textContent = w.state === 'post' ? '赛事回忆 · 精彩瞬间' : '赛事动态';
+  document.getElementById('feed').innerHTML = feed.map(function (f) {
+    var meta = [];
+    if (f.hole_number) meta.push('第 ' + f.hole_number + ' 洞');
+    meta.push('现场分享');
+    if (f.author) meta.push(esc(f.author));
+    var likes = f.like_count ? ' · ❤ ' + f.like_count : '';
+    var comments = f.comment_count ? ' · 💬 ' + f.comment_count : '';
+    return '<div class="card">' + (f.thumb_url || f.url ? '<img loading="lazy" src="' + esc(f.thumb_url || f.url) + '" alt="">' : '')
+      + '<div class="t">' + (f.pinned ? '<span class="pinbadge">置顶</span>' : '') + esc(f.caption || '现场照片') + '</div>'
+      + '<div class="m">' + meta.join(' · ') + likes + comments + '</div></div>';
+  }).join('');
+  if (w.board) renderBoard({ entries: w.board.entries, is_final: w.board.is_final, scope: w.board.scope });
+  if (w.state === 'live') setTimeout(loadWall, 20000);
+}
+function loadWall() { if (eventId) call('wall_get', { event_id: eventId }).then(function (d) { if (d.wall) renderWall(d.wall); }).catch(function () {}); }
 if (eventId) {
-  call('event_get', { event_id: eventId }).then(function (d) {
-    if (!d.event) return;
-    document.title = d.event.title + ' · RUKIK Golf';
-    document.getElementById('title').textContent = d.event.title;
-    var bits = [];
-    if (d.course) bits.push('球场：' + d.course.name);
-    if (d.event.starts_at) bits.push('时间：' + String(d.event.starts_at).slice(0, 16).replace('T', ' '));
-    bits.push('赛制：' + d.event.format);
-    document.getElementById('meta').innerHTML = bits.join('<br>');
-    var sp = document.getElementById('sponsors');
-    if ((d.sponsors || []).length) sp.innerHTML = d.sponsors.map(function (s) { return s.logo_url ? '<img src="' + s.logo_url + '" alt="' + s.name + '">' : '<span>' + s.name + '</span>'; }).join('');
-  });
-  call('leaderboard_get', { event_id: eventId }).then(function (d) {
-    var tag = document.getElementById('boardTag');
-    if (d.is_final) { tag.textContent = '正式排名'; tag.classList.add('final'); }
-    var rows = d.entries || [];
-    document.getElementById('rows').innerHTML = rows.length ? rows.map(function (e, i) {
-      return '<tr><td>' + (e.rank != null ? e.rank : i + 1) + '</td><td>' + (e.name || '') + '</td><td>' + scoreText(e) + '</td></tr>';
-    }).join('') : '<tr><td colspan="3">暂无成绩</td></tr>';
-  });
+  call('event_get', { event_id: eventId }).then(renderEvent);
+  call('leaderboard_get', { event_id: eventId }).then(renderBoard);
+  loadWall();
 }
 </script>
 </body>

@@ -47,11 +47,11 @@ var eventId = new URLSearchParams(location.search).get('e');
 function call(action, body) {
   return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + ANON }, body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
 }
-function scoreText(e) {
+function scoreText(e, scope) {
+  if (e.total != null) return e.total + (scope === 'team_points' ? ' 分' : ' 杆');
   if (e.totalPoints != null) return e.totalPoints + ' 分';
-  if (e.netTotal != null) return '净 ' + e.netTotal + ' 杆';
-  if (e.totalStrokes != null) return e.totalStrokes + ' 杆';
-  if (e.grossTotal != null) return e.grossTotal + ' 杆';
+  if (e.totalGross != null) return e.totalGross + ' 杆';
+  if (e.totalNet != null) return '净 ' + e.totalNet + ' 杆';
   if (e.points != null) return e.points + ' 分';
   if (e.statusText) return e.statusText;
   if (e.result) return e.result;
@@ -73,7 +73,7 @@ function render() {
     if (!rows.length) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">暂无成绩</td></tr>'; return; }
     document.getElementById('rows').innerHTML = rows.map(function (e, i) {
       var rank = e.rank != null ? e.rank : (i + 1);
-      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e) + '</td><td>' + (e.thru != null ? e.thru : '—') + '</td></tr>';
+      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
     }).join('');
   }).catch(function () {});
 }

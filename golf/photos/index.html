@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>赛事摄影管理 · RUKIK Live 相册</title>
+<meta name="description" content="RUKIK Live 相册引擎：摄影师只管拍，RUKIK 负责美，球员随时看。">
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f6f8f5; color:#17251b; }
+  .wrap { max-width:980px; margin:0 auto; padding:22px 18px 50px; }
+  .brand { color:#6b7a6e; letter-spacing:2px; font-size:13px; font-weight:600; }
+  h1 { margin:10px 0 4px; font-size:26px; }
+  .sub { color:#7a8a7e; font-size:14px; margin-bottom:18px; }
+  .card { background:#fff; border-radius:14px; padding:16px; margin-bottom:16px; }
+  input, button { font-size:14.5px; }
+  input[type=email], input[type=password], input[type=text] { padding:9px 11px; border:1px solid #cfd8cc; border-radius:9px; margin-right:8px; }
+  button { background:#1d7a3a; color:#fff; border:0; border-radius:9px; padding:9px 16px; cursor:pointer; }
+  button.ghost { background:#eef1ee; color:#33503a; }
+  button.dark { background:#14181d; }
+  button:disabled { opacity:.5; cursor:default; }
+  .drop { border:2px dashed #a9bfa5; border-radius:14px; padding:28px; text-align:center; color:#5c7260; background:#fbfdf9; }
+  .drop.over { border-color:#1d7a3a; background:#eff7ec; }
+  .q { font-size:13.5px; line-height:1.9; }
+  .q .fail { color:#b3261e; }
+  .q .done { color:#177245; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+  .ph { background:#fff; border-radius:12px; overflow:hidden; padding-bottom:10px; }
+  .ph img { width:100%; height:140px; object-fit:cover; display:block; }
+  .ph .cap { font-size:13px; padding:8px 10px 2px; line-height:1.5; }
+  .ph .meta { font-size:12px; color:#8a978c; padding:0 10px; line-height:1.6; }
+  .ph .ops { padding:6px 10px 0; display:flex; gap:6px; flex-wrap:wrap; }
+  .ph .ops button { padding:4px 10px; font-size:12.5px; background:#eef1ee; color:#33503a; }
+  .badge { display:inline-block; background:#eef1ee; border-radius:6px; padding:0 6px; font-size:11.5px; color:#5c7260; }
+  .badge.tone { background:#e4f3e2; color:#177245; }
+  .badge.err { background:#fbe9e7; color:#b3261e; }
+  .note { color:#5c7260; font-size:13px; line-height:1.7; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">RUKIK LIVE · 相册引擎</div>
+  <h1>赛事摄影管理</h1>
+  <div class="sub">摄影师只管拍，RUKIK 负责美，球员随时看。手机与网页共用同一赛事相册。</div>
+
+  <div class="card" id="loginCard">
+    <div style="margin-bottom:10px"><b>登录</b>（RUKIK 账号，与 App / 专家工作台同一账号体系）</div>
+    <input type="email" id="email" placeholder="邮箱">
+    <input type="password" id="password" placeholder="密码">
+    <button id="loginBtn">登录</button>
+    <span class="note" id="loginMsg"></span>
+  </div>
+
+  <div class="card hidden" id="mainCard">
+    <div style="margin-bottom:12px">
+      <input type="text" id="eventId" placeholder="赛事 ID（event_id）" style="width:340px">
+      <button id="loadBtn">加载相册</button>
+      <span class="note" id="roleMsg"></span>
+    </div>
+    <div class="drop" id="drop">
+      把照片拖到这里，或
+      <button class="dark" id="pickBtn" type="button">选择照片（可多选）</button>
+      <button class="ghost" id="pickDirBtn" type="button">选择文件夹</button>
+      <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+      <input type="file" id="dirInput" accept="image/*" multiple webkitdirectory class="hidden">
+      <div class="note" style="margin-top:8px">支持一次拖入几十至上百张；每张自动压缩生成展示图与缩略图并归属当前赛事。关闭页面将中断尚未完成的上传（第一版不支持关页续传），失败项可单独重试。</div>
+      <label class="note"><input type="checkbox" id="enhanceChk" checked> 上传后自动调色（曝光/白平衡/对比度/色彩，保留原图）</label>
+      <label class="note" style="margin-left:14px"><input type="checkbox" id="consentChk"> 授权公开展示（公开赛事的访客可见）</label>
+    </div>
+    <div class="q" id="queue"></div>
+    <h3 style="margin:18px 0 10px">当前赛事相册 <span class="note" id="albumCount"></span></h3>
+    <div class="grid" id="grid"></div>
+  </div>
+  <p class="note">权限：球员可上传与查看；摄影师另可网页批量上传、管理本人照片；管理方另可审核、隐藏、置顶与删除。照片仅用于本赛事展示与回忆，不用于人脸识别或模型训练。</p>
+</div>
+<script>
+var SUPA = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var LP = SUPA + '/functions/v1/live-photo';
+var session = null; // {access_token, user_id}
+var CLS = 'visitor';
+var queue = [];
+
+function $(id) { return document.getElementById(id); }
+async function lp(body) {
+  var res = await fetch(LP, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + (session ? session.access_token : ANON) }, body: JSON.stringify(body) });
+  var data = await res.json().catch(function () { return {}; });
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+$('loginBtn').onclick = async function () {
+  $('loginMsg').textContent = '登录中…';
+  var res = await fetch(SUPA + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON }, body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value }) });
+  var d = await res.json().catch(function () { return {}; });
+  if (!res.ok || !d.access_token) { $('loginMsg').textContent = '登录失败：' + (d.error_description || d.msg || res.status); return; }
+  session = { access_token: d.access_token, user_id: d.user && d.user.id };
+  $('loginMsg').textContent = '已登录';
+  $('loginCard').classList.add('hidden');
+  $('mainCard').classList.remove('hidden');
+};
+
+function eventId() { return $('eventId').value.trim(); }
+$('loadBtn').onclick = loadAlbum;
+
+async function loadAlbum() {
+  if (!eventId()) return;
+  var d = await lp({ action: 'photo_list', event_kind: 'golf', event_id: eventId(), limit: 100 });
+  CLS = d.cls;
+  $('roleMsg').textContent = '当前身份：' + ({ manager: '管理方', photographer: '摄影师', member: '参赛球员', visitor: '访客' }[CLS] || CLS);
+  $('albumCount').textContent = '共 ' + d.album_count + ' 张（与手机端同一相册，计数一致）';
+  renderGrid(d.photos || []);
+}
+function renderGrid(photos) {
+  $('grid').innerHTML = photos.map(function (p) {
+    var tone = p.enhance_status === 'done' ? '<span class="badge tone">已自动调色</span>' : p.enhance_status === 'queued' || p.enhance_status === 'processing' ? '<span class="badge">调色中</span>' : p.enhance_status === 'failed' ? '<span class="badge err">调色失败（原图正常）</span>' : '';
+    var st = p.status !== 'visible' ? ' <span class="badge err">' + p.status + '</span>' : '';
+    var ops = '';
+    if (CLS === 'manager') {
+      ops += '<button data-op="pin" data-id="' + p.id + '">' + (p.pinned ? '取消置顶' : '置顶') + '</button>';
+      ops += p.status === 'hidden' || p.status === 'pending_review' ? '<button data-op="approve" data-id="' + p.id + '">审核通过</button>' : '<button data-op="hide" data-id="' + p.id + '">隐藏</button>';
+      ops += '<button data-op="remove" data-id="' + p.id + '">删除</button>';
+    }
+    if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
+    if (p.enhance_status === 'failed' || p.enhance_status === 'none') ops += '<button data-op="enhance" data-id="' + p.id + '">自动调色</button>';
+    return '<div class="ph"><img loading="lazy" src="' + (p.thumb_url || p.display_url || p.enhance_url || p.url) + '">'
+      + '<div class="cap">' + (p.pinned ? '📌 ' : '') + (p.caption || '现场照片') + '</div>'
+      + '<div class="meta">' + tone + st + '</div><div class="ops">' + ops + '</div></div>';
+  }).join('') || '<p class="note">暂无照片</p>';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-op]'), function (btn) {
+    btn.onclick = async function () {
+      var id = btn.getAttribute('data-id'), op = btn.getAttribute('data-op');
+      try {
+        if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
+        else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
+        else await lp({ action: 'photo_moderate', photo_id: id, action: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
+        loadAlbum();
+      } catch (e) { alert('操作失败：' + e.message); }
+    };
+  });
+}
+
+// ---------- 批量上传：签名 URL 直传存储 + 客户端生成展示图/缩略图 + register（幂等） ----------
+function renderQueue() {
+  $('queue').innerHTML = queue.map(function (it, i) {
+    var cls = it.status === '失败' ? 'fail' : it.status === '完成' ? 'done' : '';
+    return '<div class="' + cls + '">' + (i + 1) + '. ' + it.name + ' — ' + it.status + (it.status === '失败' ? ' <button data-retry="' + i + '">重试</button>' : '') + '</div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-retry]'), function (b) {
+    b.onclick = function () { processItem(queue[Number(b.getAttribute('data-retry'))]); };
+  });
+}
+function addFiles(files) {
+  if (!eventId()) { alert('请先填写赛事 ID 并加载相册'); return; }
+  Array.prototype.forEach.call(files, function (f) {
+    if (!/^image\//.test(f.type)) return;
+    queue.push({ file: f, name: f.name, status: '排队', opId: (crypto.randomUUID ? crypto.randomUUID() : 'web-' + Date.now() + '-' + Math.random().toString(36).slice(2)) });
+  });
+  renderQueue();
+  queue.filter(function (it) { return it.status === '排队'; }).forEach(processItem);
+}
+function putSigned(signedUrl, blob, onprog) {
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('PUT', signedUrl);
+    xhr.setRequestHeader('Content-Type', blob.type || 'image/jpeg');
+    xhr.upload.onprogress = function (e) { if (e.lengthComputable && onprog) onprog(e.loaded / e.total); };
+    xhr.onload = function () { xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('存储上传 ' + xhr.status)); };
+    xhr.onerror = function () { reject(new Error('网络错误')); };
+    xhr.send(blob);
+  });
+}
+async function variant(file, maxW, quality) {
+  var bmp = await createImageBitmap(file);
+  var scale = Math.min(1, maxW / bmp.width);
+  var c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(function (res) { c.toBlob(res, 'image/jpeg', quality); });
+}
+async function uploadOne(token, blob, ext) {
+  var up = await lp({ action: 'photo_upload_url', event_kind: 'golf', event_id: eventId(), ext: ext });
+  await putSigned(up.signed_url, blob);
+  return up.public_url;
+}
+async function processItem(it) {
+  if (it.status === '上传中' || it.status === '完成') return;
+  it.status = '上传中'; renderQueue();
+  try {
+    var orig = await uploadOne(null, it.file, (it.file.name.split('.').pop() || 'jpg').toLowerCase());
+    it.status = '生成展示图'; renderQueue();
+    var disp = await variant(it.file, 1600, 0.82);
+    var thumb = await variant(it.file, 400, 0.8);
+    var dispUrl = disp ? await uploadOne(null, disp, 'jpg') : null;
+    var thumbUrl = thumb ? await uploadOne(null, thumb, 'jpg') : null;
+    it.status = '登记入册'; renderQueue();
+    await lp({ action: 'photo_register', event_kind: 'golf', event_id: eventId(), url: orig, display_url: dispUrl, thumb_url: thumbUrl, caption: it.file.name.replace(/\.[a-z0-9]+$/i, ''), consent_public: $('consentChk').checked, enhance: $('enhanceChk').checked, client_op_id: it.opId });
+    it.status = '完成'; renderQueue();
+    loadAlbum();
+  } catch (e) {
+    it.status = '失败'; it.error = e.message; renderQueue();
+  }
+}
+var drop = $('drop');
+['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
+$('pickBtn').onclick = function () { $('fileInput').click(); };
+$('pickDirBtn').onclick = function () { $('dirInput').click(); };
+$('fileInput').onchange = function () { addFiles($('fileInput').files); $('fileInput').value = ''; };
+$('dirInput').onchange = function () { addFiles($('dirInput').files); $('dirInput').value = ''; };
+</script>
+</body>
+</html>
