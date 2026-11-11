@@ -93,9 +93,12 @@
     document.head.appendChild(s);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadSdk);
-  } else {
-    loadSdk();
-  }
+  // Start immediately — do NOT wait for DOMContentLoaded. Deferred and
+  // module scripts can hold DOMContentLoaded back for a long time (the
+  // expert / clone pages load a large ES-module graph ahead of this
+  // script), and a share tapped before DOMContentLoaded fires falls back
+  // to a bare link. loadSdk only needs document.head + location, both
+  // available while parsing; shareData()/pageUrl() run later, after the
+  // signature returns, when the head metadata they read is long parsed.
+  loadSdk();
 })();
