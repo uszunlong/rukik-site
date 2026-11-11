@@ -82,15 +82,35 @@ var eventId = new URLSearchParams(location.search).get('e') || '11564c2e-9c4f-40
 var token = null;
 try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); if (raw) token = JSON.parse(raw).access_token || null; } catch (e) {}
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-function call(action, extra, timeoutMs) {
-  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, timeoutMs || 9000);
+// 页面加载架构（定版）：动态层请求纪律——同 action+event 在飞去重、重试上限 2 次、指数退避＋抖动、单次超时 12s。
+// 任一动态请求失败只影响本模块，绝不清空已渲染内容。window.__reqLog 记录各模块实际耗时供验收读取。
+window.__reqLog = [];
+var INFLIGHT = {};
+function callOnce(action, extra, timeoutMs) {
+  var t0 = Date.now();
+  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, timeoutMs || 12000);
   var headers = { 'apikey': ANON, 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
   return fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(Object.assign({ action: action, event_id: eventId }, extra || {})) })
-    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); })
-    .catch(function (e) { clearTimeout(to); throw e; });
+    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); })
+    .catch(function (e) { clearTimeout(to); window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: false }); throw e; });
 }
-function callRetry(action, extra) { return call(action, extra).catch(function () { return call(action, extra); }); }
+function dyn(action, extra) {
+  var key = action + ':' + eventId + ':' + JSON.stringify(extra || {});
+  if (INFLIGHT[key]) return INFLIGHT[key];
+  var attempt = function (n) {
+    return callOnce(action, extra).catch(function (e) {
+      if (n >= 2) throw e;
+      var wait = (n === 0 ? 700 : 2000) * (0.7 + Math.random() * 0.6);
+      return new Promise(function (res) { setTimeout(res, wait); }).then(function () { return attempt(n + 1); });
+    });
+  };
+  var p = attempt(0).then(function (j) { delete INFLIGHT[key]; return j; }, function (e) { delete INFLIGHT[key]; throw e; });
+  INFLIGHT[key] = p;
+  return p;
+}
+function call(action, extra, timeoutMs) { return callOnce(action, extra, timeoutMs); }
+function callRetry(action, extra) { return dyn(action, extra); }
 function errBox(el, msg, retryFn) {
   el.innerHTML = '<div class="card"><div class="err">' + esc(msg) + '<br><button class="retry" type="button">重试</button></div></div>';
   el.querySelector('button.retry').addEventListener('click', retryFn);
@@ -271,7 +291,7 @@ function renderFunc(board) {
     rows = '<div class="empty">暂无排名数据（尚未开始记分或成绩未提交）。</div>';
   }
   var pairHtml = '';
-  var pairs = EV.pairings || [];
+  var pairs = (EV && EV.pairings) || [];
   if (pairs.length) {
     pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
   }
@@ -291,34 +311,83 @@ function renderLive() {
     }).join('') + '</div>' : '<div class="empty">暂无现场照片。</div>') +
     '<div class="funcrow" style="margin-top:12px"><a href="https://rukik.com/golf/photos.html">📷 分享现场精彩瞬间</a></div></div>';
 }
+var LASTBOARD = null;
 function loadBoardIntoFunc() {
-  callRetry('leaderboard_get', {}).then(function (j) { renderFunc(j); }).catch(function () {
+  dyn('leaderboard_get', {}).then(function (j) {
+    LASTBOARD = j;
+    renderFunc(j);
     var el = document.getElementById('funcSec');
-    errBox(el, '排行榜加载失败，请重试。', loadBoardIntoFunc);
+    var h = el.querySelector('h2');
+    if (h) { var t = new Date(); h.innerHTML += ' <span style="font-size:12px;color:#888;font-weight:normal">更新于 ' + ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + '</span>'; }
+  }).catch(function () {
+    if (LASTBOARD) return; // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错
+    errBox(document.getElementById('funcSec'), '排行榜加载失败，请重试。', loadBoardIntoFunc);
   });
 }
 function loadWall() {
-  callRetry('wall_get', {}).then(function (j) {
+  dyn('wall_get', {}).then(function (j) {
     WALL = j.wall || null;
     if (EV) { renderHero(); renderLive(); }
-  }).catch(function () { /* 墙失败不拖垮整页：功能区与海报照常 */ });
+  }).catch(function () {
+    var el = document.getElementById('liveSec');
+    if (el && ((EV && EV.album_enabled) || (SNAP && SNAP.album_enabled))) errBox(el, '精彩瞬间加载失败，请重试。', loadWall);
+  });
 }
-function loadEvent() {
-  document.getElementById('heroSec').innerHTML = '<div class="skl"></div>';
-  callRetry('event_get', {}).then(function (j) {
+var SNAP = null, WALL_STARTED = false;
+var SNAP_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/golf-snapshots/' + eventId + '.json';
+function applySnapshot(j) {
+  // L0 基础层：海报/名称/时间/地点/机构/场次——不依赖 golf-api，存储直出即可见
+  EV = {
+    event: { title: j.title, title_en: j.title_en, description: j.description, status: j.status, starts_at: j.starts_at, timezone: j.timezone, cover_url: j.cover_url, poster_urls: j.poster_urls || [], format: j.format },
+    course: { name: j.course_name, address: j.course_address, city: j.course_city },
+    organizations: j.organizations || [], sessions: j.sessions || [],
+    album_enabled: !!j.album_enabled, care_tips: { public: [], personal: null }, course_preview: null, pairings: [],
+  };
+  renderHero(); renderOrgs();
+}
+function maybeWall() {
+  if (WALL_STARTED) return;
+  var enabled = EV && EV.album_enabled != null ? EV.album_enabled : (SNAP ? SNAP.album_enabled : null);
+  if (enabled === null || enabled === undefined) return; // 开通状态未知，等动态层
+  if (!enabled) { WALL_STARTED = true; window.__l3skipped = true; return; } // L3：未开通零请求
+  WALL_STARTED = true; loadWall();
+}
+function loadDynamic() {
+  dyn('event_get', {}).then(function (j) {
     EV = j; PREVIEW = j.course_preview || null;
     curTee = PREVIEW && PREVIEW.main_tee_id;
-    renderHero(); renderOrgs(); renderCare(); renderMap(); loadBoardIntoFunc(); loadWall();
+    renderHero(); renderOrgs(); renderMap();
+    if (LASTBOARD) loadBoardIntoFunc();
+    setTimeout(renderCare, 900); // L4 关怀层：基础与排名之后最后渲染，失败静默（renderCare 无数据即隐藏）
+    maybeWall();
   }).catch(function (e) {
     var msg = String(e && e.message || e);
-    errBox(document.getElementById('heroSec'), msg.indexOf('event not found') >= 0 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络或服务暂时不可用）。', loadEvent);
-    document.getElementById('statePill').textContent = '加载失败';
+    if (!SNAP) {
+      errBox(document.getElementById('heroSec'), msg.indexOf('event not found') >= 0 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
+      document.getElementById('statePill').textContent = '加载失败';
+    } else {
+      errBox(document.getElementById('mapSec'), '球场地图加载失败，请重试。', loadDynamic);
+    }
+    maybeWall();
   });
+}
+function boot() {
+  document.getElementById('heroSec').innerHTML = '<div class="skl"></div>';
+  loadBoardIntoFunc(); // L2 排名独立启动，不等基础层
+  var t0 = Date.now();
+  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 4000);
+  fetch(SNAP_URL, { signal: ctrl.signal }).then(function (r) { clearTimeout(to); if (!r.ok) throw new Error('snap ' + r.status); return r.json(); })
+    .then(function (j) {
+      window.__reqLog.push({ action: 'snapshot', ms: Date.now() - t0, ok: true });
+      if (j && j.event_id === eventId && !PREVIEW) { SNAP = j; applySnapshot(j); maybeWall(); }
+    })
+    .catch(function () { window.__reqLog.push({ action: 'snapshot', ms: Date.now() - t0, ok: false }); /* 快照失败：回退 API 基础层，不报错 */ });
+  loadDynamic();
 }
 if (!eventId) {
   errBox(document.getElementById('heroSec'), '链接缺少赛事参数。', function () { location.href = 'https://rukik.com/golf/event.html?e=11564c2e-9c4f-40de-a54a-9803a0ae024c'; });
 } else {
-  loadEvent();
+  boot();
 }
 </script>
 </body>
