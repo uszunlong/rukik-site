@@ -151,11 +151,17 @@
         <label>添加赞助商</label><input id="spName" placeholder="赞助商名称"><input id="spLogo" placeholder="Logo 图片地址（可选）">
         <button class="ghost" id="spBtn">添加赞助商</button>
         <div id="orgCard" style="margin-top:14px">
-        <label>机构（主办必填；协办/赞助有才展示，同步活动页统一维护）</label>
+        <label>赛事合作伙伴 · 智能品牌档案（主办必填一家；品牌资料会同步给本场 AI 球童做介绍，球员点赛事页 Logo 即可请球童详细介绍。同一品牌建档一次，后续赛事可直接复用）</label>
         <div id="orgRows"></div>
-        <button class="ghost" id="orgAdd" type="button">＋ 添加机构</button>
-        <button class="ghost" id="orgSave" type="button">保存机构</button>
+        <button class="ghost" id="orgAdd" type="button">＋ 添加合作伙伴</button>
+        <button class="ghost" id="orgSave" type="button">保存合作伙伴</button>
         <span id="orgMsg" style="font-size:13px;color:#5c7260"></span>
+        <div style="margin-top:10px">
+          <label>复用历史合作伙伴（搜索品牌档案，点选即带入本场，只需重选本场身份）</label>
+          <input id="orgSearchQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="orgSearchResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="orgLib" style="margin-top:6px"></div>
+        </div>
       </div>
       <div id="knowCard" style="margin-top:14px">
         <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
@@ -308,42 +314,256 @@ function openEvent(id) {
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
+function orgRoleOfType(t) { return t === '主办' ? 'organizer' : (t === '联合主办' || t === '承办' || t === '协办') ? 'coorganizer' : (t === '冠名赞助' || t === '赞助商') ? 'sponsor' : 'other'; }
+function orgTypeOfRole(role, label) { if (label) return label; return { organizer: '主办', coorganizer: '协办', sponsor: '赞助商', other: '合作伙伴' }[role] || '合作伙伴'; }
+var orgLinkedNow = {}; /* 本场已登记关联：orgId -> {role, role_label}（保存时据此算解除项） */
+var orgCanManage = {}; /* orgId -> bool 是否机构管理者（档案字段可否直改） */
+function orgValidUrl(u) {
+  if (!u) return null;
+  var s = String(u).trim();
+  if (/^(javascript|data|vbscript):/i.test(s)) return false;
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+  try { var p = new URL(s); return (p.protocol === 'http:' || p.protocol === 'https:') && p.hostname.indexOf('.') > 0 ? s : false; } catch (e) { return false; }
+}
 function orgRowHtml(o) {
   var opts = ORG_TYPES.map(function (t) { return '<option' + (t === (o.type || '合作伙伴') ? ' selected' : '') + '>' + t + '</option>'; }).join('');
-  return '<div class="orgrow" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' +
+  return '<div class="orgrow" data-orgid="' + (o.organization_id || '') + '" style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
     '<select class="o-type">' + opts + '</select>' +
-    '<input class="o-name" placeholder="机构名称" value="' + String(o.name || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
-    '<input class="o-logo" placeholder="Logo 地址（可选）" value="' + String(o.logo_url || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
-    '<input class="o-web" placeholder="官网（可选）" value="' + String(o.website || '').replace(/"/g, '&quot;') + '" style="flex:2;min-width:150px">' +
-    '<input class="o-intro" placeholder="简介（可选）" value="' + String(o.intro || '').replace(/"/g, '&quot;') + '" style="flex:3;min-width:180px">' +
-    '<button class="ghost o-del" type="button">删除</button></div>';
+    '<input class="o-name" placeholder="品牌/机构完整名称" value="' + escapeHtml(o.name || '') + '" style="flex:2;min-width:150px">' +
+    '<label style="font-size:13px;color:#17301c"><input type="checkbox" class="o-public" style="width:auto;margin-right:4px"' + (o.is_public === false ? '' : ' checked') + '>公开展示</label>' +
+    '<button class="ghost o-up" type="button">↑</button><button class="ghost o-down" type="button">↓</button>' +
+    '<button class="ghost o-del" type="button">删除</button></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
+    '<img class="o-logoprev" src="' + escapeHtml(o.logo_url || '') + '" style="' + (o.logo_url ? '' : 'display:none;') + 'height:34px;max-width:110px;object-fit:contain;background:#f7faf7;border:1px solid #eef2ee;border-radius:6px">' +
+    '<input class="o-logo" placeholder="Logo 地址（可粘贴，或用右侧上传）" value="' + escapeHtml(o.logo_url || '') + '" style="flex:2;min-width:150px">' +
+    '<label class="ghost" style="cursor:pointer;padding:6px 10px">上传 Logo<input type="file" class="o-logofile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none"></label>' +
+    '<input class="o-web" placeholder="官方网站（如 example.com，保存时校验）" value="' + escapeHtml(o.website || '') + '" style="flex:2;min-width:150px"></div>' +
+    '<input class="o-intro" placeholder="品牌简介（一句话，进赛事页与球童介绍）" value="' + escapeHtml(o.intro || '') + '" style="width:100%;margin-top:6px;box-sizing:border-box">' +
+    '<textarea class="o-detail" rows="2" placeholder="品牌详细介绍（主营业务、背景、实力——供 AI 球童完整介绍品牌；随品牌档案跨赛事复用）" style="width:100%;margin-top:6px;box-sizing:border-box">' + escapeHtml(o.profile_detail || '') + '</textarea>' +
+    '<details style="margin-top:4px"><summary style="font-size:13px;color:#14532d;cursor:pointer">品牌资料文件（PDF 自动提取文字；保存后发布给本场 AI 球童引用）</summary>' +
+    '<textarea class="o-mat" rows="2" placeholder="粘贴品牌资料要点，或选择下方文件自动带入" style="width:100%;margin-top:6px;box-sizing:border-box"></textarea>' +
+    '<input type="file" class="o-matfile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">' +
+    '<button class="ghost o-matsave" type="button">保存品牌资料并发布</button> <span class="o-matmsg" style="font-size:13px;color:#5c7260"></span></details>' +
+    '</div>';
 }
 function loadOrgs() {
   if (!currentEvent) return;
-  call('orgs_get', { event_id: currentEvent.id }).then(function (d) {
-    var box = document.getElementById('orgRows');
+  var box = document.getElementById('orgRows');
+  Promise.all([call('orgs_get', { event_id: currentEvent.id }), call('organization_history', {})]).then(function (rs) {
+    var d = rs[0], hist = rs[1] || {};
     if (!d.linked) { box.innerHTML = '<p style="color:#8c2f2f;font-size:13px">本赛事尚未关联活动页，机构维护不可用。</p>'; return; }
-    box.innerHTML = (d.organizations || []).map(orgRowHtml).join('');
-    bindOrgDel();
+    orgLinkedNow = {}; orgCanManage = {};
+    var byName = {};
+    (hist.organizations || []).forEach(function (o) {
+      byName[o.name] = o; orgCanManage[o.organization_id] = !!o.can_manage;
+      (o.events || []).forEach(function (e) { if (e.event_id === currentEvent.id) orgLinkedNow[o.organization_id] = { role: e.role, role_label: e.role_label }; });
+    });
+    var rows = (d.organizations || []).map(function (o) {
+      var reg = byName[o.name];
+      return { type: o.type, name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro, organization_id: reg ? reg.organization_id : null, is_public: true };
+    });
+    box.innerHTML = rows.map(orgRowHtml).join('');
+    bindOrgRows();
+    rows.forEach(function (row, i) {
+      if (!row.organization_id) return;
+      call('organization_get', { organization_id: row.organization_id }).then(function (g) {
+        if (!g.ok) return;
+        var el = box.querySelectorAll('.orgrow')[i]; if (!el) return;
+        var pub = g.organization || {};
+        if (pub.profile_detail && !el.querySelector('.o-detail').value) el.querySelector('.o-detail').value = pub.profile_detail;
+        if (pub.intro && !el.querySelector('.o-intro').value) el.querySelector('.o-intro').value = pub.intro;
+        if (pub.website && !el.querySelector('.o-web').value) el.querySelector('.o-web').value = pub.website;
+        if (pub.logo_url && !el.querySelector('.o-logo').value) { el.querySelector('.o-logo').value = pub.logo_url; var im = el.querySelector('.o-logoprev'); im.src = pub.logo_url; im.style.display = ''; }
+        var link = (g.links || []).filter(function (l) { return l.golf_event_id === currentEvent.id; })[0];
+        if (link && link.is_public === false) el.querySelector('.o-public').checked = false;
+        if (!orgCanManage[row.organization_id]) el.querySelector('.o-detail').placeholder += '（该档案由品牌管理者维护，本场保存不改其档案）';
+      });
+    });
+    renderOrgLib(hist);
   });
 }
-function bindOrgDel() {
-  Array.prototype.forEach.call(document.querySelectorAll('.o-del'), function (b) { b.onclick = function () { b.closest('.orgrow').remove(); }; });
+function renderOrgLib(hist) {
+  var box = document.getElementById('orgLib'); if (!box) return;
+  var orgs = hist.organizations || [];
+  if (!orgs.length) { box.innerHTML = '<p style="color:#5c7260;font-size:13px">暂无可复用的品牌档案；上方添加并保存后会自动建档。</p>'; return; }
+  var lastRole = {};
+  (hist.last_event_orgs || []).forEach(function (o) { lastRole[o.organization_id] = o; });
+  box.innerHTML = '<div style="font-size:13px;color:#5c7260;margin-bottom:4px">品牌档案库（点「带入本场」复用 Logo／官网／简介／详细介绍；本场身份带入后可改）</div>' + orgs.map(function (o) {
+    var lr = lastRole[o.organization_id];
+    var mem = '已参与 ' + (o.event_count || 0) + ' 场有记录的活动' + (lr ? ' · 上一场身份：' + escapeHtml(lr.role_label || orgTypeOfRole(lr.role)) : '');
+    return '<div style="display:flex;gap:8px;align-items:center;border:1px solid #eef2ee;border-radius:8px;padding:6px 8px;margin:4px 0">' +
+      (o.logo_url ? '<img src="' + escapeHtml(o.logo_url) + '" style="height:26px;max-width:80px;object-fit:contain">' : '') +
+      '<span style="flex:1;font-size:14px">' + escapeHtml(o.name) + ' <span style="color:#5c7260;font-size:12px">' + mem + '</span></span>' +
+      '<button class="ghost lib-add" type="button" data-oid="' + o.organization_id + '">带入本场</button></div>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.lib-add'), function (b) { b.onclick = function () { addOrgFromRegistry(b.getAttribute('data-oid')); }; });
+}
+function addOrgFromRegistry(oid) {
+  call('organization_get', { organization_id: oid }).then(function (g) {
+    if (!g.ok) { document.getElementById('orgMsg').textContent = '读取品牌档案失败。'; return; }
+    var p = g.organization; orgCanManage[oid] = !!g.can_manage;
+    var box = document.getElementById('orgRows');
+    box.insertAdjacentHTML('beforeend', orgRowHtml({ organization_id: oid, type: '合作伙伴', name: p.name, logo_url: p.logo_url, website: p.website, intro: p.intro, profile_detail: p.profile_detail, is_public: true }));
+    bindOrgRows();
+    document.getElementById('orgMsg').textContent = '已带入「' + p.name + '」，请选择本场身份后点「保存合作伙伴」。';
+  });
+}
+function ensureOrgId(rowEl) {
+  var oid = rowEl.getAttribute('data-orgid');
+  if (oid) return Promise.resolve(oid);
+  var name = rowEl.querySelector('.o-name').value.trim();
+  if (!name) return Promise.resolve(null);
+  return call('organization_search', { q: name, limit: 5 }).then(function (s) {
+    var list = s.organizations || [];
+    var hit = list.filter(function (x) { return x.name === name; })[0] || list[0];
+    if (hit) { rowEl.setAttribute('data-orgid', hit.organization_id); return hit.organization_id; }
+    return call('organization_create', { name: name, logo_url: rowEl.querySelector('.o-logo').value.trim() || null, website: orgValidUrl(rowEl.querySelector('.o-web').value.trim()), intro: rowEl.querySelector('.o-intro').value.trim() || null, profile_detail: rowEl.querySelector('.o-detail').value.trim() || null }).then(function (c) {
+      var id = c.organization ? c.organization.organization_id : null;
+      if (id) { rowEl.setAttribute('data-orgid', id); orgCanManage[id] = true; }
+      return id;
+    });
+  });
+}
+function bindOrgRows() {
+  Array.prototype.forEach.call(document.querySelectorAll('.orgrow'), function (r) {
+    if (r._z35bound) return; r._z35bound = true;
+    r.querySelector('.o-del').onclick = function () { r.remove(); };
+    r.querySelector('.o-up').onclick = function () { var p = r.previousElementSibling; if (p && p.classList.contains('orgrow')) r.parentNode.insertBefore(r, p); };
+    r.querySelector('.o-down').onclick = function () { var n = r.nextElementSibling; if (n && n.classList.contains('orgrow')) r.parentNode.insertBefore(n, r); };
+    r.querySelector('.o-logofile').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return;
+      var msg = document.getElementById('orgMsg');
+      if (!r.querySelector('.o-name').value.trim()) { msg.textContent = '先填品牌名称，再上传 Logo。'; return; }
+      msg.textContent = 'Logo 上传中…';
+      ensureOrgId(r).then(function (oid) {
+        if (!oid) { msg.textContent = '建档失败，Logo 未上传。'; return; }
+        var rd = new FileReader();
+        rd.onload = function () {
+          var b64 = String(rd.result).split(',')[1];
+          call('organization_logo_upload', { organization_id: oid, data_base64: b64, content_type: f.type || 'image/png' }).then(function (d) {
+            if (d.ok) { r.querySelector('.o-logo').value = d.logo_url; var im = r.querySelector('.o-logoprev'); im.src = d.logo_url; im.style.display = ''; msg.textContent = 'Logo 已上传并写入品牌档案（赛事页与 AI 同步）。'; }
+            else msg.textContent = 'Logo 上传失败：' + (d.message || d.error || '未知错误');
+          });
+        };
+        rd.readAsDataURL(f);
+      });
+    });
+    r.querySelector('.o-matfile').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return;
+      var ext = (f.name.split('.').pop() || '').toLowerCase();
+      var mmsg = r.querySelector('.o-matmsg');
+      if (ext === 'pdf') {
+        r._matSource = { type: 'pdf', name: f.name };
+        mmsg.textContent = '正在提取 PDF 文字…';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        f.arrayBuffer().then(function (buf) { return pdfjsLib.getDocument({ data: buf }).promise; }).then(function (pdf) {
+          var pages = [], chain = Promise.resolve();
+          for (var i = 1; i <= pdf.numPages; i++) { (function (p) { chain = chain.then(function () { return pdf.getPage(p).then(function (page) { return page.getTextContent(); }).then(function (tc) { pages.push(tc.items.map(function (it) { return it.str; }).join(' ')); }); }); })(i); }
+          return chain.then(function () { return { text: pages.join('\n'), n: pdf.numPages }; });
+        }).then(function (res) {
+          r.querySelector('.o-mat').value = res.text.slice(0, 19000);
+          mmsg.textContent = '已提取 ' + res.n + ' 页文字，请核对后点「保存品牌资料并发布」。';
+        }).catch(function () { mmsg.textContent = 'PDF 提取失败，请把要点粘贴到资料框。'; });
+      } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+        r._matSource = { type: 'image', name: f.name };
+        mmsg.textContent = '图片暂不支持自动识别：已记录文件名，请把要点填入资料框后保存。';
+      } else {
+        r._matSource = { type: 'word', name: f.name };
+        mmsg.textContent = 'Word 暂不支持自动解析：已记录文件名，请把要点粘贴到资料框后保存。';
+      }
+    });
+    r.querySelector('.o-matsave').onclick = function () {
+      var name = r.querySelector('.o-name').value.trim();
+      var body = r.querySelector('.o-mat').value.trim();
+      var mmsg = r.querySelector('.o-matmsg');
+      if (!name) { mmsg.textContent = '先填品牌名称。'; return; }
+      if (!body) { mmsg.textContent = '先粘贴资料要点或选 PDF 提取文字。'; return; }
+      var src = r._matSource || { type: 'text', name: null };
+      call('knowledge_save', { event_id: currentEvent.id, kind: 'sponsor', title: name + ' 品牌资料', body: body, source_type: src.type, source_name: src.name }).then(function (d) {
+        if (!d.ok) { mmsg.textContent = '保存失败：' + (d.error || '未知错误'); return; }
+        call('knowledge_publish', { event_id: currentEvent.id, id: d.knowledge.id }).then(function (p) {
+          mmsg.textContent = p.ok ? '已发布：AI 球童现在可以引用这份品牌资料。' : '已存草稿，发布失败：' + (p.error || '');
+          if (p.ok && typeof loadKnowledge === 'function') loadKnowledge();
+        });
+      });
+    };
+  });
 }
 document.getElementById('orgAdd').onclick = function () {
-  var box = document.getElementById('orgRows');
-  box.insertAdjacentHTML('beforeend', orgRowHtml({}));
-  bindOrgDel();
+  document.getElementById('orgRows').insertAdjacentHTML('beforeend', orgRowHtml({ type: '合作伙伴' }));
+  bindOrgRows();
 };
+var orgSearchTimer = null;
+document.getElementById('orgSearchQ').addEventListener('input', function () {
+  var q = this.value.trim();
+  var box = document.getElementById('orgSearchResults');
+  clearTimeout(orgSearchTimer);
+  if (q.length < 1) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  orgSearchTimer = setTimeout(function () {
+    call('organization_search', { q: q, limit: 8 }).then(function (d) {
+      var list = d.organizations || [];
+      if (!list.length) { box.innerHTML = '<div style="padding:8px;color:#5c7260;font-size:13px">没有找到同名品牌档案，保存上方新行时会自动建档。</div>'; box.style.display = 'block'; return; }
+      box.innerHTML = list.map(function (o) {
+        return '<div class="org-hit" data-oid="' + o.organization_id + '" style="display:flex;gap:8px;align-items:center;padding:7px 9px;cursor:pointer;border-bottom:1px solid #f0f4f0">' +
+          (o.logo_url ? '<img src="' + escapeHtml(o.logo_url) + '" style="height:24px;max-width:70px;object-fit:contain">' : '') +
+          '<span style="flex:1;font-size:14px">' + escapeHtml(o.name) + ' <span style="color:#5c7260;font-size:12px">已参与 ' + (o.event_count || 0) + ' 场活动</span></span><span style="font-size:12px;color:#14532d">带入本场</span></div>';
+      }).join('');
+      box.style.display = 'block';
+      Array.prototype.forEach.call(box.querySelectorAll('.org-hit'), function (h) {
+        h.onclick = function () { box.style.display = 'none'; addOrgFromRegistry(h.getAttribute('data-oid')); };
+      });
+    });
+  }, 300);
+});
 document.getElementById('orgSave').onclick = function () {
-  var rows = Array.prototype.map.call(document.querySelectorAll('.orgrow'), function (r) {
-    return { type: r.querySelector('.o-type').value, name: r.querySelector('.o-name').value.trim(), logo_url: r.querySelector('.o-logo').value.trim() || null, website: r.querySelector('.o-web').value.trim() || null, intro: r.querySelector('.o-intro').value.trim() || null };
+  var msg = document.getElementById('orgMsg');
+  var rowEls = Array.prototype.slice.call(document.querySelectorAll('.orgrow'));
+  var rows = rowEls.map(function (r, idx) {
+    return { el: r, idx: idx, type: r.querySelector('.o-type').value, name: r.querySelector('.o-name').value.trim(),
+      logo_url: r.querySelector('.o-logo').value.trim() || null, websiteRaw: r.querySelector('.o-web').value.trim(),
+      intro: r.querySelector('.o-intro').value.trim() || null, detail: r.querySelector('.o-detail').value.trim() || null,
+      is_public: r.querySelector('.o-public').checked };
   }).filter(function (o) { return o.name; });
-  call('orgs_update', { event_id: currentEvent.id, organizations: rows }).then(function (d) {
-    document.getElementById('orgMsg').textContent = d.ok ? '已保存，赛事页刷新即可见。' : ('保存失败：' + (d.message || d.error || '未知错误'));
-    if (d.ok) loadOrgs();
-  });
+  for (var i = 0; i < rows.length; i++) {
+    var v = orgValidUrl(rows[i].websiteRaw);
+    if (v === false) { msg.textContent = '官网格式不对：' + rows[i].websiteRaw + '（请填完整网址，如 example.com）'; return; }
+    rows[i].website = v;
+  }
+  if (!rows.some(function (o) { return o.type === '主办'; })) { msg.textContent = '至少保留一家「主办」。'; return; }
+  msg.textContent = '保存中…';
+  var snap = rows.map(function (o) { return { type: o.type, name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro }; });
+  call('orgs_update', { event_id: currentEvent.id, organizations: snap }).then(function (d) {
+    if (!d.ok) { msg.textContent = '保存失败：' + (d.message || d.error || '未知错误'); return null; }
+    var chain = Promise.resolve([]);
+    rows.forEach(function (o) { chain = chain.then(function (acc) { return ensureOrgId(o.el).then(function (oid) { acc.push(oid); return acc; }); }); });
+    return chain.then(function (oids) {
+      var syncs = rows.map(function (o, j) {
+        var oid = oids[j];
+        if (!oid) return Promise.resolve(null);
+        var upd = orgCanManage[oid]
+          ? call('organization_update', { organization_id: oid, logo_url: o.logo_url, website: o.website, intro: o.intro, profile_detail: o.detail })
+          : Promise.resolve(null);
+        return upd.then(function () {
+          return call('organization_link', { event_id: currentEvent.id, organization_id: oid, role: orgRoleOfType(o.type), role_label: o.type, display_order: o.idx, is_public: o.is_public });
+        });
+      });
+      return Promise.all(syncs).then(function () { return oids; });
+    });
+  }).then(function (oids) {
+    if (!oids) return;
+    var keep = {};
+    oids.forEach(function (id) { if (id) keep[id] = 1; });
+    var removals = Object.keys(orgLinkedNow).filter(function (id) { return !keep[id]; }).map(function (id) {
+      return call('organization_link', { event_id: currentEvent.id, organization_id: id, remove: true });
+    });
+    return Promise.all(removals).then(function () {
+      msg.textContent = '已保存：赛事页、品牌档案与 AI 球童介绍资料已同步。';
+      loadOrgs();
+    });
+  }).catch(function () { msg.textContent = '保存中出现异常，请刷新后核对。'; });
 };
+
 var knowEditingId = null, knowSource = { type: 'text', name: null };
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function knowKindName(k) { return { rules: '比赛规则', banquet: '晚宴安排', awards: '奖项说明', sponsor: '赞助商介绍', notice: '特殊通知', other: '其他' }[k] || '其他'; }
