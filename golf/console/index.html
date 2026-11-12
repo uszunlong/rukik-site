@@ -331,6 +331,7 @@ function refreshDash() {
     renderRegList(regs, d.teams || [], eg.pairings || []);
     var pend = 0, todos = [];
     if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请在下方「报名名单」中通过或拒绝');
+    if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点上方「结束比赛」，赛事页将切换为回忆馆');
     if (r.report) {
       var sc = r.report.scoring.by_status || {};
       pend = (sc.submitted || 0) + (sc.verified || 0);
@@ -343,6 +344,8 @@ function refreshDash() {
     var pb = document.getElementById('primaryBtn');
     if (currentEvent.status === 'draft') { pb.textContent = '发布赛事'; pb.onclick = function () { updateStatus('published'); }; }
     else if (currentEvent.status === 'published') { pb.textContent = '开始比赛'; pb.onclick = function () { updateStatus('in_progress'); }; }
+    else if (currentEvent.status === 'in_progress') { pb.textContent = '结束比赛'; pb.onclick = finishEvent; }
+    else if (currentEvent.status === 'completed') { pb.textContent = '打开赛事页（回忆馆）'; pb.onclick = function () { window.open('../event.html?e=' + encodeURIComponent(currentEvent.id), '_blank'); }; }
     else { pb.textContent = '刷新进度'; pb.onclick = refreshDash; }
   });
 }
@@ -350,6 +353,18 @@ function updateStatus(s) {
   call('event_update', { event_id: currentEvent.id, status: s }).then(function (d) {
     if (d.event) { currentEvent = d.event; document.getElementById('dashMsg').textContent = '状态已更新为 ' + s; refreshDash(); }
     else show(d);
+  });
+}
+// [线X 补齐 2026-11-11] 结束比赛：与 App「结束比赛（切换回忆馆）」同口径——同一 event_update 动作、
+// 同一 requireStaff 权限、同一状态机（in_progress → completed），不另造结束逻辑。
+function finishEvent() {
+  if (!confirm('确定结束比赛吗？结束后赛事页将切换为回忆馆，记分到此为止。')) return;
+  call('event_update', { event_id: currentEvent.id, status: 'completed' }).then(function (d) {
+    if (d.event) {
+      currentEvent = d.event;
+      document.getElementById('dashMsg').innerHTML = '比赛已结束，赛事页已切换为回忆馆：<a href="../event.html?e=' + encodeURIComponent(currentEvent.id) + '" target="_blank">打开赛事页（回忆馆）</a>';
+      refreshDash();
+    } else show(d);
   });
 }
 var courseSearchTimer = null;
