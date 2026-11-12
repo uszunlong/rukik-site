@@ -218,8 +218,13 @@ var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
 var qs = new URLSearchParams(location.search);
 var eventId = qs.get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
+/* [403修复20261112] 分享链接凭据：event.html?e=&c= 的 c 与旧 ?join= 码同为 invite_code，
+   event_get 时随请求体转发（服务端 linkAccess 口径），未登录好友凭完整链接即可打开
+   invite_only 私密球局。此前 play.html 从不转发邀请码，未登录打开必撞 403、
+   且被误报成「网络异常」（诊断定谳见 golf-load-failure-20261112/DIAG.md）。 */
+var linkCode = (qs.get('c') || qs.get('join') || '').trim();
 var HOME_MODE = !qs.get('e'); /* [线Z44] 无 e 参数＝H5 入口（发起/加入/回忆），不默认落入某场赛事 */
-document.getElementById('backLink').href = 'event.html?e=' + encodeURIComponent(eventId);
+document.getElementById('backLink').href = 'event.html?e=' + encodeURIComponent(eventId) + (linkCode ? '&c=' + encodeURIComponent(linkCode) : '');
 
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function fmtTime(iso, tz) {
@@ -893,6 +898,26 @@ function bindRetry() {
   var rb = document.getElementById('retryBtn');
   if (rb) rb.addEventListener('click', function () { loadAll(false); });
 }
+/* [403修复20261112] 403 引导页：私密球局未带有效凭据时的正确出口——成员在此
+   登录（登录成功自动重载本局）；持码者可手输邀请码（带 &c= 重开、走 linkAccess
+   直通）；其余情况引导向组织者索取最新分享链接。全程不出现「网络异常」字样。 */
+function renderForbiddenGuide() {
+  app.innerHTML = (S.ev && S.ev.event ? evMetaHtml() : '') +
+    '<div class="card"><h2>这是私密球局</h2>' +
+    '<p class="muted">本球局仅限受邀参加，登录后即可查看并加入。如果您是经分享链接打开的，请确认打开的是组织者最新分享的完整链接——链接不完整、或邀请码已被组织者更新，都会看到本页。</p>' +
+    '<div id="forbidLogin"></div>' +
+    '<div class="fld"><label>有邀请码？输入后直接打开</label><input id="forbidCode" type="text" placeholder="邀请码" autocomplete="off"></div>' +
+    '<div class="btnrow"><button class="btn" id="forbidCodeBtn" type="button">用邀请码打开</button><button class="btn plain" id="forbidRetry" type="button">重新加载</button></div></div>';
+  mountLogin(document.getElementById('forbidLogin'), { onDone: function () { loadAll(false); } });
+  var cb = document.getElementById('forbidCodeBtn');
+  if (cb) cb.addEventListener('click', function () {
+    var v = (document.getElementById('forbidCode').value || '').trim();
+    if (!v) return;
+    location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
+  });
+  var rb2 = document.getElementById('forbidRetry');
+  if (rb2) rb2.addEventListener('click', function () { loadAll(false); });
+}
 
 /* ---------- 数据装载 ---------- */
 async function loadAll(useCachePaint) {
@@ -907,12 +932,20 @@ async function loadAll(useCachePaint) {
     document.getElementById('pageTitle').textContent = (cached.ev.event && cached.ev.event.title) || '我的比赛';
   }
   paint();
-  var evR = await golfApiRetry('event_get', { event_id: eventId }, false);
+  var evBody = { event_id: eventId };
+  if (linkCode) evBody.invite_code = linkCode; /* [403修复20261112] 凭据透传（linkAccess），见 linkCode 注 */
+  var evR = await golfApiRetry('event_get', evBody, false);
   if (seq !== S.loadSeq) return;
   if (!evR || !evR.ok) {
+    /* [403修复20261112] 失败按状态分流、三态不许再混：404＝球局不存在或链接
+       已失效；403＝邀请/权限问题（私密球局未带凭据或凭据失效）→ 引导页，
+       绝不写「网络异常」；仅 fetch 异常/超时/5xx 等真网络失败才用网络异常文案。 */
+    var failStatus = evR && evR.status;
+    if (failStatus === 404) { app.innerHTML = errCardHtml('球局不存在或链接已失效。'); bindRetry(); return; }
+    if (failStatus === 403) { renderForbiddenGuide(); return; }
     /* [线Z55] 实时确认失败＝显式失败态：有缓存头也只显示赛事头＋错误，
        绝不拿缓存画状态（故障不能伪装成无数据/旧数据） */
-    if (!S.ev) { app.innerHTML = errCardHtml(evR && evR.status === 404 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络异常，已自动重试多次）。请检查网络后重新加载。'); }
+    if (!S.ev) { app.innerHTML = errCardHtml('赛事信息加载失败（网络异常，已自动重试多次）。请检查网络后重新加载。'); }
     else { app.innerHTML = evMetaHtml() + errCardHtml('赛事最新状态加载失败（网络异常，已自动重试多次）。为避免显示过期信息，这里不展示缓存状态，请重新加载。'); }
     bindRetry();
     return;
@@ -972,7 +1005,8 @@ function evMetaHtml() {
     '</div></div>';
 }
 function backToEventBtn(label) {
-  return '<div class="btnrow"><a class="btn plain" href="event.html?e=' + encodeURIComponent(eventId) + '">' + esc(label || '返回赛事页') + '</a></div>';
+  /* [403修复20261112] 返回赛事页同样透传凭据，避免最后一跳在回程再丢码撞 403 */
+  return '<div class="btnrow"><a class="btn plain" href="event.html?e=' + encodeURIComponent(eventId) + (linkCode ? '&c=' + encodeURIComponent(linkCode) : '') + '">' + esc(label || '返回赛事页') + '</a></div>';
 }
 /* [线P] 观众本人即主办方时给直达操作（球员视角文案不变） */
 function organizerHint() {

@@ -466,6 +466,17 @@ function sessHtml() {
     return '<div>🕐 ' + esc(sessTitle(s.note)) + (s.venue_name ? ' · ' + esc(s.venue_name) : '') + ' · ' + esc(tm) + '</div>';
   }).join('');
 }
+/* [403修复20261112] 链向记分页时透传落地 URL 自带的邀请码凭据（&c=），凭据在
+   最后一跳不再丢失：未登录好友从本页点「计分卡/报名」进 play.html 时，play.html
+   会把码转发给 event_get（linkAccess），私密球局直接打开、不再必撞 403。
+   码只取本页 URL 参数（查看者本就持有），不读数据载荷、不向无码者新增暴露；
+   仅非公开赛事（casual 或 visibility 非 public）拼接，公开赛事链接形态不变。 */
+function playHref() {
+  var u = 'play.html?e=' + encodeURIComponent(eventId);
+  var e = (EV && EV.event) || {};
+  if (inviteCodeParam && (e.kind === 'casual' || (e.visibility && e.visibility !== 'public'))) u += '&c=' + encodeURIComponent(inviteCodeParam);
+  return u;
+}
 function renderHero() {
   var e = EV.event, c = EV.course || {};
   var pill = document.getElementById('statePill');
@@ -478,7 +489,7 @@ function renderHero() {
   /* 第一区下方仅时间/地点；赛前报名按钮只给未报名者，已报名不重复显示（线P/Z1 口径收进双卡状态行） */
   var act = '';
   var myReg = EV.my_registration;
-  var playUrl = 'play.html?e=' + encodeURIComponent(eventId);
+  var playUrl = playHref(); /* [403修复20261112] 带凭据透传，见 playHref 注 */
   if (heroPre) {
     if (!myReg) act = '<a class="signup" href="' + playUrl + '">立即报名</a>';
     else if (myReg.status === 'pending') act = '<a class="signup alt" href="' + playUrl + '">报名审核中 · 查看进度</a>';
@@ -642,7 +653,7 @@ function renderDual() {
     else s = '查看分组与准备状态';
   }
   el.innerHTML = '<div class="dual">' +
-    '<a class="dualcard score" href="play.html?e=' + encodeURIComponent(eventId) + '"><div class="dc-ic">⛳</div><div class="dc-t">' + t + '</div><div class="dc-s">' + s + '</div></a>' +
+    '<a class="dualcard score" href="' + playHref() + '"><div class="dc-ic">⛳</div><div class="dc-t">' + t + '</div><div class="dc-s">' + s + '</div></a>' +
     '<a class="dualcard caddie" href="#" id="cdOpen"><div class="dc-ic">✦</div><div class="dc-t">问 RUKIK Golf</div><div class="dc-s">赛事智能球童</div></a></div>';
 }
 /* 主办方入口：页面最底部低调单按钮（管理动作仍在主办方台，不塞进球员页） */
@@ -1739,6 +1750,34 @@ function maybeWall() {
   if (!enabled) { WALL_STARTED = true; window.__l3skipped = true; return; } // L3：未开通零请求
   WALL_STARTED = true; loadWall();
 }
+/* [403修复20261112] 私密球局落地引导：未带凭据（无码/错码）打开本页且 event_get
+   回 403 时呈现——说明＋手输邀请码（带 &c= 重开本页）＋登录入口（成员登录后重拉
+   动态层）。不把用户放进记分页才撞 403 墙，也不写「加载失败/网络异常」误导文案。 */
+function renderForbiddenGuideEv() {
+  var pill = document.getElementById('statePill');
+  if (pill) { pill.className = 'pill pre'; pill.textContent = '私密球局'; }
+  var sec = document.getElementById('heroSec');
+  sec.innerHTML = '<div class="card"><h2>这是私密球局</h2>' +
+    '<p style="font-size:14px;line-height:1.7;color:#3c5a46;margin:0 0 10px">本球局仅限受邀参加。请通过组织者分享的邀请链接打开本页；如果您是本场成员，登录后即可查看。也可以输入组织者给您的邀请码直接打开：</p>' +
+    '<input id="fbCode" type="text" placeholder="邀请码" autocomplete="off" style="width:100%;box-sizing:border-box;border:1px solid #cfe0d4;border-radius:12px;padding:12px 14px;font-size:16px;min-height:44px">' +
+    '<button type="button" class="signup" id="fbCodeBtn" style="border:none;cursor:pointer;font:inherit;width:100%">用邀请码打开</button>' +
+    '<div id="fbLogin" style="margin-top:10px"></div></div>';
+  var btn = document.getElementById('fbCodeBtn');
+  if (btn) btn.addEventListener('click', function () {
+    var v = (document.getElementById('fbCode').value || '').trim();
+    if (!v) return;
+    location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
+  });
+  var mount = document.getElementById('fbLogin');
+  if (mount) {
+    import('./auth.js?v=20261112b').then(function (auth) {
+      auth.mountLogin(mount, { onDone: function () {
+        try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
+        loadDynamic();
+      } });
+    }).catch(function () {});
+  }
+}
 function loadDynamic() {
   dyn('event_get', inviteCodeParam ? { invite_code: inviteCodeParam } : {}).then(function (j) {
     EV = j; PREVIEW = j.course_preview || null;
@@ -1761,8 +1800,11 @@ function loadDynamic() {
   }).catch(function (e) {
     var msg = String(e && e.message || e);
     if (!SNAP) {
-      errBox(document.getElementById('heroSec'), msg.indexOf('event not found') >= 0 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
-      document.getElementById('statePill').textContent = '加载失败';
+      if (msg.indexOf('forbidden') >= 0) { renderForbiddenGuideEv(); } /* [403修复20261112] 私密球局未带凭据→引导页，不报假故障 */
+      else {
+        errBox(document.getElementById('heroSec'), msg.indexOf('event not found') >= 0 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
+        document.getElementById('statePill').textContent = '加载失败';
+      }
     } else {
       errBox(document.getElementById('mapSec'), '球场地图加载失败，请重试。', loadDynamic);
     }
