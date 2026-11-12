@@ -74,7 +74,7 @@
   #hmTee { background: rgba(3,18,12,.55) !important; border-color: rgba(160,220,185,.28) !important; color: #f2f8f3 !important; }
   /* 记分 */
   .scorehead { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; }
-  .scorehead .tot { font-size: 15px; font-weight: 700; color: #E3C878; }
+  .scorehead .tot { font-size: 15px; font-weight: 700; color: #E3C878; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* [线Z78] 个人卡同口径：长名字截断不溢出 */
   .syncbar { margin-top: 8px; font-size: 13px; line-height: 1.6; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,.05); color: #c4d8c9; border: 1px solid rgba(160,220,185,.16); }
   .syncbar.bad { background: rgba(239,68,68,.13); color: #fca5a5; border-color: rgba(239,68,68,.3); }
   .syncbar.good { background: rgba(34,197,94,.14); color: #86efac; border-color: rgba(34,197,94,.3); }
@@ -102,9 +102,9 @@
   .grow.me { background: rgba(227,200,120,.07); border-radius: 10px; }
   .grow.flash { background: rgba(34,197,94,.12); }
   .ginfo { flex: 1; min-width: 0; }
-  .gname { font-weight: 600; color: #eef7f0; }
-  .gsub { font-size: 12px; color: #9db8a7; margin-top: 2px; line-height: 1.5; }
-  .grow .stepper { margin: 0; gap: 10px; }
+  .gname { font-weight: 600; color: #eef7f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* [线Z78] 长名字单行省略，永不压住步进器 */
+  .gsub { font-size: 12px; color: #9db8a7; margin-top: 2px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* [线Z78] 含记录人长名时同样截断 */
+  .grow .stepper { margin: 0; gap: 10px; flex: 0 0 auto; } /* [线Z78] 步进器固定宽度、永不收缩被覆盖 */
   table.scores.mx td, table.scores.mx th { padding: 4px 6px; text-align: center; white-space: nowrap; }
   .edlabel { text-align: center; font-size: 15.5px; font-weight: 700; color: #f4faf5; letter-spacing: .2px; }
   .statetag { text-align: center; font-size: 13px; margin-top: 6px; color: #c4d8c9; }
@@ -1084,6 +1084,7 @@ var S = {
   authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
   fresh: false, freshPc: false, freshAsk: false, cardStale: false, cardLoadFail: false, loadNote: '', /* [线Z55] fresh＝本轮实时 event_get 已确认；未确认前 paint 只出骨架，禁止用缓存/默认值画状态模块 */
   autoJoinTried: false, autoJoinErr: '', /* [匿名邀请完善20261112] 登录后凭 linkCode 自动加入（仅 casual、每页只试一次） */
+  grpFail: false, /* [线Z78] 同组记分加载失败标记：失败不得静默退回单人形态，记分区须出可见提示＋重试 */
 };
 var app = document.getElementById('app');
 
@@ -1534,7 +1535,9 @@ function effStrokes(cardId, h) {
    入既有本机队列、回放逐人对账。 */
 async function loadGroup(card, keepEdits) {
   var r = await golfApi('score_get_group', { scorecard_id: card.id }, true).catch(function () { return null; });
-  if (!r || !r.ok || !r.data || (r.data.players || []).filter(function (p) { return p.scorecard_id; }).length < 2) { S.group = null; return null; }
+  if (!r || !r.ok || !r.data) { S.grpFail = true; S.group = null; return null; } /* [线Z78] 请求失败/超时：标记失败待提示，禁止静默伪装成单人形态 */
+  S.grpFail = false; /* 请求已成功到达：以下为「确实没有同组」的正常单人形态，不出失败提示 */
+  if ((r.data.players || []).filter(function (p) { return p.scorecard_id; }).length < 2) { S.group = null; return null; }
   S.group = r.data;
   if (!keepEdits || !Object.keys(S.gDirty).length) {
     if (S.selHole != null) { initGEdits(S.selHole); S.gInitFor = S.selHole; }
@@ -1548,6 +1551,12 @@ async function loadGroup(card, keepEdits) {
   }
   return S.group;
 }
+/* [线Z78] 同组记分加载失败提示：单人记分照常可用，重试成功即切回同组视图 */
+function grpFailHtml() {
+  if (!S.grpFail || S.group) return '';
+  return '<div class="syncbar bad">同组记分暂时没加载出来（网络异常），您仍可先记自己的分。<div class="btnrow"><button class="btn plain" type="button" id="grpRetryBtn">重试</button></div></div>';
+}
+async function grpRetry(card) { await loadGroup(card, false); paint(); }
 function initGEdits(hole) {
   S.gEdits = {}; S.gDirty = {};
   if (!S.group) return;
@@ -1824,7 +1833,7 @@ function paintScoring(card) {
   var html = evMetaHtml() +
     '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 逐洞记分</h2><span class="tot">' +
     esc((cd.player || {}).display_name || '') + (sc.thru != null ? ' · 已完成 ' + sc.thru + ' 洞' : '') + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : '') + '</span></div>' +
-    syncHtml + myStatusHtml() +
+    syncHtml + myStatusHtml() + grpFailHtml() +
     '<div class="holegrid">' + grid + '</div>';
 
   if (sel && !locked) {
@@ -1864,6 +1873,8 @@ function paintScoring(card) {
   html += backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
   app.innerHTML = html;
   bindMyStatus();
+  var grb = document.getElementById('grpRetryBtn');
+  if (grb) grb.addEventListener('click', function () { grpRetry(card); });
   app.querySelectorAll('.hole').forEach(function (el) {
     el.addEventListener('click', function () {
       S.selHole = Number(el.dataset.hole);
@@ -3434,7 +3445,12 @@ setInterval(function () {
   if (S.group && S.session) { var c = myCard(); if (c) loadGroup(c, true).then(function () { if (S.group) paint(); }); }
 }, 15000);
 window.addEventListener('online', function () { flushQueue(); });
-document.addEventListener('visibilitychange', function () { if (!document.hidden) flushQueue(); });
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) return;
+  flushQueue();
+  /* [线Z78] 回到前台且当前仍是单人形态时自动补拉一次同组记分：覆盖朋友晚加入、页面早已打开的场景；拉到即切同组视图 */
+  if (!S.group && S.session && !HOME_MODE) { var vc = myCard(); if (vc) loadGroup(vc, false).then(function (g) { if (g) paint(); }); }
+});
 </script>
 </body>
 </html>
