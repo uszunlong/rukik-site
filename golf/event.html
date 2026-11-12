@@ -124,7 +124,9 @@
   .ptrack{display:flex;gap:10px;width:max-content}
   .pcard{flex:none;width:104px;min-height:70px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;text-decoration:none;color:#1c2a1e;cursor:pointer}
   .pcard img{max-width:84px;max-height:30px;object-fit:contain}
-  .pcname{font-size:12.5px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word}
+  .pclogo{height:32px;display:flex;align-items:center;justify-content:center}
+  .pcmono{width:34px;height:34px;border-radius:9px;background:#14532d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+  .pcname{font-size:12.5px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word;overflow-wrap:anywhere}
   .pctag{font-size:10px;color:#16a34a;font-weight:700;line-height:1.2}
   .bhead{display:flex;align-items:center;gap:8px}
   .bhead h2{margin:0}
@@ -432,10 +434,15 @@ var ORG_PINNED = { '主办': 1, '联合主办': 1 };
 var PMQ = { timer: null, pausedUntil: 0 };
 var ORGS_CUR = [];
 function orgCardHtml(o, i) {
-  var inner = '<div class="pctag">' + esc(o.type || '合作伙伴') + '</div>' +
-    (o.logo_url ? '<img src="' + esc(o.logo_url) + '" alt="' + esc(o.name) + '">' : '<div class="pcname">' + esc(o.name) + '</div>');
-  /* 减法重构第 5 项：点击看机构介绍（统一档案 intro），不再直跳外站 */
-  return '<div class="pcard" data-oi="' + i + '" role="button" tabindex="0">' + inner + '</div>';
+  /* Z35：真实 Logo 原比例完整呈现；无 Logo 用品牌首字规范占位（不伪造 Logo）。名称恒显完整、不截断 */
+  var logoHtml = o.logo_url
+    ? '<img src="' + esc(o.logo_url) + '" alt="' + esc(o.name) + '">'
+    : '<div class="pcmono">' + esc((o.name || '').trim().slice(0, 1)) + '</div>';
+  var inner = '<div class="pclogo">' + logoHtml + '</div>' +
+    '<div class="pctag">' + esc(o.type || '合作伙伴') + '</div>' +
+    '<div class="pcname">' + esc(o.name) + '</div>';
+  /* Z35：卡上无任何按钮，整卡可点 → 打开本场球童并请其介绍该品牌；官网由 AI 在回答中给出 */
+  return '<div class="pcard" data-oi="' + i + '" data-oid="' + esc(o.organization_id || '') + '" role="button" tabindex="0" title="请 AI 球童介绍这家合作伙伴">' + inner + '</div>';
 }
 /* 机构介绍层：intro 走机构统一档案（event_get 快照同源）；无 intro 只显名称与角色，不拼凑 */
 function openOrgSheet(o) {
@@ -455,16 +462,18 @@ function renderPartners() {
   if (!orgs.length) { el.innerHTML = ''; return; }
   orgs.sort(function (a, b) { return (ORG_ORDER[a.type] != null ? ORG_ORDER[a.type] : 9) - (ORG_ORDER[b.type] != null ? ORG_ORDER[b.type] : 9); });
   ORGS_CUR = orgs;
-  var pinned = orgs.filter(function (o) { return ORG_PINNED[o.type]; });
-  var rest = orgs.filter(function (o) { return !ORG_PINNED[o.type]; });
+  /* Z35：全部合作伙伴一条横向带（按 ORG_ORDER 排序、主办在首），溢出时 2 秒自动轮播，纪律与精彩瞬间一致 */
   el.innerHTML = '<div class="card partners"><h2>赛事合作伙伴</h2><div class="pwrap">' +
-    (pinned.length ? '<div class="ppin">' + pinned.map(function (o) { return orgCardHtml(o, orgs.indexOf(o)); }).join('') + '</div>' : '') +
-    (rest.length ? '<div class="pstrip" id="pstrip"><div class="ptrack" id="ptrack">' + rest.map(function (o) { return orgCardHtml(o, orgs.indexOf(o)); }).join('') + '</div></div>' : '') +
+    '<div class="pstrip" id="pstrip"><div class="ptrack" id="ptrack">' + orgs.map(function (o, ix) { return orgCardHtml(o, ix); }).join('') + '</div></div>' +
     '</div></div>';
-  /* 点击委托绑在容器上：轮播复制节点后仍可点 */
+  /* 点击委托绑在容器上：轮播复制节点后仍可点；整卡点击请本场球童介绍该品牌 */
   el.onclick = function (ev) {
     var card = ev.target && ev.target.closest ? ev.target.closest('.pcard') : null;
-    if (card) openOrgSheet(ORGS_CUR[Number(card.getAttribute('data-oi'))]);
+    if (!card) return;
+    var o = ORGS_CUR[Number(card.getAttribute('data-oi'))];
+    if (!o) return;
+    PMQ.pausedUntil = Date.now() + 8000;
+    document.dispatchEvent(new CustomEvent('golf:ask-brand', { detail: { name: o.name, organization_id: o.organization_id || '' } }));
   };
   setupPartnerScroll();
 }
@@ -1607,6 +1616,7 @@ var cdEventId = null; // 面板打开时锁定当前页面 event_id，此后每�
 var cdHistory = []; // 只含本场真实问答轮，欢迎语不入会话
 var cdLoggedIn = false;
 var cdSending = false;
+var cdPendingAsk = null; /* Z35：点品牌卡时未登录先暂存，登录成功后自动发出 */
 var cdAuth = null; // 懒加载的 auth.js 模块
 var cdLoginMounted = false;
 var cdSavedScrollY = 0;
@@ -1673,7 +1683,18 @@ function cdSetLoggedIn(on) {
   cdLogin.classList.toggle('hidden', on);
   cdComposer.classList.toggle('hidden', !on);
   cdPaintChips();
+  if (on && cdPendingAsk) { var t = cdPendingAsk; cdPendingAsk = null; cdInput.value = t; cdSend(); }
 }
+/* Z35：点赛事页合作伙伴卡 → 打开本场球童并自动请其介绍该品牌（上下文沿用本场 golf_event_id） */
+document.addEventListener('golf:ask-brand', function (ev) {
+  var d = (ev && ev.detail) || {};
+  if (!d.name) return;
+  var q = '请详细介绍本场赛事的' + d.name + '。';
+  Promise.resolve(cdOpen()).then(function () {
+    if (cdLoggedIn) { cdInput.value = q; cdSend(); }
+    else cdPendingAsk = q;
+  });
+});
 function cdSetEvName() {
   var t = (window.EV && window.EV.title) || '';
   var el = document.getElementById('cdEvName');
