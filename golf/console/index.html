@@ -115,12 +115,30 @@
         <button class="ghost" id="orgSave" type="button">保存机构</button>
         <span id="orgMsg" style="font-size:13px;color:#5c7260"></span>
       </div>
+      <div id="knowCard" style="margin-top:14px">
+        <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
+        <div id="knowList"></div>
+        <div class="row">
+          <div><label>类别</label><select id="kKind"><option value="banquet">晚宴安排</option><option value="rules">比赛规则</option><option value="awards">奖项说明</option><option value="sponsor">赞助商介绍</option><option value="notice">特殊通知</option><option value="other">其他</option></select></div>
+          <div><label>标题 *</label><input id="kTitle" placeholder="如：颁奖晚宴安排"></div>
+        </div>
+        <label>内容 *</label><textarea id="kBody" rows="4" placeholder="直接输入或粘贴赛事说明；也可上传 PDF 自动提取文字后在此核对修改"></textarea>
+        <label>上传文件补充（PDF 自动提取文字；图片 / Word 暂不支持自动解析，会记录文件名，请把要点填入上方内容）</label>
+        <input type="file" id="kFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="kKey" style="width:auto;margin-right:6px">关键信息（涉及时间 / 地点 / 规则变更——发布后将通过赛事关怀提醒已报名球员）</label>
+        <p>
+          <button class="ghost" id="kSave" type="button">保存草稿</button>
+          <button class="ghost" id="kReset" type="button">清空表单</button>
+          <span id="kMsg" style="font-size:13px;color:#5c7260"></span>
+        </p>
+      </div>
       <pre id="out" style="display:none"></pre>
       </details>
     </div>
   </div>
   <p style="color:#5c7260;font-size:13px">成绩由确定性规则引擎计算并经确认流程锁定；本工作台只做组织与发布，不直接改分。</p>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 var SB = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
 var API = SB + '/functions/v1/golf-api';
@@ -164,7 +182,7 @@ function openEvent(id) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
     document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
-    refreshDash(); loadOrgs();
+    refreshDash(); loadOrgs(); loadKnowledge();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -204,6 +222,53 @@ document.getElementById('orgSave').onclick = function () {
     if (d.ok) loadOrgs();
   });
 };
+var knowEditingId = null, knowSource = { type: 'text', name: null };
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function knowKindName(k) { return { rules: '比赛规则', banquet: '晚宴安排', awards: '奖项说明', sponsor: '赞助商介绍', notice: '特殊通知', other: '其他' }[k] || '其他'; }
+function kMsg(t) { document.getElementById('kMsg').textContent = t || ''; }
+function loadKnowledge() {
+  if (!currentEvent) return;
+  call('knowledge_list', { event_id: currentEvent.id }).then(function (d) {
+    var box = document.getElementById('knowList');
+    var rows = d.knowledge || [];
+    if (d.error) { box.innerHTML = '<p class="err">知识列表加载失败：' + escapeHtml(d.error) + '</p>'; return; }
+    box.innerHTML = rows.length ? rows.map(function (r) {
+      var badge = r.status === 'published' ? '<span style="color:#1d7a3a">已发布</span>' : '<span style="color:#a16207">草稿</span>';
+      return '<div style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:6px 0"><b>' + escapeHtml(r.title) + '</b> ' +
+        '<span style="color:#5c7260;font-size:13px">' + knowKindName(r.kind) + (r.is_key_fact ? ' · 关键信息' : '') + ' · ' + badge + (r.source_name ? ' · 来源文件：' + escapeHtml(r.source_name) : '') + '</span><br>' +
+        '<span style="font-size:13px;color:#5c7260">' + escapeHtml(String(r.body || '').slice(0, 120)) + '</span><br>' +
+        '<button class="ghost k-edit" data-id="' + r.id + '" type="button">编辑</button> ' +
+        (r.status === 'published' ? '<button class="ghost k-unpub" data-id="' + r.id + '" type="button">撤下</button> ' : '<button class="ghost k-pub" data-id="' + r.id + '" type="button">发布</button> ') +
+        '<button class="ghost k-del" data-id="' + r.id + '" type="button">删除</button></div>';
+    }).join('') : '<p style="color:#5c7260;font-size:13px">暂无补充资料。</p>';
+    bindKnowButtons(rows);
+  });
+}
+function bindKnowButtons(rows) {
+  function find(id) { for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i]; return null; }
+  Array.prototype.forEach.call(document.querySelectorAll('.k-edit'), function (b) { b.onclick = function () {
+    var r = find(b.getAttribute('data-id')); if (!r) return;
+    knowEditingId = r.id; knowSource = { type: r.source_type || 'text', name: r.source_name || null };
+    document.getElementById('kKind').value = r.kind; document.getElementById('kTitle').value = r.title;
+    document.getElementById('kBody').value = r.body || ''; document.getElementById('kKey').checked = !!r.is_key_fact;
+    kMsg('正在编辑：' + r.title + '（保存后仍保持当前发布状态）');
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.k-pub'), function (b) { b.onclick = function () {
+    call('knowledge_publish', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { kMsg(d.ok ? '已发布，AI 球童现在可以引用这条资料。' : ('发布失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.k-unpub'), function (b) { b.onclick = function () {
+    call('knowledge_unpublish', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { kMsg(d.ok ? '已撤下，回到草稿。' : ('撤下失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.k-del'), function (b) { b.onclick = function () {
+    if (!confirm('确定删除这条赛事知识？删除后 AI 球童不再引用。')) return;
+    call('knowledge_delete', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { kMsg(d.ok ? '已删除。' : ('删除失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
+  }; });
+}
+function resetKnowForm() {
+  knowEditingId = null; knowSource = { type: 'text', name: null };
+  document.getElementById('kTitle').value = ''; document.getElementById('kBody').value = '';
+  document.getElementById('kKey').checked = false; document.getElementById('kFile').value = '';
+}
 function refreshDash() {
   if (!currentEvent) return;
   call('registrations_list', { event_id: currentEvent.id }).then(function (d) {
@@ -293,6 +358,42 @@ document.getElementById('awardBtn').onclick = function () { call('awards_compute
 document.getElementById('reportBtn').onclick = function () { call('event_report', { event_id: currentEvent.id }).then(show); };
 document.getElementById('annBtn').onclick = function () { call('announcement_create', { event_id: currentEvent.id, title: document.getElementById('annTitle').value, body: document.getElementById('annBody').value }).then(show); };
 document.getElementById('spBtn').onclick = function () { call('sponsor_create', { event_id: currentEvent.id, name: document.getElementById('spName').value, logo_url: document.getElementById('spLogo').value || null, placements: ['event_page', 'big_screen'] }).then(show); };
+document.getElementById('kSave').onclick = function () {
+  if (!currentEvent) return;
+  var title = document.getElementById('kTitle').value.trim();
+  var body = document.getElementById('kBody').value.trim();
+  if (!title) { kMsg('请先填写标题。'); return; }
+  if (!body) { kMsg('请填写内容（或上传 PDF 提取文字、把要点粘贴进来）。'); return; }
+  call('knowledge_save', { event_id: currentEvent.id, id: knowEditingId || undefined, kind: document.getElementById('kKind').value, title: title, body: body, source_type: knowSource.type, source_name: knowSource.name, is_key_fact: document.getElementById('kKey').checked }).then(function (d) {
+    if (d.ok) { kMsg(knowEditingId ? '已保存修改。' : '已保存为草稿，确认无误后点「发布」，AI 球童才会引用。'); resetKnowForm(); loadKnowledge(); }
+    else kMsg('保存失败：' + (d.error || '未知错误'));
+  });
+};
+document.getElementById('kReset').onclick = function () { resetKnowForm(); kMsg(''); };
+document.getElementById('kFile').addEventListener('change', function () {
+  var f = this.files[0]; if (!f) return;
+  var ext = (f.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') {
+    knowSource = { type: 'pdf', name: f.name };
+    kMsg('正在提取 PDF 文字…');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    f.arrayBuffer().then(function (buf) { return pdfjsLib.getDocument({ data: buf }).promise; }).then(function (pdf) {
+      var pages = [], chain = Promise.resolve();
+      for (var i = 1; i <= pdf.numPages; i++) { (function (p) { chain = chain.then(function () { return pdf.getPage(p).then(function (page) { return page.getTextContent(); }).then(function (tc) { pages.push(tc.items.map(function (it) { return it.str; }).join(' ')); }); }); })(i); }
+      return chain.then(function () { return { text: pages.join('\n'), n: pdf.numPages }; });
+    }).then(function (r) {
+      document.getElementById('kBody').value = r.text.slice(0, 19000);
+      if (!document.getElementById('kTitle').value.trim()) document.getElementById('kTitle').value = f.name.replace(/\.pdf$/i, '');
+      kMsg('已提取 ' + r.n + ' 页文字到内容框，请核对修改后再保存草稿。');
+    }).catch(function () { kMsg('PDF 提取失败，请把要点直接粘贴到内容框。'); });
+  } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+    knowSource = { type: 'image', name: f.name };
+    kMsg('图片暂不支持自动识别文字：已记录文件名「' + f.name + '」，请把图片中的要点填入上方内容后保存。');
+  } else {
+    knowSource = { type: 'word', name: f.name };
+    kMsg('Word 暂不支持自动解析：已记录文件名「' + f.name + '」，请把要点粘贴到上方内容后保存。');
+  }
+});
 if (token) init();
 </script>
 </body>
