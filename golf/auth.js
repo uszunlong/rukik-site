@@ -1,6 +1,7 @@
 /* RUKIK 网页登录组件（统一 UID · 与 App 同一账号体系）
  * 复用站内已验证实现（/p/ 专家页聊天区同款，2026-10-30 起口径）：
  *  - 邮箱：Supabase Auth signInWithOtp / verifyOtp(type=email)
+ *  - 密码：Supabase Auth signInWithPassword（官方端点直连，不经任何 EF 中转）
  *  - 手机号：phone-otp 三段分离服务（sendPhoneOtp / verifyPhoneOtp / resolvePhoneIdentity）
  *    发码与账号是否存在无关；验码只换一次性凭证；已绑号码解析进原 UID；
  *    未绑号码验码后才出现分支（已有账号→邮箱登录后绑定；新用户→明确确认后服务端建号）。
@@ -73,7 +74,7 @@ function adoptPhoneSession(d) {
 }
 
 /* ---------------- 登录 UI（挂载到容器） ----------------
- * mountLogin(el, { onDone })：渲染邮箱/手机号双通道登录卡。
+ * mountLogin(el, { onDone })：渲染邮箱/手机号/密码三通道登录卡（默认停在邮箱页签）。
  * onDone(session) 在登录成功后回调。返回 { destroy }。
  */
 export function mountLogin(el, opts) {
@@ -82,7 +83,7 @@ export function mountLogin(el, opts) {
     '<div class="rk-auth">' +
     '<div class="rk-auth-title">登录 / 注册</div>' +
     '<p class="rk-auth-hint">使用 RUKIK 账号登录（与 App 同一账号）。报名、记分与保存个人记录需要登录。</p>' +
-    '<div class="rk-tabs"><button type="button" data-tab="email" class="on">邮箱</button><button type="button" data-tab="phone">手机号</button></div>' +
+    '<div class="rk-tabs"><button type="button" data-tab="email" class="on">邮箱</button><button type="button" data-tab="phone">手机号</button><button type="button" data-tab="password">密码</button></div>' +
     '<div data-pane="email">' +
       '<div class="rk-row"><input type="email" data-f="email" placeholder="邮箱地址" autocomplete="email" inputmode="email"></div>' +
       '<div class="rk-row"><button type="button" data-a="sendEmail">发送验证码</button></div>' +
@@ -104,6 +105,12 @@ export function mountLogin(el, opts) {
         '<div class="rk-row"><button type="button" data-a="regDo">确认创建并登录</button><button type="button" class="plain" data-a="regBack">返回</button></div>' +
       '</div>' +
     '</div>' +
+    '<div data-pane="password" hidden>' +
+      '<div class="rk-row"><input type="email" data-f="pwEmail" placeholder="邮箱地址" autocomplete="email" inputmode="email"></div>' +
+      '<div class="rk-row"><input type="password" data-f="pwPass" placeholder="密码" autocomplete="current-password"></div>' +
+      '<div class="rk-row"><button type="button" data-a="loginPw">登录</button></div>' +
+      '<p class="rk-auth-hint">使用您在 RUKIK App 里设置的账号密码。还没有密码、或忘了密码？请用「邮箱」页签的验证码登录。</p>' +
+    '</div>' +
     '<div class="rk-msg" data-f="msg"></div>' +
     '</div>';
 
@@ -118,8 +125,7 @@ export function mountLogin(el, opts) {
   el.querySelectorAll('[data-tab]').forEach(function (b) {
     b.addEventListener('click', function () {
       el.querySelectorAll('[data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
-      q('[data-pane="email"]').hidden = b.dataset.tab !== 'email';
-      q('[data-pane="phone"]').hidden = b.dataset.tab !== 'phone';
+      el.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== b.dataset.tab; });
       say('');
     });
   });
@@ -146,6 +152,34 @@ export function mountLogin(el, opts) {
       if (r.error) say('验证失败：验证码不正确或已过期，请重新发送。');
       else { session = (r.data && r.data.session) || null; emit(); done(session); }
     } catch (e) { say('验证失败，请检查网络后重试。'); } finally { btn.disabled = false; }
+  });
+
+  q('[data-a="loginPw"]').addEventListener('click', async function () {
+    var email = (q('[data-f="pwEmail"]').value || '').trim();
+    var pass = q('[data-f="pwPass"]').value || '';
+    if (!email) { say('请先填写邮箱地址。'); return; }
+    if (!pass) { say('请填写密码。'); return; }
+    var btn = this; btn.disabled = true; say('正在登录…');
+    try {
+      var r = await sb.auth.signInWithPassword({ email: email, password: pass });
+      if (r.error) {
+        var code = (r.error.code || '') + '';
+        var em = (r.error.message || '') + '';
+        if (r.error.name === 'AuthRetryableFetchError' || r.error.status === 0 || /failed to fetch|network/i.test(em)) say('登录失败，请检查网络后重试。');
+        else if (r.error.status === 429 || /rate/i.test(code)) say('尝试太频繁了，请过一会儿再试。');
+        else if (code === 'email_not_confirmed' || /not confirmed/i.test(em)) say('这个邮箱还没有完成验证，请先用「邮箱」页签的验证码登录一次。');
+        else if (code === 'invalid_credentials' || /invalid login credentials/i.test(em)) say('密码不正确。如果这个邮箱还没有 RUKIK 账号、或账号还没有设置密码，看到的也会是这条提示——请改用「邮箱」页签的验证码登录。');
+        else say('登录失败，请重试。若持续失败，请改用邮箱验证码登录。');
+      } else {
+        q('[data-f="pwPass"]').value = '';
+        session = (r.data && r.data.session) || null; emit(); done(session);
+      }
+    } catch (e) { say('登录失败，请检查网络后重试。'); } finally { btn.disabled = false; }
+  });
+
+  ['pwEmail', 'pwPass'].forEach(function (f) {
+    var inp = q('[data-f="' + f + '"]');
+    if (inp) inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); q('[data-a="loginPw"]').click(); } });
   });
 
   var PHONE_LOCAL_LEN = { '1': 10, '86': 11, '852': 8, '886': 9, '65': 8, '44': 10, '61': 9, '81': 11, '82': 11 };
