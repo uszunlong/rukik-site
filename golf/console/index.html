@@ -184,7 +184,7 @@
           <p class="ok" id="awardMsg"></p>
         </div></div>
       <div id="viewContent" class="catview" style="display:none"><label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
-        <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div style="margin-top:14px"><label>Golf Live 照片管理</label><p style="margin:6px 0"><button class="ghost" id="photosBtn" type="button">打开照片管理（上传 / 审核 / 删除）</button></p></div><div id="sponsorCard" style="margin-top:14px">
+        <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div style="margin-top:14px"><label>Golf Live 照片管理</label><p style="margin:6px 0"><button class="ghost" id="photosBtn" type="button">打开照片管理（上传 / 审核 / 删除）</button></p></div><div style="margin-top:14px"><label>赛事海报（顶部相册：上传 / 删除 / 排序 / 设封面，保存即同步赛事页；正式赛事与快速球局同口径）</label><div id="pstList"></div><div class="row"><div><label>添加海报（PNG/JPG/WebP，≤5MB，最多 9 张）</label><input id="pstFile" type="file" accept="image/png,image/jpeg,image/webp"></div></div><p class="ok" id="pstMsg"></p></div><div id="sponsorCard" style="margin-top:14px">
         <label>合作伙伴管理（本场赞助商：名称 / 类别 / 官网 / 简介 / 排序 / Logo 自助维护，保存后赛事页与大屏同步展示）</label>
         <div id="spList"></div>
         <div style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">
@@ -371,7 +371,7 @@ function openEvent(id) {
     document.getElementById('dash').style.display = 'block';
     if (window.__z49showView) window.__z49showView('home'); /* [线Z49] 打开赛事默认回管理首页 */
     document.getElementById('dashTitle').textContent = d.event.title; /* [线Z49] 状态见首页状态行 */
-    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors();
+    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors(); pstRender();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -1351,6 +1351,70 @@ document.getElementById('spxLogoFile').addEventListener('change', function () {
       spxBindLogoPrev();
       msg.textContent = 'Logo 已上传，点「保存合作伙伴」后生效。';
     }).catch(function () { msg.textContent = 'Logo 上传网络失败，请重试。'; });
+  });
+});
+/* [线Z65] 海报管理：与赛事页 hero 相册同一套模块（poster_urls＋cover_url 真源、
+   poster_* 四 action）；currentEvent 装配自 event_get 整行回传，变更以服务端回执
+   刷新并重渲染，赛事页同步。快速球局（kind=casual）同口径可用，不按 kind 隐藏。 */
+function pstMsg(t) { var m = document.getElementById('pstMsg'); if (m) m.textContent = t || ''; }
+function pstRender() {
+  var box = document.getElementById('pstList'); if (!box) return;
+  var urls = (currentEvent && Array.isArray(currentEvent.poster_urls)) ? currentEvent.poster_urls : [];
+  var cover = currentEvent ? currentEvent.cover_url : null;
+  if (!urls.length) { box.innerHTML = '<p style="color:#5c7260;font-size:13px;margin:6px 0">还没有海报。无海报时赛事页顶部显示 RUKIK Golf 默认封面。</p>'; return; }
+  box.innerHTML = urls.map(function (u, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><img src="' + escapeHtml(u) + '" style="width:54px;height:54px;object-fit:cover;border-radius:8px;background:#eee">' +
+      (u === cover ? '<span style="font-size:11px;font-weight:700;color:#fff;background:#C9A227;border-radius:999px;padding:2px 8px">封面</span>' : '') +
+      '<span style="font-size:13px;color:#5c7260">第 ' + (i + 1) + ' 张</span>' +
+      (u === cover ? '' : '<button class="ghost" data-pst="cover" data-i="' + i + '">设封面</button>') +
+      '<button class="ghost" data-pst="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+      '<button class="ghost" data-pst="down" data-i="' + i + '"' + (i === urls.length - 1 ? ' disabled' : '') + '>↓</button>' +
+      '<button class="ghost" data-pst="del" data-i="' + i + '" style="color:#c0392b">删除</button></div>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-pst]'), function (btn) {
+    btn.addEventListener('click', function () { pstAct(btn.getAttribute('data-pst'), Number(btn.getAttribute('data-i'))); });
+  });
+}
+function pstSync(d) { if (!d || !currentEvent) return; if (Array.isArray(d.poster_urls)) currentEvent.poster_urls = d.poster_urls; if ('cover_url' in d) currentEvent.cover_url = d.cover_url; }
+function pstCall(action, extra, okMsg) {
+  pstMsg('处理中…');
+  return call(action, Object.assign({ event_id: currentEvent.id }, extra)).then(function (d) {
+    if (!d || !d.ok) { pstMsg('操作失败：' + ((d && d.error) || '未知错误')); pstRender(); return; }
+    pstSync(d); pstRender(); pstMsg(okMsg);
+  }).catch(function () { pstMsg('操作失败：网络异常，请重试。'); pstRender(); });
+}
+function pstAct(kind, i) {
+  if (!currentEvent) return;
+  var urls = (currentEvent.poster_urls || []).slice();
+  var u = urls[i]; if (!u) return;
+  if (kind === 'cover') pstCall('poster_set_cover', { url: u }, '已设为封面，赛事页已同步。');
+  else if (kind === 'up' || kind === 'down') {
+    var j = kind === 'up' ? i - 1 : i + 1; if (j < 0 || j >= urls.length) return;
+    var t = urls[j]; urls[j] = urls[i]; urls[i] = t;
+    pstCall('poster_reorder', { poster_urls: urls }, '顺序已更新，赛事页已同步。');
+  } else if (kind === 'del') {
+    uiConfirm('确定删除这张海报？删除后赛事页相册同步移除，无法恢复。').then(function (ok) {
+      if (ok) pstCall('poster_delete', { url: u }, '已删除，赛事页已同步。');
+    });
+  }
+}
+document.getElementById('pstFile').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = '';
+  if (!f || !currentEvent) return;
+  if (!/image\/(png|jpeg|webp)/.test(f.type || '')) { pstMsg('仅支持 PNG / JPG / WebP。'); return; }
+  if (f.size > 5242880) { pstMsg('单张海报不能超过 5MB。'); return; }
+  if ((currentEvent.poster_urls || []).length >= 9) { pstMsg('海报最多 9 张，请先删除旧海报。'); return; }
+  pstMsg('上传中…');
+  call('poster_add', { event_id: currentEvent.id, content_type: f.type || 'image/png' }).then(function (d) {
+    if (!d || !d.ok) { pstMsg('上传失败：' + ((d && d.error) || '未知错误')); return; }
+    pstSync(d);
+    fetch(d.signed_url, { method: 'PUT', headers: { 'Content-Type': f.type || 'image/png' }, body: f }).then(function (r) {
+      if (!r.ok) {
+        call('poster_delete', { event_id: currentEvent.id, url: d.public_url }).then(function (dd) { pstSync(dd); pstRender(); });
+        pstMsg('上传失败（存储返回 ' + r.status + '），已清理登记，请重试。'); return;
+      }
+      pstRender(); pstMsg('海报已添加，赛事页已同步。');
+    }).catch(function () { pstMsg('上传网络失败，请重试。'); });
   });
 });
 document.getElementById('spxSave').onclick = function () {
