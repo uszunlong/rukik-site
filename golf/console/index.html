@@ -182,6 +182,51 @@
       <pre id="out" style="display:none"></pre>
       </details>
     </div>
+
+    <!-- [线Z32] 活动AI：每场活动自动拥有的专属 AI 分身（与专家 AI 分身同一套逻辑：
+         知识存取/确认沿用赛事知识层，问答走 RUKIK Golf AI球童；本页只管本场身份、
+         知识与开放开关，不暴露模型与后台参数） -->
+    <div class="card" id="aiCard" style="display:none">
+      <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
+      <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
+
+      <h4 style="margin:14px 0 4px">A · 基本信息</h4>
+      <label>AI 名称</label><input id="aiName" placeholder="如：RUKIK Golf AI球童">
+      <label>欢迎语（可选）</label><input id="aiWelcome" placeholder="球员打开球童时看到的第一句话">
+      <label>对外介绍（可选）</label><textarea id="aiIntro" rows="2" placeholder="一句话介绍本场 AI 能帮球员做什么"></textarea>
+      <div class="row">
+        <div><label>语气偏好</label><select id="aiTone"><option value="warm">温暖陪伴</option><option value="concise">专业简洁</option><option value="quiet">安静少打扰</option></select></div>
+        <div><label>AI 状态</label><select id="aiStatus"><option value="enabled">已启用</option><option value="disabled">已停用</option></select></div>
+      </div>
+      <p><button class="ghost" id="aiSaveBasics" type="button">保存基本信息</button> <span id="aiMsgA" style="font-size:13px;color:#5c7260"></span></p>
+
+      <h4 style="margin:16px 0 4px">B · 知识资料（两个来源，一个入口）</h4>
+      <div id="aiKnowSummary" style="font-size:14px;color:#5c7260">加载中…</div>
+      <div id="aiPackBox" style="margin-top:8px"></div>
+      <p><button class="ghost" id="aiUploadBtn" type="button">上传 / 补充资料（粘贴文字或 PDF）</button>
+      <button class="ghost" id="aiPackRefresh" type="button">刷新自动知识包</button>
+      <span id="aiMsgB" style="font-size:13px;color:#5c7260"></span></p>
+
+      <h4 style="margin:16px 0 4px">C · 知识确认</h4>
+      <p style="color:#5c7260;font-size:13px;margin:2px 0 8px">AI 只引用「已发布」资料；草稿先在这里确认再发布。与赛事正式数据（时间、地点、分组、成绩）冲突时，以正式数据为准，旧资料请及时撤下。</p>
+      <div id="aiKnowList"></div>
+
+      <h4 style="margin:16px 0 4px">D · 问答预览</h4>
+      <p style="color:#5c7260;font-size:13px;margin:2px 0 8px">以主办方身份直接体验球员看到的回答。发现答错时，点回答下方的「纠正资料」，更新对应知识即可（不用改聊天内容）。</p>
+      <div id="aiChat" style="border:1px solid #e5eee1;border-radius:10px;padding:10px 12px;max-height:320px;overflow:auto;background:#fbfdf9"></div>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:3"><input id="aiQ" placeholder="如：这场活动是谁主办的？几点签到？"></div>
+        <div style="flex:0"><button id="aiAskBtn" type="button">提问</button></div>
+      </div>
+      <p id="aiMsgD" style="font-size:13px;color:#5c7260"></p>
+
+      <h4 style="margin:16px 0 4px">E · 开放设置</h4>
+      <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiOpenPart" style="width:auto;margin-right:6px">向参赛者开放 AI 问答</label>
+      <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiOpenVis" style="width:auto;margin-right:6px">允许未报名访客使用（仅公开资料）</label>
+      <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiCare" style="width:auto;margin-right:6px">启用赛事关怀和提醒</label>
+      <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiPostOpen" style="width:auto;margin-right:6px">活动结束后继续开放（回忆与历史问答）</label>
+      <p><button class="ghost" id="aiSaveSwitches" type="button">保存开放设置</button> <span id="aiMsgE" style="font-size:13px;color:#5c7260"></span></p>
+    </div>
   </div>
   <p style="color:#5c7260;font-size:13px">成绩由确定性规则引擎计算并经确认流程锁定；本工作台只做组织与发布，不直接改分。</p>
 </main>
@@ -259,7 +304,7 @@ function openEvent(id) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
     document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
-    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin();
+    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -349,6 +394,170 @@ function resetKnowForm() {
   document.getElementById('kTitle').value = ''; document.getElementById('kBody').value = '';
   document.getElementById('kKey').checked = false; document.getElementById('kFile').value = '';
 }
+/* [线Z32] 活动AI面板：配置读写走 ai_config_get/ai_config_save；知识列表与确认
+   沿用 knowledge_* 动作（与上方「补充赛事知识」同一套数据，两个视图互相刷新）；
+   问答预览与球员端同路：pro-chat＋golf_event_id（平台官方球童角色），以 staff
+   身份实答；「纠正资料」回到知识表单改资料本身，而不是改聊天内容。 */
+var AI_PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824';
+var aiHistory = [], aiAsking = false;
+function aiMsg(id, t) { var el = document.getElementById(id); if (el) el.textContent = t || ''; }
+function loadAiPanel() {
+  if (!currentEvent) return;
+  document.getElementById('aiCard').style.display = 'block';
+  aiHistory = [];
+  document.getElementById('aiChat').innerHTML = '<p id="aiChatHint" style="color:#5c7260;font-size:13px;margin:2px 0">在下方输入问题，试试本场 AI 的回答。</p>';
+  aiMsg('aiMsgA', ''); aiMsg('aiMsgB', ''); aiMsg('aiMsgD', ''); aiMsg('aiMsgE', '');
+  call('ai_config_get', { event_id: currentEvent.id }).then(function (d) {
+    if (!d.ok || !d.ai_config) { aiMsg('aiMsgA', 'AI 配置加载失败：' + (d.error || '未知错误')); return; }
+    var c = d.ai_config;
+    document.getElementById('aiName').value = c.display_name || '';
+    document.getElementById('aiWelcome').value = c.welcome_text || '';
+    document.getElementById('aiIntro').value = c.intro || '';
+    document.getElementById('aiTone').value = c.tone || 'warm';
+    document.getElementById('aiStatus').value = c.status || 'enabled';
+    document.getElementById('aiOpenPart').checked = c.open_participants !== false;
+    document.getElementById('aiOpenVis').checked = c.open_visitors !== false;
+    document.getElementById('aiCare').checked = c.care_enabled !== false;
+    document.getElementById('aiPostOpen').checked = c.post_event_open !== false;
+  });
+  loadAiKnowledge();
+}
+function loadAiKnowledge() {
+  if (!currentEvent) return;
+  call('knowledge_list', { event_id: currentEvent.id }).then(function (d) {
+    var rows = d.knowledge || [];
+    var pack = null, mine = [];
+    rows.forEach(function (r) { if (r.kind === 'auto_pack') pack = r; else mine.push(r); });
+    call('orgs_get', { event_id: currentEvent.id }).then(function (od) {
+      var orgN = od && od.organizations ? od.organizations.length : 0;
+      document.getElementById('aiKnowSummary').textContent = '赛事资料 ' + mine.length + ' 份 · 机构知识 ' + orgN + ' 家 · 活动安排已自动同步';
+    });
+    var pb = document.getElementById('aiPackBox');
+    if (pack) {
+      pb.innerHTML = '<div style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px"><b>自动同步 · 本场知识包</b> ' +
+        '<span style="color:#1d7a3a;font-size:13px">已发布</span><br><span style="font-size:13px;color:#5c7260">' +
+        escapeHtml(String(pack.body || '').slice(0, 160)) + '…</span></div>';
+    } else {
+      pb.innerHTML = '<p style="color:#5c7260;font-size:13px">自动知识包尚未生成，点「刷新自动知识包」立即整理。</p>';
+    }
+    var drafts = mine.filter(function (r) { return r.status !== 'published'; }).length;
+    var box = document.getElementById('aiKnowList');
+    box.innerHTML = (drafts ? '<p style="font-size:13px;color:#a16207">' + drafts + ' 条草稿待确认发布。</p>' : '') +
+      (mine.length ? mine.map(function (r) {
+        var badge = r.status === 'published' ? '<span style="color:#1d7a3a">已发布</span>' : '<span style="color:#a16207">草稿</span>';
+        var src = r.source_type === 'auto' ? '自动同步' : '主办方补充';
+        return '<div style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:6px 0"><b>' + escapeHtml(r.title) + '</b> ' +
+          '<span style="color:#5c7260;font-size:13px">' + knowKindName(r.kind) + ' · 来源：' + src + ' · ' + badge + '</span><br>' +
+          '<button class="ghost ai-k-edit" data-id="' + r.id + '" type="button">编辑</button> ' +
+          (r.status === 'published' ? '<button class="ghost ai-k-unpub" data-id="' + r.id + '" type="button">撤下</button> ' : '<button class="ghost ai-k-pub" data-id="' + r.id + '" type="button">发布</button> ') +
+          '<button class="ghost ai-k-del" data-id="' + r.id + '" type="button">删除</button></div>';
+      }).join('') : '<p style="color:#5c7260;font-size:13px">暂无主办方补充资料。</p>');
+    bindAiKnowButtons(mine);
+  });
+}
+function bindAiKnowButtons(rows) {
+  function find(id) { for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i]; return null; }
+  function after() { loadAiKnowledge(); loadKnowledge(); }
+  Array.prototype.forEach.call(document.querySelectorAll('.ai-k-edit'), function (b) { b.onclick = function () {
+    var r = find(b.getAttribute('data-id')); if (r) gotoKnowForm(r);
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.ai-k-pub'), function (b) { b.onclick = function () {
+    call('knowledge_publish', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { aiMsg('aiMsgB', d.ok ? '已发布，AI 现在可以引用这条资料。' : ('发布失败：' + (d.error || '未知错误'))); if (d.ok) after(); });
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.ai-k-unpub'), function (b) { b.onclick = function () {
+    call('knowledge_unpublish', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { aiMsg('aiMsgB', d.ok ? '已撤下，回到草稿。' : ('撤下失败：' + (d.error || '未知错误'))); if (d.ok) after(); });
+  }; });
+  Array.prototype.forEach.call(document.querySelectorAll('.ai-k-del'), function (b) { b.onclick = function () {
+    var kid = b.getAttribute('data-id');
+    uiConfirm('确定删除这条赛事知识？删除后 AI 不再引用。').then(function (ok) {
+      if (!ok) return;
+      call('knowledge_delete', { event_id: currentEvent.id, id: kid }).then(function (d) { aiMsg('aiMsgB', d.ok ? '已删除。' : ('删除失败：' + (d.error || '未知错误'))); if (d.ok) after(); });
+    });
+  }; });
+}
+function gotoKnowForm(row) {
+  var det = document.querySelector('#dash details'); if (det) det.open = true;
+  if (row) {
+    knowEditingId = row.id; knowSource = { type: row.source_type || 'text', name: row.source_name || null };
+    document.getElementById('kKind').value = row.kind; document.getElementById('kTitle').value = row.title;
+    document.getElementById('kBody').value = row.body || ''; document.getElementById('kKey').checked = !!row.is_key_fact;
+    kMsg('正在纠正：' + row.title + '（保存后保持原发布状态；草稿请再点发布）');
+  }
+  document.getElementById('knowCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('kTitle').focus();
+}
+document.getElementById('aiSaveBasics').onclick = function () {
+  if (!currentEvent) return;
+  call('ai_config_save', { event_id: currentEvent.id, display_name: document.getElementById('aiName').value, welcome_text: document.getElementById('aiWelcome').value || null, intro: document.getElementById('aiIntro').value || null, tone: document.getElementById('aiTone').value, status: document.getElementById('aiStatus').value }).then(function (d) {
+    aiMsg('aiMsgA', d.ok ? '已保存。' : ('保存失败：' + (d.error || '未知错误')));
+  });
+};
+document.getElementById('aiSaveSwitches').onclick = function () {
+  if (!currentEvent) return;
+  call('ai_config_save', { event_id: currentEvent.id, open_participants: document.getElementById('aiOpenPart').checked, open_visitors: document.getElementById('aiOpenVis').checked, care_enabled: document.getElementById('aiCare').checked, post_event_open: document.getElementById('aiPostOpen').checked }).then(function (d) {
+    aiMsg('aiMsgE', d.ok ? '已保存，立即生效。' : ('保存失败：' + (d.error || '未知错误')));
+  });
+};
+document.getElementById('aiUploadBtn').onclick = function () { gotoKnowForm(null); };
+document.getElementById('aiPackRefresh').onclick = function () {
+  if (!currentEvent) return;
+  aiMsg('aiMsgB', '正在整理…');
+  call('knowledge_pack_refresh', { event_id: currentEvent.id }).then(function (d) { aiMsg('aiMsgB', d.ok ? '自动知识包已刷新。' : ('刷新失败：' + (d.error || '未知错误'))); if (d.ok) loadAiKnowledge(); });
+};
+function aiAddMsg(role, text) {
+  var box = document.getElementById('aiChat');
+  var hint = document.getElementById('aiChatHint'); if (hint) hint.remove();
+  var d = document.createElement('div');
+  d.style.margin = '6px 0';
+  var head = document.createElement('b'); head.textContent = role === 'user' ? '我：' : '活动AI：';
+  var span = document.createElement('span'); span.textContent = text;
+  span.style.whiteSpace = 'pre-wrap';
+  d.appendChild(head); d.appendChild(span);
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return span;
+}
+function aiAddFixBtn() {
+  var box = document.getElementById('aiChat');
+  var p = document.createElement('p'); p.style.margin = '0 0 8px';
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'ghost'; b.textContent = '纠正资料';
+  b.onclick = function () { gotoKnowForm(null); aiMsg('aiMsgD', '在上方知识表单里填写或修改正确资料，保存并发布后，AI 即按新资料回答。'); };
+  p.appendChild(b); box.appendChild(p); box.scrollTop = box.scrollHeight;
+}
+async function aiAsk() {
+  if (aiAsking || !currentEvent) return;
+  var inp = document.getElementById('aiQ');
+  var text = (inp.value || '').trim(); if (!text) return;
+  aiAsking = true; inp.value = '';
+  aiHistory.push({ role: 'user', content: text });
+  aiAddMsg('user', text);
+  var bubble = aiAddMsg('assistant', '正在思考…');
+  var acc = '';
+  try {
+    var res = await fetch(SB + '/functions/v1/pro-chat', { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ professional_id: AI_PRO_ID, mode: 'web', stream: true, messages: aiHistory.slice(-10), golf_event_id: currentEvent.id }) });
+    if (!res.ok) { var ej = await res.json().catch(function () { return null; }); bubble.textContent = '这次没能连上（' + ((ej && ej.error) || res.status) + '），请稍后再试。'; aiHistory.pop(); return; }
+    var reader = res.body.getReader(); var dec = new TextDecoder(); var buf = ''; bubble.textContent = '';
+    for (;;) {
+      var step = await reader.read(); if (step.done) break;
+      buf += dec.decode(step.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        var line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+        if (line.indexOf('data:') !== 0) continue;
+        var data = line.slice(5).trim(); if (!data || data === '[DONE]') continue;
+        try { var j = JSON.parse(data); var c = j && j.choices && j.choices[0] && j.choices[0].delta ? j.choices[0].delta.content : ''; if (typeof c === 'string' && c) { acc += c; bubble.textContent = acc; } } catch (e) {}
+      }
+    }
+    if (!acc) { bubble.textContent = '这次没有拿到回答，请再问一次。'; aiHistory.pop(); return; }
+    bubble.textContent = acc;
+    aiHistory.push({ role: 'assistant', content: acc });
+    aiAddFixBtn();
+  } catch (e) {
+    bubble.textContent = '网络好像不太顺，请稍后再试一次。'; aiHistory.pop();
+  } finally { aiAsking = false; }
+}
+document.getElementById('aiAskBtn').onclick = aiAsk;
+document.getElementById('aiQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); aiAsk(); } });
 /* [线P] 报名名单区：姓名/状态/球队/分组全量渲染（此前 registrations_list 只被用来数计数，
    主办方看不见谁报了名）；pending 行带通过/拒绝；待审核数进计数区与待办提示区 */
 var REG_STATUS_TXT = { registered: '已生效', checked_in: '已签到', pending: '待审核', waitlisted: '候补', rejected: '未通过', withdrawn: '已退出', no_show: '未到场', cancelled: '已取消' };
