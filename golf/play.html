@@ -157,6 +157,7 @@ var S = {
   session: null, ev: null, pc: null, askCtx: null, cardData: null,
   selHole: null, edStrokes: null, edPutts: null,
   flushing: false, conflicts: {}, failed: {}, preview: null, loadedAt: 0,
+  authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
 };
 var app = document.getElementById('app');
 
@@ -171,14 +172,18 @@ function queuedFor(cardId, hole) {
 
 /* ---------- 数据装载 ---------- */
 async function loadAll(useCachePaint) {
+  var seq = ++S.loadSeq; /* [线P] 运行序号：后发运行优先，陈旧运行返回后不得再 paint */
   var cached = cacheGet();
   if (useCachePaint && cached && cached.ev) {
     S.ev = cached.ev; S.pc = cached.pc || null; S.askCtx = cached.askCtx || null; S.cardData = cached.cardData || null;
     paint();
   }
   var evR = await golfApi('event_get', { event_id: eventId }, false);
+  if (seq !== S.loadSeq) return;
   if (!evR.ok) {
     if (!S.ev) { app.innerHTML = '<div class="card"><div class="err">' + (evR.status === 404 ? '赛事不存在或链接无效。' : '赛事信息加载失败，请检查网络后重试。') + '</div><div class="btnrow"><button class="btn" id="retryBtn">重试</button></div></div>'; var rb = document.getElementById('retryBtn'); if (rb) rb.addEventListener('click', function () { loadAll(false); }); }
+    /* [线P] 已有赛事状态时按现状态重绘（已登录用户永不因一次接口失败被打回登录表单——走查实证根因） */
+    else paint();
     return;
   }
   S.ev = evR.data;
@@ -198,6 +203,7 @@ async function loadAll(useCachePaint) {
     var cd = await golfApi('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; });
     if (cd && cd.ok) { S.cardData = cd.data; cacheSet({ cardData: S.cardData }); }
   }
+  if (seq !== S.loadSeq) return; /* [线P] 陈旧运行不得重绘 */
   paint();
   flushQueue(); // 进入页面即尝试回放本地待同步记分
 }
@@ -216,11 +222,19 @@ function evMetaHtml() {
 function backToEventBtn(label) {
   return '<div class="btnrow"><a class="btn plain" href="event.html?e=' + encodeURIComponent(eventId) + '">' + esc(label || '返回赛事页') + '</a></div>';
 }
+/* [线P] 观众本人即主办方时给直达操作（球员视角文案不变） */
+function organizerHint() {
+  if (!S.ev || S.ev.my_role !== 'organizer') return '';
+  return '<div class="btnrow"><a class="btn gold" href="console/?e=' + encodeURIComponent(eventId) + '">您是本场主办方，去分组 →</a></div>';
+}
 
 /* ---------- 状态机渲染 ---------- */
 function paint() {
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
   var e = S.ev.event;
+  /* [线P] 会话状态未确认（auth.js 尚在恢复本地会话）时只显示赛事信息＋确认中骨架，
+     绝不抢先渲染登录表单——已登录用户先看到登录表单正是走查投诉的根因之一 */
+  if (!S.session && !S.authKnown) { app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">正在确认登录状态…</div></div>'; return; }
   if (!S.session) return paintGuest();
   var mine = S.ev.my_player;
   var reg = S.ev.my_registration;
@@ -231,6 +245,20 @@ function paint() {
   }
   if (reg && reg.status === 'cancelled') {
     app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名已取消</h2><p class="muted">您在本场的报名已取消。如需重新报名，请联系主办方。</p>' + backToEventBtn() + '</div>';
+    return;
+  }
+  /* [线P] 报名审核流球员态（用户定版：报名先待审核、通过后才生效） */
+  if (reg && reg.status === 'pending') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名待主办方审核</h2>' +
+      '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：<b>报名已提交，等待主办方审核</b>。</p>' +
+      '<p class="muted">审核通过后报名即正式生效，这里会继续显示分组与记分入口；未通过会在此如实显示。可稍后刷新查看审核结果。</p>' +
+      '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
+    document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+    return;
+  }
+  if (reg && reg.status === 'rejected') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名未通过审核</h2>' +
+      '<p class="muted">主办方未通过您本场的报名，本次报名不生效。如有疑问，请联系主办方。</p>' + backToEventBtn() + '</div>';
     return;
   }
   var card = myCard();
@@ -291,6 +319,7 @@ function paintWaitingGroup() {
     '<div class="card"><h2>✅ 报名成功</h2>' +
     '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
     '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>' +
+    organizerHint() +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
 }
@@ -317,6 +346,7 @@ function paintNoCard() {
     (grouped
       ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
       : '<p class="muted">您已报名，但尚未分组，暂时无法记分。请等待主办方完成分组与记分卡设置。</p>') +
+    organizerHint() +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
 }
@@ -571,9 +601,12 @@ function previewText(p) {
 
 /* ---------- 启动 ---------- */
 initAuth(function (s) {
+  var wasKnown = S.authKnown;
   var was = !!S.session;
   S.session = s;
-  if (!!s !== was) loadAll(false);
+  S.authKnown = true; /* [线P] 首次回调即确认会话状态（有/无），之后才允许渲染登录表单 */
+  if (!wasKnown || !!s !== was) loadAll(false);
+  else paint();
 });
 renderAuthBar(document.getElementById('authBar'), { onLogout: function () { loadAll(false); } });
 (function boot() {
