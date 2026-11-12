@@ -1226,6 +1226,7 @@ function wzSteps(n) {
   wzEl('wzStep1').style.display = n === 1 ? 'block' : 'none';
   wzEl('wzStep2').style.display = n === 2 ? 'block' : 'none';
   wzEl('wzStep3').style.display = n === 3 ? 'block' : 'none';
+  if (n === 3) wzEl('wzStep2Err').textContent = '';
 }
 wzEl('wzOpenBtn').onclick = function () {
   wzEl('wizardCard').style.display = 'block';
