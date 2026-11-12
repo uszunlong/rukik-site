@@ -6,6 +6,16 @@
 <title>我的比赛 · RUKIK Golf</title>
 <!-- build-marker: z55-20261112c -->
 <meta name="description" content="RUKIK Golf 网页记分：报名、分组、逐洞记分与成绩回顾，无需下载 App。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RUKIK Golf">
+<meta property="og:title" content="RUKIK Golf · 一页球局">
+<meta property="og:description" content="一起来打球！点开链接登录后即可加入球局、一起记分，无需下载 App。">
+<meta property="og:image" content="https://rukik.com/assets/og-share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RUKIK Golf · 一页球局">
+<meta name="twitter:description" content="一起来打球！点开链接登录后即可加入球局、一起记分，无需下载 App。">
+<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
+<script src="/assets/wxshare.js?v=20261111a"></script>
 <style>
   /* [线Z59] 深绿高科技 UI（2026-11-12 用户效果图定版）：只换样式层，类名/DOM/JS 零改动。
      色板：深墨绿/深翡翠绿底，荧光绿强调，香槟金点缀，柔和白文字；静态渐变氛围，无动画特效。 */
@@ -912,6 +922,7 @@ async function loadAll(useCachePaint) {
   document.getElementById('pageTitle').textContent = (evR.data.event && evR.data.event.title) || '我的比赛';
   cacheSet({ ev: S.ev });
   S.fresh = true;
+  applyPlayShare(); /* [分享修复20261112] 数据确认后刷新分享卡片（og＋微信分享数据） */
   if (!S.session) { paint(); return; }
   var rs = await Promise.all([
     golfApiRetry('player_card', { event_id: eventId }, true).catch(function () { return null; }),
@@ -2055,6 +2066,51 @@ function openPlayHd() {
   ov.hidden = false;
 }
 function closePlayHd() { var ov = document.getElementById('playHd'); if (ov) ov.hidden = true; }
+
+/* ---------- [分享修复20261112] 分享卡片（对齐 event.html 定版口径） ----------
+   静态 og 为通用邀请口径（系统分享面板/微信抓取取静态值）；球局数据到达后
+   按当前球局刷新 og 与微信分享数据。静态标签刻意不写 og:url——防抓取端把
+   ?join=CODE 规范化掉、丢了邀请码；wxshare.js 无 canonical 时以 location.href
+   作分享链接，邀请码天然保留。 */
+var PLAY_SHARE_IMG = 'https://rukik.com/assets/og-share.png';
+function setMeta(sel, val) { var el = document.querySelector(sel); if (el && val) el.setAttribute('content', val); }
+function pushWxShare(data) {
+  try {
+    if (window.wx && typeof wx.updateAppMessageShareData === 'function') {
+      wx.ready(function () {
+        wx.updateAppMessageShareData({ title: data.title, desc: data.desc, link: data.link, imgUrl: data.imgUrl });
+        if (typeof wx.updateTimelineShareData === 'function') wx.updateTimelineShareData({ title: data.title, link: data.link, imgUrl: data.imgUrl });
+      });
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+function applyPlayShare() {
+  if (!S.ev || !S.ev.event) return;
+  var e = S.ev.event;
+  var casual = e.kind === 'casual';
+  var link = location.href.split('#')[0];
+  if (casual && e.invite_code) link = location.origin + location.pathname + '?join=' + encodeURIComponent(e.invite_code);
+  var data = {
+    title: e.title || 'RUKIK Golf · 一页球局',
+    desc: casual ? '一起来打球！点开链接登录后即可加入球局、一起记分，无需下载 App。' : 'RUKIK Golf 网页记分：报名、分组、逐洞记分与成绩回顾，无需下载 App。',
+    link: link,
+    imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || PLAY_SHARE_IMG
+  };
+  setMeta('meta[property="og:title"]', data.title);
+  setMeta('meta[property="og:description"]', data.desc);
+  setMeta('meta[property="og:image"]', data.imgUrl);
+  setMeta('meta[name="twitter:title"]', data.title);
+  setMeta('meta[name="twitter:description"]', data.desc);
+  setMeta('meta[name="twitter:image"]', data.imgUrl);
+  /* jweixin 由 wxshare.js 在微信内按需加载，可能晚于数据到达：短时重试直至 SDK 就绪，失败静默。 */
+  var tries = 0;
+  (function attempt() {
+    if (pushWxShare(data)) return;
+    if (++tries <= 8) setTimeout(attempt, 900);
+  })();
+}
 
 /* ---------- 日常球局结束（casual_finish 简化确认，Z43） ---------- */
 /* ---------- [线Z55] 日常球局组织者邀请管理（根治指令三） ----------
