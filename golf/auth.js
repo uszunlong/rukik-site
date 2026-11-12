@@ -315,6 +315,32 @@ export function mountLogin(el, opts) {
   return { destroy: function () { if (smsTimer) clearInterval(smsTimer); el.innerHTML = ''; } };
 }
 
+/* [线Z79 2026-11-12] 网页改名：与 App 同一写路径（nameIdentity.ts 的
+ * updateMyDisplayName）——写 public.users.display_name 并同步本人家庭
+ * 成员行。全平台显示名以账户个人资料为唯一真源，改一次各页同步；
+ * 禁止以邮箱/手机号代替姓名。 */
+export async function fetchMyAccountName() {
+  if (!session || !session.user) return null;
+  try {
+    var r = await sb.from('users').select('display_name').eq('id', session.user.id).maybeSingle();
+    var n = (r && r.data && r.data.display_name) || '';
+    if (n) return n;
+  } catch (e) {}
+  var md = session.user.user_metadata || {};
+  return md.name || md.full_name || null;
+}
+
+export async function updateMyAccountName(newName) {
+  var name = String(newName || '').trim().slice(0, 60);
+  if (!name) return { ok: false, error: 'empty_name' };
+  if (!session || !session.user) return { ok: false, error: 'not_signed_in' };
+  var uid = session.user.id;
+  var r = await sb.from('users').update({ display_name: name }).eq('id', uid);
+  if (r && r.error) return { ok: false, error: (r.error && r.error.message) || 'update_failed' };
+  try { await sb.from('family_members').update({ name: name }).eq('user_id', uid); } catch (e) {}
+  return { ok: true, name: name };
+}
+
 /* 顶部登录状态条：renderAuthBar(el, { onLogout }) */
 export function renderAuthBar(el, opts) {
   opts = opts || {};
@@ -322,9 +348,40 @@ export function renderAuthBar(el, opts) {
     if (!el) return;
     if (session && session.user) {
       var who = session.user.email || session.user.phone || 'RUKIK 用户';
-      el.innerHTML = '<span>已登录：' + String(who).replace(/[<>&"]/g, '') + '</span><button type="button" class="rk-logout">退出</button>';
+      el.innerHTML = '<span>已登录：' + String(who).replace(/[<>&"]/g, '') + '</span>'
+        + '<button type="button" class="rk-rename">改名</button>'
+        + '<button type="button" class="rk-logout">退出</button>'
+        + '<span class="rk-rename-box" hidden>'
+        + '<input type="text" class="rk-rename-input" maxlength="60" placeholder="您的姓名" autocomplete="name">'
+        + '<button type="button" class="rk-rename-save">保存</button>'
+        + '<button type="button" class="rk-rename-cancel">取消</button>'
+        + '<span class="rk-rename-msg"></span>'
+        + '</span>';
       var b = el.querySelector('.rk-logout');
       if (b) b.addEventListener('click', async function () { await signOut(); if (opts.onLogout) opts.onLogout(); });
+      var rb = el.querySelector('.rk-rename');
+      var box = el.querySelector('.rk-rename-box');
+      var input = el.querySelector('.rk-rename-input');
+      var msg = el.querySelector('.rk-rename-msg');
+      if (rb && box) rb.addEventListener('click', async function () {
+        box.hidden = !box.hidden;
+        if (!box.hidden) {
+          msg.textContent = '';
+          var cur = await fetchMyAccountName();
+          if (cur) { input.value = cur; msg.textContent = '当前显示名：' + cur; }
+          try { input.focus(); } catch (e) {}
+        }
+      });
+      var cancel = el.querySelector('.rk-rename-cancel');
+      if (cancel) cancel.addEventListener('click', function () { box.hidden = true; });
+      var save = el.querySelector('.rk-rename-save');
+      if (save) save.addEventListener('click', async function () {
+        save.disabled = true; msg.textContent = '保存中…';
+        var r = await updateMyAccountName(input.value);
+        save.disabled = false;
+        if (r.ok) { msg.textContent = '已保存：新姓名将在全平台同步显示'; input.value = r.name; }
+        else { msg.textContent = r.error === 'empty_name' ? '姓名不能为空' : '保存失败，请检查网络后重试'; }
+      });
       el.hidden = false;
     } else {
       el.innerHTML = '';

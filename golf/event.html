@@ -127,10 +127,10 @@
   .pstrip{overflow-x:auto;flex:1;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .pstrip::-webkit-scrollbar{display:none}
   .ptrack{display:flex;gap:10px;width:max-content}
-  .pcard{flex:none;width:124px;min-height:70px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;text-decoration:none;color:#1c2a1e;cursor:pointer}
-  .pcard img{max-width:100%;max-height:100%;object-fit:contain}
-  .pclogo{height:84px;width:100%;display:flex;align-items:center;justify-content:center}
-  .pcmono{width:56px;height:56px;border-radius:14px;background:#14532d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700}
+  .pcard{flex:none;width:104px;min-height:70px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;text-decoration:none;color:#1c2a1e;cursor:pointer}
+  .pcard img{max-width:84px;max-height:30px;object-fit:contain}
+  .pclogo{height:32px;display:flex;align-items:center;justify-content:center}
+  .pcmono{width:34px;height:34px;border-radius:9px;background:#14532d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
   .pcname{font-size:13px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word;overflow-wrap:anywhere}
   .pctag{font-size:10px;color:#16a34a;font-weight:700;line-height:1.2}
   .bhead{display:flex;align-items:center;gap:8px}
@@ -229,29 +229,6 @@
   .rk-row button:disabled{opacity:.55}
   .rk-msg{margin-top:10px;font-size:13px;line-height:1.6;color:#8B857D;text-align:center;min-height:18px}
   /* [Z53] 赛事海报相册：原图比例自适应（height:auto 不裁切）、2 秒轮播、点开灯箱 contain 全屏 */
-  /* [Z65] 无海报默认封面：品牌主题图（内联 SVG，与 golf-share.jpg 同族）＋球场名/RUKIK GOLF 叠加，
-     设计稿形态、永不空白；图片缺失时深绿底+文字仍成立 */
-  .defcov{position:relative;border-radius:16px;overflow:hidden;background:#06231a;aspect-ratio:16/9}
-  .defcov svg.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .defcov .scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,20,12,.55) 0%,rgba(3,20,12,.10) 55%,rgba(3,20,12,0) 100%)}
-  .defcov .tx{position:absolute;left:18px;bottom:16px;right:18px;color:#fff}
-  .defcov .brand{font-size:12px;font-weight:700;letter-spacing:3px;color:#C9A227}
-  .defcov .cname{font-size:23px;font-weight:800;line-height:1.25;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.35)}
-  .defcov .ttl{font-size:13px;color:rgba(255,255,255,.88);margin-top:3px}
-  /* [Z65] hero 内「管理封面」入口（仅 staff 渲染，口径同 renderStaff） */
-  .pcBtn{position:absolute;left:10px;bottom:10px;z-index:6;background:rgba(8,26,44,.80);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
-  /* [Z65 微修] 默认封面内按钮改置左上，避免与左下球场名/副标题文字重叠（相册形态不受影响） */
-  .defcov .pcBtn{top:10px;bottom:auto}
-  /* [Z65] 封面管理弹层（结构复用 pm-* 样式类） */
-  #pcSheet{position:fixed;inset:0;z-index:86;display:flex;flex-direction:column;justify-content:flex-end}
-  #pcSheet.hidden{display:none}
-  #pcSheet .pm-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
-  #pcSheet .pm-panel{position:relative;background:#fff;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;padding:14px}
-  .pc-act{border:1px solid #cfe0d2;background:#fff;color:#14532d;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
-  .pc-act[disabled]{opacity:.35;cursor:default}
-  .pc-cov{font-size:11px;font-weight:700;color:#fff;background:#C9A227;border-radius:999px;padding:2px 8px;flex:none}
-  .pc-up{display:block;border:1px dashed #9db8a4;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;color:#14401f;background:#f4faf5;cursor:pointer}
-  .pc-up small{display:block;font-weight:400;color:#6b7d6f;font-size:12px;margin-top:2px}
   .pal{position:relative;border-radius:16px;overflow:hidden;background:#0B2033}
   .palTrack{display:flex;transition:transform .45s ease;align-items:flex-start}
   .palSlide{flex:0 0 100%;margin:0;cursor:pointer}
@@ -472,12 +449,6 @@ function openPal(i) {
   palLbShow();
 }
 function closePal() { document.getElementById('palOverlay').classList.add('hidden'); }
-/* [Z65] 顶部照片栏与正式赛事同模块：staff 口径与 renderStaff / 服务端
-   requireStaff 统一（organizer ∪ 本场 admin/referee；my_role 缺失默认不渲染） */
-var DEFCOV_SVG = '<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="z65g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#052a1a"/><stop offset=".45" stop-color="#0d5c37"/><stop offset="1" stop-color="#03160d"/></linearGradient><radialGradient id="z65r" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd682" stop-opacity=".20"/><stop offset="1" stop-color="#ffd682" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="url(#z65g)"/><ellipse cx="980" cy="-60" rx="620" ry="340" fill="url(#z65r)"/><path d="M0 700 Q 800 640 1600 690 L1600 900 L0 900 Z" fill="#0a462a" opacity=".55"/><path d="M0 762 Q 800 700 1600 748 L1600 900 L0 900 Z" fill="#0e6038" opacity=".5"/><path d="M0 826 Q 800 766 1600 812 L1600 900 L0 900 Z" fill="#14804a" opacity=".45"/><circle cx="1215" cy="400" r="205" fill="none" stroke="#d8b25a" stroke-width="5"/><line x1="1225" y1="282" x2="1225" y2="518" stroke="#f5f5f0" stroke-width="7"/><polygon points="1225,282 1353,318 1225,354" fill="#2ecc71"/><ellipse cx="1225" cy="508" rx="32" ry="9" fill="#02120a"/><circle cx="1157" cy="509" r="13" fill="#fafaf6"/><line x1="90" y1="618" x2="330" y2="618" stroke="#d8b25a" stroke-width="4"/></svg>';
-function isEventStaff() { return !!(EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')); }
-function pcBtnHtml() { return isEventStaff() ? '<button type="button" class="pcBtn" data-pcopen>\u{1F5BC} 管理封面</button>' : ''; }
-function bindPcBtn(scope) { var b = scope && scope.querySelector('[data-pcopen]'); if (b) b.addEventListener('click', function () { if (window.openPcSheet) window.openPcSheet(); }); }
 function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片墙就绪后 renderLive 把 #heroMedia 换成照片墙
   var box = document.getElementById('heroMedia');
   if (!box) return;
@@ -485,21 +456,12 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   var list = postersOf();
   PALB.list = list;
   if (PALB.idx >= list.length) PALB.idx = 0;
-  if (!list.length) { /* [Z65] 无海报默认封面：品牌横幅＋球场名＋RUKIK GOLF（有海报后自动让位）；图缺失时深绿底纹仍成立 */
-    var cN = (EV.course && EV.course.name) || EV.event.title;
-    box.innerHTML = '<div class="defcov">' + DEFCOV_SVG +
-      '<div class="scrim"></div><div class="tx"><div class="brand">RUKIK GOLF</div>' +
-      '<div class="cname">' + esc(cN) + '</div>' +
-      ((EV.course && EV.course.name && EV.event.title !== cN) ? '<div class="ttl">' + esc(EV.event.title) + '</div>' : '') +
-      '</div>' + pcBtnHtml() + '</div>';
-    bindPcBtn(box);
-    return;
-  }
+  if (!list.length) { box.innerHTML = '<div class="ph">' + esc(EV.event.title) + '</div>'; return; }
   box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
     list.map(function (u, i) { return '<figure class="palSlide" data-pi="' + i + '"><img src="' + esc(u) + '" alt="赛事海报"></figure>'; }).join('') +
     '</div>' +
     (list.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + list.length + '</div><div class="palDots" id="palDots">' + list.map(function (u, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
-    pcBtnHtml() + '</div>';
+    '</div>';
   var palBox = document.getElementById('palBox');
   Array.prototype.forEach.call(palBox.querySelectorAll('img'), function (img) {
     img.addEventListener('error', function () {
@@ -520,7 +482,6 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   palBox.addEventListener('touchstart', function () { palNoteManual(); }, { passive: true });
   palGo(PALB.idx);
   palStart();
-  bindPcBtn(box);
 }
 (function bindPalOverlay() {
   var c = document.getElementById('palClose'), pv = document.getElementById('palPrev'), nx = document.getElementById('palNext'), ov = document.getElementById('palOverlay');
@@ -1992,23 +1953,6 @@ if (!eventId) {
     </div>
   </div>
 </div>
-<!-- 封面管理弹层（线 Z65，2026-11-12）：staff 页内管理海报相册——上传/删除/排序/设封面，
-     全部走 golf-api poster_* 四 action（与正式赛事同一套模块）；非 staff 不渲染入口 -->
-<div id="pcSheet" class="hidden" role="dialog" aria-label="管理封面">
-  <div class="pm-backdrop" id="pcBackdrop"></div>
-  <div class="pm-panel">
-    <div class="pm-hd">
-      <div class="pm-ttl">管理封面</div>
-      <button type="button" class="pm-x" id="pcClose" aria-label="关闭">✕</button>
-    </div>
-    <div class="pm-msg" id="pcMsg"></div>
-    <div class="pm-list" id="pcList"></div>
-    <div style="padding-top:10px">
-      <label class="pc-up" for="pcFile">＋ 添加海报<small>PNG / JPG / WebP · 单张 ≤5MB · 最多 9 张；排序即展示序，封面单独设定</small></label>
-      <input type="file" id="pcFile" accept="image/png,image/jpeg,image/webp" style="display:none">
-    </div>
-  </div>
-</div>
 <script type="module">
 /* RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）
  * 调用口径逐字复用线 H caddie.html：客户端只传 golf_event_id，上下文由服务端
@@ -2338,127 +2282,6 @@ document.addEventListener('click', function (e) {
       });
     }).catch(function () { msg.textContent = '加载失败，请稍后重试。'; });
   }
-})();
-</script>
-<script>
-/* [Z65] 封面管理面板逻辑：数据源＝EV.event.poster_urls（存储序）＋cover_url，
-   与 hero 相册（renderHeroMedia/postersOf）同读一份真源；任一变更后以服务端
-   回执刷新 EV 并重渲染 hero（默认封面自动让位/回归）。上传＝poster_add 先登记
-   再签名直传；直传失败自动 poster_delete 清理登记条目，不留坏图。 */
-(function () {
-  var sheet = document.getElementById('pcSheet');
-  if (!sheet) return;
-  var msg = document.getElementById('pcMsg');
-  var list = document.getElementById('pcList');
-  var fileIn = document.getElementById('pcFile');
-  var bound = false;
-  function setMsg(t) { if (msg) msg.textContent = t || ''; }
-  function rawList() { return (window.EV && Array.isArray(window.EV.event.poster_urls)) ? window.EV.event.poster_urls.slice() : []; }
-  function close() { sheet.classList.add('hidden'); }
-  function syncEv(d) {
-    if (d && Array.isArray(d.poster_urls)) window.EV.event.poster_urls = d.poster_urls;
-    if (d && 'cover_url' in d) window.EV.event.cover_url = d.cover_url;
-  }
-  function afterChange(okMsg) {
-    if (typeof window.renderHeroMedia === 'function') window.renderHeroMedia();
-    renderList();
-    setMsg(okMsg || '');
-  }
-  function doCall(action, extra, okMsg) {
-    setMsg('处理中…');
-    return window.call(action, extra).then(function (d) {
-      syncEv(d);
-      afterChange(okMsg);
-      return d;
-    }).catch(function (e) { renderList(); setMsg('操作失败：' + ((e && e.message) || '请稍后重试')); });
-  }
-  function renderList() {
-    var urls = rawList();
-    var cover = (window.EV && window.EV.event) ? window.EV.event.cover_url : null;
-    if (!urls.length) {
-      list.innerHTML = '<div class="pm-msg">还没有海报。用下方「添加海报」上传第一张；没有海报时，球局页顶部显示 RUKIK Golf 默认封面。</div>';
-      return;
-    }
-    list.innerHTML = urls.map(function (u, i) {
-      return '<div class="pm-row" data-pcidx="' + i + '"><img src="' + window.esc(u) + '" alt="海报">' +
-        (u === cover ? '<span class="pc-cov">封面</span>' : '') +
-        '<span class="pm-cap">第 ' + (i + 1) + ' 张</span>' +
-        (u === cover ? '' : '<button type="button" class="pc-act" data-pc="cover">设封面</button>') +
-        '<button type="button" class="pc-act" data-pc="up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
-        '<button type="button" class="pc-act" data-pc="down"' + (i === urls.length - 1 ? ' disabled' : '') + '>↓</button>' +
-        '<button type="button" class="pm-del" data-pc="del">删除</button></div>';
-    }).join('');
-    Array.prototype.forEach.call(list.querySelectorAll('.pm-row'), function (row) {
-      var i = Number(row.getAttribute('data-pcidx'));
-      var u = rawList()[i];
-      if (!u) return;
-      var cov = row.querySelector('[data-pc="cover"]');
-      if (cov) cov.addEventListener('click', function () { doCall('poster_set_cover', { url: u }, '已设为封面，相册与分享图已同步。'); });
-      var up = row.querySelector('[data-pc="up"]');
-      if (up) up.addEventListener('click', function () {
-        var cur = rawList(); if (i <= 0 || i >= cur.length) return;
-        var nx = cur.slice(); var t = nx[i - 1]; nx[i - 1] = nx[i]; nx[i] = t;
-        doCall('poster_reorder', { poster_urls: nx }, '顺序已更新。');
-      });
-      var dn = row.querySelector('[data-pc="down"]');
-      if (dn) dn.addEventListener('click', function () {
-        var cur = rawList(); if (i < 0 || i >= cur.length - 1) return;
-        var nx = cur.slice(); var t = nx[i + 1]; nx[i + 1] = nx[i]; nx[i] = t;
-        doCall('poster_reorder', { poster_urls: nx }, '顺序已更新。');
-      });
-      var del = row.querySelector('[data-pc="del"]');
-      if (del) del.addEventListener('click', function () {
-        if (!del.classList.contains('confirm')) {
-          del.classList.add('confirm'); del.textContent = '确认删除？';
-          var cancel = document.createElement('button');
-          cancel.type = 'button'; cancel.className = 'pm-cancel'; cancel.textContent = '取消';
-          cancel.addEventListener('click', function () { del.classList.remove('confirm'); del.textContent = '删除'; cancel.remove(); });
-          del.after(cancel);
-          return;
-        }
-        del.disabled = true; del.textContent = '删除中…';
-        doCall('poster_delete', { url: u }, '已删除，相册已同步。');
-      });
-    });
-  }
-  function onFile() {
-    var f = fileIn.files && fileIn.files[0];
-    fileIn.value = '';
-    if (!f) return;
-    if (!/image\/(png|jpeg|webp)/.test(f.type || '')) { setMsg('仅支持 PNG / JPG / WebP 图片。'); return; }
-    if (f.size > 5242880) { setMsg('单张海报不能超过 5MB，请压缩后重试。'); return; }
-    if (rawList().length >= 9) { setMsg('海报最多 9 张，请先删除旧海报。'); return; }
-    setMsg('上传中…');
-    window.call('poster_add', { content_type: f.type }).then(function (d) {
-      if (!d || !d.ok || !d.signed_url) throw new Error((d && d.error) || '登记失败');
-      syncEv(d);
-      return fetch(d.signed_url, { method: 'PUT', headers: { 'Content-Type': f.type }, body: f }).then(function (r) {
-        if (!r.ok) {
-          return window.call('poster_delete', { url: d.public_url }).then(function (dd) {
-            syncEv(dd);
-            throw new Error('直传失败（存储返回 ' + r.status + '），已清理登记，请重试');
-          });
-        }
-        afterChange('海报已添加，相册已同步。');
-      });
-    }).catch(function (e) {
-      if (typeof window.renderHeroMedia === 'function') window.renderHeroMedia();
-      renderList();
-      setMsg('上传失败：' + ((e && e.message) || '请稍后重试'));
-    });
-  }
-  window.openPcSheet = function () {
-    if (!bound) {
-      bound = true;
-      document.getElementById('pcClose').addEventListener('click', close);
-      document.getElementById('pcBackdrop').addEventListener('click', close);
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) close(); });
-      fileIn.addEventListener('change', onFile);
-    }
-    renderList();
-    setMsg('');
-    sheet.classList.remove('hidden');
-  };
 })();
 </script>
 </body>
