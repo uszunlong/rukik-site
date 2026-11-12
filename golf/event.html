@@ -143,6 +143,7 @@
   <div id="mapSec"></div>
   <div id="careSec"></div>
   <div id="funcSec"></div>
+  <div id="awardSec"></div>
   <div id="liveSec"></div>
   <p class="src" style="margin-top:18px">成绩由确定性规则引擎计算；未最终确认的成绩会明确标注。照片仅在赛事开通 Golf Live 相册后展示。</p>
 </div>
@@ -616,7 +617,26 @@ function renderLive() {
   carStart();
 }
 var LASTBOARD = null;
+// [线Z2 P0-7] 奖项呈现：只展示主办方已确认（verified）或已颁发（presented）的奖项，与球童上下文/回忆生成同口径；
+// pending（待确认）不对外展示。获奖人取 awards_list 的球员名；团队奖以排行榜 entries 的 teamId→队名映射，未命中如实只显示奖项名、不编造。
+function loadAwards() {
+  var sec = document.getElementById('awardSec');
+  if (!sec || !eventId) return;
+  dyn('awards_list', {}).then(function (j) {
+    var list = ((j && j.awards) || []).filter(function (a) { return a.status === 'verified' || a.status === 'presented'; });
+    if (!list.length) { sec.innerHTML = ''; return; }
+    var teamNames = {};
+    ((LASTBOARD && LASTBOARD.entries) || []).forEach(function (en) { if (en.teamId && en.name) teamNames[en.teamId] = en.name; });
+    var rows = list.map(function (a) {
+      var winner = (a.golf_players && a.golf_players.display_name) || '';
+      if (!winner && a.winner_team_id) winner = teamNames[a.winner_team_id] || '';
+      return '<tr><td>' + esc(a.name || '') + '</td><td>' + esc(winner) + (a.status === 'presented' ? ' · 已颁奖' : '') + '</td></tr>';
+    }).join('');
+    sec.innerHTML = '<div class="card"><h2>🏆 本场奖项</h2><table class="board"><tr><th>奖项</th><th>获奖者</th></tr>' + rows + '</table></div>';
+  }).catch(function () { /* 奖项加载失败不阻塞页面其他区块 */ });
+}
 function loadBoardIntoFunc() {
+  loadAwards();
   dyn('leaderboard_get', {}).then(function (j) {
     LASTBOARD = j;
     renderFunc(j);
