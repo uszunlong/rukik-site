@@ -147,6 +147,21 @@
   .cdcarectl .cc-opt{background:rgba(255,255,255,.05);border:1px solid rgba(160,220,185,.3);color:#cfeedd;border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer;font-family:inherit}
   .cdcarectl .cc-opt.on{background:linear-gradient(135deg,#0d8a4a,#0a6e3c);border-color:rgba(120,255,190,.4);color:#fff;font-weight:700}
   .cd-sub2{font-size:12.5px;color:#9db8a7;margin-top:2px}
+  /* ---------- [线Z59·首页] 首页视图专属（品牌卡＋三入口横向卡＋更名「高光时刻」） ---------- */
+  .brandcard { position: relative; overflow: hidden; border-color: rgba(120,255,190,.22); padding-left: 22px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237dffb0' stroke-opacity='.22' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 21V4'/%3E%3Cpath d='M7 5h10l-2.4 2.8L17 10.6H7'/%3E%3Cellipse cx='7' cy='21' rx='4.4' ry='1.2'/%3E%3Ccircle cx='17.5' cy='17.5' r='2.6'/%3E%3C/svg%3E"), linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80));
+    background-repeat: no-repeat, no-repeat; background-position: right 2px center, center; background-size: 128px, cover; }
+  .brandcard::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3.5px; border-radius: 3px; background: linear-gradient(180deg, #2ee06f, #0a6e3c); }
+  .brandcard::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(46,224,111,0), rgba(46,224,111,.55), rgba(46,224,111,0)); }
+  .entry { display: flex; align-items: center; gap: 12px; }
+  .entry .etx { flex: 1; min-width: 0; }
+  .entry::before { content: ""; flex: none; width: 46px; height: 46px; border-radius: 13px; background-color: rgba(255,255,255,.05); border: 1px solid rgba(120,255,190,.22); background-repeat: no-repeat; background-position: center; background-size: 24px 24px; }
+  .entry::after { content: "›"; flex: none; font-size: 26px; line-height: 1; color: #8ff5b6; font-weight: 400; }
+  #hmCreate::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237dffb0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 21V4'/%3E%3Cpath d='M6 5h11l-2.5 3L17 11H6'/%3E%3Cellipse cx='6' cy='21' rx='4' ry='1.2'/%3E%3C/svg%3E"); background-color: rgba(46,224,111,.16); border-color: rgba(120,255,190,.4); }
+  #hmJoin::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237dffb0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='3.2'/%3E%3Cpath d='M3.5 19c.6-3 2.8-4.5 5.5-4.5s5 1.5 5.5 4.5'/%3E%3Ccircle cx='17' cy='9' r='2.4'/%3E%3Cpath d='M16.2 14.7c2.2.3 3.7 1.7 4.2 4.3'/%3E%3C/svg%3E"); }
+  a.entry[href="memory/"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237dffb0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 7.5V12l3 2'/%3E%3C/svg%3E"); }
+  .entry.main::after { color: #eafff2; }
+  .foot { border-top: 1px solid rgba(160,220,185,.14); padding-top: 14px; }
 </style>
 </head>
 <body>
@@ -2112,19 +2127,19 @@ function maybeCasualFinish() {
   });
 }
 
-/* ---------- H5 入口（play 无参）：发起球局／加入球局／我的高尔夫回忆 ----------
+/* ---------- H5 入口（play 无参）：发起球局／加入球局／高光时刻 ----------
    日常球局接口按线 Z43 终报接口清单接线（CASUAL 接线点集中在 casualCreate/casualJoin 两处）。 */
 var hmCourse = null, hmTees = [], hmSearchTimer = null;
 function paintHome() {
   document.getElementById('backLink').style.display = 'none';
-  var html = '<div class="card"><h2 style="font-size:20px">RUKIK Golf</h2>' +
+  var html = '<div class="card brandcard"><h2 style="font-size:20px">RUKIK Golf</h2>' +
     '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p></div>' +
     '<div id="hmJoinBox"></div>' +
     '<div id="hmRounds"></div>' +
     '<div class="card"><h2>开始一局</h2>' +
-    '<button class="entry main" id="hmCreate" type="button">发起球局<small>选球场 · 邀请好友 · 共同记分</small></button>' +
-    '<button class="entry" id="hmJoin" type="button">加入球局<small>输入球局码，或打开好友分享的链接</small></button>' +
-    '<a class="entry" href="memory/">我的高尔夫回忆<small>成绩 · 球场 · 球友 · 精彩瞬间</small></a>' +
+    '<button class="entry main" id="hmCreate" type="button"><span class="etx">发起球局<small>选球场 · 邀请好友 · 共同记分</small></span></button>' +
+    '<button class="entry" id="hmJoin" type="button"><span class="etx">加入球局<small>输入球局码，或打开好友分享的链接</small></span></button>' +
+    '<a class="entry" href="memory/"><span class="etx">高光时刻<small>成绩 · 球场 · 球友 · 精彩瞬间</small></span></a>' +
     '<div id="hmPanel"></div></div>';
   if (!S.session) {
     html += '<div class="card"><h2>登录</h2><p class="muted">发起或加入球局需要登录（与 RUKIK App 同一账号，同一 UID）。</p><div id="hmLogin"></div></div>';
