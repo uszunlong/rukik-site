@@ -565,12 +565,12 @@ function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
   var holeAtCall = curHole;
-  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞暂无地形几何，展示记分卡资料（见上方）。</div>'; prefetchAround(curHole); return; }
+  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞暂无地形图</div>'; prefetchAround(curHole); return; }
   callRetry('course_geometry', { hole: curHole }).then(function (j) {
     geomCache[holeAtCall] = j;
     if (holeAtCall !== curHole) return; // 用户已切到别的洞，本洞结果只入缓存，不动当前画面与大图
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
-    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞暂无地形几何，展示记分卡资料（见上方）。</div>';
+    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞暂无地形图</div>';
     applyHoleFocus(j);
     prefetchAround(holeAtCall);
   }).catch(function () {
@@ -610,10 +610,10 @@ function renderBoard() {
     var tab = boardTab || 'team';
     body = '<div class="btabs"><button type="button" data-btab="team"' + (tab === 'team' ? ' class="on"' : '') + '>团队榜</button><button type="button" data-btab="ind"' + (tab === 'ind' ? ' class="on"' : '') + '>个人榜</button></div>' +
       (tab === 'team'
-        ? (boardRowsHtml(b.entries, b.scope) || '<div class="empty">暂无团队成绩（尚未开始记分）。</div>')
-        : (boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无未组队球员成绩。</div>'));
+        ? (boardRowsHtml(b.entries, b.scope) || '<div class="empty">暂无团队成绩</div>')
+        : (boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无个人成绩</div>'));
   } else {
-    body = boardRowsHtml(b.entries, b.scope) || boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无排名数据（尚未开始记分）。</div>';
+    body = boardRowsHtml(b.entries, b.scope) || boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无排名</div>';
   }
   el.innerHTML = '<div class="card">' + head + body +
     '<div id="awardZone"></div>' +
