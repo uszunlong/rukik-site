@@ -3,19 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BD Max·首届美国菁英高尔夫邀请赛 · RUKIK Golf</title>
+<title>RUKIK Golf · 赛事</title>
 <!-- build-marker: z55-20261112c -->
-<meta name="description" content="首届美国菁英高尔夫邀请赛：高尔夫球队、商会球队与企业代表队同场竞技。">
+<!-- [分享串图根治 2026-11-12] 静态 og/标题/描述必须保持赛事中立（品牌默认）：
+     抓取端只读静态 HTML，写死任一赛事都会让所有赛事的分享卡串图串文
+     （Western Hills 好友球局串 BD Max 海报与文案实证）。单场数据由 applyShare
+     在数据到达后按当前赛事注入 og 与微信分享数据。 -->
+<meta name="description" content="RUKIK Golf 赛事页：海报、球场地图、排行榜与在线报名。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RUKIK Golf">
-<meta property="og:title" content="BD Max·首届美国菁英高尔夫邀请赛">
-<meta property="og:description" content="首届美国菁英高尔夫邀请赛：高尔夫球队、商会球队与企业代表队同场竞技。">
-<meta property="og:url" content="https://rukik.com/golf/event.html?e=11564c2e-9c4f-40de-a54a-9803a0ae024c">
-<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/live/golf/11564c2e-9c4f-40de-a54a-9803a0ae024c/b8744985-251f-485c-a88e-af47fe046365.jpg">
+<meta property="og:title" content="RUKIK Golf · 赛事">
+<meta property="og:description" content="赛事互动 · 精彩瞬间 · 实时成绩">
+<meta property="og:url" content="https://rukik.com/golf/event.html">
+<meta property="og:image" content="https://rukik.com/assets/og-share.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="BD Max·首届美国菁英高尔夫邀请赛">
-<meta name="twitter:description" content="首届美国菁英高尔夫邀请赛：高尔夫球队、商会球队与企业代表队同场竞技。">
-<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/live/golf/11564c2e-9c4f-40de-a54a-9803a0ae024c/b8744985-251f-485c-a88e-af47fe046365.jpg">
+<meta name="twitter:title" content="RUKIK Golf · 赛事">
+<meta name="twitter:description" content="赛事互动 · 精彩瞬间 · 实时成绩">
+<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
 <script src="/assets/wxshare.js?v=20261111a"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -277,7 +281,7 @@ var token = null;
 try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); if (raw) token = JSON.parse(raw).access_token || null; } catch (e) {}
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 // 分享卡片（定版口径：标题＝赛事名、描述＝赛事主题句、缩略图＝官方海报）。
-// 静态标签是默认赛事 BD Max；快照/动态数据到达后按当前赛事刷新 og 与微信分享数据。
+// 静态标签保持赛事中立（品牌默认，见 head 注释）；快照/动态数据到达后按当前赛事刷新 og 与微信分享数据。
 function shareDescOf(d) {
   var s = String(d || '').replace(/\s+/g, ' ').trim();
   if (!s) return '赛事互动 · 精彩瞬间 · 实时成绩';
@@ -299,7 +303,9 @@ function pushWxShare(data) {
 }
 function applyShare(e) {
   if (!e || !e.title) return;
-  var data = { title: e.title, desc: shareDescOf(e.description), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || '' };
+  /* 无自有封面回退品牌图，禁落空值：setMeta 对空值跳过、wx 空 imgUrl 会回退抓静态 og，
+     任一都会让分享图停在静态值上（串图根因之二）。 */
+  var data = { title: e.title, desc: shareDescOf(e.description), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || 'https://rukik.com/assets/og-share.png' };
   document.title = e.title + ' · RUKIK Golf';
   setMeta('meta[property="og:title"]', data.title);
   setMeta('meta[property="og:description"]', data.desc);
