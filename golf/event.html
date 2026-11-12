@@ -84,13 +84,35 @@
   .carDots{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:5px;justify-content:center;pointer-events:none}
   .carDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
   .carDots i.on{background:#fff}
+  /* 线 Z27 照片管理（2026-11-11）：照片墙管理条＋管理弹层（删除只列本人上传，服务端按上传者校验） */
+  .wallbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
+  .wallbar .wb-t{font-size:13px;font-weight:600;color:#e8f5ea}
+  .pmBtn{background:#1d7a3d;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+  #pmSheet{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;justify-content:flex-end}
+  #pmSheet.hidden{display:none}
+  #pmSheet .pm-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
+  #pmSheet .pm-panel{position:relative;background:#fff;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;padding:14px}
+  .pm-hd{display:flex;align-items:center;justify-content:space-between}
+  .pm-ttl{font-size:16px;font-weight:700;color:#0e2a16}
+  .pm-x{background:none;border:0;font-size:18px;cursor:pointer;color:#666}
+  .pm-opts{display:flex;flex-direction:column;gap:10px;padding:14px 0}
+  .pm-opt{border:1px solid #dce8de;border-radius:12px;padding:14px;font-size:15px;font-weight:600;color:#14401f;background:#f4faf5;cursor:pointer;text-align:left}
+  .pm-opt small{display:block;font-weight:400;color:#6b7d6f;font-size:12px;margin-top:2px}
+  .pm-list{overflow:auto;display:flex;flex-direction:column;gap:10px;padding:6px 0}
+  .pm-row{display:flex;align-items:center;gap:10px}
+  .pm-row img{width:54px;height:54px;object-fit:cover;border-radius:8px;background:#eee;flex:none}
+  .pm-cap{flex:1;font-size:13px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pm-del{border:1px solid #d33;color:#d33;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+  .pm-del.confirm{background:#d33;color:#fff;border-color:#d33}
+  .pm-cancel{border:0;background:none;color:#6b7d6f;font-size:13px;cursor:pointer;flex:none}
+  .pm-msg{font-size:13px;color:#6b7d6f;padding:8px 0}
 
   /* ---- 五区改版（最终改版指令 2026-11-11）：Hero 元信息／双卡／合作伙伴带／排行榜 ---- */
   .herometa{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:#33463a;margin-top:2px}
   .signup{display:block;margin-top:12px;background:#16a34a;color:#fff;text-align:center;border-radius:14px;padding:14px;font-size:16px;font-weight:700;text-decoration:none}
   .signup.alt{background:#fff;color:#14532d;border:1.5px solid #14532d}
   .dual{display:flex;gap:10px;margin-top:14px}
-  .dualcard{flex:1;display:block;background:#14532d;color:#fff;border-radius:16px;padding:16px 14px;text-decoration:none;box-shadow:0 1px 4px rgba(20,60,35,.12)}
+  .dualcard{flex:1;display:block;background:#14532d;color:#fff;border-radius:16px;padding:11px 14px;text-decoration:none;box-shadow:0 1px 4px rgba(20,60,35,.12)}
   .dualcard.caddie{background:#fff;color:#14532d;border:1.5px solid #cfe0d2}
   .dc-ic{font-size:24px;line-height:1}
   .dc-t{font-size:18px;font-weight:700;margin-top:6px}
@@ -100,9 +122,9 @@
   .pstrip{overflow-x:auto;flex:1;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .pstrip::-webkit-scrollbar{display:none}
   .ptrack{display:flex;gap:10px;width:max-content}
-  .pcard{flex:none;width:104px;height:70px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;text-decoration:none;color:#1c2a1e;overflow:hidden}
+  .pcard{flex:none;width:104px;min-height:70px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;text-decoration:none;color:#1c2a1e;cursor:pointer}
   .pcard img{max-width:84px;max-height:30px;object-fit:contain}
-  .pcname{font-size:12.5px;font-weight:600;text-align:center;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .pcname{font-size:12.5px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word}
   .pctag{font-size:10px;color:#16a34a;font-weight:700;line-height:1.2}
   .bhead{display:flex;align-items:center;gap:8px}
   .bhead h2{margin:0}
@@ -117,6 +139,29 @@
   .awards{margin-top:14px;border-top:1px solid #eef2ee;padding-top:10px}
   .awt{font-size:14.5px;font-weight:700;color:#14532d;margin-bottom:6px}
   .staffbtn{display:block;margin-top:18px;background:#fff;color:#14532d;border:1.5px solid #cfe0d2;text-align:center;border-radius:14px;padding:12px;font-size:15px;font-weight:600;text-decoration:none}
+  /* ---- 减法重构（Z29，2026-11-11）：赛事详情折叠 / 地图摘要行 / 机构介绍层 / 高清球洞图层 ---- */
+  .dtoggle{margin-top:10px;background:none;border:none;color:#14532d;font-size:14px;font-weight:600;cursor:pointer;padding:4px 0}
+  .details{margin-top:6px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.9;color:#33463a}
+  .details.hidden{display:none}
+  .mapsum{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:6px 0;font-size:15px;color:#1c2a1e;text-align:left}
+  .mapsum .ms-t{font-weight:600}
+  .mapsum .ms-r{color:#14532d;font-weight:600;font-size:14px;white-space:nowrap}
+  #mapPick.hidden{display:none}
+  .hdlink{border:1px solid #cfe0d2;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:#14532d;font-weight:600}
+  #orgSheet{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;justify-content:flex-end}
+  #orgSheet.hidden{display:none}
+  #orgSheet .cd-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
+  .org-panel{position:relative;background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));max-width:760px;width:100%;margin:0 auto;box-sizing:border-box}
+  .org-panel h3{margin:0 0 4px;font-size:18px;color:#1c2a1e}
+  .org-panel .orole{font-size:12px;color:#16a34a;font-weight:700}
+  .org-panel .ointro{margin-top:10px;font-size:14.5px;line-height:1.7;color:#33463a;white-space:pre-wrap}
+  .org-panel .oweb{display:inline-block;margin-top:14px;color:#14532d;font-weight:600;text-decoration:none}
+  .org-panel .oclose{position:absolute;top:12px;right:12px;background:#f1f5f1;border:1px solid #dde7dd;border-radius:999px;width:32px;height:32px;font-size:14px;cursor:pointer}
+  #hdOverlay{position:fixed;inset:0;z-index:86;background:rgba(8,20,12,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+  #hdOverlay.hidden{display:none}
+  #hdOverlay .hd-box{background:#fdfdf8;border-radius:14px;padding:10px;max-width:97vw;max-height:86dvh;overflow:auto}
+  #hdOverlay .hd-box svg{width:92vw;height:auto;max-height:80dvh}
+  #hdOverlay .hd-close{margin-top:12px;background:#fff;color:#14532d;border:none;border-radius:999px;padding:9px 22px;font-size:15px;font-weight:600;cursor:pointer}
 
   /* ---- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）---- */
   #cdSheet{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;justify-content:flex-end}
@@ -277,6 +322,19 @@ function renderHeroMedia() { // Hero 媒体区默认海报形态；照片墙就�
   var box = document.getElementById('heroMedia');
   if (box) box.innerHTML = heroPosterHtml();
 }
+/* 减法重构（Z29）：赛制人类可读名 11 种全覆盖，枚举绝不上屏（缺陷 a） */
+var FORMAT_LABELS = { stroke: '个人比杆赛', net_stroke: '净杆赛', stableford: 'Stableford 积分赛', scramble: 'Scramble 团队赛', best_ball: 'Best Ball 最佳球赛', match_play: '比洞赛', team_points: '团队积分赛', team_stroke: '团体比杆赛', alternate_shot: '交替击球赛', skins: 'Skins 逐洞赛', six_six_six: 'Sixes 六六六组合赛' };
+function fmtLabel(f) { return FORMAT_LABELS[f] || '高尔夫赛事'; }
+/* 场次诚实口径（缺陷 b）：note 只取第一分句作标题，内部说明不上屏；占位时间不显钟点 */
+function sessTitle(note) { var t = String(note || '').split(/[；;]/)[0].trim(); return t || '活动安排'; }
+function sessTBD(s) { return /占位|非真实时间|时间待定|时间未定/.test(String((s && s.note) || '')); }
+function sessHtml() {
+  var ss = (EV.sessions || []).slice().sort(function (a, b) { return (sessTBD(a) ? 1 : 0) - (sessTBD(b) ? 1 : 0); });
+  return ss.map(function (s) {
+    var tm = sessTBD(s) ? '时间待定（以主办方公布为准）' : fmtTime(s.start_at, s.timezone || (EV.event && EV.event.timezone));
+    return '<div>🕐 ' + esc(sessTitle(s.note)) + (s.venue_name ? ' · ' + esc(s.venue_name) : '') + ' · ' + esc(tm) + '</div>';
+  }).join('');
+}
 function renderHero() {
   var e = EV.event, c = EV.course || {};
   var pill = document.getElementById('statePill');
@@ -301,7 +359,19 @@ function renderHero() {
     (e.starts_at ? '<span>🗓 ' + fmtTime(e.starts_at, e.timezone) + ' 开赛</span>' : '') +
     (c.name ? '<span>📍 ' + esc(c.name) + (c.city ? '，' + esc(c.city) : '') + '</span>' : '') +
     '<span>🏌️ ' + statusLine + '</span></div>' +
-    act;
+    act +
+    /* 减法重构第 1 项：赛制/介绍/日程默认收进「赛事详情」，点开才看 */
+    '<button type="button" class="dtoggle" id="dToggle">赛事详情 ▾</button>' +
+    '<div class="details hidden" id="detailsBox">' +
+    '<div>赛制：' + esc(fmtLabel(e.format)) + '</div>' +
+    (e.description ? '<div>' + esc(e.description) + '</div>' : '') +
+    sessHtml() +
+    '</div>';
+  var dT = document.getElementById('dToggle'), dB = document.getElementById('detailsBox');
+  if (dT && dB) dT.addEventListener('click', function () {
+    var open = dB.classList.toggle('hidden') === false;
+    dT.textContent = open ? '赛事详情 ▴' : '赛事详情 ▾';
+  });
   renderDual();
   renderStaff();
 }
@@ -317,6 +387,8 @@ function renderDual() {
     t = '记分卡';
     if (myReg && myReg.status === 'pending') s = '报名待主办方审核';
     else if (myReg && myReg.status === 'rejected') s = '报名未通过';
+    /* 缺陷 c：已开赛但尚未分组，文案与状态一致，不许假装能记分 */
+    else if (myReg && !EV.my_pairing) s = '已开赛 · 尚未分组，请联系主办方';
     else if (myReg) s = '记录我的成绩 · 同组记分';
     else s = '登录后记录我的成绩';
   } else {
@@ -334,7 +406,7 @@ function renderDual() {
   }
   el.innerHTML = '<div class="dual">' +
     '<a class="dualcard score" href="play.html?e=' + encodeURIComponent(eventId) + '"><div class="dc-ic">⛳</div><div class="dc-t">' + t + '</div><div class="dc-s">' + s + '</div></a>' +
-    '<a class="dualcard caddie" href="#" id="cdOpen"><div class="dc-ic">🤖</div><div class="dc-t">问RUKIK Golf</div><div class="dc-s">赛事助手 · 球场攻略 · 规则解读</div></a></div>';
+    '<a class="dualcard caddie" href="#" id="cdOpen"><div class="dc-ic">🤖</div><div class="dc-t">问RUKIK Golf</div><div class="dc-s">懂比赛 · 懂您</div></a></div>';
 }
 /* 主办方入口：页面最底部低调单按钮（管理动作仍在主办方台，不塞进球员页） */
 function renderStaff() {
@@ -347,23 +419,42 @@ function renderStaff() {
 var ORG_ORDER = { '主办': 0, '联合主办': 1, '承办': 2, '协办': 3, '冠名赞助': 4, '赞助商': 5, '合作伙伴': 6 };
 var ORG_PINNED = { '主办': 1, '联合主办': 1 };
 var PMQ = { timer: null, pausedUntil: 0 };
-function orgCardHtml(o) {
+var ORGS_CUR = [];
+function orgCardHtml(o, i) {
   var inner = '<div class="pctag">' + esc(o.type || '合作伙伴') + '</div>' +
     (o.logo_url ? '<img src="' + esc(o.logo_url) + '" alt="' + esc(o.name) + '">' : '<div class="pcname">' + esc(o.name) + '</div>');
-  if (o.website) return '<a class="pcard" href="' + esc(o.website) + '" target="_blank" rel="noopener">' + inner + '</a>';
-  return '<div class="pcard">' + inner + '</div>';
+  /* 减法重构第 5 项：点击看机构介绍（统一档案 intro），不再直跳外站 */
+  return '<div class="pcard" data-oi="' + i + '" role="button" tabindex="0">' + inner + '</div>';
 }
+/* 机构介绍层：intro 走机构统一档案（event_get 快照同源）；无 intro 只显名称与角色，不拼凑 */
+function openOrgSheet(o) {
+  if (!o) return;
+  document.getElementById('orgName').textContent = o.name || '';
+  document.getElementById('orgRole').textContent = o.type || '合作伙伴';
+  var introEl = document.getElementById('orgIntro');
+  if (o.intro) { introEl.textContent = o.intro; introEl.style.display = ''; } else introEl.style.display = 'none';
+  var webEl = document.getElementById('orgWeb');
+  if (o.website) { webEl.href = /^https?:\/\//i.test(o.website) ? o.website : 'https://' + o.website; webEl.style.display = ''; } else webEl.style.display = 'none';
+  document.getElementById('orgSheet').classList.remove('hidden');
+}
+function closeOrgSheet() { document.getElementById('orgSheet').classList.add('hidden'); }
 function renderPartners() {
   var el = document.getElementById('partnerSec');
   var orgs = (EV.organizations || []).filter(function (o) { return o && o.name; });
   if (!orgs.length) { el.innerHTML = ''; return; }
   orgs.sort(function (a, b) { return (ORG_ORDER[a.type] != null ? ORG_ORDER[a.type] : 9) - (ORG_ORDER[b.type] != null ? ORG_ORDER[b.type] : 9); });
+  ORGS_CUR = orgs;
   var pinned = orgs.filter(function (o) { return ORG_PINNED[o.type]; });
   var rest = orgs.filter(function (o) { return !ORG_PINNED[o.type]; });
   el.innerHTML = '<div class="card partners"><h2>赛事合作伙伴</h2><div class="pwrap">' +
-    (pinned.length ? '<div class="ppin">' + pinned.map(orgCardHtml).join('') + '</div>' : '') +
-    (rest.length ? '<div class="pstrip" id="pstrip"><div class="ptrack" id="ptrack">' + rest.map(orgCardHtml).join('') + '</div></div>' : '') +
+    (pinned.length ? '<div class="ppin">' + pinned.map(function (o) { return orgCardHtml(o, orgs.indexOf(o)); }).join('') + '</div>' : '') +
+    (rest.length ? '<div class="pstrip" id="pstrip"><div class="ptrack" id="ptrack">' + rest.map(function (o) { return orgCardHtml(o, orgs.indexOf(o)); }).join('') + '</div></div>' : '') +
     '</div></div>';
+  /* 点击委托绑在容器上：轮播复制节点后仍可点 */
+  el.onclick = function (ev) {
+    var card = ev.target && ev.target.closest ? ev.target.closest('.pcard') : null;
+    if (card) openOrgSheet(ORGS_CUR[Number(card.getAttribute('data-oi'))]);
+  };
   setupPartnerScroll();
 }
 function setupPartnerScroll() {
@@ -981,6 +1072,15 @@ function holeData() {
   for (var i = 0; i < list.length; i++) if (list[i].hole === curHole) return list[i];
   return null;
 }
+/* 减法重构第 3 项（Z29）：选择器默认收起，状态跨重渲染保留 */
+var mapPickOpen = false;
+function openHdOverlay() {
+  var src = document.getElementById('holeSvg'), box = document.getElementById('hdBox');
+  if (!src || !box) return;
+  box.innerHTML = src.innerHTML; // 同一份渲染结果放大呈现，不另画一套（渲染归 Z28）
+  document.getElementById('hdOverlay').classList.remove('hidden');
+}
+function closeHdOverlay() { document.getElementById('hdOverlay').classList.add('hidden'); }
 function renderMap() {
   var el = document.getElementById('mapSec');
   if (!PREVIEW || !PREVIEW.name) { el.innerHTML = ''; return; }
@@ -990,16 +1090,29 @@ function renderMap() {
   var teeOpts = (PREVIEW.tees || []).map(function (t) { return '<option value="' + t.id + '"' + (t.id === curTee ? ' selected' : '') + '>' + esc(t.name) + (t.course_rating ? '（' + t.course_rating + '/' + t.slope + '）' : '') + '</option>'; }).join('');
   var dots = '';
   for (var i = 1; i <= 18; i++) dots += '<button type="button" data-hole="' + i + '"' + (i === curHole ? ' class="on"' : '') + '>' + i + '</button>';
-  el.innerHTML = '<div class="card"><h2>球场地图 · ' + esc(PREVIEW.name) + '</h2>' +
+  var teeName = (PREVIEW.tees || []).filter(function (t) { return t.id === curTee; }).map(function (t) { return t.name; })[0] || '';
+  el.innerHTML = '<div class="card"><h2>球场地图</h2>' +
     '<div id="lmapBox"></div>' +
-    '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button><button type="button" id="prevHole">← 上一洞</button><strong>第 ' + curHole + ' 洞</strong><button type="button" id="nextHole">下一洞 →</button>' +
+    '<button type="button" class="mapsum" id="mapSum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span><span class="ms-r">发球台：' + esc(teeName || '默认') + ' ' + (mapPickOpen ? '▴' : '▾') + '</span></button>' +
+    '<div id="mapPick"' + (mapPickOpen ? '' : ' class="hidden"') + '>' +
+    '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button>' +
     (teeOpts ? '<select id="teeSel">' + teeOpts + '</select>' : '') + '</div>' +
-    '<div class="dots">' + dots + '</div>' +
+    '<div class="dots">' + dots + '</div></div>' +
+    '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><button type="button" class="hdlink" id="hdOpen">查看高清球洞图</button><button type="button" id="nextHole">下一洞 →</button></div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
     '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div></div>';
   el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
   el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
   el.querySelector('#allHoles').addEventListener('click', function () { resetBigMap(); });
+  var msBtn = el.querySelector('#mapSum'), mpBox = el.querySelector('#mapPick');
+  if (msBtn && mpBox) msBtn.addEventListener('click', function () {
+    mapPickOpen = !mapPickOpen;
+    mpBox.classList.toggle('hidden', !mapPickOpen);
+    var msr = msBtn.querySelector('.ms-r');
+    if (msr) msr.textContent = msr.textContent.replace(/[▾▴]$/, mapPickOpen ? '▴' : '▾');
+  });
+  var hdBtn = el.querySelector('#hdOpen');
+  if (hdBtn) hdBtn.addEventListener('click', openHdOverlay);
   el.querySelectorAll('.dots button').forEach(function (b) { b.addEventListener('click', function () { setHole(Number(b.getAttribute('data-hole'))); }); });
   var sel = el.querySelector('#teeSel');
   if (sel) sel.addEventListener('change', function () { curTee = sel.value; renderMap(); });
@@ -1215,8 +1328,11 @@ function renderLive() {
       var src = esc(f.thumb_url || f.url);
       return '<figure class="carSlide"><img data-ci="' + i + '" data-src="' + src + '"' + (i < 3 ? ' src="' + src + '"' : '') + ' alt=""></figure>';
     }).join('') +
-    '</div><div class="carDots" id="carDots">' + feed.map(function (f, i) { return '<i' + (i === CAR.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div>';
+    '</div><div class="carDots" id="carDots">' + feed.map(function (f, i) { return '<i' + (i === CAR.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' +
+    '<div class="wallbar"><span class="wb-t">🔴 Golf Live · ' + ((WALL.stats && WALL.stats.photos) || feed.length) + ' 张照片</span><button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button></div></div>';
   var box = document.getElementById('carBox');
+  var pmB = document.getElementById('pmOpenBtn');
+  if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
   Array.prototype.forEach.call(box.querySelectorAll('img'), function (img) {
     img.addEventListener('error', function () {
       var fig = img.parentNode, track = document.getElementById('carTrack');
@@ -1356,6 +1472,22 @@ if (!eventId) {
 </script>
 
 <!-- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）：本页展开，不跳问 Rukik；caddie.html 独立页保留为备用入口 -->
+<!-- 机构介绍层（Z29）：点击合作伙伴卡打开；无 intro 只显名称与角色 -->
+<div id="orgSheet" class="hidden" role="dialog" aria-label="机构介绍">
+  <div class="cd-backdrop" onclick="closeOrgSheet()"></div>
+  <div class="org-panel">
+    <button type="button" class="oclose" onclick="closeOrgSheet()" aria-label="关闭">✕</button>
+    <span class="orole" id="orgRole"></span>
+    <h3 id="orgName"></h3>
+    <div class="ointro" id="orgIntro"></div>
+    <a class="oweb" id="orgWeb" href="#" target="_blank" rel="noopener">访问网站 →</a>
+  </div>
+</div>
+<!-- 高清球洞图层（Z29）：放大呈现 #holeSvg 同一份渲染 -->
+<div id="hdOverlay" class="hidden" role="dialog" aria-label="高清球洞图">
+  <div class="hd-box" id="hdBox"></div>
+  <button type="button" class="hd-close" onclick="closeHdOverlay()">关闭</button>
+</div>
 <div id="cdSheet" class="hidden" role="dialog" aria-label="RUKIK Golf AI球童">
   <div class="cd-backdrop" id="cdBackdrop"></div>
   <div class="cd-panel">
@@ -1381,6 +1513,26 @@ if (!eventId) {
         <button type="button" id="cdSend">发送</button>
       </div>
       <div class="cd-hint">AI 球童是平台官方 AI，不是真人教练；成绩与排名以赛事正式发布为准。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 照片管理弹层（线 Z27，2026-11-11）：上传照片＝前往照片池（现行上传流不变）；删除照片＝只列本人上传、逐张删、页面内确认 -->
+<div id="pmSheet" class="hidden" role="dialog" aria-label="管理照片">
+  <div class="pm-backdrop" id="pmBackdrop"></div>
+  <div class="pm-panel">
+    <div class="pm-hd">
+      <div class="pm-ttl">管理照片</div>
+      <button type="button" class="pm-x" id="pmClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="pm-opts" id="pmOpts">
+      <button type="button" class="pm-opt" id="pmGoUpload">📷 上传照片<small>前往赛事照片池上传（现有上传方式不变）</small></button>
+      <button type="button" class="pm-opt" id="pmGoDelete">🗑 删除照片<small>只显示并删除你自己上传的照片</small></button>
+    </div>
+    <div id="pmDelView" class="hidden">
+      <div class="pm-msg" id="pmMsg"></div>
+      <div id="pmLoginMount"></div>
+      <div class="pm-list" id="pmList"></div>
     </div>
   </div>
 </div>
@@ -1589,6 +1741,119 @@ document.addEventListener('click', function (e) {
   var t = e.target && e.target.closest ? e.target.closest('#cdOpen') : null;
   if (t) { e.preventDefault(); cdOpen(); }
 });
+</script>
+<script>
+/* 照片管理（线 Z27，2026-11-11）：删除只列本人上传的照片；服务端 live-photo 按 uploader_id 强制校验，
+ * 他人照片删不动（403）。令牌每次调用时现读 localStorage（与 photos.html 同口径，不依赖页面加载时快照）。 */
+(function () {
+  var LP = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/live-photo';
+  var LSKEY = 'sb-yzgzgtrqrmarfjftgbwt-auth-token';
+  var sheet = document.getElementById('pmSheet');
+  var opts = document.getElementById('pmOpts');
+  var delView = document.getElementById('pmDelView');
+  var msg = document.getElementById('pmMsg');
+  var list = document.getElementById('pmList');
+
+  function session() {
+    try { var raw = localStorage.getItem(LSKEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function myTok() { var s = session(); return (s && s.access_token) || null; }
+  function myUid() {
+    var s = session();
+    if (s && s.user && s.user.id) return s.user.id;
+    var t = myTok();
+    if (!t) return null;
+    try {
+      var p = JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))));
+      return p.sub || null;
+    } catch (e) { return null; }
+  }
+  function lp(body) {
+    var tok = myTok();
+    return fetch(LP, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': window.ANON, 'Authorization': 'Bearer ' + (tok || window.ANON) },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, data: j }; }); });
+  }
+  function close() { sheet.classList.add('hidden'); }
+  window.pmOpen = function () {
+    opts.classList.remove('hidden');
+    delView.classList.add('hidden');
+    sheet.classList.remove('hidden');
+  };
+  document.getElementById('pmClose').addEventListener('click', close);
+  document.getElementById('pmBackdrop').addEventListener('click', close);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) close(); });
+  document.getElementById('pmGoUpload').addEventListener('click', function () { location.href = poolUrl(); });
+  document.getElementById('pmGoDelete').addEventListener('click', function () {
+    opts.classList.add('hidden');
+    delView.classList.remove('hidden');
+    list.innerHTML = '';
+    if (!myUid()) {
+      msg.textContent = '请先登录后再删除照片（与 RUKIK App 同一账号）。';
+      mountLogin();
+      return;
+    }
+    loadMine();
+  });
+  function mountLogin() {
+    import('./auth.js').then(function (m) {
+      m.mountLogin(document.getElementById('pmLoginMount'), { onDone: function () {
+        document.getElementById('pmLoginMount').innerHTML = '';
+        loadMine();
+      } });
+    }).catch(function () { msg.textContent = '登录组件加载失败，请刷新后重试。'; });
+  }
+  function loadMine() {
+    msg.textContent = '正在加载…';
+    lp({ action: 'photo_list', event_kind: 'golf', event_id: window.eventId, limit: 100 }).then(function (r) {
+      if (r.status !== 200 || !r.data || r.data.error) { msg.textContent = '加载失败，请稍后重试。'; return; }
+      var uid = myUid();
+      var mine = (r.data.photos || []).filter(function (p) { return p.uploader_id === uid; });
+      if (!mine.length) { msg.textContent = '你还没有上传过照片。'; list.innerHTML = ''; return; }
+      msg.textContent = '只显示你上传的照片。删除后立即生效、无法恢复。';
+      list.innerHTML = mine.map(function (p) {
+        var cap = p.caption ? esc(p.caption) : (p.status === 'visible' ? '已展示' : '未公开展示');
+        return '<div class="pm-row" data-pid="' + esc(p.id) + '"><img src="' + esc(p.thumb_url || p.url) + '" alt="">' +
+          '<span class="pm-cap">' + cap + '</span>' +
+          '<button type="button" class="pm-del">删除</button></div>';
+      }).join('');
+      Array.prototype.forEach.call(list.querySelectorAll('.pm-row'), function (row) {
+        var btn = row.querySelector('.pm-del');
+        btn.addEventListener('click', function () {
+          if (!btn.classList.contains('confirm')) {
+            btn.classList.add('confirm'); btn.textContent = '确认删除？';
+            var cancel = document.createElement('button');
+            cancel.type = 'button'; cancel.className = 'pm-cancel'; cancel.textContent = '取消';
+            cancel.addEventListener('click', function () {
+              btn.classList.remove('confirm'); btn.textContent = '删除'; cancel.remove();
+            });
+            btn.after(cancel);
+            return;
+          }
+          btn.disabled = true; btn.textContent = '删除中…';
+          lp({ action: 'photo_delete', photo_id: row.getAttribute('data-pid') }).then(function (r2) {
+            if (r2.status === 200 && r2.data && r2.data.ok) {
+              row.remove();
+              if (typeof window.loadWall === 'function') window.loadWall();
+              if (!list.querySelector('.pm-row')) msg.textContent = '你上传的照片已全部删除。';
+            } else if (r2.status === 403) {
+              msg.textContent = '只能删除自己上传的照片。';
+              btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
+            } else {
+              msg.textContent = '删除失败，请稍后重试。';
+              btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
+            }
+          }).catch(function () {
+            msg.textContent = '删除失败，请稍后重试。';
+            btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
+          });
+        });
+      });
+    }).catch(function () { msg.textContent = '加载失败，请稍后重试。'; });
+  }
+})();
 </script>
 </body>
 </html>
