@@ -71,6 +71,7 @@
   .cta{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid #e3eae4;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
   .cta a{display:block;max-width:760px;margin:0 auto;background:#14532d;color:#fff;text-align:center;border-radius:14px;padding:14px;font-size:16px;font-weight:700;text-decoration:none}
   .cta a.live{background:#16a34a}.cta a.post{background:#7c3aed}
+  .cta a.orglink{background:#fff;color:#14532d;border:1.5px solid #14532d;margin-top:8px;padding:11px;font-size:15px}
   .funcrow{display:flex;gap:10px;flex-wrap:wrap}
   .funcrow a{flex:1;min-width:140px;text-align:center;background:#eef4ef;color:#14532d;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none}
   iframe.osm{width:100%;height:230px;border:0;border-radius:14px}
@@ -83,6 +84,51 @@
   .carDots{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:5px;justify-content:center;pointer-events:none}
   .carDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
   .carDots i.on{background:#fff}
+
+  /* ---- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）---- */
+  #cdSheet{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;justify-content:flex-end}
+  #cdSheet .cd-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
+  .cd-panel{position:relative;background:#f6f7f5;border-radius:18px 18px 0 0;max-height:86dvh;display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(10,30,16,.25)}
+  .cd-head{background:#14532d;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:12px;border-radius:18px 18px 0 0;flex:none}
+  .cd-head .cd-ttl{min-width:0;flex:1}
+  .cd-head .cd-name{font-size:16px;font-weight:700;line-height:1.25}
+  .cd-head .cd-sub{font-size:11.5px;opacity:.85;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cd-badge{display:inline-block;background:#eef4ef;color:#14532d;border-radius:999px;font-size:10.5px;padding:1px 7px;margin-left:6px;vertical-align:2px;font-weight:600}
+  #cdClose{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;width:32px;height:32px;font-size:14px;cursor:pointer;flex:none}
+  .cd-body{flex:1;overflow-y:auto;padding:14px 12px 8px;display:flex;flex-direction:column;gap:10px;max-width:760px;width:100%;margin:0 auto}
+  .cd-msg{max-width:86%;padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.65;word-break:break-word;white-space:pre-wrap}
+  .cd-msg.u{align-self:flex-end;background:#14532d;color:#fff;border-bottom-right-radius:4px}
+  .cd-msg.a{align-self:flex-start;background:#fff;border:1px solid #dde7dd;border-bottom-left-radius:4px}
+  .cd-msg.a .h{font-weight:700;font-size:15px;margin:8px 0 2px}
+  .cd-msg.a .h:first-child{margin-top:0}
+  .cd-msg.a ul{margin:4px 0 4px 2px;padding-left:18px}
+  .cd-msg.a li{margin:2px 0}
+  .cd-msg.a p{margin:4px 0}
+  .cd-tag{display:inline-block;font-size:10.5px;color:#14532d;background:#eef4ef;border-radius:999px;padding:1px 7px;margin-bottom:6px;font-weight:600}
+  .cd-sys{align-self:center;font-size:12.5px;color:#7a8a7e;text-align:center;max-width:92%}
+  .cd-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .cd-chips button{background:#fff;border:1px solid #cfe0d2;color:#14532d;border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+  .cd-chips button:active{background:#eef4ef}
+  #cdLogin{background:#fff;border:1px solid #dde7dd;border-radius:14px;padding:14px}
+  #cdLogin .cd-lt{font-weight:700;margin-bottom:6px}
+  #cdLogin .cd-ld{font-size:13px;color:#5b7263;margin-bottom:10px;line-height:1.6}
+  .cd-foot{background:#f6f7f5;border-top:1px solid #e2eae2;padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex:none}
+  .cd-inrow{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+  .cd-inrow textarea{flex:1;resize:none;border:1px solid #cfe0d2;border-radius:12px;padding:10px 12px;font-size:15px;font-family:inherit;max-height:110px;background:#fff}
+  #cdSend{background:#16a34a;color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:15px;font-weight:600;cursor:pointer}
+  #cdSend:disabled{background:#a7c4ac}
+  .cd-hint{max-width:760px;margin:6px auto 0;font-size:11.5px;color:#8a9a8e;text-align:center}
+  .rk-auth-title{font-size:16px;font-weight:700;text-align:center;margin-bottom:6px}
+  .rk-auth-hint{font-size:13.5px;line-height:1.7;color:#44403a;text-align:center;margin:0 0 6px}
+  .rk-tabs{display:flex;gap:8px;margin:12px 0 2px}
+  .rk-tabs button{flex:1;background:#fff;color:#142235;border:1px solid #e3ddd2;border-radius:999px;padding:10px 0;font-size:15px;cursor:pointer;min-height:44px}
+  .rk-tabs button.on{background:#142235;color:#F7F3EC;border-color:#142235}
+  .rk-row{display:flex;gap:8px;margin-top:10px}
+  .rk-row input,.rk-row select{flex:1;min-width:0;border:1px solid #e3ddd2;border-radius:999px;padding:11px 16px;font-size:16px;outline:none;background:#fff;color:#202020;min-height:44px}
+  .rk-row button{background:#142235;color:#F7F3EC;border:none;border-radius:999px;padding:11px 18px;font-size:15px;cursor:pointer;white-space:nowrap;min-height:44px}
+  .rk-row button.plain{background:#fff;color:#142235;border:1px solid #e3ddd2}
+  .rk-row button:disabled{opacity:.55}
+  .rk-msg{margin-top:10px;font-size:13px;line-height:1.6;color:#8B857D;text-align:center;min-height:18px}
   .hidden{display:none}
 </style>
 </head>
@@ -97,7 +143,7 @@
   <div id="liveSec"></div>
   <p class="src" style="margin-top:18px">成绩由确定性规则引擎计算；未最终确认的成绩会明确标注。照片仅在赛事开通 Golf Live 相册后展示。</p>
 </div>
-<div class="cta hidden" id="ctaBar"><a id="ctaBtn" href="play.html">打开 RUKIK App</a></div>
+<div class="cta hidden" id="ctaBar"><a id="ctaBtn" href="play.html">打开 RUKIK App</a><a id="orgBtn" class="orglink hidden" href="console/">管理本场（主办方台）</a></div>
 <script>
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
@@ -211,6 +257,18 @@ function renderHero() {
   btn.className = st;
   btn.textContent = st === 'pre' ? '立即报名' : st === 'live' ? '进入我的比赛' : '查看赛事结果';
   btn.setAttribute('href', 'play.html?e=' + encodeURIComponent(eventId));
+  /* [线P] 已报名用户按报名状态显示 CTA，不再一律「立即报名」；审核流 pending/rejected 如实区分 */
+  var myReg = EV.my_registration;
+  if (myReg && st !== 'post') {
+    if (myReg.status === 'pending') btn.textContent = '报名审核中 · 查看进度';
+    else if (myReg.status === 'registered' || myReg.status === 'checked_in') btn.textContent = '已报名 · 进入我的比赛';
+    else if (myReg.status === 'waitlisted') btn.textContent = '候补中 · 查看进度';
+    else if (myReg.status === 'rejected') btn.textContent = '报名未通过 · 查看详情';
+  }
+  /* [线P] 主办方入口：my_role=organizer 时在 CTA 区给出主办方台直达（此前 App/网页均无入口，用户找不到） */
+  var orgBtn = document.getElementById('orgBtn');
+  if (EV.my_role === 'organizer') { orgBtn.classList.remove('hidden'); orgBtn.setAttribute('href', 'console/?e=' + encodeURIComponent(eventId)); }
+  else orgBtn.classList.add('hidden');
 }
 function renderOrgs() {
   var el = document.getElementById('orgSec');
@@ -443,7 +501,7 @@ function renderFunc(board) {
     pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
   }
   el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + pairHtml +
-    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="caddie.html?e=' + encodeURIComponent(eventId) + '&ret=event">问RUKIK｜本场赛事AI球童</a>' +
+    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="#" id="cdOpen">问RUKIK｜本场赛事AI球童</a>' +
     (eventId ? '<a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜</a>' : '') + '</div></div>';
 }
 // ---- Golf Live · 精彩瞬间（极简改版 2026-11-11）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
@@ -640,6 +698,240 @@ if (!eventId) {
 } else {
   boot();
 }
+</script>
+
+<!-- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）：本页展开，不跳问 Rukik；caddie.html 独立页保留为备用入口 -->
+<div id="cdSheet" class="hidden" role="dialog" aria-label="RUKIK Golf AI球童">
+  <div class="cd-backdrop" id="cdBackdrop"></div>
+  <div class="cd-panel">
+    <div class="cd-head">
+      <div class="cd-ttl">
+        <div class="cd-name">RUKIK Golf AI球童<span class="cd-badge">平台官方 AI</span></div>
+        <div class="cd-sub" id="cdEvName">本场赛事</div>
+      </div>
+      <button type="button" id="cdClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="cd-body" id="cdBody">
+      <div id="cdLogin" class="hidden">
+        <div class="cd-lt">登录后即可问 AI 球童</div>
+        <div class="cd-ld">AI 球童需要读取您在本场赛事的真实成绩与分组信息，因此需要登录。与 RUKIK App 同一账号（手机号或邮箱），同一 UID。</div>
+        <div id="cdLoginMount"></div>
+      </div>
+      <div id="cdMsgs"></div>
+      <div class="cd-chips" id="cdChips"></div>
+    </div>
+    <div class="cd-foot hidden" id="cdComposer">
+      <div class="cd-inrow">
+        <textarea id="cdInput" rows="1" placeholder="问球童：规则、球场、我的成绩……"></textarea>
+        <button type="button" id="cdSend">发送</button>
+      </div>
+      <div class="cd-hint">AI 球童是平台官方 AI，不是真人教练；成绩与排名以赛事正式发布为准。</div>
+    </div>
+  </div>
+</div>
+<script type="module">
+/* RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）
+ * 调用口径逐字复用线 H caddie.html：客户端只传 golf_event_id，上下文由服务端
+ * 以本人 JWT 由服务端隐藏注入，永不显示为用户消息；auth.js 懒加载（首屏零新增请求）。
+ * 会话只含本场对话：sessionStorage 按 event_id 分键，与 caddie.html 同键共享同一线程。 */
+var CD_PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
+var CD_API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1';
+var CD_WELCOME = '您好！我是您的RUKIK Golf AI球童。我可以帮您了解球场、解释规则、回顾成绩，也会记住您在每一场比赛中的真实进步。';
+var CD_SUGGESTED = ['我这场比赛打得怎么样？现在排第几？', '下一洞是什么情况？', '球出界（OB）了该怎么处理？', '比杆赛和 Stableford 有什么区别？', '打高尔夫有哪些基本礼仪？'];
+
+var cdSheet = document.getElementById('cdSheet');
+var cdBody = document.getElementById('cdBody');
+var cdMsgs = document.getElementById('cdMsgs');
+var cdChips = document.getElementById('cdChips');
+var cdInput = document.getElementById('cdInput');
+var cdSendBtn = document.getElementById('cdSend');
+var cdComposer = document.getElementById('cdComposer');
+var cdLogin = document.getElementById('cdLogin');
+var cdEventId = null; // 面板打开时锁定当前页面 event_id，此后每轮都带它
+var cdHistory = []; // 只含本场真实问答轮，欢迎语不入会话
+var cdLoggedIn = false;
+var cdSending = false;
+var cdAuth = null; // 懒加载的 auth.js 模块
+var cdLoginMounted = false;
+var cdSavedScrollY = 0;
+
+function cdEsc(s) { return window.esc ? window.esc(s) : String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function cdStoreKey() { return 'golf_caddie_msgs_' + (cdEventId || 'none'); }
+function cdPersist() { try { sessionStorage.setItem(cdStoreKey(), JSON.stringify(cdHistory.slice(-20))); } catch (e) {} }
+function cdLoadHistory() { try { var s = sessionStorage.getItem(cdStoreKey()); cdHistory = s ? (JSON.parse(s) || []) : []; } catch (e) { cdHistory = []; } }
+function cdScrollBottom() { cdBody.scrollTop = cdBody.scrollHeight; }
+// 轻量结构渲染：## 标题 / - 列表 / **加粗** / 段落（先转义再套格式，用户文本永不注入 HTML）
+function cdRenderRich(text) {
+  var lines = cdEsc(text).split('\n');
+  var out = '', inList = false;
+  function closeList() { if (inList) { out += '</ul>'; inList = false; } }
+  lines.forEach(function (ln) {
+    var t = ln.trim();
+    var bold = function (s) { return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); };
+    if (/^##\s+/.test(t)) { closeList(); out += '<div class="h">' + bold(t.replace(/^##\s+/, '')) + '</div>'; }
+    else if (/^-\s+/.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + bold(t.replace(/^-\s+/, '')) + '</li>'; }
+    else if (t === '') { closeList(); }
+    else { closeList(); out += '<p>' + bold(t) + '</p>'; }
+  });
+  closeList();
+  return out;
+}
+function cdAddMsg(role, text, rich) {
+  var d = document.createElement('div');
+  d.className = 'cd-msg ' + (role === 'user' ? 'u' : 'a');
+  if (role === 'assistant' && rich) d.innerHTML = cdRenderRich(text); else d.textContent = text;
+  cdMsgs.appendChild(d);
+  cdScrollBottom();
+  return d;
+}
+function cdAddSys(text) {
+  var d = document.createElement('div');
+  d.className = 'cd-sys'; d.textContent = text;
+  cdMsgs.appendChild(d);
+  cdScrollBottom();
+}
+function cdPaintWelcome() {
+  var d = document.createElement('div');
+  d.className = 'cd-msg a';
+  d.innerHTML = '<span class="cd-tag">平台官方 AI · 不是真人教练</span><div>' + cdEsc(CD_WELCOME) + '</div>';
+  cdMsgs.appendChild(d);
+}
+function cdPaintHistory() {
+  cdMsgs.innerHTML = '';
+  cdPaintWelcome();
+  cdHistory.forEach(function (m) { cdAddMsg(m.role, m.content, m.role === 'assistant'); });
+}
+function cdPaintChips() {
+  cdChips.innerHTML = '';
+  if (!cdLoggedIn) return;
+  CD_SUGGESTED.forEach(function (q) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = q;
+    b.addEventListener('click', function () { if (!cdSending) { cdInput.value = q; cdSend(); } });
+    cdChips.appendChild(b);
+  });
+}
+function cdSetLoggedIn(on) {
+  cdLoggedIn = on;
+  cdLogin.classList.toggle('hidden', on);
+  cdComposer.classList.toggle('hidden', !on);
+  cdPaintChips();
+}
+function cdSetEvName() {
+  var t = (window.EV && window.EV.title) || '';
+  var el = document.getElementById('cdEvName');
+  if (t) { el.textContent = t; return; }
+  // EV 未就绪时只读 event_get 取公开标题，失败静默留「本场赛事」
+  fetch(CD_API + '/golf-api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': window.ANON, 'Authorization': 'Bearer ' + window.ANON },
+    body: JSON.stringify({ action: 'event_get', event_id: cdEventId })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    var tt = (j && j.event && j.event.title) || '';
+    if (tt) el.textContent = tt;
+  }).catch(function () {});
+}
+async function cdEnsureAuth() {
+  if (cdAuth) return cdAuth;
+  cdAuth = await import('./auth.js');
+  cdAuth.initAuth(function (s) { cdSetLoggedIn(!!s); });
+  return cdAuth;
+}
+async function cdOpen() {
+  if (!cdEventId) cdEventId = window.eventId;
+  cdLoadHistory();
+  cdSavedScrollY = window.scrollY || 0;
+  cdSheet.classList.remove('hidden');
+  cdPaintHistory();
+  cdSetEvName();
+  try {
+    var auth = await cdEnsureAuth();
+    var tk = await auth.getAccessToken();
+    cdSetLoggedIn(!!tk);
+    if (!tk && !cdLoginMounted) {
+      cdLoginMounted = true;
+      auth.mountLogin(document.getElementById('cdLoginMount'), { onDone: function () { cdSetLoggedIn(true); } });
+    }
+  } catch (e) {
+    // 登录组件加载失败：面板内如实提示，赛事页其余功能不受影响
+    cdAddSys('登录组件暂时加载失败，请稍后再打开球童面板。');
+  }
+  cdScrollBottom();
+  try { cdInput.focus(); } catch (e) {}
+}
+function cdClose() {
+  cdSheet.classList.add('hidden');
+  try { window.scrollTo(0, cdSavedScrollY); } catch (e) {}
+}
+async function cdSend() {
+  var text = (cdInput.value || '').trim();
+  if (!text || cdSending) return;
+  cdSending = true; cdSendBtn.disabled = true; cdInput.value = '';
+  cdHistory.push({ role: 'user', content: text });
+  cdAddMsg('user', text, false); cdPersist();
+  var bubble = cdAddMsg('assistant', '正在思考…', false);
+  var acc = '';
+  try {
+    var tk = await cdAuth.getAccessToken();
+    if (!tk) { bubble.textContent = '登录状态已过期，请重新登录后再问我。'; cdSetLoggedIn(false); return; }
+    var payload = { professional_id: CD_PRO_ID, mode: 'web', stream: true, messages: cdHistory.slice(-10) };
+    if (cdEventId) payload.golf_event_id = cdEventId;
+    var res = await fetch(CD_API + '/pro-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': window.ANON, 'Authorization': 'Bearer ' + tk },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      var ej = await res.json().catch(function () { return null; });
+      var code = ej && ej.error;
+      if (res.status === 401 || code === 'login_required') { bubble.textContent = '登录状态已过期，请重新登录后再问我。'; cdSetLoggedIn(false); }
+      else if (code === 'round_limit') { bubble.textContent = '这轮会话的问题已经比较多了，请关闭面板后重新打开球童会话继续问我。'; }
+      else { bubble.textContent = '这次没能连上（' + (code || res.status) + '），请稍后再试一次。'; }
+      cdHistory.pop(); cdPersist();
+      return;
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    bubble.textContent = '';
+    for (;;) {
+      var step = await reader.read();
+      if (step.done) break;
+      buf += dec.decode(step.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        var line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+        if (line.indexOf('data:') !== 0) continue;
+        var data = line.slice(5).trim();
+        if (!data || data === '[DONE]') continue;
+        try {
+          var j = JSON.parse(data);
+          var c = j && j.choices && j.choices[0] && j.choices[0].delta ? j.choices[0].delta.content : '';
+          if (typeof c === 'string' && c) { acc += c; bubble.innerHTML = cdRenderRich(acc); cdScrollBottom(); }
+        } catch (e) {}
+      }
+    }
+    if (!acc) { bubble.textContent = '这次没有拿到回答，请再问一次。'; cdHistory.pop(); cdPersist(); return; }
+    bubble.innerHTML = cdRenderRich(acc);
+    cdHistory.push({ role: 'assistant', content: acc });
+    cdPersist();
+  } catch (e) {
+    bubble.textContent = '网络好像不太顺，请稍后再试一次。';
+    cdHistory.pop(); cdPersist();
+  } finally {
+    cdSending = false; cdSendBtn.disabled = false;
+  }
+}
+cdSendBtn.addEventListener('click', cdSend);
+cdInput.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); cdSend(); } });
+document.getElementById('cdClose').addEventListener('click', cdClose);
+document.getElementById('cdBackdrop').addEventListener('click', cdClose);
+// funcrow 由 renderFunc 反复重渲染，入口用事件委托绑定（避免重复绑定）
+document.addEventListener('click', function (e) {
+  var t = e.target && e.target.closest ? e.target.closest('#cdOpen') : null;
+  if (t) { e.preventDefault(); cdOpen(); }
+});
 </script>
 </body>
 </html>
