@@ -68,6 +68,8 @@
             <option value="stableford">Stableford 积分赛</option><option value="scramble">Scramble 团队赛</option>
             <option value="best_ball">Best Ball</option><option value="match_play">比洞赛</option>
             <option value="team_points">企业团队积分赛</option>
+            <option value="team_stroke">团队比杆赛（取最佳 N 人汇总）</option><option value="alternate_shot">交替击球赛（双人轮流击球）</option>
+            <option value="skins">Skins 逐洞奖金赛</option><option value="six_six_six">Sixes 六六六组合赛</option>
           </select></div>
           <div><label>人数上限 *</label><input id="fCap" type="number" value="40"></div>
         </div>
@@ -128,7 +130,23 @@
           <button class="ghost" id="pubBtn">发布排行榜</button>
           <button class="ghost" id="awardBtn">计算奖项</button>
           <button class="ghost" id="reportBtn">运营报表</button>
+          <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
+          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button>
         </p>
+        <div id="awardZone" style="margin-top:10px">
+          <label>奖项管理（计算 → 确认 → 颁发；只有已确认／已颁发的奖项才会出现在赛事页与赛后回忆中）</label>
+          <div id="awardList"><p style="color:#5c7260;font-size:13px">打开赛事后加载。</p></div>
+          <div class="row">
+            <div><label>人工奖项名称</label><input id="awName" placeholder="如：最近洞奖"></div>
+            <div><label>获奖球员</label><select id="awPlayer"></select></div>
+            <div><label>依据说明 *</label><input id="awNote" placeholder="如：第 7 洞最近旗杆 1.2 米，现场测量"></div>
+          </div>
+          <p>
+            <button class="ghost" id="awAddBtn">添加人工奖项（待确认）</button>
+            <button class="ghost" id="memGenBtn">生成赛后回忆</button>
+          </p>
+          <p class="ok" id="awardMsg"></p>
+        </div>
         <label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
         <button class="ghost" id="annBtn">发布公告</button>
         <label>添加赞助商</label><input id="spName" placeholder="赞助商名称"><input id="spLogo" placeholder="Logo 图片地址（可选）">
@@ -216,7 +234,7 @@ function openEvent(id) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
     document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
-    refreshDash(); loadOrgs(); loadKnowledge();
+    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -408,7 +426,7 @@ function renderScoreSection(d) {
     var stColor = c.status === 'disputed' ? '#b91c1c' : '#5c7260';
     /* 确认流处理（走既有 certify，全程留痕）：submitted/disputed 可核对通过，verified 可锁定，locked 仅主办方可解锁（必填原因） */
     var acts = '';
-    if (c.status === 'submitted') acts = ' <button class="ghost sc-act" data-step="referee_review" data-card="' + c.id + '" type="button">确认核对</button>';
+    if (c.status === 'submitted') acts = ' <button class="ghost sc-act" data-step="referee_review" data-card="' + c.id + '" type="button">确认核对</button> <button class="ghost sc-act" data-step="referee_review" data-decision="flag" data-card="' + c.id + '" type="button">退回</button>';
     else if (c.status === 'disputed') acts = ' <button class="ghost sc-act" data-step="referee_review" data-card="' + c.id + '" type="button">异议核对通过</button>';
     else if (c.status === 'verified') acts = ' <button class="ghost sc-act" data-step="admin_lock" data-card="' + c.id + '" type="button">锁定为正式成绩</button>';
     else if (c.status === 'locked') acts = ' <button class="ghost sc-act" data-step="admin_unlock" data-card="' + c.id + '" type="button">解锁</button>';
@@ -433,14 +451,19 @@ function renderScoreSection(d) {
   Array.prototype.forEach.call(box.querySelectorAll('.sc-act'), function (b) {
     b.onclick = function (ev) {
       ev.stopPropagation();
-      handleCardAction(b.getAttribute('data-step'), b.getAttribute('data-card'));
+      handleCardAction(b.getAttribute('data-step'), b.getAttribute('data-card'), b.getAttribute('data-decision'));
     };
   });
 }
-function handleCardAction(step, cardId) {
+function handleCardAction(step, cardId, decision) {
   var m = document.getElementById('scoreMsg');
   var body = { scorecard_id: cardId, step: step };
-  if (step === 'referee_review') body.decision = 'approve';
+  if (step === 'referee_review' && decision === 'flag') {
+    /* [线Z2 追加·线AA 转来] 裁判退回：走 certify 的 flag 步（卡转 disputed、理由记入审计），与解锁同口径必填理由 */
+    var fnote = prompt('退回将把该记分卡标记为「有异议」，球员更正后可重新提交。请填写退回理由（记入审计）：');
+    if (!fnote) { if (m) m.textContent = '已取消退回（未填写理由）。'; return; }
+    body.decision = 'flag'; body.note = fnote;
+  } else if (step === 'referee_review') body.decision = 'approve';
   if (step === 'admin_unlock') {
     var note = prompt('解锁将把该记分卡退回「已核对」以便更正，必须填写原因（记入审计）：');
     if (!note) { if (m) m.textContent = '已取消解锁（未填写原因）。'; return; }
@@ -567,7 +590,152 @@ document.getElementById('pairBtn').onclick = function () { call('pairings_genera
 document.getElementById('snapBtn').onclick = function () { call('handicap_snapshot_all', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
 document.getElementById('cardsBtn').onclick = function () { call('scorecard_ensure', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
 document.getElementById('pubBtn').onclick = function () { call('leaderboard_publish', { event_id: currentEvent.id }).then(show); };
-document.getElementById('awardBtn').onclick = function () { call('awards_compute', { event_id: currentEvent.id }).then(show); };
+document.getElementById('awardBtn').onclick = function () { call('awards_compute', { event_id: currentEvent.id }).then(function (d) { show(d); loadAwardsAdmin(); }); };
+/* [线Z2 P0-8] 主办方报表导出：浏览器端生成 CSV 下载（不建服务端文件）。
+   数据源：成绩表＝scorecards_staff_list（线Y，requireStaff）；报名名单＝registrations_list（requireStaff）。
+   字段以系统现有数据为准：付款状态以 payment_status（线Z1 新口径）为准、缺失时如实回退 fee_status 原值；
+   签到以 checked_in_at／status=checked_in 判定。没有任何推测或补造字段。 */
+var PAY_STATUS_TXT = { not_required: '无需付款', pending: '待确认收款', confirmed: '已确认收款' };
+var FEE_STATUS_TXT = { paid: '已付款', unpaid: '未付款', waived: '已免除', refunded: '已退款' };
+function csvCell(v) {
+  if (v == null) return '';
+  var s = String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function csvDownload(filename, rows) {
+  var text = '\ufeff' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
+  var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 400);
+}
+function exportFileBase(kind) {
+  var t = (currentEvent && currentEvent.title ? String(currentEvent.title) : '赛事').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+  var d = new Date();
+  var ds = d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+  return kind + '_' + t + '_' + ds + '.csv';
+}
+function buildScoresCsv(d) {
+  var cards = (d && d.cards) || [];
+  var holeNos = [];
+  cards.forEach(function (c) { (c.holes || []).forEach(function (h) { if (holeNos.indexOf(h.hole) < 0) holeNos.push(h.hole); }); });
+  holeNos.sort(function (a, b) { return a - b; });
+  var head = ['球员', '队伍', '分组', '状态', '总杆', '相对标准杆', '净杆', '已打洞数'].concat(holeNos.map(function (n) { return '第' + n + '洞'; }));
+  var rows = [head];
+  cards.forEach(function (c) {
+    var byHole = {};
+    (c.holes || []).forEach(function (h) { byHole[h.hole] = h.strokes; });
+    var name = c.subject_type === 'team' ? (c.team_name || '团队卡') + '（团队卡）' : (c.player_name || '（未命名）');
+    var par = c.to_par == null ? '' : (c.to_par > 0 ? '+' + c.to_par : '' + c.to_par);
+    var row = [name, c.team_name || '', c.group_no ? '第 ' + c.group_no + ' 组' : '', (typeof CARD_STATUS_TXT !== 'undefined' && CARD_STATUS_TXT[c.status]) || c.status || '',
+      c.gross_total == null ? '' : c.gross_total, par, c.net_total == null ? '' : c.net_total, c.thru == null ? '' : c.thru];
+    holeNos.forEach(function (n) { row.push(byHole[n] == null ? '' : byHole[n]); });
+    rows.push(row);
+  });
+  return rows;
+}
+function buildRegsCsv(d) {
+  var regs = (d && d.registrations) || [];
+  var teamName = {};
+  ((d && d.teams) || []).forEach(function (t) { teamName[t.id] = t.name; });
+  var rows = [['姓名', '报名状态', '付款状态', '签到状态', '队伍', '单位', '组别', '报名时间']];
+  regs.forEach(function (r) {
+    var p = r.golf_players || {};
+    var pay = r.payment_status ? (PAY_STATUS_TXT[r.payment_status] || r.payment_status) : (r.fee_status ? (FEE_STATUS_TXT[r.fee_status] || r.fee_status) : '');
+    var checked = (r.checked_in_at || r.status === 'checked_in') ? '已签到' : '未签到';
+    rows.push([p.display_name || '（未命名）', (typeof REG_STATUS_TXT !== 'undefined' && REG_STATUS_TXT[r.status]) || r.status || '', pay, checked,
+      r.team_id ? (teamName[r.team_id] || '') : '', p.org_name || '', p.division || '', r.registered_at ? String(r.registered_at).slice(0, 19).replace('T', ' ') : '']);
+  });
+  return rows;
+}
+function exportScoresCsv() {
+  if (!currentEvent) return;
+  call('scorecards_staff_list', { event_id: currentEvent.id }).then(function (d) {
+    if (!d || !d.ok) { show('导出成绩表失败：' + ((d && d.error) || '未知错误')); return; }
+    csvDownload(exportFileBase('成绩表'), buildScoresCsv(d));
+  }).catch(function () { show('导出成绩表失败，请刷新重试。'); });
+}
+function exportRegsCsv() {
+  if (!currentEvent) return;
+  call('registrations_list', { event_id: currentEvent.id }).then(function (d) {
+    if (!d || !d.ok) { show('导出报名名单失败：' + ((d && d.error) || '未知错误')); return; }
+    csvDownload(exportFileBase('报名名单'), buildRegsCsv(d));
+  }).catch(function () { show('导出报名名单失败，请刷新重试。'); });
+}
+document.getElementById('expScoresBtn').onclick = exportScoresCsv;
+document.getElementById('expRegsBtn').onclick = exportRegsCsv;
+/* [线Z2 追加1/2] 奖项操作链＋赛后回忆入口：
+   计算（awardBtn→awards_compute）→ 列表确认（award_verify）→ 标记颁发（award_verify presented）
+   → 呈现由赛事页奖项区与回忆生成消费 verified/presented（线Z2 已上线口径一致）。
+   人工奖项走 award_set（服务端要求 evidence.note/measured_by，无依据不许建）。
+   赛后回忆走 memories_generate（requireStaff），手动结束比赛不自动触发时由此兜底，不改 golf-tick。 */
+var AWARD_STATUS_TXT = { pending: '待确认', verified: '已确认', presented: '已颁奖' };
+function loadAwardsAdmin() {
+  if (!currentEvent) return;
+  Promise.all([call('awards_list', { event_id: currentEvent.id }), call('registrations_list', { event_id: currentEvent.id })]).then(function (rs) {
+    var d = rs[0], rd = rs[1];
+    var box = document.getElementById('awardList');
+    if (!box) return;
+    var teamName = {};
+    ((rd && rd.teams) || []).forEach(function (t) { teamName[t.id] = t.name; });
+    var regs = ((rd && rd.registrations) || []).filter(function (r) { return r.golf_players; });
+    var sel = document.getElementById('awPlayer');
+    if (sel) {
+      var cur = sel.value;
+      sel.innerHTML = regs.map(function (r) { return '<option value="' + r.player_id + '">' + escapeHtml(r.golf_players.display_name || '') + '</option>'; }).join('');
+      if (cur) sel.value = cur;
+    }
+    var list = (d && d.awards) || [];
+    if (!list.length) {
+      box.innerHTML = '<p style="color:#5c7260;font-size:13px">暂无奖项。先点上方「计算奖项」（需有已锁定的正式成绩），或在下方添加人工奖项。</p>';
+      return;
+    }
+    box.innerHTML = list.map(function (a) {
+      var winner = a.winner_player_id ? ((a.golf_players && a.golf_players.display_name) || '') : (a.winner_team_id ? (teamName[a.winner_team_id] || '') : '');
+      var btn = '';
+      if (a.status === 'pending') btn = '<button class="ghost aw-verify" data-id="' + a.id + '">确认</button>';
+      else if (a.status === 'verified') btn = '<button class="ghost aw-present" data-id="' + a.id + '">标记颁发</button>';
+      else btn = '<span style="color:#2e7d32;font-size:13px">✓ 已颁奖</span>';
+      return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:6px 0">' +
+        '<span><b>' + escapeHtml(a.name || '') + '</b>' + (winner ? ' — ' + escapeHtml(winner) : '') + '</span>' +
+        '<span style="color:#5c7260;font-size:13px">' + (AWARD_STATUS_TXT[a.status] || a.status || '') + '</span>' + btn + '</div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.aw-verify'), function (b) { b.onclick = function () { awardVerify(b.getAttribute('data-id'), false); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('.aw-present'), function (b) { b.onclick = function () { awardVerify(b.getAttribute('data-id'), true); }; });
+  }).catch(function () { /* 列表失败静默，计算/报表等其他入口不受影响 */ });
+}
+function awardVerify(id, presented) {
+  call('award_verify', { award_id: id, presented: presented ? true : undefined }).then(function (d) {
+    if (d && d.ok) {
+      document.getElementById('awardMsg').textContent = presented ? '已标记颁发，赛事页与赛后回忆将呈现该奖项。' : '已确认，赛事页与赛后回忆将呈现该奖项。';
+      loadAwardsAdmin();
+    } else show(d);
+  });
+}
+document.getElementById('awAddBtn').onclick = function () {
+  if (!currentEvent) return;
+  var name = document.getElementById('awName').value.trim();
+  var note = document.getElementById('awNote').value.trim();
+  var pid = document.getElementById('awPlayer').value;
+  if (!name || !pid) { document.getElementById('awardMsg').textContent = '请填写奖项名称并选择获奖球员。'; return; }
+  if (!note) { document.getElementById('awardMsg').textContent = '人工奖项必须填写依据说明（如现场测量结果），无依据不能创建。'; return; }
+  call('award_set', { event_id: currentEvent.id, kind: 'manual', name: name, winner_player_id: pid, evidence: { note: note } }).then(function (d) {
+    if (d && d.ok) {
+      document.getElementById('awardMsg').textContent = '人工奖项已添加（待确认），确认后才会对外呈现。';
+      document.getElementById('awName').value = ''; document.getElementById('awNote').value = '';
+      loadAwardsAdmin();
+    } else show(d);
+  });
+};
+document.getElementById('memGenBtn').onclick = function () {
+  if (!currentEvent) return;
+  call('memories_generate', { event_id: currentEvent.id }).then(function (d) {
+    if (d && d.ok) document.getElementById('awardMsg').textContent = '已生成 ' + ((d.memories || []).length) + ' 份赛后回忆，球员可在赛事页回忆馆／App 中查看。';
+    else show(d);
+  });
+};
 document.getElementById('reportBtn').onclick = function () { call('event_report', { event_id: currentEvent.id }).then(show); };
 document.getElementById('annBtn').onclick = function () { call('announcement_create', { event_id: currentEvent.id, title: document.getElementById('annTitle').value, body: document.getElementById('annBody').value }).then(show); };
 document.getElementById('spBtn').onclick = function () { call('sponsor_create', { event_id: currentEvent.id, name: document.getElementById('spName').value, logo_url: document.getElementById('spLogo').value || null, placements: ['event_page', 'big_screen'] }).then(show); };
