@@ -270,7 +270,7 @@ function paintRegister() {
     var name = (document.getElementById('regName').value || '').trim();
     var errEl = document.getElementById('regErr');
     if (!name) { errEl.textContent = '请填写姓名。'; return; }
-    var body = { event_id: eventId, display_name: name, source: 'qr' }; // 报名来源枚举现无 web 值（app/wechat/qr/organizer/team/invite_code/csv_import）：网页经分享链接到达，暂用 qr 区分 App 报名；待主线迁移补 web 值
+    var body = { event_id: eventId, display_name: name, source: 'web' }; // 报名来源：迁移 0697 已给 golf_registrations_source_check 补 'web' 值（线 K），网页报名直用 web
     var inv = document.getElementById('regInvite'); if (inv && inv.value.trim()) body.invite_code = inv.value.trim();
     var hcp = (document.getElementById('regHcp').value || '').trim(); if (hcp !== '') body.handicap_index = Number(hcp);
     var div = (document.getElementById('regDiv').value || '').trim(); if (div) body.division = div;
