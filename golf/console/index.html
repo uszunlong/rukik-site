@@ -161,6 +161,11 @@
         <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
         <div id="knowList"></div>
         <div class="row">
+          <div><label>智能关怀模板（选一个一键带入，再改成贵赛事的真实信息；保存草稿→确认→发布后生效）</label>
+          <select id="kTpl"><option value="">— 选择模板 —</option></select></div>
+        </div>
+        <p style="font-size:13px;color:#5c7260;margin:2px 0 8px">带【签到时间】【合影时间】【颁奖时间】标记的条目发布后，RUKIK 会结合赛事时间、分组与球员进度，在对应时刻自动提醒相关球员（智能赛事关怀）；请把标记里的时间改成真实时间，不要删掉标记本身。</p>
+        <div class="row">
           <div><label>类别</label><select id="kKind"><option value="banquet">晚宴安排</option><option value="rules">比赛规则</option><option value="awards">奖项说明</option><option value="sponsor">赞助商介绍</option><option value="notice">特殊通知</option><option value="other">其他</option></select></div>
           <div><label>标题 *</label><input id="kTitle" placeholder="如：颁奖晚宴安排"></div>
         </div>
@@ -771,6 +776,43 @@ document.getElementById('memGenBtn').onclick = function () {
 document.getElementById('reportBtn').onclick = function () { call('event_report', { event_id: currentEvent.id }).then(show); };
 document.getElementById('annBtn').onclick = function () { call('announcement_create', { event_id: currentEvent.id, title: document.getElementById('annTitle').value, body: document.getElementById('annBody').value }).then(show); };
 document.getElementById('spBtn').onclick = function () { call('sponsor_create', { event_id: currentEvent.id, name: document.getElementById('spName').value, logo_url: document.getElementById('spLogo').value || null, placements: ['event_page', 'big_screen'] }).then(show); };
+/* [线Z12] 智能赛事关怀 20 类模板：一键带入知识编辑框（类别/标题/正文），
+   仍走既有「保存草稿→主办方确认→发布」流程才生效；时间为占位示例，必须改真实值。 */
+var CARE_TEMPLATES = [
+  { n: '01 赛前一天欢迎', kind: 'notice', title: '赛前温馨欢迎', body: '明天就是我们的高尔夫邀请赛啦！⛳ 球杆、球鞋、手套和好心情都准备好了吗？今晚早点休息，明天带着轻松的心情来球场。期待与您一起度过精彩的一天！' },
+  { n: '02 签到时间提醒', kind: 'notice', title: '签到安排', body: '【签到时间】08:30-09:30\n请预留停车、签到和热身时间，早点抵达就能更从容地享受比赛。签到地点：（请填写）' },
+  { n: '03 出发交通提醒', kind: 'notice', title: '出发交通提醒', body: '比赛今天举行，建议提前查看前往球场的路线与路况，别让堵车影响好心情，精彩值得从容赴约。' },
+  { n: '04 天气与穿着提醒', kind: 'notice', title: '天气与穿着', body: '请按比赛日天气预报准备着装：有风可带一件轻便外套，别忘了防晒和补水。准备充分，就能更安心地享受每一洞。' },
+  { n: '05 分组发布说明', kind: 'notice', title: '分组已发布', body: '分组已经发布，可在赛事页查看您所在的组别、出发洞与开球时间。记得提前与同组球友会合。' },
+  { n: '06 赛事规则提醒', kind: 'rules', title: '比赛规则与计分方式', body: '本场赛制：（请填写，如团体比杆赛）\n计分方式：（请填写）\n当地规则：（请填写）\n成绩确认要求：（请填写）\n了解规则，才能把更多注意力留给比赛本身。' },
+  { n: '07 签到欢迎词', kind: 'notice', title: '欢迎来到比赛', body: '欢迎来到今天的比赛！🎉 签到完成后，可以先熟悉球场环境，找到您的同组球友。今天不必急着证明什么，享受这场期待已久的高尔夫之约。' },
+  { n: '08 热身提醒', kind: 'notice', title: '热身提醒', body: '距离开球约 40 分钟。如果练习设施开放，可以做些轻松热身，找找挥杆和推杆的感觉。带着熟悉的节奏上场就好。' },
+  { n: '09 集体合影安排', kind: 'notice', title: '集体合影安排', body: '【合影时间】10:00\n合影地点：（请填写）\n请按时前往指定地点。成绩会留在记分卡里，而与球友们的笑容，也值得被好好珍藏。' },
+  { n: '10 开球倒计时', kind: 'notice', title: '开球倒计时', body: '距离开球还有 15 分钟，请按球场安排前往您的出发洞，确认球、球标和记分方式，把注意力交给这场比赛。' },
+  { n: '11 开赛欢迎词', kind: 'notice', title: '比赛正式开始', body: '🏌️ 比赛正式开始！祝每位球员挥杆顺畅、享受过程。RUKIK 会陪您记录成绩、关注赛事安排，也帮您留住今天的精彩瞬间。' },
+  { n: '12 记分提醒', kind: 'notice', title: '记分提醒', body: '完成一洞后，记得和同组球友核对杆数，再保存成绩哦。⛳ 一洞一记，既省心，也让比赛记录更准确。' },
+  { n: '13 补水与休息', kind: 'notice', title: '补水与休息', body: '比赛进行一段时间后，别忘了适量补水。☀️ 照顾好自己，才能更舒服地享受后面的球洞。' },
+  { n: '14 半场进度关怀', kind: 'notice', title: '半场进度', body: '9 洞完成，半场顺利！👏 接下来保持节奏，享受后半场的每一杆。' },
+  { n: '15 主办方临时公告', kind: 'notice', title: '赛事通知', body: '（请填写公告正文。公告将原文传达给相关球员，请确认时间、地点、规则等事实无误后再发布。）' },
+  { n: '16 天气异常预警', kind: 'notice', title: '天气安全提示', body: '⚠️ 如遇雷暴等异常天气，请立即遵循球场工作人员和主办方的安全指示；如有雷声或闪电，应停止打球并前往合适的安全建筑物避险，不要在树下或球车内躲避。安全永远比成绩重要。' },
+  { n: '17 完赛祝贺', kind: 'notice', title: '完赛祝贺', body: '🏆 18 洞，精彩完赛！今天的每一杆都已成为您高尔夫旅程的一部分。先喝点水、休息一下，我们再一起回顾今天的精彩。' },
+  { n: '18 成绩确认说明', kind: 'notice', title: '成绩确认说明', body: '成绩经核对锁定后即为正式成绩，将在赛事页与排行榜展示。无论名次如何，这都是一份真实、值得保存的比赛记录。' },
+  { n: '19 颁奖与晚宴安排', kind: 'banquet', title: '颁奖与晚宴安排', body: '【颁奖时间】18:30\n颁奖地点：（请填写）\n晚宴安排：（请填写）\n无论是否登上领奖台，都希望您和球友们一起分享今天的好球与好故事。' },
+  { n: '20 赛事回忆与感谢', kind: 'notice', title: '赛事回忆与感谢', body: '📸 本场比赛的精彩照片和赛事回忆整理发布后，会在赛事页与 App 中呈现。感谢您参与这场比赛，期待下次再见，一起创造新的高光。' }
+];
+(function () {
+  var sel = document.getElementById('kTpl');
+  CARE_TEMPLATES.forEach(function (t, i) { var o = document.createElement('option'); o.value = String(i); o.textContent = t.n; sel.appendChild(o); });
+  sel.addEventListener('change', function () {
+    if (sel.value === '') return;
+    var t = CARE_TEMPLATES[Number(sel.value)];
+    document.getElementById('kKind').value = t.kind;
+    document.getElementById('kTitle').value = t.title;
+    document.getElementById('kBody').value = t.body;
+    kMsg('已带入模板「' + t.n + '」，请改成贵赛事的真实信息（时间/地点/规则），再保存草稿。');
+    sel.value = '';
+  });
+})();
 document.getElementById('kSave').onclick = function () {
   if (!currentEvent) return;
   var title = document.getElementById('kTitle').value.trim();
