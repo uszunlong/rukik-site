@@ -324,14 +324,8 @@ function callOnce(action, extra, timeoutMs) {
   var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, timeoutMs || 12000);
   var headers = { 'apikey': ANON, 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  var bodyObj = Object.assign({ action: action, event_id: eventId }, extra || {});
-  /* [匿名邀请完善20261112] 链接凭据对全部动态 action 统一透传（此前只有 event_get
-     带码）：带码访客在排行榜/逐洞几何/奖项/照片墙上不再因请求缺凭据被误判为
-     未带码。extra 自带 invite_code 时以其为准。服务端是否按 linkAccess 放行
-     由各 action 权限口径决定，本页不越权。 */
-  if (inviteCodeParam && bodyObj.invite_code == null) bodyObj.invite_code = inviteCodeParam;
-  return fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(bodyObj) })
-    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) { var er = new Error(j.error || ('HTTP ' + r.status)); er.status = r.status; throw er; } return j; }); })
+  return fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(Object.assign({ action: action, event_id: eventId }, extra || {})) })
+    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); })
     .catch(function (e) { clearTimeout(to); window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: false }); throw e; });
 }
 function dyn(action, extra) {
@@ -339,7 +333,6 @@ function dyn(action, extra) {
   if (INFLIGHT[key]) return INFLIGHT[key];
   var attempt = function (n) {
     return callOnce(action, extra).catch(function (e) {
-      if (e && (e.status === 403 || e.status === 404)) throw e; /* [匿名邀请完善20261112] 业务性拒绝不重试，与记分页口径一致 */
       if (n >= 2) throw e;
       var wait = (n === 0 ? 700 : 2000) * (0.7 + Math.random() * 0.6);
       return new Promise(function (res) { setTimeout(res, wait); }).then(function () { return attempt(n + 1); });
@@ -354,6 +347,31 @@ function callRetry(action, extra) { return dyn(action, extra); }
 function errBox(el, msg, retryFn) {
   el.innerHTML = '<div class="card"><div class="err">' + esc(msg) + '<br><button class="retry" type="button">重试</button></div></div>';
   el.querySelector('button.retry').addEventListener('click', retryFn);
+}
+/* [Z64] 权限态不是故障：未登录打开私密球局时 course_geometry / leaderboard_get
+   回 forbidden/401——区块呈现登录引导（文案＋页内现有登录组件），不报红色
+   「加载失败」；真网络/服务失败（超时/5xx）才走原失败重试呈现。服务端权限
+   口径不动（私密球局须登录是正确设计）。 */
+function isAuthErr(e) {
+  var m = String(e && e.message || e).toLowerCase();
+  return m.indexOf('forbidden') >= 0 || m.indexOf('unauthorized') >= 0 || m.indexOf('401') >= 0 || m.indexOf('403') >= 0;
+}
+function loginGuideHtml(text) {
+  return '<div class="empty">' + esc(text) + '<br><button type="button" class="signup" data-logingate style="border:none;cursor:pointer;font:inherit;margin-top:10px;padding:12px 18px">去登录</button><div class="logingate" style="margin-top:10px"></div></div>';
+}
+function wireLoginGuide(box) {
+  var btn = box && box.querySelector('[data-logingate]');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var mount = box.querySelector('.logingate');
+    btn.style.display = 'none';
+    import('./auth.js?v=20261112b').then(function (auth) {
+      auth.mountLogin(mount, { onDone: function () {
+        try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
+        loadDynamic();
+      } });
+    }).catch(function () { btn.style.display = ''; });
+  });
 }
 var EV = null, WALL = null, PREVIEW = null, curHole = 1, curTee = null, geomCache = {};
 
@@ -1511,21 +1529,17 @@ function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
   var holeAtCall = curHole;
-  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞逐洞数据完善中，可先看上方全场总览。</div>'; prefetchAround(curHole); return; }
+  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞暂无地形图</div>'; prefetchAround(curHole); return; }
   callRetry('course_geometry', { hole: curHole }).then(function (j) {
     geomCache[holeAtCall] = j;
     if (holeAtCall !== curHole) return; // 用户已切到别的洞，本洞结果只入缓存，不动当前画面与大图
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
-    /* [匿名邀请完善20261112] 无逐洞几何是数据完善中的正常态，不是加载失败：
-       诚实提示并指向上方全场总览（与地图数据分层诚实口径一致）。 */
-    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞逐洞数据完善中，可先看上方全场总览。</div>';
+    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞暂无地形图</div>';
     applyHoleFocus(j);
     prefetchAround(holeAtCall);
   }).catch(function (e) {
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
-    /* [匿名邀请完善20261112] 私密球局逐洞几何对未加入者按隐私口径拒绝（forbidden）：
-       权限态诚实降级，不报「加载失败」；真网络/服务失败才保留重试口径。 */
-    if (String(e && e.message || e).indexOf('forbidden') >= 0) { b2.innerHTML = '<div class="empty">本洞地图将在加入本场后可见。</div>'; return; }
+    if (isAuthErr(e)) { b2.innerHTML = loginGuideHtml('登录后查看球场地图'); wireLoginGuide(b2); return; } /* [Z64] 未登录态：登录引导，不报「加载失败」 */
     b2.innerHTML = '<div class="err">本洞地图加载失败。<br><button class="retry" type="button">重试</button></div>';
     b2.querySelector('button.retry').addEventListener('click', loadHoleSvg);
   });
@@ -1714,11 +1728,10 @@ function loadBoardIntoFunc() {
     loadAwards();
   }).catch(function (e) {
     if (LASTBOARD) { renderBoard(); return; } // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错
-    /* [匿名邀请完善20261112] 私密球局排行榜按隐私口径对未加入者拒绝（forbidden）——
-       这是权限态不是故障：诚实降级为「加入后可见」，不报「加载失败」误导访客。 */
-    if (String(e && e.message || e).indexOf('forbidden') >= 0) {
+    if (isAuthErr(e)) { /* [Z64] 未登录态：登录引导，不报「加载失败」 */
       var bs = document.getElementById('boardSec');
-      if (bs) bs.innerHTML = '<div class="bhead"><h2>🏆 排行榜</h2></div><div class="empty">本场为私密球局，排行榜将在加入本场后可见。</div>';
+      bs.innerHTML = '<div class="card"><div class="bhead"><h2>🏆 实时排行榜</h2></div>' + loginGuideHtml('登录后查看排行榜') + '</div>';
+      wireLoginGuide(bs);
       return;
     }
     errBox(document.getElementById('boardSec'), '排行榜加载失败，请重试。', loadBoardIntoFunc);
