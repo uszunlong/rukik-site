@@ -93,6 +93,8 @@
       <div id="scoreSection" style="margin-top:16px">
         <h4 style="margin:6px 0">参赛成绩</h4>
         <div id="scoreList"></div>
+        <p class="ok" id="scoreMsg"></p>
+        <p style="color:#5c7260;font-size:13px">成绩更正不在本台直接改杆数：请在记分端按原流程更正（覆盖已有成绩必须填写原因），每次更正都会自动留下审计记录；锁定成绩须先由主办方解锁并注明原因。</p>
       </div>
       <p style="margin-top:14px">
         <button id="primaryBtn">下一步</button>
@@ -329,14 +331,23 @@ function renderScoreSection(d) {
   if (!d || !d.ok) { box.innerHTML = '<p style="color:#5c7260;font-size:14px">成绩加载失败，请刷新重试。</p>'; return; }
   var cards = d.cards || [];
   if (!cards.length) { box.innerHTML = '<p style="color:#5c7260;font-size:14px">暂无记分卡（尚未生成记分卡或无人开赛）。</p>'; return; }
-  box.innerHTML = cards.map(function (c, i) {
+  var disputed = cards.filter(function (c) { return c.status === 'disputed'; }).length;
+  var notice = disputed ? '<div style="background:#fdf2f2;border:1px solid #f0caca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:14px;margin-bottom:6px">有 ' + disputed + ' 张记分卡被标记异议，请逐张展开核对成绩后处理。</div>' : '';
+  box.innerHTML = notice + cards.map(function (c, i) {
     var name = c.subject_type === 'team' ? (c.team_name || '团队卡') + '（团队卡）' : (c.player_name || '（未命名）');
     var par = c.to_par == null ? '—' : (c.to_par > 0 ? '+' + c.to_par : '' + c.to_par);
+    var stColor = c.status === 'disputed' ? '#b91c1c' : '#5c7260';
+    /* 确认流处理（走既有 certify，全程留痕）：submitted/disputed 可核对通过，verified 可锁定，locked 仅主办方可解锁（必填原因） */
+    var acts = '';
+    if (c.status === 'submitted') acts = ' <button class="ghost sc-act" data-step="referee_review" data-card="' + c.id + '" type="button">确认核对</button>';
+    else if (c.status === 'disputed') acts = ' <button class="ghost sc-act" data-step="referee_review" data-card="' + c.id + '" type="button">异议核对通过</button>';
+    else if (c.status === 'verified') acts = ' <button class="ghost sc-act" data-step="admin_lock" data-card="' + c.id + '" type="button">锁定为正式成绩</button>';
+    else if (c.status === 'locked') acts = ' <button class="ghost sc-act" data-step="admin_unlock" data-card="' + c.id + '" type="button">解锁</button>';
     var head = '<div class="sc-row" data-i="' + i + '" style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px;cursor:pointer"><b>' + escapeHtml(name) + '</b>' +
-      ' <span style="color:#5c7260">' + (c.subject_type === 'team' ? '' : '队伍：' + escapeHtml(c.team_name || '—') + ' · ') +
+      ' <span style="color:' + stColor + '">' + (c.subject_type === 'team' ? '' : '队伍：' + escapeHtml(c.team_name || '—') + ' · ') +
       '状态：' + (CARD_STATUS_TXT[c.status] || c.status) +
       ' · 已打 ' + (c.thru || 0) + ' 洞 · 总杆：' + (c.gross_total == null ? '—' : c.gross_total) +
-      ' · 相对标准杆：' + par + (c.group_no ? ' · 第 ' + c.group_no + ' 组' : '') + '</span> <span style="color:#1d7a3a">逐洞 ▾</span></div>';
+      ' · 相对标准杆：' + par + (c.group_no ? ' · 第 ' + c.group_no + ' 组' : '') + '</span> <span style="color:#1d7a3a">逐洞 ▾</span>' + acts + '</div>';
     var holes = c.holes || [];
     var detail = '<div class="sc-detail" id="scDetail' + i + '" style="display:none;padding:6px 0 10px;overflow-x:auto"><table style="border-collapse:collapse;font-size:13px">' +
       '<tr><th style="padding:2px 6px;text-align:left">洞</th>' + holes.map(function (h) { return '<td style="padding:2px 6px;text-align:center">' + h.hole + '</td>'; }).join('') + '</tr>' +
@@ -349,6 +360,29 @@ function renderScoreSection(d) {
       var det = document.getElementById('scDetail' + row.getAttribute('data-i'));
       if (det) det.style.display = det.style.display === 'none' ? 'block' : 'none';
     };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('.sc-act'), function (b) {
+    b.onclick = function (ev) {
+      ev.stopPropagation();
+      handleCardAction(b.getAttribute('data-step'), b.getAttribute('data-card'));
+    };
+  });
+}
+function handleCardAction(step, cardId) {
+  var m = document.getElementById('scoreMsg');
+  var body = { scorecard_id: cardId, step: step };
+  if (step === 'referee_review') body.decision = 'approve';
+  if (step === 'admin_unlock') {
+    var note = prompt('解锁将把该记分卡退回「已核对」以便更正，必须填写原因（记入审计）：');
+    if (!note) { if (m) m.textContent = '已取消解锁（未填写原因）。'; return; }
+    body.note = note;
+  }
+  if (step === 'admin_lock' && !confirm('锁定后成绩即为正式成绩，球员端不能再更正。确定锁定？')) return;
+  call('certify', body).then(function (d) {
+    if (d.ok) {
+      if (m) m.textContent = '已处理，成绩状态已更新。';
+      refreshDash(); /* 计数区与成绩区一并刷新（refreshDash 内含成绩重拉） */
+    } else if (m) m.textContent = '处理失败：' + (d.error || '未知错误');
   });
 }
 function refreshDash() {
