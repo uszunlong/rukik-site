@@ -368,6 +368,8 @@ function paintRecap(card) {
     html += '<h3>逐洞成绩</h3><table class="scores"><tr><th>洞</th><th>Par</th><th>杆数</th></tr>' +
       S.cardData.holes.map(function (h) { return '<tr><td>' + h.hole + '</td><td>' + h.par + '</td><td>' + (h.strokes == null ? '—' : '<b>' + h.strokes + '</b>') + '</td></tr>'; }).join('') + '</table>';
   }
+  /* [主会话] 完赛回顾态亦保留球童入口（与 paintScoring 同口径；复盘本场成绩是球童核心用法，完赛不得消失） */
+  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
   html += '<div class="btnrow"><a class="btn" href="event.html?e=' + encodeURIComponent(eventId) + '">查看排行榜与赛事回忆</a></div></div>';
   app.innerHTML = html;
 }
