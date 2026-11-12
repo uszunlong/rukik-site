@@ -143,9 +143,13 @@
   #mapStage { position: relative; margin-top: 10px; }
   #mapSvgBox { position: relative; }
   #mapSvgBox svg.map { width: 100%; height: auto; display: block; border-radius: 12px; }
-  #mapSvgBox.has-svg { height: clamp(300px, 94vw, 400px); overflow: hidden; border-radius: 12px; background: #0a2e1f; cursor: grab; touch-action: pan-y; }
+  /* [地图取景二修20261112] 舞台高度不再固定 clamp(300px,94vw,400px)：旧版固定
+   * 高盒＋svg height:100% 时 viewBox 按 meet 适配，桌面宽屏下画布被压到舞台
+   * 约一半宽；且画布高改由 buildHoleArt 按本洞走廊纵横比自适应，盒高须随
+   * 画布自身比例走（svg width:100%＋height:auto），画布宽恒＝舞台宽 100%。 */
+  #mapSvgBox.has-svg { overflow: hidden; border-radius: 12px; background: #0a2e1f; cursor: grab; touch-action: pan-y; }
   #mapSvgBox.has-svg:active { cursor: grabbing; }
-  #mapSvgBox.has-svg svg.map { width: 100%; height: 100%; border-radius: 0; transform-origin: 0 0; animation: mapfade .3s ease; }
+  #mapSvgBox.has-svg svg.map { width: 100%; height: auto; border-radius: 0; transform-origin: 0 0; animation: mapfade .3s ease; }
   #mapSvgBox svg.pz-anim { transition: transform .28s ease; }
   @keyframes mapfade { from { opacity: .25; } to { opacity: 1; } }
   #mapOvBox { position: relative; }
@@ -385,10 +389,13 @@ function makeProjector(geoms, frame) {
  * 留白 586px；9 洞横条贴底、上方留白 325px）。新版：①取景集只用打球走廊
  * 要素（球道/果岭/发球台/沙坑/水体/洞线/旗杆），环境要素照常绘制但不决定
  * 取景；②走廊长轴旋转为水平（发球台左、果岭右，与记分推进同向），把长轴
- * 对齐画布长边；③取景框在画布内居中，每轴外扩 4% 边距容纳贴边障碍。 */
+ * 对齐画布长边；③取景框在画布内居中，边距约 4%（[地图取景二修20261112]
+ * 起由 PAD 统一承担，跨度不再二次外扩，见 computeFit 内注）。 */
 const FIT_TYPES = { fairway: 1, green: 1, tee: 1, bunker: 1, water_hazard: 1, hole: 1, pin: 1 };
-function makeFitProjector(feats, frame) {
-  const FW = frame ? frame.w : MAP_W, FH = frame ? frame.h : MAP_H;
+/* [地图取景二修20261112] 走廊旋转跨度独立成 computeFit：buildHoleArt 先据其
+ * 纵横比定画布高、再建投影器，同一份跨度两处共用、口径不漂移。
+ * 返回 null 的条件与旧版 makeFitProjector 相同（可取景的点不足 2 个）。 */
+function computeFit(feats) {
   const anchorPts = [], allPts = [];
   (feats || []).forEach(f => {
     const g = featGeom(f); if (!g) return;
@@ -422,8 +429,17 @@ function makeFitProjector(feats, frame) {
     if (rx < rx0) rx0 = rx; if (rx > rx1) rx1 = rx;
     if (ry < ry0) ry0 = ry; if (ry > ry1) ry1 = ry;
   });
-  const ex = (rx1 - rx0) * 0.04, ey = (ry1 - ry0) * 0.04;
-  rx0 -= ex; rx1 += ex; ry0 -= ey; ry1 += ey;
+  /* [地图取景二修20261112] 跨度不再二次外扩：旧版在此每轴外扩 4%，与投影
+   * 器的 PAD（26＝画布宽约 4.2%）构成边距双重计算，球道带被压到画布宽
+   * 84.8%。边距统一由 PAD 承担（约 4%，与任务口径一致），走廊极值点距
+   * 画布边恒为 PAD，贴边障碍本就在取景集内、不靠外扩容纳。 */
+  return { kx: kx, cos: cos, sin: sin, rx0: rx0, rx1: rx1, ry0: ry0, ry1: ry1 };
+}
+function makeFitProjector(feats, frame, fit) {
+  const FW = frame ? frame.w : MAP_W, FH = frame ? frame.h : MAP_H;
+  const F = fit || computeFit(feats);
+  if (!F) return null;
+  const kx = F.kx, cos = F.cos, sin = F.sin, rx0 = F.rx0, rx1 = F.rx1, ry0 = F.ry0, ry1 = F.ry1;
   const sc = Math.min((FW - 2 * PAD) / Math.max(1e-12, rx1 - rx0), (FH - 2 * PAD) / Math.max(1e-12, ry1 - ry0));
   const ox = (FW - (rx1 - rx0) * sc) / 2, oy = (FH - (ry1 - ry0) * sc) / 2;
   return function (p) {
@@ -681,7 +697,11 @@ function treeItems(f, pr, items, seedBase) {
 /* ---------- 果岭放大插图（真实果岭多边形重投影＋周边要素＋纵深码数） ---------- */
 const INSET = { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
 function insetModel(feats, pin, frame) {
-  const INSET = frame ? { cx: frame.w - 88, cy: frame.h - 88, r: 64 } : { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
+  /* [地图取景二修20261112] 果岭特写随画框高缩放并贴右下角：半径＝框高 24%
+   * 夹在 [30, 64]，620 高框时恰为旧值 64、圆心与旧版仅差 10px；矮画框下
+   * 不再以 128 直径圆压住走廊主体。无 frame（旧调用）保持原常量。 */
+  const IR = frame ? Math.max(30, Math.min(64, Math.round(frame.h * 0.24))) : 64;
+  const INSET = frame ? { cx: frame.w - IR - 14, cy: frame.h - IR - 14, r: IR } : { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
   const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
   if (!greens.length) return null;
   let ring = null, bestArea = -1;
@@ -873,6 +893,9 @@ function teeStrip(teeRows, frame) {
 }
 
 /* ---------- 整洞构建 ---------- */
+/* [地图取景二修20261112] 自适应画布高上下限（画布单位，画布宽恒 620）：
+ * 下限保极端长条洞在手机上仍有可读高度；上限防近方形走廊把画布撑得过高。 */
+const FIT_FRAME_H_MIN = 150, FIT_FRAME_H_MAX = 480;
 function bboxDiag(geoms) {
   const pts = [];
   geoms.forEach(g => collectPts(g, pts));
@@ -891,12 +914,22 @@ function buildHoleArt(data, opts) {
   // 总览呈现。仅当 boundary 与单洞同尺度（个别数据源的洞级边界）时才画。
   const geoms = [];
   feats.forEach(f => { const g = featGeom(f); if (g) geoms.push(g); });
-  /* [地图打磨20261112] 单洞画框改 620×620 近正方形：手机舞台近正方形
-   * （宽≈屏宽、高 clamp(300px,94vw,400px)），旧 720×520 横框在舞台内被
-   * 按宽缩放、上下留黑，球道实际显示尺寸被再缩一截；方框与舞台等比、
-   * 接近满幅，走廊横带在屏上的高度约提升五成。 */
-  const frame = { w: 620, h: 620 };
-  const pr = makeFitProjector(feats, frame) || makeProjector(geoms, frame);
+  /* [地图取景二修20261112] 画布高按本洞走廊旋转后纵横比自适应（取代
+   * [地图打磨20261112] 的 620×620 方框）：方框与旧舞台固定高不匹配，桌面端
+   * 画布被 meet 适配压到舞台约一半宽，长条球道在方框里也只是中部一条绿带、
+   * 上下大片留白（真机 13:21 复验实证，WH 5/9、FH 1/2 四洞同症）。新口径：
+   * 画布宽恒 620（页面以 width:100% 显示＝舞台宽 100%）；画布高取「走廊在
+   * 两轴 4% 边距＋PAD 下同时吃满宽高」的高度，再夹入 [FIT_FRAME_H_MIN,
+   * FIT_FRAME_H_MAX] 保手机可读。fit 为空（无可取景跨度）时回退旧方框，
+   * 后续 makeProjector 旧路径不变。 */
+  const fit = computeFit(feats);
+  let frameH = 620;
+  if (fit) {
+    const spanX = Math.max(1e-12, fit.rx1 - fit.rx0), spanY = Math.max(1e-12, fit.ry1 - fit.ry0);
+    frameH = Math.round(Math.min(FIT_FRAME_H_MAX, Math.max(FIT_FRAME_H_MIN, 2 * PAD + (620 - 2 * PAD) * spanY / spanX)));
+  }
+  const frame = { w: 620, h: frameH };
+  const pr = makeFitProjector(feats, frame, fit) || makeProjector(geoms, frame);
   if (!pr) return null;
   const drawBoundary = boundaryGeom && bboxDiag([boundaryGeom]) <= 1.8 * Math.max(1e-12, bboxDiag(geoms)) ? boundaryGeom : null;
   const art = buildArtWithProjector(feats, drawBoundary, pr, Object.assign({}, opts, { frame: frame }));
@@ -2114,7 +2147,15 @@ function cdCareText() {
     }
     var parts = [];
     if (played) parts.push('已完成 ' + played + ' 洞' + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : ''));
-    if (nxt) parts.push('下一洞第 ' + nxt.hole + ' 洞 · Par ' + nxt.par + (nxt.yards ? ' · ' + nxt.yards + ' 码' : '') + '，按自己的节奏来');
+    if (nxt) {
+      var fact = '第 ' + nxt.hole + ' 洞 · Par ' + nxt.par + (nxt.yards ? ' · ' + nxt.yards + ' 码' : '');
+      // [关怀行措辞 2026-11-12] 指向当前查看洞（未打）时称「这一洞」，不得称
+      // 「下一洞」——正看着第 5 洞却写「下一洞第 5 洞」字面自相矛盾（真机复验
+      // 实证）；指向进度下一未打洞（含查看已打洞时回退到的进度下一洞）才称
+      // 「下一洞」。判定只看目标洞是否就是当前查看洞，数据口径不变。
+      var onViewed = S.selHole != null && nxt.hole === S.selHole;
+      parts.push((onViewed ? '这一洞 · ' + fact : '下一洞' + fact) + '，按自己的节奏来');
+    }
     else if (played) parts.push('全部洞已打完，辛苦了');
     if (parts.length) return parts.join('。') + '。';
   }
