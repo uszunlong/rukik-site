@@ -87,6 +87,9 @@
 
   /* ---- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）---- */
   #cdSheet{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;justify-content:flex-end}
+  /* [线X 热修 2026-11-11] #cdSheet 是 ID 选择器（特异性 100），会压过 .hidden 的 display:none（特异性 10），
+     曾致弹层自页面加载起永久可见且关不掉、遮罩全屏拦截。此规则特异性 110，确保 hidden 时真隐藏。 */
+  #cdSheet.hidden{display:none}
   #cdSheet .cd-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
   .cd-panel{position:relative;background:#f6f7f5;border-radius:18px 18px 0 0;max-height:86dvh;display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(10,30,16,.25)}
   .cd-head{background:#14532d;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:12px;border-radius:18px 18px 0 0;flex:none}
@@ -492,7 +495,20 @@ function renderFunc(board) {
         var note = en.counted ? '（计入 ' + en.counted.length + ' 人汇总）' : '';
         return '<tr><td>' + (en.rank != null ? en.rank : '') + '</td><td>' + esc(en.name || en.team_name || '') + note + '</td><td>' + esc(val) + (board.is_final ? '' : ' · 未最终确认') + '</td></tr>';
       }).join('') + '</table>';
-  } else {
+  }
+  // [线X 热修] 无队伍球员个人榜：team 类赛制下未组队球员由服务端以 individuals 单列，不混入队伍名次
+  var indHtml = '';
+  var inds = (board && board.individuals) || [];
+  if (inds.length) {
+    indHtml = '<div style="margin-top:12px;font-size:14px"><strong>个人成绩（未组队）</strong></div>' +
+      '<table class="board"><tr><th>名次</th><th>球员</th><th>成绩</th></tr>' +
+      inds.map(function (en) {
+        var val = en.total != null ? en.total : (en.grossTotal != null ? en.grossTotal : '');
+        var thru = en.thru != null ? ' · 已打 ' + en.thru + ' 洞' : '';
+        return '<tr><td>' + (en.rank != null ? en.rank : '') + '</td><td>' + esc(en.name || '') + '</td><td>' + esc(val) + thru + (board.is_final ? '' : ' · 未最终确认') + '</td></tr>';
+      }).join('') + '</table>';
+  }
+  if (!rows && !indHtml) {
     rows = '<div class="empty">暂无排名数据（尚未开始记分或成绩未提交）。</div>';
   }
   var pairHtml = '';
@@ -500,7 +516,7 @@ function renderFunc(board) {
   if (pairs.length) {
     pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
   }
-  el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + pairHtml +
+  el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + indHtml + pairHtml +
     '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="#" id="cdOpen">问RUKIK｜本场赛事AI球童</a>' +
     (eventId ? '<a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜</a>' : '') + '</div></div>';
 }
@@ -927,6 +943,8 @@ cdSendBtn.addEventListener('click', cdSend);
 cdInput.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); cdSend(); } });
 document.getElementById('cdClose').addEventListener('click', cdClose);
 document.getElementById('cdBackdrop').addEventListener('click', cdClose);
+// [线X 热修] Esc 关闭（与 ✕／点遮罩并列的第三条关闭路径）；弹层只许由下方 #cdOpen 委托点击打开，无任何自动打开路径
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !cdSheet.classList.contains('hidden')) cdClose(); });
 // funcrow 由 renderFunc 反复重渲染，入口用事件委托绑定（避免重复绑定）
 document.addEventListener('click', function (e) {
   var t = e.target && e.target.closest ? e.target.closest('#cdOpen') : null;
