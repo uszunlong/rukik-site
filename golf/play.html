@@ -2104,7 +2104,14 @@ function cdCareText() {
   if (cd2 && cd2.scorecard && (cd2.holes || []).length) {
     var sc = cd2.scorecard, hs = cd2.holes;
     var played = hs.filter(function (h) { return effStrokes(sc.id, h) != null; }).length;
-    var nxt = hs.filter(function (h) { return effStrokes(sc.id, h) == null; })[0];
+    var unplayed = hs.filter(function (h) { return effStrokes(sc.id, h) == null; }).slice().sort(function (a, b) { return a.hole - b.hole; });
+    var nxt = unplayed[0];
+    // [关怀行锚点 2026-11-12] 关怀行「下一洞」须随记分卡当前查看洞更新：
+    // 取当前洞起最近的未打洞；其后无未打洞时回退全场第一个未打洞。
+    // 数据只取本场真实记分与球洞表，与服务端 ask_context 进度口径一致。
+    if (S.selHole != null) {
+      for (var ui = 0; ui < unplayed.length; ui++) { if (unplayed[ui].hole >= S.selHole) { nxt = unplayed[ui]; break; } }
+    }
     var parts = [];
     if (played) parts.push('已完成 ' + played + ' 洞' + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : ''));
     if (nxt) parts.push('下一洞第 ' + nxt.hole + ' 洞 · Par ' + nxt.par + (nxt.yards ? ' · ' + nxt.yards + ' 码' : '') + '，按自己的节奏来');
