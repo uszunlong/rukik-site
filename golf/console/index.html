@@ -81,9 +81,15 @@
       <div class="counts">
         <div class="count"><b id="cReg">–</b><span>已报名</span></div>
         <div class="count"><b id="cIn">–</b><span>已签到</span></div>
-        <div class="count"><b id="cPend">–</b><span>待处理</span></div>
+        <div class="count"><b id="cReview">–</b><span>待审核报名</span></div>
+        <div class="count"><b id="cPend">–</b><span>记分卡待确认</span></div>
       </div>
       <div id="todos"></div>
+      <div id="regSection" style="margin-top:16px">
+        <h4 style="margin:6px 0">报名名单</h4>
+        <div id="regList"></div>
+        <p class="ok" id="regMsg"></p>
+      </div>
       <p style="margin-top:14px">
         <button id="primaryBtn">下一步</button>
         <button class="ghost" id="boardBtn">大屏排行榜</button>
@@ -175,6 +181,12 @@ function loadEvents() {
     Array.prototype.forEach.call(document.querySelectorAll('.evt'), function (el) {
       el.onclick = function () { openEvent(el.getAttribute('data-id')); };
     });
+    /* [线P] ?e= 深链：赛事页/App 的「管理本场」入口直达对应赛事（仅限本人主办的赛事） */
+    var want = new URLSearchParams(location.search).get('e');
+    if (want && !loadEvents._deepLinked && (d.organized || []).some(function (e) { return e.id === want; })) {
+      loadEvents._deepLinked = true;
+      openEvent(want);
+    }
   });
 }
 function openEvent(id) {
@@ -269,30 +281,69 @@ function resetKnowForm() {
   document.getElementById('kTitle').value = ''; document.getElementById('kBody').value = '';
   document.getElementById('kKey').checked = false; document.getElementById('kFile').value = '';
 }
+/* [线P] 报名名单区：姓名/状态/球队/分组全量渲染（此前 registrations_list 只被用来数计数，
+   主办方看不见谁报了名）；pending 行带通过/拒绝；待审核数进计数区与待办提示区 */
+var REG_STATUS_TXT = { registered: '已生效', checked_in: '已签到', pending: '待审核', waitlisted: '候补', rejected: '未通过', withdrawn: '已退出', no_show: '未到场', cancelled: '已取消' };
+function renderRegList(regs, teams, pairings) {
+  var box = document.getElementById('regList');
+  if (!box) return;
+  var teamName = {};
+  (teams || []).forEach(function (t) { teamName[t.id] = t.name; });
+  var groupOf = {};
+  (pairings || []).forEach(function (p) { (p.golf_pairing_players || []).forEach(function (pp) { groupOf[pp.player_id] = p.group_no; }); });
+  if (!regs.length) { box.innerHTML = '<p style="color:#5c7260;font-size:14px">暂无报名。</p>'; return; }
+  box.innerHTML = regs.map(function (r) {
+    var p = r.golf_players || {};
+    var stColor = r.status === 'pending' ? '#a16207' : r.status === 'rejected' ? '#b91c1c' : '#1d7a3a';
+    var btns = r.status === 'pending'
+      ? ' <button class="ghost rv-ok" data-id="' + r.id + '" type="button">通过</button> <button class="ghost rv-no" data-id="' + r.id + '" type="button">拒绝</button>' : '';
+    return '<div style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px"><b>' + escapeHtml(p.display_name || '（未命名）') + '</b>' +
+      ' <span style="color:' + stColor + '">' + (REG_STATUS_TXT[r.status] || r.status) + '</span>' +
+      '<span style="color:#5c7260"> · 球队：' + escapeHtml(r.team_id ? (teamName[r.team_id] || '—') : '—') +
+      ' · 分组：' + (groupOf[r.player_id] ? '第 ' + groupOf[r.player_id] + ' 组' : '未分组') +
+      (p.org_name ? ' · ' + escapeHtml(p.org_name) : '') + (p.division ? ' · ' + escapeHtml(p.division) : '') + '</span>' + btns + '</div>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.rv-ok'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'approve'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('.rv-no'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'reject'); }; });
+}
+function reviewReg(regId, decision) {
+  call('registration_review', { event_id: currentEvent.id, registration_id: regId, decision: decision }).then(function (d) {
+    var m = document.getElementById('regMsg');
+    if (d.ok) { m.textContent = decision === 'approve' ? '已通过该报名，报名正式生效。' : '已拒绝该报名。'; refreshDash(); }
+    else m.textContent = '审核失败：' + (d.error || '未知错误');
+  });
+}
 function refreshDash() {
   if (!currentEvent) return;
-  call('registrations_list', { event_id: currentEvent.id }).then(function (d) {
+  Promise.all([
+    call('registrations_list', { event_id: currentEvent.id }),
+    call('event_get', { event_id: currentEvent.id }),
+    call('event_report', { event_id: currentEvent.id })
+  ]).then(function (rs) {
+    var d = rs[0], eg = rs[1], r = rs[2];
     var regs = d.registrations || [];
-    var reg = regs.filter(function (r) { return r.status === 'registered'; }).length;
-    var ci = regs.filter(function (r) { return r.status === 'checked_in'; }).length;
+    var reg = regs.filter(function (x) { return x.status === 'registered'; }).length;
+    var ci = regs.filter(function (x) { return x.status === 'checked_in'; }).length;
+    var pendReg = regs.filter(function (x) { return x.status === 'pending'; }).length;
     document.getElementById('cReg').textContent = reg + ci;
     document.getElementById('cIn').textContent = ci;
-    return call('event_report', { event_id: currentEvent.id }).then(function (r) {
-      var pend = 0, todos = [];
-      if (r.report) {
-        var sc = r.report.scoring.by_status || {};
-        pend = (sc.submitted || 0) + (sc.verified || 0);
-        if ((sc.submitted || 0) > 0) todos.push('有 ' + sc.submitted + ' 张记分卡已提交、等待球员核对');
-        if ((sc.verified || 0) > 0) todos.push('有 ' + sc.verified + ' 张记分卡已核对、等待管理员锁定为正式成绩');
-        if (currentEvent.status === 'draft') todos.push('赛事还是草稿，确认信息后点「发布赛事」开放报名');
-      }
-      document.getElementById('cPend').textContent = pend;
-      document.getElementById('todos').innerHTML = todos.map(function (t) { return '<div class="todo">RUKIK 替您想到：' + t + '</div>'; }).join('');
-      var pb = document.getElementById('primaryBtn');
-      if (currentEvent.status === 'draft') { pb.textContent = '发布赛事'; pb.onclick = function () { updateStatus('published'); }; }
-      else if (currentEvent.status === 'published') { pb.textContent = '开始比赛'; pb.onclick = function () { updateStatus('in_progress'); }; }
-      else { pb.textContent = '刷新进度'; pb.onclick = refreshDash; }
-    });
+    document.getElementById('cReview').textContent = pendReg;
+    renderRegList(regs, d.teams || [], eg.pairings || []);
+    var pend = 0, todos = [];
+    if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请在下方「报名名单」中通过或拒绝');
+    if (r.report) {
+      var sc = r.report.scoring.by_status || {};
+      pend = (sc.submitted || 0) + (sc.verified || 0);
+      if ((sc.submitted || 0) > 0) todos.push('有 ' + sc.submitted + ' 张记分卡已提交、等待球员核对');
+      if ((sc.verified || 0) > 0) todos.push('有 ' + sc.verified + ' 张记分卡已核对、等待管理员锁定为正式成绩');
+      if (currentEvent.status === 'draft') todos.push('赛事还是草稿，确认信息后点「发布赛事」开放报名');
+    }
+    document.getElementById('cPend').textContent = pend;
+    document.getElementById('todos').innerHTML = todos.map(function (t) { return '<div class="todo">RUKIK 替您想到：' + t + '</div>'; }).join('');
+    var pb = document.getElementById('primaryBtn');
+    if (currentEvent.status === 'draft') { pb.textContent = '发布赛事'; pb.onclick = function () { updateStatus('published'); }; }
+    else if (currentEvent.status === 'published') { pb.textContent = '开始比赛'; pb.onclick = function () { updateStatus('in_progress'); }; }
+    else { pb.textContent = '刷新进度'; pb.onclick = refreshDash; }
   });
 }
 function updateStatus(s) {
