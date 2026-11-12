@@ -36,6 +36,17 @@
   .catcard span { font-size:12px; color:#5c7260; }
   .catcard:active { background:#e2efdb; }
   .catview > .counts { margin-bottom:6px; }
+
+  /* [线Z67] 发布新赛事向导 */
+  #wzOpenBtn { width:100%; margin:10px 0 4px; font-size:16px; padding:13px; }
+  .wzTpl { border:2px solid #d8e6cf; border-radius:12px; padding:12px 14px; margin:8px 0; cursor:pointer; background:#fbfef9; }
+  .wzTpl.on { border-color:#1d7a3a; background:#eef6ea; }
+  .wzTpl b { font-size:15px; color:#14532d; }
+  .wzTpl span { display:block; font-size:12px; color:#5c7260; margin-top:3px; line-height:1.5; }
+  .srctag { display:none; font-size:11px; color:#8a6d00; background:#fff3cd; border:1px solid #ecd27a; border-radius:8px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .needpick { border:2px solid #c62828 !important; background:#fdf1f1; }
+  .wzsteps { font-size:13px; color:#5c7260; margin:2px 0 10px; }
+  .wzsteps b { color:#14532d; }
 </style>
 </head>
 <body>
@@ -56,6 +67,7 @@
     <div class="card">
       <h3 style="margin-top:0">我的赛事</h3>
       <div id="eventList"></div>
+      <button id="wzOpenBtn" type="button">＋ 发布新赛事（模板向导）</button>
       <details>
         <summary>＋ 快速创建赛事（5 项必填）</summary>
         <label>赛事名称 *</label><input id="fTitle">
@@ -92,6 +104,90 @@
         <button id="createBtn">创建草稿</button>
         <p class="ok" id="createMsg"></p>
       </details>
+    </div>
+
+    <!-- [线Z67] 发布新赛事向导：选样板 → 差异项＋海报识别 → 预览发布。
+         结构与设置全复用现行赛事模块；识别只回填草稿、经组织者确认才提交。 -->
+    <div class="card" id="wizardCard" style="display:none;border:2px solid #bcd8b0">
+      <h3 style="margin-top:0">发布新赛事</h3>
+      <div class="wzsteps" id="wzStepsBar"></div>
+
+      <div id="wzStep1">
+        <div class="wzTpl on" data-t="blank"><b>空白样板</b><span>从零填写赛事名、球场、时间等差异项，其余用平台默认设置。</span></div>
+        <div class="wzTpl" data-t="clone"><b>复制我的一场往届赛事</b><span>赛制、费用、人数、合作伙伴、海报与关怀设置全带过来，只改球场、日期、时间等差异项；报名、分组、成绩不会复制。</span>
+          <select id="wzSrcSel" style="margin-top:8px"></select>
+          <span id="wzSrcMsg"></span>
+        </div>
+        <div class="wzTpl" data-t="preset"><b>邀请赛预设</b><span>BD Max 同款结构：团体比杆（每队取 6 位最佳汇总）、线下收款、Shotgun 统一开球。只带结构，不含任何真实赛事数据。</span></div>
+        <p style="margin-top:12px"><button id="wzTo2" type="button">下一步：填差异项</button>
+        <button class="ghost" id="wzCancel1" type="button">取消</button></p>
+      </div>
+
+      <div id="wzStep2" style="display:none">
+        <div style="border:1px dashed #bcd8b0;border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#fbfef9">
+          <b style="color:#14532d">上传海报，AI 识别回填（可选）</b>
+          <p style="font-size:12px;color:#5c7260;margin:6px 0">选一张赛事海报图，AI 会把海报上印着的赛事名、日期、开球时间、球场、费用、截止、联系人、主办方读出来填进下面表单（带「海报识别」标记，可改）。球场必须匹配到球场库才算数，匹配不到会标红请您手选。生成赛事时，这张原图会成为新赛事的第一张海报与封面。</p>
+          <input id="wzPosterFile" type="file" accept="image/png,image/jpeg,image/webp">
+          <span id="wzPosterMsg" style="font-size:13px;color:#5c7260"></span>
+          <div><img id="wzPosterPrev" alt="" style="display:none;max-width:260px;max-height:180px;border-radius:8px;margin-top:8px"></div>
+        </div>
+        <label>赛事名称 *<span class="srctag" id="tag-wzTitle"></span></label><input id="wzTitle">
+        <div class="row">
+          <div><label>球场 *（可搜全美 1.4 万家球场库）<span class="srctag" id="tag-wzCourse"></span></label>
+            <input id="wzCourseQ" placeholder="输入球场名搜索，如 Friendly Hills" autocomplete="off">
+            <div id="wzCourseResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:220px;overflow:auto;background:#fff"></div>
+            <select id="wzCourse" style="margin-top:6px"></select>
+            <div id="wzCourseInfo" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+            <div id="wzCourseWarn" style="font-size:12px;color:#c62828;margin-top:4px"></div>
+          </div>
+          <div><label>默认发球台</label><select id="wzTee"></select>
+            <label style="margin-top:8px">赛制<span class="srctag" id="tag-wzFormat"></span></label><select id="wzFormat">
+              <option value="stroke">个人比杆赛</option><option value="net_stroke">净杆赛</option>
+              <option value="stableford">Stableford 积分赛</option><option value="scramble">Scramble 团队赛</option>
+              <option value="best_ball">Best Ball</option><option value="match_play">比洞赛</option>
+              <option value="team_points">企业团队积分赛</option>
+              <option value="team_stroke">团队比杆赛（取最佳 N 人汇总）</option><option value="alternate_shot">交替击球赛（双人轮流击球）</option>
+              <option value="skins">Skins 逐洞奖金赛</option><option value="six_six_six">Sixes 六六六组合赛</option>
+            </select>
+            <div id="wzFormatNote" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>日期 *<span class="srctag" id="tag-wzDate"></span></label><input id="wzDate" type="date"></div>
+          <div><label>开球时间 *<span class="srctag" id="tag-wzTime"></span></label><input id="wzTime" type="time" value="09:00"></div>
+        </div>
+        <div class="row">
+          <div><label>人数上限 *</label><input id="wzCap" type="number" value="40"></div>
+          <div><label>报名截止（可选）<span class="srctag" id="tag-wzDeadline"></span></label><input id="wzDeadline" type="date"></div>
+        </div>
+        <div class="row">
+          <div><label>报名费模式</label><select id="wzFeeMode">
+            <option value="free">免费报名</option>
+            <option value="offline">线下收款（主办方确认）</option>
+            <option value="online" disabled>线上支付（尚未开通）</option>
+          </select></div>
+          <div><label>报名费金额（美元，线下收款时填）<span class="srctag" id="tag-wzFeeAmt"></span></label><input id="wzFeeAmt" type="number" min="0" step="1" placeholder="如 180"></div>
+        </div>
+        <label>地点补充 / 赛事介绍<span class="srctag" id="tag-wzDesc"></span></label>
+        <textarea id="wzDesc" rows="4" placeholder="可写举办地点补充、主办方与联系人、赛程安排等；海报识别到的主办方/联系人会先出现在这里供您确认"></textarea>
+        <div id="wzContactLine" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+        <p id="wzStep2Err" class="err"></p>
+        <p style="margin-top:12px"><button class="ghost" id="wzBack1" type="button">上一步</button>
+        <button id="wzTo3" type="button">下一步：预览</button></p>
+      </div>
+
+      <div id="wzStep3" style="display:none">
+        <div id="wzSummary" style="font-size:14px;line-height:1.9"></div>
+        <p id="wzCreateMsg" class="ok"></p>
+        <div id="wzCreatedBox" style="display:none;border:1px solid #d8e6cf;border-radius:12px;padding:12px 14px;background:#fbfef9">
+          <div id="wzCreatedInfo" style="font-size:14px;line-height:1.8"></div>
+          <p style="margin-top:8px"><button id="wzPublishBtn" type="button">发布赛事</button>
+          <button class="ghost" id="wzKeepDraft" type="button">先留草稿，去管理这场赛事</button></p>
+          <p id="wzPublishMsg" class="ok"></p>
+        </div>
+        <p style="margin-top:12px"><button class="ghost" id="wzBack2" type="button">上一步</button>
+        <button id="wzCreateBtn" type="button">生成草稿</button></p>
+      </div>
     </div>
 
     <div class="card" id="dash" style="display:none">
@@ -1115,6 +1211,280 @@ document.getElementById('createBtn').onclick = function () {
     if (d.event) { document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents(); }
     else show(d);
   });
+};
+/* [线Z67] 发布新赛事向导：三步（选样板 → 差异项＋海报识别 → 预览发布）。
+   克隆走服务端 event_clone_template（严格白名单）；海报识别走 poster_extract
+   只回草稿、本页确认后才随创建提交，识别结果不静默落库。 */
+var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, createdId: null, busy: false };
+function wzEl(id) { return document.getElementById(id); }
+function wzTag(id, text) { var t = wzEl('tag-' + id); if (t) { t.textContent = text; t.style.display = text ? 'inline-block' : 'none'; } }
+function wzSteps(n) {
+  wzEl('wzStepsBar').innerHTML = ['选样板', '填差异项', '预览发布'].map(function (s, i) {
+    return (i + 1 === n ? '<b>' : '') + '第 ' + (i + 1) + ' 步 · ' + s + (i + 1 === n ? '</b>' : '') + (i < 2 ? ' → ' : '');
+  }).join('');
+  wzEl('wzStep1').style.display = n === 1 ? 'block' : 'none';
+  wzEl('wzStep2').style.display = n === 2 ? 'block' : 'none';
+  wzEl('wzStep3').style.display = n === 3 ? 'block' : 'none';
+}
+wzEl('wzOpenBtn').onclick = function () {
+  wzEl('wizardCard').style.display = 'block';
+  wzSteps(1);
+  wzEl('wizardCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  call('event_list', { scope: 'mine' }).then(function (d) {
+    var list = (d.organized || []).filter(function (e) { return e.kind !== 'casual'; });
+    wzEl('wzSrcSel').innerHTML = list.length ? list.map(function (e) {
+      return '<option value="' + e.id + '">' + escapeHtml(e.title) + '（' + e.status + (e.starts_at ? ' · ' + String(e.starts_at).slice(0, 10) : '') + '）</option>';
+    }).join('') : '<option value="">（暂无可复制的往届赛事）</option>';
+    wzEl('wzSrcMsg').textContent = list.length ? '' : '您还没有主办过的正式赛事，可先用空白样板或邀请赛预设。';
+  });
+  call('course_list', {}).then(function (d) {
+    wzEl('wzCourse').innerHTML = (d.courses || []).map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; }).join('');
+  });
+};
+wzEl('wzCancel1').onclick = function () { wzEl('wizardCard').style.display = 'none'; };
+Array.prototype.forEach.call(document.querySelectorAll('.wzTpl'), function (el) {
+  el.onclick = function (ev) {
+    if (ev.target && ev.target.id === 'wzSrcSel') return;
+    Array.prototype.forEach.call(document.querySelectorAll('.wzTpl'), function (x) { x.classList.remove('on'); });
+    el.classList.add('on'); WZ.template = el.getAttribute('data-t');
+  };
+});
+function wzPrefillStep2() {
+  ['wzTitle', 'tag-wzTitle', 'tag-wzCourse', 'tag-wzDate', 'tag-wzTime', 'tag-wzFeeAmt', 'tag-wzDeadline', 'tag-wzDesc', 'tag-wzFormat'].forEach(function (id) {
+    if (id.indexOf('tag-') === 0) wzTag(id.slice(4), '');
+  });
+  wzEl('wzCourseWarn').textContent = ''; wzEl('wzCourseQ').classList.remove('needpick');
+  wzEl('wzStep2Err').textContent = ''; wzEl('wzContactLine').textContent = '';
+  wzEl('wzFormat').disabled = false; wzEl('wzFormatNote').textContent = '';
+  if (WZ.template === 'preset') {
+    wzEl('wzFormat').value = 'team_stroke'; wzEl('wzTime').value = '10:30'; wzEl('wzFeeMode').value = 'offline';
+    wzEl('wzFormatNote').textContent = '邀请赛预设：团体比杆，每队取 6 位最佳成绩汇总；Shotgun 统一开球；线下收款。';
+    wzTag('wzFormat', '邀请赛预设');
+  }
+  if (WZ.template === 'clone' && WZ.srcRow) {
+    var s = WZ.srcRow;
+    wzEl('wzTitle').value = s.title || ''; wzTag('wzTitle', '来自模板');
+    wzEl('wzCap').value = s.capacity || 40;
+    wzEl('wzFeeMode').value = s.fee_mode || 'free';
+    wzEl('wzFeeAmt').value = s.fee_cents ? Math.round(s.fee_cents / 100) : '';
+    wzEl('wzDesc').value = s.description || ''; if (s.description) wzTag('wzDesc', '来自模板');
+    wzEl('wzFormat').value = s.format || 'stroke'; wzEl('wzFormat').disabled = true;
+    wzEl('wzFormatNote').textContent = '赛制随模板复制，不在此修改：' + (s.format || '') + '。';
+    wzTag('wzFormat', '来自模板');
+    if (s.course_id) {
+      call('course_get', { course_id: s.course_id }).then(function (d) {
+        if (d.course) wzPickCourse({ id: d.course.id, name: d.course.name, completeness: { tier: 'L2' } });
+      });
+      call('event_get', { event_id: s.id }).then(function (d) {
+        var tee = d.rounds && d.rounds[0] && d.rounds[0].default_tee_id;
+        if (tee) setTimeout(function () { wzEl('wzTee').value = tee; }, 600);
+      });
+    }
+  }
+}
+wzEl('wzTo2').onclick = function () {
+  if (WZ.template === 'clone') {
+    WZ.srcId = wzEl('wzSrcSel').value;
+    if (!WZ.srcId) { wzEl('wzSrcMsg').textContent = '请先选择一场您主办过的赛事。'; return; }
+    call('event_list', { scope: 'mine' }).then(function (d) {
+      WZ.srcRow = (d.organized || []).filter(function (e) { return e.id === WZ.srcId; })[0] || null;
+      wzSteps(2); wzPrefillStep2();
+    });
+  } else { WZ.srcId = null; WZ.srcRow = null; wzSteps(2); wzPrefillStep2(); }
+};
+wzEl('wzBack1').onclick = function () { wzSteps(1); };
+wzEl('wzBack2').onclick = function () { wzSteps(2); };
+/* 球场搜索（与快速创建同口径：course_search 选卡 + course_get 带发球台） */
+var wzCourseTimer = null;
+function wzRenderCourseResults(list) {
+  var box = wzEl('wzCourseResults');
+  if (!list.length) { box.innerHTML = '<div style="padding:8px;color:#888">未找到，可换关键词。</div>'; box.style.display = 'block'; return; }
+  box.innerHTML = list.map(function (c, i) {
+    var tier = c.completeness.tier === 'L3' ? '发球台详情全' : c.completeness.tier === 'L2' ? '记分卡 Par/SI' : '仅位置';
+    return '<div class="csr" data-i="' + i + '" style="padding:8px;cursor:pointer;border-bottom:1px solid #eef2ee"><b>' + escapeHtml(c.name) + '</b><br><span style="font-size:12px;color:#5c7260">' + escapeHtml(c.city || '') + (c.state ? ', ' + escapeHtml(c.state) : '') + ' · ' + tier + '</span></div>';
+  }).join('');
+  box.style.display = 'block';
+  Array.prototype.forEach.call(box.querySelectorAll('.csr'), function (el) {
+    el.onclick = function () { wzPickCourse(list[Number(el.getAttribute('data-i'))]); box.style.display = 'none'; wzEl('wzCourseQ').classList.remove('needpick'); wzEl('wzCourseWarn').textContent = ''; };
+  });
+}
+function wzSearchCourse(qv) {
+  call('course_search', { q: qv, limit: 10 }).then(function (d) { wzRenderCourseResults(d.courses || []); });
+}
+wzEl('wzCourseQ').addEventListener('input', function () {
+  var qv = this.value.trim(); clearTimeout(wzCourseTimer);
+  if (qv.length < 2) { wzEl('wzCourseResults').style.display = 'none'; return; }
+  wzCourseTimer = setTimeout(function () { wzSearchCourse(qv); }, 300);
+});
+function wzPickCourse(c) {
+  var sel = wzEl('wzCourse');
+  if (!Array.prototype.some.call(sel.options, function (o) { return o.value === c.id; })) {
+    var opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; sel.appendChild(opt);
+  }
+  sel.value = c.id; wzEl('wzCourseQ').value = c.name;
+  call('course_get', { course_id: c.id }).then(function (d) {
+    var tees = (d.tees || []).slice().sort(function (a, b) { return (b.total_yards || 0) - (a.total_yards || 0); });
+    wzEl('wzTee').innerHTML = tees.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.name) + (t.slope ? '（Slope ' + t.slope + '）' : '') + '</option>'; }).join('') || '<option value="">（该场暂无发球台资料）</option>';
+    wzEl('wzCourseInfo').textContent = '已带入：' + ((d.course && d.course.address) || '') + ' · 选中后自动带入地址/坐标/Par/发球台。';
+  });
+}
+/* 海报识别：原图留作新赛事海报；识别用压缩副本，只回填草稿 */
+wzEl('wzPosterFile').addEventListener('change', function () {
+  var f = this.files && this.files[0]; WZ.posterFile = f || null;
+  if (!f) return;
+  if (!/image\/(png|jpeg|webp)/.test(f.type || '')) { wzEl('wzPosterMsg').textContent = '仅支持 PNG / JPG / WebP。'; WZ.posterFile = null; return; }
+  if (f.size > 5242880) { wzEl('wzPosterMsg').textContent = '海报不能超过 5MB。'; WZ.posterFile = null; return; }
+  var rd = new FileReader();
+  rd.onload = function () { wzEl('wzPosterPrev').src = rd.result; wzEl('wzPosterPrev').style.display = 'block'; };
+  rd.readAsDataURL(f);
+  wzEl('wzPosterMsg').textContent = '识别中…';
+  wzDownscale(f).then(function (b64) {
+    return call('poster_extract', { image_base64: b64, media_type: 'image/jpeg' });
+  }).then(function (d) {
+    if (!d || !d.ok || !d.draft) { wzEl('wzPosterMsg').textContent = '识别未成功（' + ((d && d.error) || '无结果') + '），可手动填写；海报仍会随赛事保存。'; return; }
+    wzFillFromDraft(d.draft);
+    wzEl('wzPosterMsg').textContent = '识别完成，已回填带「海报识别」标记的字段，请核对后可修改。';
+  }).catch(function () { wzEl('wzPosterMsg').textContent = '识别请求失败，可手动填写；海报仍会随赛事保存。'; });
+});
+function wzDownscale(f) {
+  return new Promise(function (resolve, reject) {
+    var url = URL.createObjectURL(f); var img = new Image();
+    img.onload = function () {
+      var max = 1600, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+      var cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = reject; img.src = url;
+  });
+}
+function wzFillFromDraft(dr) {
+  if (dr.title) { wzEl('wzTitle').value = dr.title; wzTag('wzTitle', '海报识别'); }
+  if (dr.date) { wzEl('wzDate').value = dr.date; wzTag('wzDate', '海报识别'); }
+  if (dr.start_time) { wzEl('wzTime').value = dr.start_time; wzTag('wzTime', '海报识别'); }
+  if (dr.fee_amount != null) { wzEl('wzFeeAmt').value = dr.fee_amount; wzEl('wzFeeMode').value = 'offline'; wzTag('wzFeeAmt', '海报识别'); }
+  if (dr.capacity != null) wzEl('wzCap').value = dr.capacity;
+  if (dr.registration_deadline) { wzEl('wzDeadline').value = dr.registration_deadline; wzTag('wzDeadline', '海报识别'); }
+  var extra = [];
+  if (dr.organizer_name) extra.push('主办方：' + dr.organizer_name);
+  if (dr.contact_name || dr.contact_phone || dr.contact_email) extra.push('联系人：' + [dr.contact_name, dr.contact_phone, dr.contact_email].filter(Boolean).join(' '));
+  if (dr.venue_text) extra.push('地点：' + dr.venue_text);
+  if (dr.description) extra.push(dr.description);
+  if (extra.length) {
+    var cur = wzEl('wzDesc').value.trim();
+    wzEl('wzDesc').value = (cur ? cur + '\n' : '') + extra.join('\n');
+    wzTag('wzDesc', '海报识别');
+    wzEl('wzContactLine').textContent = '以上主办方/联系人/地点来自海报识别，已并入赛事介绍，请核对。';
+  }
+  if (dr.course_name) {
+    wzEl('wzCourseQ').value = dr.course_name;
+    call('course_search', { q: dr.course_name, limit: 10 }).then(function (d) {
+      var list = d.courses || [];
+      var exact = list.filter(function (c) { return c.name.trim().toLowerCase() === String(dr.course_name).trim().toLowerCase(); });
+      if (exact.length === 1 || list.length === 1) {
+        wzPickCourse(exact[0] || list[0]); wzTag('wzCourse', '海报识别 · 已匹配球场库');
+      } else {
+        wzEl('wzCourseQ').classList.add('needpick');
+        wzEl('wzCourseWarn').textContent = '海报上的球场名「' + dr.course_name + '」未能自动匹配到球场库，请在下方搜索结果中手动选择（未匹配前不能生成赛事）。';
+        wzRenderCourseResults(list);
+      }
+    });
+  }
+}
+function wzValidate() {
+  var errs = [];
+  if (!wzEl('wzTitle').value.trim()) errs.push('请填写赛事名称');
+  if (!wzEl('wzCourse').value) errs.push('请选择球场（必须匹配球场库）');
+  if (!wzEl('wzDate').value) errs.push('请选择日期');
+  if (!wzEl('wzTime').value) errs.push('请填写开球时间');
+  return errs;
+}
+function wzStartsAt() { return wzEl('wzDate').value + 'T' + wzEl('wzTime').value + ':00'; }
+wzEl('wzTo3').onclick = function () {
+  var errs = wzValidate();
+  if (errs.length) { wzEl('wzStep2Err').textContent = errs.join('；'); return; }
+  wzEl('wzStep2Err').textContent = '';
+  var cname = wzEl('wzCourse').options[wzEl('wzCourse').selectedIndex] ? wzEl('wzCourse').options[wzEl('wzCourse').selectedIndex].textContent : '';
+  var tplName = WZ.template === 'clone' ? '复制往届赛事' : WZ.template === 'preset' ? '邀请赛预设' : '空白样板';
+  wzEl('wzSummary').innerHTML =
+    '样板：' + tplName + '<br>赛事名称：<b>' + escapeHtml(wzEl('wzTitle').value) + '</b><br>' +
+    '球场：' + escapeHtml(cname) + '<br>时间：' + wzEl('wzDate').value + ' ' + wzEl('wzTime').value + ' 开球<br>' +
+    '人数上限：' + (wzEl('wzCap').value || '不限') + ' · 报名费：' + (wzEl('wzFeeMode').value === 'offline' ? '线下收款 $' + (wzEl('wzFeeAmt').value || 0) : '免费') +
+    (wzEl('wzDeadline').value ? '<br>报名截止：' + wzEl('wzDeadline').value : '') +
+    (WZ.posterFile ? '<br>海报：已选原图，生成草稿后自动设为首图与封面' : '') +
+    '<br><span style="color:#5c7260;font-size:13px">生成后先是草稿（仅您可见），确认无误再发布。</span>';
+  wzEl('wzCreatedBox').style.display = 'none'; wzEl('wzCreateBtn').style.display = 'inline-block';
+  wzEl('wzCreateMsg').textContent = '';
+  wzSteps(3);
+};
+wzEl('wzCreateBtn').onclick = function () {
+  if (WZ.busy) return;
+  var errs = wzValidate();
+  if (errs.length) { wzEl('wzCreateMsg').textContent = errs.join('；'); return; }
+  WZ.busy = true; wzEl('wzCreateMsg').textContent = '生成草稿中…';
+  var base = {
+    title: wzEl('wzTitle').value.trim(), course_id: wzEl('wzCourse').value,
+    default_tee_id: wzEl('wzTee').value || undefined,
+    starts_at: wzStartsAt(), play_dates: [wzEl('wzDate').value],
+    capacity: Number(wzEl('wzCap').value || 40),
+    fee_mode: wzEl('wzFeeMode').value, fee_cents: Math.round(Number(wzEl('wzFeeAmt').value || 0) * 100),
+    registration_deadline: wzEl('wzDeadline').value ? wzEl('wzDeadline').value + 'T23:59:00' : undefined,
+    description: wzEl('wzDesc').value.trim() || undefined
+  };
+  var p;
+  if (WZ.template === 'clone') {
+    p = call('event_clone_template', { source_event_id: WZ.srcId, overrides: base });
+  } else if (WZ.template === 'preset') {
+    p = call('event_create', Object.assign({}, base, { format: 'team_stroke', start_mode: 'shotgun', competition_config: { mode: 'formal' }, tiebreak_config: { count_best: 6, team_metric: 'gross' } }));
+  } else {
+    p = call('event_create', Object.assign({}, base, { format: wzEl('wzFormat').value }));
+  }
+  p.then(function (d) {
+    if (!d || !d.event) { WZ.busy = false; wzEl('wzCreateMsg').textContent = '生成失败：' + ((d && (d.message || d.error)) || '未知错误'); return; }
+    WZ.createdId = d.event.id;
+    var after = function () {
+      WZ.busy = false;
+      wzEl('wzCreateBtn').style.display = 'none';
+      wzEl('wzCreateMsg').textContent = '';
+      wzEl('wzCreatedBox').style.display = 'block';
+      wzEl('wzCreatedInfo').innerHTML = '草稿已生成：<b>' + escapeHtml(d.event.title) + '</b>' +
+        (WZ.posterFile ? '<br>海报已设为首图与封面。' : '') +
+        '<br>公开赛事页预览：<a href="../event.html?e=' + encodeURIComponent(WZ.createdId) + '" target="_blank">打开赛事页</a>（发布前仅您登录可见）';
+      loadEvents();
+    };
+    if (WZ.posterFile) {
+      wzEl('wzCreateMsg').textContent = '草稿已生成，正在保存海报…';
+      wzUploadPoster(WZ.createdId, (d.event.poster_urls || []).slice()).then(after).catch(after);
+    } else after();
+  }).catch(function () { WZ.busy = false; wzEl('wzCreateMsg').textContent = '生成请求失败，请重试。'; });
+};
+function wzUploadPoster(eventId, existingUrls) {
+  var f = WZ.posterFile;
+  return call('poster_add', { event_id: eventId, content_type: f.type || 'image/png' }).then(function (d) {
+    if (!d || !d.ok) throw new Error('poster_add failed');
+    return fetch(d.signed_url, { method: 'PUT', headers: { 'Content-Type': f.type || 'image/png' }, body: f }).then(function (r) {
+      if (!r.ok) throw new Error('poster put ' + r.status);
+      var others = existingUrls.filter(function (u) { return u !== d.public_url; });
+      var order = [d.public_url].concat(others);
+      return call('poster_reorder', { event_id: eventId, poster_urls: order }).then(function () {
+        return call('poster_set_cover', { event_id: eventId, url: d.public_url });
+      });
+    });
+  });
+}
+wzEl('wzPublishBtn').onclick = function () {
+  if (!WZ.createdId) return;
+  call('event_update', { event_id: WZ.createdId, status: 'published' }).then(function (d) {
+    if (d && d.event) {
+      wzEl('wzPublishMsg').innerHTML = '已发布！公开赛事页：<a href="../event.html?e=' + encodeURIComponent(WZ.createdId) + '" target="_blank">打开赛事页</a>';
+      loadEvents();
+    } else wzEl('wzPublishMsg').textContent = '发布失败：' + ((d && d.error) || '未知错误');
+  });
+};
+wzEl('wzKeepDraft').onclick = function () {
+  wzEl('wizardCard').style.display = 'none';
+  if (WZ.createdId) openEvent(WZ.createdId);
 };
 document.getElementById('boardBtn').onclick = function () { if (currentEvent) window.open('/golf/board/?e=' + currentEvent.id, '_blank'); };
 document.getElementById('shareBtn').onclick = function () { if (currentEvent) window.open('/golf/event.html?e=' + currentEvent.id, '_blank'); };
