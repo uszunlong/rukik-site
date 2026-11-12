@@ -720,27 +720,60 @@ function insetModel(feats, pin, frame, pr) {
   /* [地图取景三修20261112] 特写圆避让果岭本体：旋转取景后果岭恒在右侧，
    * 旧版恒定右下角与果岭大面积重叠（四洞像素实测全部重叠）。有主投影时
    * 先算果岭在主视图的外接框（外扩 5 容光晕），四角逐一评分——与果岭框
-   * 重叠面积最小者优先、并列取离果岭中心最远者；无主投影保持旧落位。 */
+   * 重叠面积最小者优先、并列取离果岭中心最远者；无主投影保持旧落位。
+   * [地图取景四修打磨20261112] 落位口径再收紧：三修只避果岭，终判实拍与
+   * 像素复测仍见圆压球道（WH5 覆盖球道/果岭 1320px 且压发球台、WH9 覆盖
+   * 1895px）。改为对打球面本体全集（发球台/球道/果岭）逐角算相交深度：
+   * 圆心到各打球面多边形的最短距离（多边形内为 0），深度＝max(0, IR+1−
+   * 距离)（+1 为抗锯齿余量）；取深度 0（零重叠）且离打球面外接框中心最
+   * 远的一角，四角皆有深度时取最浅者。发球台 Point 按其绘制矩形（±6/
+   * ±4.5）入算。无主投影保持旧落位。
+   * [定谳重修20261112] 四修此评分段上线后被他线以旧基线整文件发布冲回
+   * 三修版（线上实拍四洞全落左上、压球道起点/湖边）；本线经线上本体函数
+   * ＋真实 course_geometry 回包定谳（夹具与回包几何 19/19 一致、非数据
+   * 背离），在现行基线上原样恢复此评分段，选角口径与四修一致。 */
   if (frame && pr) {
-    let gx0 = 1 / 0, gx1 = -1 / 0, gy0 = 1 / 0, gy1 = -1 / 0;
-    feats.filter(f => f.type === 'green').forEach(f => {
+    const polys = [];
+    feats.forEach(f => {
+      if (f.type !== 'tee' && f.type !== 'fairway' && f.type !== 'green') return;
       const g = featGeom(f); if (!g) return;
-      outerRings(g).forEach(r => r.forEach(p => {
-        const q = pr(p);
-        if (q[0] < gx0) gx0 = q[0]; if (q[0] > gx1) gx1 = q[0];
-        if (q[1] < gy0) gy0 = q[1]; if (q[1] > gy1) gy1 = q[1];
-      }));
+      if (g.type === 'Point') {
+        const q = pr(g.coordinates);
+        polys.push([[q[0] - 6, q[1] - 4.5], [q[0] + 6, q[1] - 4.5], [q[0] + 6, q[1] + 4.5], [q[0] - 6, q[1] + 4.5]]);
+        return;
+      }
+      outerRings(g).forEach(r => {
+        const ring = r.map(p => pr(p));
+        if (ring.length >= 3) polys.push(ring);
+      });
     });
-    if (gx0 <= gx1) {
-      gx0 -= 5; gx1 += 5; gy0 -= 5; gy1 += 5;
-      const gcx = (gx0 + gx1) / 2, gcy = (gy0 + gy1) / 2;
+    if (polys.length) {
+      let bx0 = 1 / 0, bx1 = -1 / 0, by0 = 1 / 0, by1 = -1 / 0;
+      polys.forEach(ring => ring.forEach(q => {
+        if (q[0] < bx0) bx0 = q[0]; if (q[0] > bx1) bx1 = q[0];
+        if (q[1] < by0) by0 = q[1]; if (q[1] > by1) by1 = q[1];
+      }));
+      const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
+      const distToRing = (cx, cy, ring) => {
+        let inside = false, d = Infinity;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+          if ((yi > cy) !== (yj > cy) && cx < (xj - xi) * (cy - yi) / (yj - yi) + xi) inside = !inside;
+          const dx = xj - xi, dy = yj - yi, L2 = dx * dx + dy * dy;
+          let t = L2 ? ((cx - xi) * dx + (cy - yi) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+          const dd = Math.hypot(cx - (xi + t * dx), cy - (yi + t * dy));
+          if (dd < d) d = dd;
+        }
+        return inside ? 0 : d;
+      };
       const cands = [[frame.w - IR - 14, frame.h - IR - 14], [IR + 14, frame.h - IR - 14], [frame.w - IR - 14, IR + 14], [IR + 14, IR + 14]];
-      let best = null, bestOv = null, bestDist = -1;
+      let best = null, bestPen = null, bestDist = -1;
       cands.forEach(c => {
-        const ovx = Math.max(0, Math.min(c[0] + IR, gx1) - Math.max(c[0] - IR, gx0));
-        const ovy = Math.max(0, Math.min(c[1] + IR, gy1) - Math.max(c[1] - IR, gy0));
-        const ov = ovx * ovy, dist = Math.hypot(c[0] - gcx, c[1] - gcy);
-        if (bestOv === null || ov < bestOv || (ov === bestOv && dist > bestDist)) { bestOv = ov; bestDist = dist; best = c; }
+        let pen = 0;
+        polys.forEach(ring => { pen = Math.max(pen, IR + 1 - distToRing(c[0], c[1], ring)); });
+        pen = Math.max(0, pen);
+        const dist = Math.hypot(c[0] - bcx, c[1] - bcy);
+        if (bestPen === null || pen < bestPen || (pen === bestPen && dist > bestDist)) { bestPen = pen; bestDist = dist; best = c; }
       });
       if (best) INSET = { cx: best[0], cy: best[1], r: IR };
     }
