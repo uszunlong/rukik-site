@@ -28,6 +28,14 @@
   .err { color:#b91c1c; font-size:14px; } .ok { color:#1d7a3a; font-size:14px; }
   pre { background:#0b1f14; color:#cfe6c8; padding:12px; border-radius:10px; overflow:auto; font-size:12px; max-height:300px; }
   a { color:#1d7a3a; }
+
+  /* [线Z49] 管理首页分类卡与分类视图 */
+  #catGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .catcard { background:#eef6ea; border:1px solid #d8e6cf; border-radius:12px; padding:14px 12px; cursor:pointer; }
+  .catcard b { display:block; font-size:16px; color:#14532d; }
+  .catcard span { font-size:12px; color:#5c7260; }
+  .catcard:active { background:#e2efdb; }
+  .catview > .counts { margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -87,52 +95,81 @@
     </div>
 
     <div class="card" id="dash" style="display:none">
-      <h3 style="margin-top:0" id="dashTitle">赛事进度</h3>
-      <div class="counts">
-        <div class="count"><b id="cReg">–</b><span>已报名</span></div>
-        <div class="count"><b id="cIn">–</b><span>已签到</span></div>
-        <div class="count"><b id="cReview">–</b><span>待审核报名</span></div>
-        <div class="count"><b id="cPend">–</b><span>记分卡待确认</span></div>
+      <div id="catBar" style="display:none;position:sticky;top:0;z-index:50;background:#fff;margin:-16px -18px 12px;padding:10px 18px;border-bottom:1px solid #e5eee1;border-radius:14px 14px 0 0">
+        <button class="ghost" id="catBack" type="button">← 返回管理首页</button>
+        <b id="catTitle" style="margin-left:10px;font-size:16px"></b>
       </div>
+      <div id="viewHome">
+      <h3 style="margin-top:0" id="dashTitle">赛事进度</h3>
+      <div style="font-size:13px;color:#5c7260;margin:-4px 0 10px">赛事状态：<b id="evtStatus" style="color:#17301c">–</b></div>
+      
+      <div class="counts"><div class="count"><b id="cReg">–</b><span>报名人数</span></div><div class="count"><b id="cIn">–</b><span>已签到</span></div><div class="count"><b id="cPairs">–</b><span>分组数量</span></div></div>
       <div id="todos"></div>
-      <div id="regSection" style="margin-top:16px">
+      
+      
+      
+      <p style="margin-top:14px"><button id="primaryBtn">下一步</button>
+        <button class="ghost" id="shareBtn">公开赛事页</button></p>
+      <p class="ok" id="dashMsg"></p>
+      <div id="catGrid" style="margin-top:14px"></div>
+      </div><!-- /viewHome -->
+      <div id="viewReg" class="catview" style="display:none"><div class="counts"><div class="count"><b id="cReview">–</b><span>待审核报名</span></div></div><div id="regSection" style="margin-top:16px">
         <h4 style="margin:6px 0">报名名单</h4>
         <div id="regList"></div>
         <p class="ok" id="regMsg"></p>
-      </div>
-      <div id="feeSection" style="margin-top:16px">
+      </div><div id="feeSection" style="margin-top:16px">
         <h4 style="margin:6px 0">报名费设置</h4>
         <div id="feeBox"><p style="color:#5c7260;font-size:13px">打开赛事后加载。</p></div>
         <p class="ok" id="feeMsg"></p>
-      </div>
-      <div id="scoreSection" style="margin-top:16px">
+      </div></div>
+      <div id="viewPair" class="catview" style="display:none"><div id="pairZone"><h4 style="margin:6px 0">分组设置</h4><div class="row">
+          <div><label>分组方式</label><select id="pMethod"><option value="handicap_balance">差点平衡</option><option value="random">随机</option><option value="team">按团队</option><option value="org">按组织</option></select></div>
+          <div><label>每组人数</label><input id="pSize" type="number" value="4"></div>
+        </div><p><button class="ghost" id="pairBtn">分组管理</button>
+          <button class="ghost" id="snapBtn">生成差点快照</button>
+          <button class="ghost" id="cardsBtn">生成记分卡</button></p><!-- [线Z48] 分组管理：自包含区块（单一容器 #pmPanel，Z49 重构时整体迁入「分组管理」分类页） -->
+      <div id="pmPanel" style="display:none;margin-top:14px;border-top:2px solid #dce7dd;padding-top:12px">
+        <h4 style="margin:6px 0">分组管理</h4>
+        <p style="color:#5c7260;font-size:13px;margin:4px 0">草稿自动保存；球员端在发布前只看到「等待主办方分组」。点「确认发布分组」后才生成正式分组并关联共享记分卡。已有成绩的组调整成员会先给出影响清单、确认后才生效，成绩不会被删除或误迁移。</p>
+        <div class="row">
+          <div><label>轮次</label><select id="pmRound"></select></div>
+          <div><label>每组人数上限</label><input id="pmMaxSize" type="number" min="1" max="8" value="4"></div>
+          <div><label>自动分组方式</label><select id="pmMethod"><option value="handicap_balance">差点平衡</option><option value="org">同机构优先</option><option value="team">按团队</option><option value="random">种子随机</option><option value="empty">空白草稿</option></select></div>
+        </div>
+        <p>
+          <button type="button" id="pmAutoBtn">自动生成草稿</button>
+          <button type="button" class="ghost" id="pmSmartBtn">智能补组（自组优先）</button>
+          <button type="button" class="ghost" id="pmAddGroupBtn">新增组</button>
+        </p>
+        <div class="row">
+          <div><label>复制上一场分组（本人主办的历史赛事）</label><select id="pmCopySrc"><option value="">（选择历史赛事）</option></select></div>
+        </div>
+        <p><button type="button" class="ghost" id="pmCopyBtn">复制到本场草稿</button> <span id="pmCopyMsg" style="font-size:13px;color:#5c7260"></span></p>
+        <div id="pmUnmatched" style="display:none;background:#fdf6e0;border:1px solid #e5cf8a;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0"></div>
+        <div id="pmGroups"></div>
+        <h5 style="margin:14px 0 6px">待分组球员 <span id="pmPoolCount" style="color:#5c7260;font-weight:normal"></span></h5>
+        <div class="row">
+          <div><input id="pmSearch" placeholder="搜索姓名"></div>
+          <div><label>排序</label><select id="pmSort"><option value="registered">报名时间</option><option value="handicap">差点</option></select></div>
+        </div>
+        <p style="color:#5c7260;font-size:12px;margin:4px 0">点选一名球员后，点任意组的「加入选中球员」即可指派；也可以用每行的组号下拉快速加入；桌面端可拖动球员到组卡片。</p>
+        <div id="pmPool" style="margin-top:6px"></div>
+        <p id="pmValid" style="font-size:13px;margin:10px 0 4px"></p>
+        <p style="margin:6px 0">
+          <button type="button" class="ghost" id="pmSaveBtn">保存草稿</button>
+          <button type="button" id="pmPublishBtn">确认发布分组</button>
+          <span id="pmSaveState" style="font-size:13px;color:#5c7260"></span>
+        </p>
+        <div id="pmImpact" style="display:none;background:#fdf1f0;border:1px solid #e0a8a2;border-radius:8px;padding:10px 12px;font-size:14px;margin:8px 0"></div>
+        <p class="ok" id="pmMsg"></p>
+      </div></div></div>
+      <div id="viewScore" class="catview" style="display:none"><div class="counts"><div class="count"><b id="cPend">–</b><span>记分卡待确认</span></div></div><p style="margin:4px 0 10px"><button class="ghost" id="boardBtn">大屏排行榜</button></p><div id="scoreSection" style="margin-top:16px">
         <h4 style="margin:6px 0">参赛成绩</h4>
         <div id="scoreList"></div>
         <p class="ok" id="scoreMsg"></p>
         <p style="color:#5c7260;font-size:13px">成绩更正不在本台直接改杆数：请在记分端按原流程更正（覆盖已有成绩必须填写原因），每次更正都会自动留下审计记录；锁定成绩须先由主办方解锁并注明原因。</p>
-      </div>
-      <p style="margin-top:14px">
-        <button id="primaryBtn">下一步</button>
-        <button class="ghost" id="boardBtn">大屏排行榜</button>
-        <button class="ghost" id="shareBtn">公开赛事页</button>
-      </p>
-      <p class="ok" id="dashMsg"></p>
-      <details>
-        <summary>高级管理（分组 / 记分卡 / 奖项 / 报表 / 赞助 / 公告）</summary>
-        <div class="row">
-          <div><label>分组方式</label><select id="pMethod"><option value="handicap_balance">差点平衡</option><option value="random">随机</option><option value="team">按团队</option><option value="org">按组织</option></select></div>
-          <div><label>每组人数</label><input id="pSize" type="number" value="4"></div>
-        </div>
-        <p>
-          <button class="ghost" id="pairBtn">生成分组</button>
-          <button class="ghost" id="snapBtn">生成差点快照</button>
-          <button class="ghost" id="cardsBtn">生成记分卡</button>
-          <button class="ghost" id="awardBtn">计算奖项</button>
-          <button class="ghost" id="reportBtn">运营报表</button>
-          <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
-          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button>
-        </p>
-        <div id="awardZone" style="margin-top:10px">
+      </div></div>
+      <div id="viewAward" class="catview" style="display:none"><p style="margin:4px 0 10px"><button class="ghost" id="awardBtn">计算奖项</button></p><div id="awardZone" style="margin-top:10px">
           <label>奖项管理（计算 → 确认 → 颁发；只有已确认／已颁发的奖项才会出现在赛事页与赛后回忆中）</label>
           <div id="awardList"><p style="color:#5c7260;font-size:13px">打开赛事后加载。</p></div>
           <div class="row">
@@ -142,13 +179,12 @@
           </div>
           <p>
             <button class="ghost" id="awAddBtn">添加人工奖项（待确认）</button>
-            <button class="ghost" id="memGenBtn">生成赛后回忆</button>
+            
           </p>
           <p class="ok" id="awardMsg"></p>
-        </div>
-        <label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
-        <button class="ghost" id="annBtn">发布公告</button>
-        <div id="sponsorCard" style="margin-top:14px">
+        </div></div>
+      <div id="viewContent" class="catview" style="display:none"><label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
+        <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div style="margin-top:14px"><label>Golf Live 照片管理</label><p style="margin:6px 0"><button class="ghost" id="photosBtn" type="button">打开照片管理（上传 / 审核 / 删除）</button></p></div><div id="sponsorCard" style="margin-top:14px">
         <label>合作伙伴管理（本场赞助商：名称 / 类别 / 官网 / 简介 / 排序 / Logo 自助维护，保存后赛事页与大屏同步展示）</label>
         <div id="spList"></div>
         <div style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">
@@ -170,8 +206,7 @@
             <span id="spxMsg" style="font-size:13px;color:#5c7260"></span>
           </p>
         </div>
-        </div>
-        <div id="orgCard" style="margin-top:14px">
+        </div><div id="orgCard" style="margin-top:14px">
         <label>赛事合作伙伴 · 智能品牌档案（主办必填一家；品牌资料会同步给本场 AI 球童做介绍，球员点赛事页 Logo 即可请球童详细介绍。同一品牌建档一次，后续赛事可直接复用）</label>
         <div id="orgRows"></div>
         <button class="ghost" id="orgAdd" type="button">＋ 添加合作伙伴</button>
@@ -183,8 +218,8 @@
           <div id="orgSearchResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
           <div id="orgLib" style="margin-top:6px"></div>
         </div>
-      </div>
-      <div id="knowCard" style="margin-top:14px">
+      </div></div>
+      <div id="viewSettings" class="catview" style="display:none"><div id="knowCard" style="margin-top:14px">
         <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
         <div id="knowList"></div>
         <div class="row">
@@ -205,15 +240,9 @@
           <button class="ghost" id="kReset" type="button">清空表单</button>
           <span id="kMsg" style="font-size:13px;color:#5c7260"></span>
         </p>
-      </div>
-      <pre id="out" style="display:none"></pre>
-      </details>
-    </div>
-
-    <!-- [线Z32] 活动AI：每场活动自动拥有的专属 AI 分身（与专家 AI 分身同一套逻辑：
-         知识存取/确认沿用赛事知识层，问答走 RUKIK Golf AI球童；本页只管本场身份、
-         知识与开放开关，不暴露模型与后台参数） -->
-    <div class="card" id="aiCard" style="display:none">
+      </div><div style="margin-top:18px"><label>报表与导出</label><p style="margin:6px 0"><button class="ghost" id="reportBtn">运营报表</button>
+          <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
+          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="aiCard" style="display:none;margin-top:18px">
       <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
 
@@ -253,7 +282,17 @@
       <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiCare" style="width:auto;margin-right:6px">启用赛事关怀和提醒</label>
       <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiPostOpen" style="width:auto;margin-right:6px">活动结束后继续开放（回忆与历史问答）</label>
       <p><button class="ghost" id="aiSaveSwitches" type="button">保存开放设置</button> <span id="aiMsgE" style="font-size:13px;color:#5c7260"></span></p>
+    </div></div>
+      <pre id="out" style="display:none"></pre>
+    
+      
+      
     </div>
+
+    <!-- [线Z32] 活动AI：每场活动自动拥有的专属 AI 分身（与专家 AI 分身同一套逻辑：
+         知识存取/确认沿用赛事知识层，问答走 RUKIK Golf AI球童；本页只管本场身份、
+         知识与开放开关，不暴露模型与后台参数） -->
+    
   </div>
   <p style="color:#5c7260;font-size:13px">成绩由确定性规则引擎计算并经确认流程锁定；本工作台只做组织与发布，不直接改分。</p>
 </main>
@@ -330,7 +369,8 @@ function openEvent(id) {
   call('event_get', { event_id: id }).then(function (d) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
-    document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
+    if (window.__z49showView) window.__z49showView('home'); /* [线Z49] 打开赛事默认回管理首页 */
+    document.getElementById('dashTitle').textContent = d.event.title; /* [线Z49] 状态见首页状态行 */
     refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors();
   });
 }
@@ -981,10 +1021,10 @@ function refreshDash() {
     renderRegList(regs, d.teams || [], eg.pairings || []);
     renderFeeBox();
     var pend = 0, todos = [];
-    if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请在下方「报名名单」中通过或拒绝');
+    if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请到「报名管理」的名单中通过或拒绝');
     var unpaidN = feeModeNow() === 'offline' ? regs.filter(function (x) { return (x.status === 'registered' || x.status === 'checked_in') && x.payment_status === 'pending'; }).length : 0;
-    if (unpaidN > 0) todos.push('有 ' + unpaidN + ' 位球员待确认收款：未确认收款前不会进入正式分组，请在名单中点「确认已付款」');
-    if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点上方「结束比赛」，赛事页将切换为回忆馆');
+    if (unpaidN > 0) todos.push('有 ' + unpaidN + ' 位球员待确认收款：未确认收款前不会进入正式分组，请到「报名管理」的名单中点「确认已付款」');
+    if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点本页下方「结束比赛」，赛事页将切换为回忆馆');
     if (r.report) {
       var sc = r.report.scoring.by_status || {};
       pend = (sc.submitted || 0) + (sc.verified || 0);
@@ -993,7 +1033,11 @@ function refreshDash() {
       if (currentEvent.status === 'draft') todos.push('赛事还是草稿，确认信息后点「发布赛事」开放报名');
     }
     document.getElementById('cPend').textContent = pend;
-    document.getElementById('todos').innerHTML = todos.map(function (t) { return '<div class="todo">RUKIK 替您想到：' + t + '</div>'; }).join('');
+    document.getElementById('cPairs').textContent = (eg.pairings || []).length; /* [线Z49] 首页分组数量 */
+    document.getElementById('evtStatus').textContent = ({ draft: '草稿', published: '已发布', in_progress: '比赛中', completed: '已完赛', cancelled: '已取消' })[currentEvent.status] || currentEvent.status; /* [线Z49] 首页状态 */
+    /* [线Z49] 首页待办补充分组项：pairings 来自本批 event_get 已加载数据 */
+    if ((reg + ci) > 0 && !(eg.pairings || []).length && currentEvent.status !== 'completed') todos.push('尚未生成分组：球员端暂无分组，请到「分组管理」生成');
+        document.getElementById('todos').innerHTML = todos.map(function (t) { return '<div class="todo">RUKIK 替您想到：' + t + '</div>'; }).join('');
     var pb = document.getElementById('primaryBtn');
     if (currentEvent.status === 'draft') { pb.textContent = '发布赛事'; pb.onclick = function () { updateStatus('published'); }; }
     else if (currentEvent.status === 'published') { pb.textContent = '开始比赛'; pb.onclick = function () { updateStatus('in_progress'); }; }
@@ -1074,7 +1118,7 @@ document.getElementById('createBtn').onclick = function () {
 };
 document.getElementById('boardBtn').onclick = function () { if (currentEvent) window.open('/golf/board/?e=' + currentEvent.id, '_blank'); };
 document.getElementById('shareBtn').onclick = function () { if (currentEvent) window.open('/golf/event.html?e=' + currentEvent.id, '_blank'); };
-document.getElementById('pairBtn').onclick = function () { call('pairings_generate', { event_id: currentEvent.id, round_id: currentRound.id, method: document.getElementById('pMethod').value, group_size: Number(document.getElementById('pSize').value || 4) }).then(show); };
+document.getElementById('pairBtn').onclick = function () { pmOpen(); };
 document.getElementById('snapBtn').onclick = function () { call('handicap_snapshot_all', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
 document.getElementById('cardsBtn').onclick = function () { call('scorecard_ensure', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
 document.getElementById('awardBtn').onclick = function () { call('awards_compute', { event_id: currentEvent.id }).then(function (d) { show(d); loadAwardsAdmin(); }); };
@@ -1219,7 +1263,7 @@ document.getElementById('awAddBtn').onclick = function () {
 document.getElementById('memGenBtn').onclick = function () {
   if (!currentEvent) return;
   call('memories_generate', { event_id: currentEvent.id }).then(function (d) {
-    if (d && d.ok) document.getElementById('awardMsg').textContent = '已生成 ' + ((d.memories || []).length) + ' 份赛后回忆，球员可在赛事页回忆馆／App 中查看。';
+    if (d && d.ok) document.getElementById('memMsg').textContent = '已生成 ' + ((d.memories || []).length) + ' 份赛后回忆，球员可在赛事页回忆馆／App 中查看。'; /* [线Z49] 按钮迁入赛事内容，提示落点随迁 */
     else show(d);
   });
 };
@@ -1397,6 +1441,296 @@ document.getElementById('kFile').addEventListener('change', function () {
   }
 });
 if (token) init();
+</script>
+<script>
+// [线Z48] 分组管理面板逻辑（自包含：只依赖页面级 call/escapeHtml/currentEvent/currentRound 与服务端 grouping_* 动作）
+var pmState = { eventId: null, roundId: null, draftId: null, maxSize: 4, groups: [], eligible: {}, eligibleList: [], selected: null, saveTimer: null, saving: false, seededFromPublished: false };
+function pmEl(id) { return document.getElementById(id); }
+function pmMsg(t, isErr) { var m = pmEl('pmMsg'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : ''; } }
+function pmSaveState(t, isErr) { var m = pmEl('pmSaveState'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : '#5c7260'; } }
+function pmInfo(pid) { return pmState.eligible[pid] || { player_id: pid, name: pid.slice(0, 8), handicap_index: null, self_group: null }; }
+function pmGroupedSet() { var s = {}; pmState.groups.forEach(function (g) { g.players.forEach(function (p) { s[p.player_id] = true; }); }); return s; }
+function pmSetGroupsFromPayload(payload) {
+  pmState.groups = ((payload && payload.groups) || []).map(function (g) {
+    return { name: g.name != null ? g.name : null, start_hole: g.start_hole != null ? g.start_hole : null, tee_time: g.tee_time != null ? g.tee_time : null, players: (g.players || []).map(function (p) { return { player_id: p.player_id }; }) };
+  });
+}
+function pmSerialize() {
+  return pmState.groups.map(function (g) {
+    return { name: g.name || null, start_hole: g.start_hole != null && g.start_hole !== '' ? Number(g.start_hole) : null, tee_time: g.tee_time || null, players: g.players.map(function (p) { return { player_id: p.player_id }; }) };
+  });
+}
+function pmOpen() {
+  if (!currentEvent) return;
+  var panel = pmEl('pmPanel'); if (!panel) return;
+  panel.style.display = 'block';
+  pmState.eventId = currentEvent.id;
+  var rounds = (currentEvent.rounds && currentEvent.rounds.length) ? currentEvent.rounds : (currentRound ? [currentRound] : []);
+  var sel = pmEl('pmRound');
+  sel.innerHTML = rounds.map(function (r) { return '<option value="' + r.id + '">第 ' + r.round_no + ' 轮</option>'; }).join('');
+  pmState.roundId = currentRound ? currentRound.id : (rounds[0] && rounds[0].id);
+  if (pmState.roundId) sel.value = pmState.roundId;
+  var ps = document.getElementById('pSize');
+  pmState.maxSize = Math.min(8, Math.max(1, Number((ps && ps.value) || 4)));
+  pmEl('pmMaxSize').value = pmState.maxSize;
+  var pm = document.getElementById('pMethod');
+  if (pm) pmEl('pmMethod').value = pm.value;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  pmLoad();
+}
+async function pmLoad() {
+  pmMsg(''); pmSaveState('加载中…'); pmEl('pmImpact').style.display = 'none'; pmEl('pmUnmatched').style.display = 'none';
+  var mg = await call('grouping_manage', { event_id: pmState.eventId });
+  var list = (mg && mg.eligible_players) || [];
+  pmState.eligibleList = list; pmState.eligible = {};
+  list.forEach(function (p) { pmState.eligible[p.player_id] = p; });
+  var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId });
+  pmState.seededFromPublished = false;
+  if (dg && dg.draft) {
+    pmState.draftId = dg.draft.id;
+    if (dg.draft.payload && dg.draft.payload.group_size) { pmState.maxSize = dg.draft.payload.group_size; pmEl('pmMaxSize').value = pmState.maxSize; }
+    pmSetGroupsFromPayload(dg.draft.payload);
+    pmSaveState('已载入未发布草稿');
+  } else {
+    pmState.draftId = null;
+    var eg = await call('event_get', { event_id: pmState.eventId });
+    var prs = ((eg && eg.pairings) || []).filter(function (p) { return p.round_id === pmState.roundId; });
+    if (prs.length) {
+      prs.sort(function (a, b) { return a.group_no - b.group_no; });
+      pmState.groups = prs.map(function (p) { return { name: null, start_hole: p.start_hole != null ? p.start_hole : null, tee_time: p.tee_time || null, players: (p.golf_pairing_players || []).map(function (x) { return { player_id: x.player_id }; }) }; });
+      pmState.seededFromPublished = true;
+      pmSaveState('已载入已发布分组（修改后保存为新草稿，重新发布才生效）');
+    } else { pmState.groups = []; pmSaveState('尚未分组'); }
+  }
+  var cs = await call('grouping_copy_sources', { event_id: pmState.eventId });
+  var srcSel = pmEl('pmCopySrc');
+  srcSel.innerHTML = '<option value="">（选择历史赛事）</option>' + ((cs && cs.sources) || []).map(function (s) { return '<option value="' + s.event_id + '">' + escapeHtml(s.title || '') + '（' + escapeHtml(String(s.starts_at || '').slice(0, 10)) + '，' + s.groups + ' 组）</option>'; }).join('');
+  pmRender();
+}
+function pmRender() { pmRenderGroups(); pmRenderPool(); pmRenderValid(); }
+function pmRenderGroups() {
+  var box = pmEl('pmGroups'); if (!box) return;
+  if (!pmState.groups.length) { box.innerHTML = '<p style="color:#5c7260;font-size:13px">暂无分组。用上方「自动生成草稿」「智能补组」或「新增组」开始。</p>'; return; }
+  box.innerHTML = pmState.groups.map(function (g, gi) {
+    var over = g.players.length > pmState.maxSize;
+    var members = g.players.map(function (p, idx) {
+      var info = pmInfo(p.player_id);
+      var badge = info.self_group ? ' <span style="background:#eef4ea;border:1px solid #b9cdb2;border-radius:6px;padding:0 5px;font-size:12px">自组：' + escapeHtml(info.self_group.name || '同行组') + '</span>' : '';
+      var hc = info.handicap_index != null ? '（差点 ' + info.handicap_index + '）' : '';
+      return '<div class="pmMember" draggable="true" data-gi="' + gi + '" data-idx="' + idx + '" style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed #e2eae2">' +
+        '<span style="color:#5c7260">' + (idx + 1) + '.</span><span>' + escapeHtml(info.name || '') + hc + '</span>' + badge +
+        '<span style="margin-left:auto"><button type="button" class="ghost pmMUp" data-gi="' + gi + '" data-idx="' + idx + '">↑</button> ' +
+        '<button type="button" class="ghost pmMDown" data-gi="' + gi + '" data-idx="' + idx + '">↓</button> ' +
+        '<button type="button" class="ghost pmMOut" data-gi="' + gi + '" data-idx="' + idx + '">移出</button></span></div>';
+    }).join('');
+    return '<div class="pmGroup" data-gi="' + gi + '" style="border:1px solid #cfdccf;border-radius:10px;padding:10px 12px;margin:8px 0">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>第 ' + (gi + 1) + ' 组</b>' +
+      '<span style="color:' + (over ? '#b03a2e' : '#5c7260') + ';font-size:13px">' + g.players.length + '/' + pmState.maxSize + ' 人' + (over ? '（超员）' : '') + '</span>' +
+      '<input class="pmGName" data-gi="' + gi + '" placeholder="组名（可选）" value="' + escapeHtml(g.name || '') + '" style="width:130px">' +
+      '<label style="font-size:13px">出发洞 <input class="pmGHole" data-gi="' + gi + '" type="number" min="1" max="18" value="' + (g.start_hole != null ? g.start_hole : '') + '" style="width:60px"></label>' +
+      '<label style="font-size:13px">开球时间 <input class="pmGTime" data-gi="' + gi + '" type="datetime-local" value="' + (g.tee_time ? String(g.tee_time).slice(0, 16) : '') + '"></label>' +
+      '<button type="button" class="ghost pmGDel" data-gi="' + gi + '" style="margin-left:auto">删除组</button></div>' +
+      '<div style="margin-top:6px">' + (members || '<p style="color:#5c7260;font-size:13px;margin:4px 0">空组</p>') + '</div>' +
+      '<p style="margin:8px 0 0"><button type="button" class="ghost pmGAdd" data-gi="' + gi + '">加入选中球员</button></p></div>';
+  }).join('');
+}
+function pmPoolPlayers() {
+  var grouped = pmGroupedSet();
+  var q = (pmEl('pmSearch').value || '').trim();
+  var list = pmState.eligibleList.filter(function (p) { return !grouped[p.player_id] && (!q || (p.name || '').indexOf(q) >= 0); });
+  if (pmEl('pmSort').value === 'handicap') list = list.slice().sort(function (a, b) { return (a.handicap_index == null ? 999 : a.handicap_index) - (b.handicap_index == null ? 999 : b.handicap_index); });
+  return list;
+}
+function pmRenderPool() {
+  var box = pmEl('pmPool'); if (!box) return;
+  var list = pmPoolPlayers();
+  pmEl('pmPoolCount').textContent = '（' + list.length + ' 人）';
+  if (!list.length) { box.innerHTML = '<p style="color:#5c7260;font-size:13px">没有待分组球员。</p>'; return; }
+  box.innerHTML = list.map(function (p) {
+    var sel = pmState.selected === p.player_id;
+    var badge = p.self_group ? ' <span style="background:#eef4ea;border:1px solid #b9cdb2;border-radius:6px;padding:0 5px;font-size:12px">自组：' + escapeHtml(p.self_group.name || '同行组') + '</span>' : '';
+    var hc = p.handicap_index != null ? '（差点 ' + p.handicap_index + '）' : '';
+    var opts = pmState.groups.map(function (g, gi) { return '<option value="' + gi + '">第 ' + (gi + 1) + ' 组</option>'; }).join('');
+    return '<div class="pmPoolItem" draggable="true" data-pid="' + p.player_id + '" style="display:flex;align-items:center;gap:6px;padding:5px 6px;border:1px solid ' + (sel ? '#3d7a44' : '#e2eae2') + ';border-radius:8px;margin:4px 0;background:' + (sel ? '#eef7ee' : '#fff') + ';cursor:pointer">' +
+      '<span>' + escapeHtml(p.name || '') + hc + '</span>' + badge +
+      (pmState.groups.length ? '<span style="margin-left:auto"><select class="pmQuickGroup" data-pid="' + p.player_id + '">' + opts + '</select> <button type="button" class="ghost pmQuickAdd" data-pid="' + p.player_id + '">加入</button></span>' : '') + '</div>';
+  }).join('');
+}
+function pmRenderValid() {
+  var grouped = pmGroupedSet();
+  var total = Object.keys(grouped).length;
+  var seen = {}, dup = 0;
+  pmState.groups.forEach(function (g) { g.players.forEach(function (p) { if (seen[p.player_id]) dup++; seen[p.player_id] = true; }); });
+  var over = pmState.groups.filter(function (g) { return g.players.length > pmState.maxSize; }).length;
+  var un = pmState.eligibleList.length - total;
+  var el = pmEl('pmValid');
+  el.textContent = '已分组 ' + total + ' 人 · 待分组 ' + un + ' 人 · 超员组 ' + over + ' · 重复入组 ' + dup;
+  el.style.color = (un > 0 || over > 0 || dup > 0) ? '#b03a2e' : '#3d7a44';
+}
+function pmAfterChange() { pmRender(); pmScheduleSave(); }
+function pmScheduleSave() { pmSaveState('待保存…'); if (pmState.saveTimer) clearTimeout(pmState.saveTimer); pmState.saveTimer = setTimeout(function () { pmSave(); }, 800); }
+async function pmSave() {
+  if (pmState.saving) { pmScheduleSave(); return; }
+  pmState.saving = true; pmSaveState('保存中…');
+  try {
+    if (!pmState.draftId) {
+      var r0 = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: 'empty', group_size: pmState.maxSize });
+      if (!r0 || !r0.ok) { pmSaveState('保存失败：' + ((r0 && r0.error) || '建草稿失败'), true); return; }
+      pmState.draftId = r0.draft.id;
+    }
+    var r = await call('grouping_draft_update', { event_id: pmState.eventId, draft_id: pmState.draftId, round_id: pmState.roundId, groups: pmSerialize(), max_group_size: pmState.maxSize });
+    if (r && r.ok) { pmState.seededFromPublished = false; pmSaveState('草稿已自动保存 ' + new Date().toLocaleTimeString()); }
+    else pmSaveState('保存失败：' + ((r && r.error) || '未知错误'), true);
+  } finally { pmState.saving = false; }
+}
+function pmRemoveEverywhere(pid) { pmState.groups.forEach(function (g) { g.players = g.players.filter(function (p) { return p.player_id !== pid; }); }); }
+function pmAddToGroup(pid, gi) {
+  var g = pmState.groups[gi]; if (!g) return;
+  if (g.players.length >= pmState.maxSize) { pmMsg('第 ' + (gi + 1) + ' 组已达人数上限 ' + pmState.maxSize + ' 人', true); return; }
+  pmRemoveEverywhere(pid); g.players.push({ player_id: pid }); pmMsg(''); pmAfterChange();
+}
+async function pmAuto() {
+  pmMsg('');
+  var r = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: pmEl('pmMethod').value, group_size: pmState.maxSize });
+  if (r && r.ok) { pmState.draftId = r.draft.id; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender(); pmSaveState('已生成草稿（已保存）'); }
+  else pmMsg('生成失败：' + ((r && r.error) || '未知错误'), true);
+}
+async function pmSmart() {
+  pmMsg('');
+  var r = await call('grouping_smart_fill', { event_id: pmState.eventId, group_size: pmState.maxSize });
+  if (r && r.ok) { var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId }); if (dg && dg.draft) { pmState.draftId = dg.draft.id; pmSetGroupsFromPayload(dg.draft.payload); } pmRender(); pmSaveState('智能补组已生成草稿'); }
+  else pmMsg('智能补组失败：' + ((r && r.error) || '未知错误'), true);
+}
+async function pmCopy() {
+  pmMsg(''); pmEl('pmCopyMsg').textContent = '';
+  var src = pmEl('pmCopySrc').value;
+  if (!src) { pmEl('pmCopyMsg').textContent = '先选择一场历史赛事'; return; }
+  var r = await call('grouping_copy_previous', { event_id: pmState.eventId, round_id: pmState.roundId, source_event_id: src });
+  if (r && r.ok) {
+    pmState.draftId = r.draft.id; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender();
+    pmEl('pmCopyMsg').textContent = '已复制：匹配 ' + r.matched + ' 人，未匹配 ' + (r.unmatched || []).length + ' 人';
+    var box = pmEl('pmUnmatched');
+    if ((r.unmatched || []).length) { box.style.display = 'block'; box.textContent = '以下球员在上一场有分组，但未报名本场或不符合分组资格，未能带入：' + r.unmatched.map(function (u) { return u.name || u.player_id; }).join('、'); }
+    else box.style.display = 'none';
+    pmSaveState('复制结果已存为草稿（已保存）');
+  } else pmMsg('复制失败：' + ((r && r.error) || '未知错误'), true);
+}
+function pmShowImpact(impact, errText) {
+  var box = pmEl('pmImpact'); box.style.display = 'block';
+  function names(list, fmt) { return (list || []).map(fmt).join('；'); }
+  var html = '<b>本次调整涉及已有分组/成绩，请确认影响：</b>';
+  if (errText) html += '<div style="color:#b03a2e;margin-top:6px">' + escapeHtml(errText) + '</div>';
+  if (impact) {
+    if ((impact.blocked_groups || []).length) html += '<div style="color:#b03a2e;margin-top:6px">以下组已有带成绩的记分卡，不能整体删除，已拦截：第 ' + impact.blocked_groups.join('、') + ' 组。请先把这些组的球员安排到保留的组里再发布。</div>';
+    if ((impact.moved || []).length) html += '<div style="margin-top:6px">跨组调整：' + names(impact.moved, function (m) { return escapeHtml(m.name || '') + '（第 ' + m.from_group + ' 组 → 第 ' + m.to_group + ' 组' + (m.has_scores ? '，已有成绩，成绩保留不迁移' : '') + '）'; }) + '</div>';
+    if ((impact.added || []).length) html += '<div style="margin-top:6px">新加入分组：' + names(impact.added, function (m) { return escapeHtml(m.name || '') + '（第 ' + m.to_group + ' 组）'; }) + '</div>';
+    if ((impact.removed_from_groups || []).length) html += '<div style="margin-top:6px">移回待分组：' + names(impact.removed_from_groups, function (m) { return escapeHtml(m.name || '') + '（原第 ' + m.from_group + ' 组）'; }) + '</div>';
+    if ((impact.removed_groups || []).length) html += '<div style="margin-top:6px">将删除的空组：第 ' + impact.removed_groups.join('、') + ' 组</div>';
+  }
+  var blocked = impact && (impact.blocked_groups || []).length > 0;
+  html += '<p style="margin:10px 0 0"><button type="button" id="pmImpactNo" class="ghost">取消</button>' + (blocked ? '' : ' <button type="button" id="pmImpactYes">确认发布</button>') + '</p>';
+  box.innerHTML = html;
+  pmEl('pmImpactNo').addEventListener('click', function () { box.style.display = 'none'; });
+  if (!blocked) pmEl('pmImpactYes').addEventListener('click', function () { box.style.display = 'none'; pmPublish(true); });
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+async function pmPublish(confirmed) {
+  pmMsg('');
+  if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; }
+  if (pmState.draftId || pmState.groups.length) await pmSave();
+  if (!pmState.draftId) { pmMsg(pmState.seededFromPublished ? '当前显示的是已发布分组，没有新草稿需要发布。' : '没有可发布的草稿。', !pmState.seededFromPublished); return; }
+  var body = { event_id: pmState.eventId, draft_id: pmState.draftId };
+  if (confirmed) body.confirm_impact = true;
+  var r = await call('grouping_publish', body);
+  if (r && r.ok) { pmMsg('分组已发布，球员端（App／网页／球童）已同步为最新分组。'); pmEl('pmImpact').style.display = 'none'; await pmLoad(); }
+  else if (r && (r.needs_confirm || r.impact)) pmShowImpact(r.impact, r.error || '');
+  else pmMsg('发布失败：' + ((r && r.error) || '未知错误'), true);
+}
+// 事件接线（容器内委托，面板整体搬移不丢行为）
+(function pmInit() {
+  var groupsBox = pmEl('pmGroups'), poolBox = pmEl('pmPool');
+  groupsBox.addEventListener('click', function (e) {
+    var t = e.target; if (!t.dataset) return;
+    var gi = Number(t.dataset.gi), idx = Number(t.dataset.idx);
+    if (t.classList.contains('pmMOut')) { pmState.groups[gi].players.splice(idx, 1); pmAfterChange(); }
+    else if (t.classList.contains('pmMUp') && idx > 0) { var g = pmState.groups[gi]; var tmp = g.players[idx - 1]; g.players[idx - 1] = g.players[idx]; g.players[idx] = tmp; pmAfterChange(); }
+    else if (t.classList.contains('pmMDown')) { var g2 = pmState.groups[gi]; if (idx < g2.players.length - 1) { var tmp2 = g2.players[idx + 1]; g2.players[idx + 1] = g2.players[idx]; g2.players[idx] = tmp2; pmAfterChange(); } }
+    else if (t.classList.contains('pmGDel')) { pmState.groups.splice(gi, 1); pmAfterChange(); }
+    else if (t.classList.contains('pmGAdd')) { if (!pmState.selected) { pmMsg('先在下方待分组列表点选一名球员', true); return; } pmAddToGroup(pmState.selected, gi); }
+  });
+  groupsBox.addEventListener('change', function (e) {
+    var t = e.target; if (!t.dataset) return; var gi = Number(t.dataset.gi); var g = pmState.groups[gi]; if (!g) return;
+    if (t.classList.contains('pmGName')) { g.name = t.value || null; pmScheduleSave(); }
+    else if (t.classList.contains('pmGHole')) { g.start_hole = t.value === '' ? null : Number(t.value); pmScheduleSave(); }
+    else if (t.classList.contains('pmGTime')) { g.tee_time = t.value ? new Date(t.value).toISOString() : null; pmScheduleSave(); }
+  });
+  groupsBox.addEventListener('dragstart', function (e) { var row = e.target.closest ? e.target.closest('.pmMember') : null; if (row) e.dataTransfer.setData('text/plain', JSON.stringify({ pid: pmState.groups[Number(row.dataset.gi)].players[Number(row.dataset.idx)].player_id })); });
+  groupsBox.addEventListener('dragover', function (e) { if (e.target.closest && e.target.closest('.pmGroup')) e.preventDefault(); });
+  groupsBox.addEventListener('drop', function (e) { var card = e.target.closest ? e.target.closest('.pmGroup') : null; if (!card) return; e.preventDefault(); try { var d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d && d.pid) pmAddToGroup(d.pid, Number(card.dataset.gi)); } catch (err) {} });
+  poolBox.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.classList && t.classList.contains('pmQuickAdd')) { var sel = poolBox.querySelector('.pmQuickGroup[data-pid="' + t.dataset.pid + '"]'); if (sel) pmAddToGroup(t.dataset.pid, Number(sel.value)); return; }
+    var row = e.target.closest ? e.target.closest('.pmPoolItem') : null;
+    if (row && !(t.classList && (t.classList.contains('pmQuickGroup') || t.classList.contains('pmQuickAdd')))) { pmState.selected = pmState.selected === row.dataset.pid ? null : row.dataset.pid; pmRenderPool(); }
+  });
+  poolBox.addEventListener('dragstart', function (e) { var row = e.target.closest ? e.target.closest('.pmPoolItem') : null; if (row) e.dataTransfer.setData('text/plain', JSON.stringify({ pid: row.dataset.pid })); });
+  poolBox.addEventListener('dragover', function (e) { e.preventDefault(); });
+  poolBox.addEventListener('drop', function (e) { e.preventDefault(); try { var d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d && d.pid) { pmRemoveEverywhere(d.pid); pmAfterChange(); } } catch (err) {} });
+  pmEl('pmSearch').addEventListener('input', pmRenderPool);
+  pmEl('pmSort').addEventListener('change', pmRenderPool);
+  pmEl('pmRound').addEventListener('change', function () { pmState.roundId = pmEl('pmRound').value; pmLoad(); });
+  pmEl('pmMaxSize').addEventListener('change', function () { pmState.maxSize = Math.min(8, Math.max(1, Number(pmEl('pmMaxSize').value || 4))); pmEl('pmMaxSize').value = pmState.maxSize; pmRender(); pmScheduleSave(); });
+  pmEl('pmAutoBtn').addEventListener('click', pmAuto);
+  pmEl('pmSmartBtn').addEventListener('click', pmSmart);
+  pmEl('pmCopyBtn').addEventListener('click', pmCopy);
+  pmEl('pmAddGroupBtn').addEventListener('click', function () { pmState.groups.push({ name: null, start_hole: null, tee_time: null, players: [] }); pmAfterChange(); });
+  pmEl('pmSaveBtn').addEventListener('click', function () { if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; } pmSave(); });
+  pmEl('pmPublishBtn').addEventListener('click', function () { pmPublish(false); });
+})();
+
+</script>
+
+<script>
+/* [线Z49] 管理首页 + 6 分类：数据驱动显隐。分类定义带 kinds 适配位——
+   本台现仅服务 golf 赛事（数据源 golf-api），普通活动接入时按 kind 过滤分类即可，
+   现阶段不声称已覆盖普通活动后台。 */
+var Z49_CATS = [
+  { key: 'viewReg',     name: '报名管理',   sub: '名单 · 收款 · 签到',   kinds: ['golf'] },
+  { key: 'viewPair',    name: '分组管理',   sub: '人工分组 · 出发洞',   kinds: ['golf'] },
+  { key: 'viewScore',   name: '成绩与排名', sub: '记分 · 裁判 · 排行榜', kinds: ['golf'] },
+  { key: 'viewAward',   name: '奖项管理',   sub: '计算 · 确认 · 颁奖',   kinds: ['golf'] },
+  { key: 'viewContent', name: '赛事内容',   sub: '海报 · 公告 · 合作伙伴', kinds: ['golf'] },
+  { key: 'viewSettings',name: '赛事设置',   sub: '规则 · AI球童 · 导出', kinds: ['golf'] }
+];
+function z49EventKind() { return 'golf'; }
+function z49ShowView(key) {
+  var isHome = key === 'home';
+  document.getElementById('viewHome').style.display = isHome ? 'block' : 'none';
+  document.getElementById('catBar').style.display = isHome ? 'none' : 'block';
+  var title = '';
+  Z49_CATS.forEach(function (c) {
+    var el = document.getElementById(c.key);
+    if (el) el.style.display = (!isHome && c.key === key) ? 'block' : 'none';
+    if (c.key === key) title = c.name;
+  });
+  if (!isHome) document.getElementById('catTitle').textContent = title;
+  window.scrollTo(0, 0);
+}
+window.__z49showView = z49ShowView;
+(function () {
+  var kind = z49EventKind();
+  var grid = document.getElementById('catGrid');
+  grid.innerHTML = Z49_CATS.filter(function (c) { return c.kinds.indexOf(kind) >= 0; }).map(function (c) {
+    return '<div class="catcard" data-view="' + c.key + '"><b>' + c.name + '</b><span>' + c.sub + '</span></div>';
+  }).join('');
+  Array.prototype.forEach.call(grid.querySelectorAll('.catcard'), function (el) {
+    el.onclick = function () { z49ShowView(el.getAttribute('data-view')); };
+  });
+  document.getElementById('catBack').onclick = function () { z49ShowView('home'); };
+  document.getElementById('photosBtn').onclick = function () {
+    if (currentEvent) window.open('../photos.html?e=' + encodeURIComponent(currentEvent.id), '_blank');
+  };
+})();
 </script>
 </body>
 </html>
