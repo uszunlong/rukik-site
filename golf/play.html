@@ -91,6 +91,45 @@
   table.scores th { color: #8B857D; font-weight: 600; font-size: 12.5px; }
   .skel { padding: 34px 0; text-align: center; color: #8B857D; font-size: 14px; }
   .foot { margin-top: 18px; text-align: center; font-size: 12px; color: #b3aa99; line-height: 1.8; }
+  /* [线Z44] 一页式球局：模块②页内球童＋模块③球洞地图（Z28 渲染）＋H5 入口 */
+  .cdcare { background: #f2f7f2; border: 1px solid #d7e8d7; border-radius: 12px; padding: 11px 13px; font-size: 14px; line-height: 1.7; color: #2f4633; }
+  .cdmsgs { margin-top: 12px; max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .cd-msg { max-width: 88%; padding: 10px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; margin-top: 10px; word-break: break-word; }
+  .cd-msg.u { background: #14532d; color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+  .cd-msg.a { background: #fbf7ec; border: 1px solid #eee5cf; color: #2b2b28; margin-right: auto; border-bottom-left-radius: 4px; }
+  .cd-msg.a p { margin: 0 0 6px; } .cd-msg.a p:last-child { margin-bottom: 0; }
+  .cd-msg.a .h { font-weight: 700; margin: 2px 0 6px; }
+  .cd-msg.a ul { margin: 4px 0 6px; padding-left: 18px; }
+  .cd-sys { text-align: center; font-size: 12.5px; color: #8B857D; margin-top: 10px; }
+  .cd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .cd-chips button { background: #fff; border: 1px solid #d9e2d9; color: #14532d; border-radius: 999px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .cd-inrow { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
+  .cd-inrow textarea { flex: 1; min-width: 0; border: 1px solid #e3ddd2; border-radius: 14px; padding: 11px 13px; font-size: 15px; outline: none; background: #fff; resize: none; max-height: 96px; font-family: inherit; }
+  .cd-inrow button { background: #14532d; color: #fff; border: none; border-radius: 14px; padding: 12px 18px; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .cd-inrow button:disabled { opacity: .55; }
+  .cd-hint { font-size: 12px; color: #b3aa99; margin-top: 8px; line-height: 1.6; }
+  .maphead { font-size: 15px; font-weight: 700; color: #14532d; }
+  #mapSvgBox { margin-top: 10px; cursor: zoom-in; }
+  #mapSvgBox svg.map { width: 100%; height: auto; display: block; border-radius: 12px; }
+  .holeinfo { margin-top: 10px; font-size: 13.5px; color: #57534a; line-height: 1.7; }
+  .hdov { position: fixed; inset: 0; z-index: 95; background: rgba(20,34,53,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .hdov .hd-box { background: #fdfdf8; border-radius: 16px; padding: 12px; max-width: 860px; width: 100%; max-height: 88vh; overflow: auto; }
+  .hdov .hd-box svg.map { width: 100%; height: auto; display: block; }
+  .hdov .hd-close { position: fixed; top: 14px; right: 14px; background: #14532d; color: #fff; border: none; border-radius: 999px; padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer; z-index: 96; }
+  .entry { display: block; width: 100%; text-align: left; background: #fff; border: 1.5px solid #e7e2d4; border-radius: 16px; padding: 16px; font-size: 17px; font-weight: 700; color: #20242a; cursor: pointer; margin-top: 12px; text-decoration: none; box-shadow: 0 2px 12px rgba(20,34,53,.05); font-family: inherit; }
+  .entry small { display: block; font-size: 13px; font-weight: 400; color: #8B857D; margin-top: 4px; }
+  .entry.main { background: #14532d; color: #fff; border-color: #14532d; }
+  .entry.main small { color: #cfe3cf; }
+  .csr { padding: 10px 6px; cursor: pointer; border-bottom: 1px solid #eef2ee; font-size: 14.5px; }
+  .csr small { display: block; color: #8B857D; font-size: 12.5px; margin-top: 2px; }
+  .sharebox { background: #f2f7f2; border: 1px solid #d7e8d7; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.7; word-break: break-all; margin-top: 12px; }
+  /* [A2] 球童模块头部紧凑陪伴控件（宣传卡已取消） */
+  .cdcarectl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+  .cdcarectl .cc-label{font-size:12.5px;color:#5b6b5e;font-weight:600}
+  .cdcarectl .cc-cur{background:#0B3B2C;border:1px solid #0B3B2C;color:#E3C878;border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .cdcarectl .cc-opt{background:#fff;border:1px solid #cfe0d2;color:#14532d;border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .cdcarectl .cc-opt.on{background:#0C7A43;border-color:#0C7A43;color:#fff;font-weight:700}
+  .cd-sub2{font-size:12.5px;color:#5b6b5e;margin-top:2px}
 </style>
 </head>
 <body>
@@ -102,6 +141,32 @@
 <div id="authBar" hidden></div>
 <div class="wrap">
   <div id="app"><div class="skel">正在加载赛事信息…</div></div>
+  <div id="cdModule" hidden>
+    <div class="card">
+      <h2>问 RUKIK Golf</h2>
+      <div class="cd-sub2">赛事智能球童</div>
+      <div class="cdcarectl" id="cdCareCtlP"></div>
+      <div class="cdcare" id="cdCare"></div>
+      <div class="cdmsgs" id="cdMsgs" hidden></div>
+      <div class="cd-chips" id="cdChips"></div>
+      <div class="cd-inrow">
+        <textarea id="cdInput" rows="1" placeholder="问球童：规则、球场、我的成绩……"></textarea>
+        <button type="button" id="cdSend">发送</button>
+      </div>
+      <div class="cd-hint">AI 球童是平台官方 AI，不是真人教练；成绩与排名以赛事正式发布为准。</div>
+    </div>
+  </div>
+  <div id="mapModule" hidden>
+    <div class="card">
+      <h2>球场地图</h2>
+      <div class="maphead" id="mapHead"></div>
+      <div id="mapSvgBox"><div class="skel">地图加载中…</div></div>
+      <div class="holeinfo" id="mapInfo"></div>
+      <div class="btnrow"><button class="btn plain" id="mapHdBtn" type="button">查看高清球洞图</button></div>
+    </div>
+  </div>
+
+  <div id="playHd" class="hdov" hidden><div class="hd-box" id="playHdBox"></div><button type="button" class="hd-close" id="playHdClose">关闭</button></div>
   <div class="foot">RUKIK Golf · 网页记分与 App 共用同一记分卡与成绩记录<br>报名、记分、基础 AI 球童、球场地图与个人成绩永久免费</div>
 </div>
 <script type="module">
@@ -111,6 +176,7 @@ var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
 var qs = new URLSearchParams(location.search);
 var eventId = qs.get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
+var HOME_MODE = !qs.get('e'); /* [线Z44] 无 e 参数＝H5 入口（发起/加入/回忆），不默认落入某场赛事 */
 document.getElementById('backLink').href = 'event.html?e=' + encodeURIComponent(eventId);
 
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -159,6 +225,577 @@ function cacheSet(patch) {
     Object.assign(c, patch); c.at = Date.now();
     localStorage.setItem(CACHE_KEY, JSON.stringify(c));
   } catch (e) {}
+}
+
+/* ---------- [线Z44] 逐洞地图渲染（Z28 规范实现自 event.html 原样移植） ---------- */
+var PREVIEW = null, curHole = 1, geomCache = {};
+/* ═══ 逐洞地图「插画级」渲染（线 Z28）：与 App holeMapGeom.ts 同一算法/配色。
+ * 全部图形由 course_geometry 真实几何派生：球道修剪条纹（clipPath 裁剪不越界）、
+ * 距离标识按中心线大地线实算、果岭放大插图为真实果岭重投影＋纵深码数；
+ * 取景按单洞要素（全场 boundary 只在总览呈现）；无数据要素不画、不编造。 ═══ */
+/* 逐洞地图「插画级」渲染核心（线 Z28 规范实现）。
+ * 网页 event.html 的 renderHoleSvg 与 App holeMapGeom.ts 均按本文件同一套
+ * 数学/配色/层序实现。全部图形由 golf-api course_geometry 的真实 OSM 几何
+ * 派生：条纹裁剪在球道多边形内、距离点按中心线大地线实算、果岭放大图为
+ * 果岭多边形的真实重投影；无数据的要素一律不画，绝不生成假形状。 */
+
+const MAP_W = 720, MAP_H = 520, PAD = 26;
+
+const PAL = {
+  backdrop: '#e9f2e9', backdropEdge: '#d7e2cf',
+  boundary: '#9db8a2',
+  rough: '#cfe0b8',
+  fairwayBase: '#a9d69a', stripeA: '#b9e2ac', stripeB: '#9ccb8c', fairwayEdge: '#8fbf82',
+  greenHalo: '#79c47e', green: '#45a34b', greenEdge: '#35823b', greenInner: 'rgba(255,255,255,0.10)',
+  bunker: '#eed9a4', bunkerEdge: '#d3b26e', bunkerInner: '#f7ecd2',
+  waterEdge: '#4b93c4', waterFrom: '#8ecdf2', waterTo: '#5ea9dd',
+  pathUnder: '#b7bcb0', pathOver: '#eaeae3',
+  tee: '#f2ecd9', teeEdge: '#bfb183',
+  centerline: '#14532d',
+  markerRing: '#14532d', markerText: '#14532d',
+  flag: '#e11d48', pole: '#374151',
+  treeDark: '#57934a', treeLight: '#6fae5f',
+  insetBg: '#fdfdf8', insetRing: '#d8d2c0',
+  chipBg: '#ffffff', chipEdge: '#ddd6c2', chipYards: '#20301f', chipName: '#75806e',
+};
+const ORDER = { rough: 1, fairway: 1, water_hazard: 2, cartpath: 3, bunker: 4, green: 5, tee: 6 };
+
+/* ---------- 基础几何 ---------- */
+function featGeom(f) {
+  const gj = f && (f.geojson || f);
+  if (!gj) return null;
+  if (gj.geometry) return gj.geometry;
+  if (gj.coordinates) return gj;
+  return null;
+}
+function collectPts(g, pts) {
+  if (!g) return;
+  if (g.type === 'Point') pts.push(g.coordinates);
+  else if (g.type === 'LineString' || g.type === 'MultiPoint') (g.coordinates || []).forEach(p => pts.push(p));
+  else if (g.type === 'Polygon' || g.type === 'MultiLineString') (g.coordinates || []).forEach(r => (r || []).forEach(p => pts.push(p)));
+  else if (g.type === 'MultiPolygon') (g.coordinates || []).forEach(pl => (pl || []).forEach(r => (r || []).forEach(p => pts.push(p))));
+}
+function makeProjector(geoms) {
+  const pts = [];
+  geoms.forEach(g => collectPts(g, pts));
+  if (!pts.length) return null;
+  let x0 = 1 / 0, x1 = -1 / 0, y0 = 1 / 0, y1 = -1 / 0;
+  pts.forEach(p => { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; });
+  const kx = Math.cos(((y0 + y1) / 2) * Math.PI / 180);
+  const sx = (MAP_W - 2 * PAD) / Math.max(1e-9, (x1 - x0) * kx);
+  const sy = (MAP_H - 2 * PAD) / Math.max(1e-9, y1 - y0);
+  const sc = Math.min(sx, sy);
+  return p => [PAD + (p[0] - x0) * kx * sc, MAP_H - PAD - (p[1] - y0) * sc];
+}
+function pathOf(geom, pr) {
+  const line = coords => coords.map((p, i) => { const q = pr(p); return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' ');
+  if (!geom) return '';
+  if (geom.type === 'LineString') return line(geom.coordinates || []);
+  if (geom.type === 'Polygon') return (geom.coordinates || []).map(r => line(r) + ' Z').join(' ');
+  if (geom.type === 'MultiPolygon') return (geom.coordinates || []).map(pl => (pl || []).map(r => line(r) + ' Z').join(' ')).join(' ');
+  if (geom.type === 'MultiLineString') return (geom.coordinates || []).map(r => line(r)).join(' ');
+  return '';
+}
+function outerRings(geom) {
+  if (!geom) return [];
+  if (geom.type === 'Polygon') return geom.coordinates && geom.coordinates[0] ? [geom.coordinates[0]] : [];
+  if (geom.type === 'MultiPolygon') return (geom.coordinates || []).map(pl => pl && pl[0]).filter(Boolean);
+  return [];
+}
+function ringCentroid(ring) {
+  let x = 0, y = 0, n = 0;
+  (ring || []).forEach(p => { x += p[0]; y += p[1]; n++; });
+  return n ? [x / n, y / n] : [0, 0];
+}
+function ringAreaPx(ringPx) {
+  let a = 0;
+  for (let i = 0; i < ringPx.length; i++) {
+    const p = ringPx[i], q = ringPx[(i + 1) % ringPx.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return a / 2;
+}
+function pointInRing(pt, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function haversineM(a, b) {
+  const R = 6371000, t = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * t, dLng = (b[0] - a[0]) * t;
+  const s = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[1] * t) * Math.cos(b[1] * t) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- 中心线：距离标识实算 ---------- */
+function centerlineCoords(feats) {
+  const f = feats.find(f => f.type === 'hole');
+  if (!f) return null;
+  const g = featGeom(f);
+  if (!g) return null;
+  if (g.type === 'LineString') return g.coordinates;
+  if (g.type === 'MultiLineString') {
+    let best = null, bl = -1;
+    (g.coordinates || []).forEach(l => { if (l.length > bl) { bl = l.length; best = l; } });
+    return best;
+  }
+  return null;
+}
+function pinPoint(feats) {
+  const f = feats.find(f => f.type === 'pin');
+  const g = f && featGeom(f);
+  return g && g.type === 'Point' ? g.coordinates : null;
+}
+function lineCum(line) {
+  const cum = [0];
+  for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversineM(line[i - 1], line[i]));
+  return cum;
+}
+function pointAtArc(line, cum, s) {
+  const total = cum[cum.length - 1];
+  s = Math.max(0, Math.min(total, s));
+  let i = 1;
+  while (i < cum.length - 1 && cum[i] < s) i++;
+  const seg = cum[i] - cum[i - 1] || 1;
+  const f = (s - cum[i - 1]) / seg;
+  return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * f, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * f];
+}
+/* 距果岭 100/150/200 码标识：沿中心线大地线实算位置，返回投影坐标＋法向。 */
+function distanceMarkers(feats, pr, inset) {
+  const raw = centerlineCoords(feats);
+  if (!raw || raw.length < 2) return [];
+  const pin = pinPoint(feats);
+  let line = raw.slice();
+  if (pin) {
+    const dFirst = haversineM(pin, line[0]), dLast = haversineM(pin, line[line.length - 1]);
+    if (dFirst < dLast) line.reverse();
+  }
+  const cum = lineCum(line);
+  const totalM = cum[cum.length - 1];
+  const totalY = totalM / 0.9144;
+  const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
+  let greenC = null;
+  if (greens.length) {
+    const ring = outerRings(greens[0])[0];
+    if (ring) { const c = ringCentroid(ring); greenC = pr(c); }
+  }
+  const out = [];
+  [200, 150, 100].forEach(R => {
+    if (totalY - R < 35) return; // 离发球台太近的标准点不标（短洞）
+    const sM = totalM - R * 0.9144;
+    const pt = pointAtArc(line, cum, sM);
+    const xy = pr(pt);
+    const pa = pr(pointAtArc(line, cum, Math.max(0, sM - 9)));
+    const pb = pr(pointAtArc(line, cum, Math.min(totalM, sM + 9)));
+    let tx = pb[0] - pa[0], ty = pb[1] - pa[1];
+    const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+    const nx = -ty, ny = tx;
+    const cands = [[xy[0] + nx * 23, xy[1] + ny * 23], [xy[0] - nx * 23, xy[1] - ny * 23], [xy[0], xy[1]]];
+    let chosen = null;
+    for (const c of cands) {
+      if (c[0] < 15 || c[0] > MAP_W - 15 || c[1] < 15 || c[1] > MAP_H - 15) continue;
+      if (inset && Math.hypot(c[0] - inset.cx, c[1] - inset.cy) < inset.r + 16) continue;
+      if (!chosen) { chosen = c; continue; }
+      if (greenC) {
+        const dNew = Math.hypot(c[0] - greenC[0], c[1] - greenC[1]);
+        const dOld = Math.hypot(chosen[0] - greenC[0], chosen[1] - greenC[1]);
+        if (dNew > dOld) chosen = c;
+      }
+    }
+    if (!chosen) chosen = [xy[0], xy[1]];
+    out.push({ x: xy[0], y: xy[1], nx, ny, bx: chosen[0], by: chosen[1], label: R, totalYds: Math.round(totalY) });
+  });
+  return out;
+}
+
+/* ---------- 球道修剪条纹（缎带多边形＋clipPath 裁剪，绝不越界） ---------- */
+function resamplePx(pts, step) {
+  const out = [];
+  let acc = 0, nextMark = 0;
+  for (let i = 0; i < pts.length; i++) {
+    if (i === 0) { out.push({ x: pts[0][0], y: pts[0][1], s: 0 }); continue; }
+    const a = pts[i - 1], b = pts[i];
+    const seg = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    let d = step - (acc - nextMark + (nextMark - acc));
+    // 沿段每 step 取一点
+    let walked = 0;
+    let since = (i === 1) ? step : (acc - Math.floor(acc / step) * step);
+    let toNext = step - ((acc % step + step) % step);
+    if (toNext === 0) toNext = step;
+    while (walked + toNext <= seg) {
+      walked += toNext;
+      const f = walked / (seg || 1);
+      out.push({ x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f, s: acc + walked });
+      toNext = step;
+    }
+    acc += seg;
+    out.push({ x: b[0], y: b[1], s: acc });
+    void d; void since;
+  }
+  // 补法向
+  for (let i = 0; i < out.length; i++) {
+    const p0 = out[Math.max(0, i - 1)], p1 = out[Math.min(out.length - 1, i + 1)];
+    let tx = p1.x - p0.x, ty = p1.y - p0.y;
+    const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+    out[i].nx = -ty; out[i].ny = tx;
+  }
+  return out;
+}
+function interpRs(rs, s) {
+  if (s <= 0) return rs[0];
+  if (s >= rs[rs.length - 1].s) return rs[rs.length - 1];
+  let i = 1;
+  while (i < rs.length - 1 && rs[i].s < s) i++;
+  const a = rs[i - 1], b = rs[i];
+  const f = (s - a.s) / ((b.s - a.s) || 1);
+  let nx = a.nx + (b.nx - a.nx) * f, ny = a.ny + (b.ny - a.ny) * f;
+  const l = Math.hypot(nx, ny) || 1;
+  return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, s, nx: nx / l, ny: ny / l };
+}
+function stripeRibbons(lineGeo, pr) {
+  if (!lineGeo || lineGeo.length < 2) return [];
+  const pts = lineGeo.map(p => pr(p));
+  const rs = resamplePx(pts, 4);
+  if (rs.length < 2) return [];
+  const total = rs[rs.length - 1].s;
+  if (total < 40) return [];
+  const bandCount = Math.max(4, Math.min(14, Math.round(total / 34)));
+  const bandLen = total / bandCount, HW = 380;
+  const ribbons = [];
+  for (let k = 0; k < bandCount; k++) {
+    const s0 = k * bandLen, s1 = Math.min(total, (k + 1) * bandLen);
+    const chunk = [interpRs(rs, s0)];
+    rs.forEach(p => { if (p.s > s0 && p.s < s1) chunk.push(p); });
+    chunk.push(interpRs(rs, s1));
+    if (chunk.length < 2) continue;
+    const left = chunk.map(c => [c.x + c.nx * HW, c.y + c.ny * HW]);
+    const right = chunk.map(c => [c.x - c.nx * HW, c.y - c.ny * HW]).reverse();
+    ribbons.push({ band: k, pts: left.concat(right) });
+  }
+  return ribbons;
+}
+function ptsToPath(pts) {
+  return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z';
+}
+
+/* ---------- 植被（仅当 OSM 真有 wood/tree/scrub 要素时；无数据不画） ---------- */
+const VEG_TYPES = { wood: 1, woods: 1, forest: 1, tree: 1, trees: 1, tree_row: 1, scrub: 1, vegetation: 1 };
+function treeItems(f, pr, items, seedBase) {
+  const g = featGeom(f);
+  if (!g) return;
+  if (g.type === 'Point') {
+    const q = pr(g.coordinates);
+    items.push({ k: 'circle', cx: q[0], cy: q[1], r: 7, fill: PAL.treeDark });
+    items.push({ k: 'circle', cx: q[0] - 1.6, cy: q[1] - 1.6, r: 4.4, fill: PAL.treeLight });
+    return;
+  }
+  if (g.type === 'LineString') {
+    const pts = (g.coordinates || []).map(p => pr(p));
+    const rs = resamplePx(pts, 15);
+    rs.forEach(p => {
+      items.push({ k: 'circle', cx: p.x, cy: p.y, r: 5.6, fill: PAL.treeDark });
+      items.push({ k: 'circle', cx: p.x - 1.2, cy: p.y - 1.2, r: 3.5, fill: PAL.treeLight });
+    });
+    return;
+  }
+  const rings = outerRings(g);
+  rings.forEach(ring => {
+    const ringPx = ring.map(p => pr(p));
+    const area = Math.abs(ringAreaPx(ringPx));
+    const n = Math.max(3, Math.min(46, Math.round(area / 800)));
+    const xs = ringPx.map(p => p[0]), ys = ringPx.map(p => p[1]);
+    const bx0 = Math.min.apply(null, xs), bx1 = Math.max.apply(null, xs), by0 = Math.min.apply(null, ys), by1 = Math.max.apply(null, ys);
+    const seed = Math.round((ring[0][0] + ring[0][1]) * 1e5) + seedBase;
+    const rnd = mulberry32(seed);
+    let placed = 0, guard = 0;
+    while (placed < n && guard < n * 30) {
+      guard++;
+      const x = bx0 + rnd() * (bx1 - bx0), y = by0 + rnd() * (by1 - by0);
+      if (!pointInRing([x, y], ringPx)) continue;
+      const r = 4.6 + rnd() * 4.2;
+      items.push({ k: 'circle', cx: x, cy: y, r, fill: PAL.treeDark });
+      items.push({ k: 'circle', cx: x - r * 0.22, cy: y - r * 0.22, r: r * 0.62, fill: PAL.treeLight });
+      placed++;
+    }
+  });
+}
+
+/* ---------- 果岭放大插图（真实果岭多边形重投影＋周边要素＋纵深码数） ---------- */
+const INSET = { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
+function insetModel(feats, pin) {
+  const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
+  if (!greens.length) return null;
+  let ring = null, bestArea = -1;
+  greens.forEach(g => outerRings(g).forEach(r => {
+    let a = 0;
+    for (let i = 1; i < r.length; i++) a += haversineM(r[i - 1], r[i]);
+    if (a > bestArea) { bestArea = a; ring = r; }
+  }));
+  if (!ring || ring.length < 3) return null;
+  const c = ringCentroid(ring);
+  const kx = Math.cos(c[1] * Math.PI / 180), M = 111320;
+  const toM = p => [(p[0] - c[0]) * kx * M, (p[1] - c[1]) * M];
+  let half = 0;
+  ring.forEach(p => { const m = toM(p); half = Math.max(half, Math.abs(m[0]), Math.abs(m[1])); });
+  half = Math.max(15, half * 2.05);
+  const scale = (INSET.r - 5) / half;
+  const ip = p => { const m = toM(p); return [INSET.cx + m[0] * scale, INSET.cy - m[1] * scale]; };
+  let depthM = 0;
+  for (let i = 0; i < ring.length; i++) for (let j = i + 1; j < ring.length; j++) depthM = Math.max(depthM, haversineM(ring[i], ring[j]));
+  const items = [];
+  items.push({ k: 'circle', cx: INSET.cx + 2, cy: INSET.cy + 3, r: INSET.r, fill: 'rgba(20,60,30,0.16)', clip: null });
+  items.push({ k: 'circle', cx: INSET.cx, cy: INSET.cy, r: INSET.r, fill: PAL.insetBg, stroke: PAL.insetRing, sw: 1.2 });
+  const clipId = 'insetClip';
+  const near = feats.filter(f => ['bunker', 'water_hazard', 'cartpath', 'rough', 'fairway'].indexOf(f.type) >= 0);
+  near.forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    const pts = [];
+    collectPts(g, pts);
+    const cen = ringCentroid(pts);
+    const cm = toM(cen);
+    if (Math.abs(cm[0]) > half * 1.25 || Math.abs(cm[1]) > half * 1.25) return;
+    if (f.type === 'cartpath') { items.push({ k: 'path', d: pathOf(g, ip), fill: 'none', stroke: PAL.pathOver, sw: 2, clip: clipId }); return; }
+    const fill = f.type === 'bunker' ? PAL.bunker : f.type === 'water_hazard' ? 'url(#waterGrad)' : f.type === 'fairway' ? PAL.fairwayBase : PAL.rough;
+    items.push({ k: 'path', d: pathOf(g, ip), fill, stroke: f.type === 'bunker' ? PAL.bunkerEdge : 'none', sw: 0.8, clip: clipId });
+  });
+  greens.forEach(g => {
+    items.push({ k: 'path', d: pathOf(g, ip), fill: PAL.greenHalo, stroke: PAL.greenHalo, sw: 3, clip: clipId });
+    items.push({ k: 'path', d: pathOf(g, ip), fill: PAL.green, stroke: PAL.greenEdge, sw: 0.8, clip: clipId });
+  });
+  const flagAt = pin ? ip(pin) : [INSET.cx, INSET.cy];
+  if (flagAt[0] > INSET.cx - INSET.r && flagAt[0] < INSET.cx + INSET.r && flagAt[1] > INSET.cy - INSET.r && flagAt[1] < INSET.cy + INSET.r) {
+    items.push({ k: 'line', x1: flagAt[0], y1: flagAt[1] + 1, x2: flagAt[0], y2: flagAt[1] - 12, stroke: PAL.pole, sw: 1.6, clip: clipId });
+    items.push({ k: 'poly', pts: flagAt[0] + ',' + (flagAt[1] - 12) + ' ' + flagAt[0] + ',' + (flagAt[1] - 7) + ' ' + (flagAt[0] + 8.5) + ',' + (flagAt[1] - 9.5), fill: PAL.flag, clip: clipId });
+    items.push({ k: 'circle', cx: flagAt[0], cy: flagAt[1], r: 2.2, fill: '#1f2937', stroke: '#ffffff', sw: 1, clip: clipId });
+  }
+  const label = '纵深 ' + Math.round(depthM / 0.9144) + ' 码';
+  const pillW = label.length * 6.4 + 16;
+  items.push({ k: 'rect', x: INSET.cx - pillW / 2, y: INSET.cy + INSET.r - 21, w: pillW, h: 15, rx: 7.5, fill: 'rgba(255,255,255,0.92)' });
+  items.push({ k: 'text', x: INSET.cx, y: INSET.cy + INSET.r - 10, text: label, size: 9.5, weight: 600, fill: PAL.markerText, anchor: 'middle' });
+  return { items, cx: INSET.cx, cy: INSET.cy, r: INSET.r, depthYds: Math.round(depthM / 0.9144), clipId };
+}
+
+/* ---------- 主构建：以给定投影器渲染一洞地形层 ---------- */
+function buildArtWithProjector(feats, boundaryGeom, pr, opts) {
+  opts = opts || {};
+  const items = [];
+  const sorted = feats.slice().sort((a, b) => (ORDER[a.type] || 5) - (ORDER[b.type] || 5));
+  const byType = t => sorted.filter(f => f.type === t);
+  const hasFairway = byType('fairway').some(f => { const g = featGeom(f); return g && (g.type === 'Polygon' || g.type === 'MultiPolygon'); });
+  const pin = pinPoint(feats);
+
+  if (boundaryGeom) items.push({ k: 'path', d: pathOf(boundaryGeom, pr), fill: 'none', stroke: PAL.boundary, sw: 1.5, dash: '5 4' });
+
+  byType('rough').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.rough }); });
+
+  feats.forEach((f, i) => { if (VEG_TYPES[f.type]) treeItems(f, pr, items, i * 7919); });
+
+  byType('water_hazard').forEach(f => {
+    const g = featGeom(f);
+    if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'url(#waterGrad)', stroke: PAL.waterEdge, sw: 1 });
+  });
+
+  if (hasFairway) {
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.fairwayBase }); });
+    const line = centerlineCoords(feats);
+    const ribbons = line ? stripeRibbons(line, pr) : [];
+    let dA = '', dB = '';
+    ribbons.forEach(r => { if (r.band % 2 === 0) dA += ptsToPath(r.pts); else dB += ptsToPath(r.pts); });
+    if (dA) items.push({ k: 'path', d: dA, fill: PAL.stripeA, clip: 'fwClip' });
+    if (dB) items.push({ k: 'path', d: dB, fill: PAL.stripeB, clip: 'fwClip' });
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.fairwayEdge, sw: 1 }); });
+  } else {
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.fairwayBase }); });
+  }
+
+  byType('cartpath').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.pathUnder, sw: 4.5, opacity: 0.9 }); });
+  byType('cartpath').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.pathOver, sw: 2.6 }); });
+
+  byType('bunker').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.bunker, stroke: PAL.bunkerEdge, sw: 1.1 });
+    const rings = outerRings(g);
+    if (rings.length) {
+      const c = ringCentroid(rings[0]);
+      const cp = pr(c);
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.bunkerInner, opacity: 0.85, transform: 'translate(' + cp[0].toFixed(1) + ' ' + cp[1].toFixed(1) + ') scale(0.8) translate(' + (-cp[0]).toFixed(1) + ' ' + (-cp[1]).toFixed(1) + ')' });
+    }
+  });
+
+  byType('green').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.greenHalo, stroke: PAL.greenHalo, sw: 7 });
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.green, stroke: PAL.greenEdge, sw: 1 });
+    const rings = outerRings(g);
+    if (rings.length) {
+      const c = ringCentroid(rings[0]);
+      const cp = pr(c);
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.greenInner, transform: 'translate(' + cp[0].toFixed(1) + ' ' + cp[1].toFixed(1) + ') scale(0.78) translate(' + (-cp[0]).toFixed(1) + ' ' + (-cp[1]).toFixed(1) + ')' });
+    }
+  });
+
+  byType('tee').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    if (g.type === 'Point') {
+      const q = pr(g.coordinates);
+      items.push({ k: 'rect', x: q[0] - 6, y: q[1] - 4.5, w: 12, h: 9, rx: 2, fill: PAL.tee, stroke: PAL.teeEdge, sw: 1 });
+    } else {
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.tee, stroke: PAL.teeEdge, sw: 1.1 });
+    }
+  });
+
+  if (!hasFairway) {
+    const line = centerlineCoords(feats);
+    if (line) {
+      const lg = { type: 'LineString', coordinates: line };
+      items.push({ k: 'path', d: pathOf(lg, pr), fill: 'none', stroke: PAL.centerline, sw: 3.5, linecap: 1 });
+    }
+  }
+
+  const inset = opts.inset === false ? null : insetModel(feats, pin);
+  if (inset) inset.items.forEach(it => items.push(it));
+
+  const markers = opts.markers === false ? [] : distanceMarkers(feats, pr, inset);
+  markers.forEach(m => {
+    items.push({ k: 'line', x1: m.x - m.nx * 10, y1: m.y - m.ny * 10, x2: m.x + m.nx * 10, y2: m.y + m.ny * 10, stroke: 'rgba(20,83,45,0.35)', sw: 5, linecap: 1 });
+    items.push({ k: 'line', x1: m.x - m.nx * 10, y1: m.y - m.ny * 10, x2: m.x + m.nx * 10, y2: m.y + m.ny * 10, stroke: '#ffffff', sw: 2.6, linecap: 1 });
+    items.push({ k: 'circle', cx: m.bx, cy: m.by, r: 12, fill: '#ffffff', stroke: PAL.markerRing, sw: 1.6 });
+    items.push({ k: 'text', x: m.bx, y: m.by + 0.5, text: String(m.label), size: 11.5, weight: 700, fill: PAL.markerText, anchor: 'middle', dyEm: 0.36 });
+  });
+
+  // 旗杆（pin 在放大插图内时由插图内的旗代替）
+  let flagPt = pin ? pr(pin) : null;
+  if (!flagPt) {
+    const greens = byType('green').map(f => featGeom(f)).filter(Boolean);
+    if (greens.length) { const r = outerRings(greens[0])[0]; if (r) flagPt = pr(ringCentroid(r)); }
+  }
+  if (flagPt && !(inset && Math.hypot(flagPt[0] - inset.cx, flagPt[1] - inset.cy) < inset.r + 6)) {
+    items.push({ k: 'line', x1: flagPt[0], y1: flagPt[1] + 1, x2: flagPt[0], y2: flagPt[1] - 16, stroke: PAL.pole, sw: 2 });
+    items.push({ k: 'poly', pts: flagPt[0] + ',' + (flagPt[1] - 16) + ' ' + flagPt[0] + ',' + (flagPt[1] - 9.5) + ' ' + (flagPt[0] + 11.5) + ',' + (flagPt[1] - 12.75), fill: PAL.flag });
+    items.push({ k: 'circle', cx: flagPt[0], cy: flagPt[1], r: 3, fill: '#1f2937', stroke: '#ffffff', sw: 1.3 });
+  }
+
+  const clips = [];
+  if (hasFairway) {
+    let fwD = '';
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) fwD += pathOf(g, pr); });
+    if (fwD) clips.push({ id: 'fwClip', d: fwD });
+  }
+  if (inset) clips.push({ id: inset.clipId, shape: { cx: inset.cx, cy: inset.cy, r: inset.r - 3 } });
+  return { items, clips, inset, markers, hasFairway };
+}
+
+/* ---------- 发球台码数条 ---------- */
+function teeStrip(teeRows) {
+  const rows = [];
+  (teeRows || []).forEach((t, i) => {
+    const r = Math.floor(i / 5);
+    if (!rows[r]) rows[r] = [];
+    rows[r].push(t);
+  });
+  const items = [];
+  rows.forEach((row, ri) => {
+    row.forEach((t, ci) => {
+      const x = 14 + ci * (132 + 10), y = MAP_H + 12 + ri * (25 + 7);
+      items.push({ k: 'rect', x, y, w: 132, h: 25, rx: 6, fill: PAL.chipBg, stroke: PAL.chipEdge, sw: 1, opacity: 0.94 });
+      items.push({ k: 'rect', x: x + 7, y: y + 6.5, w: 12, h: 12, rx: 3, fill: t.color });
+      items.push({ k: 'text', x: x + 25, y: y + 12.5, text: String(t.yards), size: 13, weight: 700, fill: PAL.chipYards, anchor: 'start', dyEm: 0.36 });
+      items.push({ k: 'text', x: x + 58, y: y + 12.5, text: t.label, size: 9.5, weight: 400, fill: PAL.chipName, anchor: 'start', dyEm: 0.36 });
+    });
+  });
+  const stripH = rows.length ? 12 + rows.length * 25 + (rows.length - 1) * 7 + 8 : 0;
+  return { items, stripH };
+}
+
+/* ---------- 整洞构建 ---------- */
+function bboxDiag(geoms) {
+  const pts = [];
+  geoms.forEach(g => collectPts(g, pts));
+  if (!pts.length) return 0;
+  let x0 = 1 / 0, x1 = -1 / 0, y0 = 1 / 0, y1 = -1 / 0;
+  pts.forEach(p => { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; });
+  const kx = Math.cos(((y0 + y1) / 2) * Math.PI / 180);
+  return Math.hypot((x1 - x0) * kx, y1 - y0);
+}
+function buildHoleArt(data, opts) {
+  opts = opts || {};
+  const feats = Array.isArray(data && data.features) ? data.features : [];
+  const boundaryGeom = featGeom(data && data.boundary);
+  // 取景按单洞要素：course_geometry 的 boundary 是全场轮廓，纳入取景会把
+  // 单洞压成画面中央一小块（旧渲染即如此）；新渲染单洞取景、全场轮廓只在
+  // 总览呈现。仅当 boundary 与单洞同尺度（个别数据源的洞级边界）时才画。
+  const geoms = [];
+  feats.forEach(f => { const g = featGeom(f); if (g) geoms.push(g); });
+  const pr = makeProjector(geoms);
+  if (!pr) return null;
+  const drawBoundary = boundaryGeom && bboxDiag([boundaryGeom]) <= 1.8 * Math.max(1e-12, bboxDiag(geoms)) ? boundaryGeom : null;
+  const art = buildArtWithProjector(feats, drawBoundary, pr, opts);
+  const strip = teeStrip(opts.teeRows || []);
+  const height = MAP_H + strip.stripH;
+  const items = [{ k: 'rect', x: 0, y: 0, w: MAP_W, h: height, rx: 14, fill: PAL.backdrop, stroke: PAL.backdropEdge, sw: 1 }].concat(art.items, strip.items);
+  return { items, clips: art.clips, height, markers: art.markers, inset: art.inset, hasFairway: art.hasFairway };
+}
+
+/* ---------- SVG 序列化（网页/harness 用；App 端按同一 items 模型原生渲染） ---------- */
+function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function itemToSvg(it) {
+  const clip = it.clip ? ' clip-path="url(#' + it.clip + ')"' : '';
+  const op = it.opacity != null ? ' opacity="' + it.opacity + '"' : '';
+  const tr = it.transform ? ' transform="' + it.transform + '"' : '';
+  if (it.k === 'path') return '<path d="' + it.d + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + (it.dash ? ' stroke-dasharray="' + it.dash + '"' : '') + (it.linecap ? ' stroke-linecap="round"' : '') + clip + op + tr + '/>';
+  if (it.k === 'circle') return '<circle cx="' + it.cx.toFixed(1) + '" cy="' + it.cy.toFixed(1) + '" r="' + it.r + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + clip + op + '/>';
+  if (it.k === 'line') return '<line x1="' + it.x1.toFixed(1) + '" y1="' + it.y1.toFixed(1) + '" x2="' + it.x2.toFixed(1) + '" y2="' + it.y2.toFixed(1) + '" stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' + (it.linecap ? ' stroke-linecap="round"' : '') + clip + op + '/>';
+  if (it.k === 'poly') return '<polygon points="' + it.pts + '" fill="' + it.fill + '"' + clip + op + '/>';
+  if (it.k === 'rect') return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" rx="' + (it.rx || 0) + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + clip + op + '/>';
+  if (it.k === 'text') return '<text x="' + it.x.toFixed(1) + '" y="' + it.y.toFixed(1) + '" font-size="' + it.size + '" font-weight="' + (it.weight || 400) + '" fill="' + it.fill + '" text-anchor="' + (it.anchor || 'start') + '"' + (it.dyEm ? ' dy="' + it.dyEm + 'em"' : '') + ' font-family="Arial, Helvetica, sans-serif">' + escXml(it.text) + '</text>';
+  return '';
+}
+function artToSvg(art, label) {
+  let defs = '<defs><linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + PAL.waterFrom + '"/><stop offset="1" stop-color="' + PAL.waterTo + '"/></linearGradient>';
+  (art.clips || []).forEach(c => {
+    if (c.d) defs += '<clipPath id="' + c.id + '"><path d="' + c.d + '"/></clipPath>';
+    else if (c.shape) defs += '<clipPath id="' + c.id + '"><circle cx="' + c.shape.cx + '" cy="' + c.shape.cy + '" r="' + c.shape.r + '"/></clipPath>';
+  });
+  defs += '</defs>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + MAP_W + ' ' + art.height + '" role="img" aria-label="' + escXml(label || '') + '">' + defs + art.items.map(itemToSvg).join('') + '</svg>';
+}
+function renderHoleArtSvg(data, opts) {
+  const art = buildHoleArt(data, opts || {});
+  if (!art) return '';
+  return artToSvg(art, (opts && opts.label) || '');
+}
+var TEE_FAMILY_COLORS = [["championship", "#2f353b"], ["unicorn", "#7c5cd6"], ["gold", "#c9a227"], ["fairway", "#4d9f57"], ["silver", "#9aa5b1"]];
+function teeColorOf(name) { var n = String(name || "").toLowerCase(); for (var i = 0; i < TEE_FAMILY_COLORS.length; i++) if (n.indexOf(TEE_FAMILY_COLORS[i][0]) >= 0) return TEE_FAMILY_COLORS[i][1]; return "#6b7280"; }
+function artToSvgWeb(art, label) { return artToSvg(art, label).replace("<svg ", "<svg class=\"map\" "); }
+function renderHoleSvg(data) {
+  var teeRows = [];
+  try {
+    var byTee = (typeof PREVIEW !== "undefined" && PREVIEW && PREVIEW.holes_by_tee) || {};
+    ((typeof PREVIEW !== "undefined" && PREVIEW && PREVIEW.tees) || []).forEach(function (t) {
+      var hd = (byTee[t.id] || []).find(function (h) { return h.hole === curHole; });
+      if (hd && hd.yards != null) teeRows.push({ label: String(t.name).replace("（", " ").replace("）", ""), color: teeColorOf(t.name), yards: hd.yards });
+    });
+    teeRows.sort(function (a, b) { return b.yards - a.yards; });
+  } catch (e) { teeRows = []; }
+  var art = buildHoleArt(data, { teeRows: teeRows });
+  if (!art) return '<div class="empty">本洞暂无地形图</div>';
+  return artToSvgWeb(art, "第 " + curHole + " 洞地图");
 }
 
 /* ---------- 全局状态 ---------- */
@@ -242,6 +879,7 @@ function organizerHint() {
 /* ---------- 状态机渲染 ---------- */
 function paint() {
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
+  setTailVisible(false); /* [线Z44] 尾部两模块只在记生态呈现，其余状态一律隐藏 */
   var e = S.ev.event;
   /* [线P] 会话状态未确认（auth.js 尚在恢复本地会话）时只显示赛事信息＋确认中骨架，
      绝不抢先渲染登录表单——已登录用户先看到登录表单正是走查投诉的根因之一 */
@@ -420,7 +1058,7 @@ function paintRecap(card) {
   }
   /* [主会话] 完赛回顾态亦保留球童入口（与 paintScoring 同口径；复盘本场成绩是球童核心用法，完赛不得消失） */
   html += myStatusHtml();
-  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
+  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问 RUKIK Golf</a></div>';
   html += '<div class="btnrow"><a class="btn" href="event.html?e=' + encodeURIComponent(eventId) + '">查看排行榜与赛事回忆</a></div></div>';
   app.innerHTML = html;
 }
@@ -550,9 +1188,9 @@ function paintGroupScoring(card) {
     (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
     '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（18 洞）') + '</button></div>' +
     matrix + certHtml +
-    '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>' +
-    backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
+    backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
+  setTailVisible(true); syncTail(); maybeCasualFinish(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
   bindMyStatus();
   app.querySelectorAll('[data-gstep]').forEach(function (el) {
     el.addEventListener('click', function () {
@@ -771,8 +1409,7 @@ function paintScoring(card) {
     if (sc.status === 'submitted') html += '<p class="muted" style="margin-top:10px">成绩已提交，等待球员确认 / 裁判核对。</p>';
     if (sc.status === 'verified') html += '<p class="muted" style="margin-top:10px">成绩已确认，等待主办方锁定为正式成绩。</p>';
   }
-  /* [线W2] 问RUKIK Golf 直达本场球童（pro-chat＋官方球童角色，独立赛事会话；球童页顶栏可返回比赛） */
-  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
+  /* [线Z44] 球童已改为页内模块②（记分卡正下方），不再跳独立球童页 */
   html += backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
   app.innerHTML = html;
   bindMyStatus();
@@ -848,6 +1485,7 @@ function paintScoring(card) {
     var r = await golfApi('certify', { scorecard_id: card.id, step: 'player_verify', decision: 'flag', note: note }, true);
     if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
   });
+  setTailVisible(true); syncTail(); maybeCasualFinish(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
 }
 
 function sendShape(item) {
@@ -1006,12 +1644,667 @@ function previewText(p) {
   return parts.join('<br>');
 }
 
+
+/* ══════════ [线Z44] 一页式球局：尾部两模块（②页内球童 ③球洞地图）＋H5 入口 ══════════
+   模块②：复用赛事页 event.html 内嵌球童同一通道（pro-chat＋官方球童角色＋
+   sessionStorage 同键同格式，会话与赛事页/独立球童页共享同一线程）；上下文由
+   服务端按 golf_event_id 隐藏注入，客户端只传 event_id，永不拼事实文本。
+   模块③：复用 Z28 renderHoleSvg（上方原样移植），几何走 course_geometry；
+   记分卡切洞（S.selHole 变化）即由 syncTail 同步切洞；点图开高清层、关掉回原位。
+   两模块各自独立加载：任一失败只在本模块内报错，不拖垮记分与整页。 */
+function setTailVisible(show) {
+  var cd = document.getElementById('cdModule'), mp = document.getElementById('mapModule');
+  if (cd) cd.hidden = !show;
+  if (mp) mp.hidden = !show;
+  if (show) { try { initCareP(); } catch (e) {} }
+}
+/* [A2 2026-11-12 08:31 终裁] 宣传卡取消：陪伴模式改为球童模块头部紧凑控件
+ * （#cdCareCtlP，只显当前模式、点击展开三选一）；真源仍为 golf_care_prefs
+ * （care_pref_get/set 用户级偏好），跨赛事沿用、选中即存。 */
+var CARE_MODES_P = [['warm', '温暖陪伴'], ['concise', '专业简洁'], ['quiet', '安静模式']];
+var careModeP = null, careOpenP = false, careInitP = false;
+function careLabelP() { for (var i = 0; i < CARE_MODES_P.length; i++) if (CARE_MODES_P[i][0] === careModeP) return CARE_MODES_P[i][1]; return '温暖陪伴'; }
+function renderCareP() {
+  var box = document.getElementById('cdCareCtlP'); if (!box) return;
+  var opts = '';
+  if (careOpenP) opts = CARE_MODES_P.map(function (m) { return '<button type="button" class="cc-opt' + (m[0] === careModeP ? ' on' : '') + '" data-carep="' + m[0] + '">' + m[1] + '</button>'; }).join('');
+  box.innerHTML = '<span class="cc-label">陪伴方式</span><button type="button" class="cc-cur" id="careHeadP">' + careLabelP() + ' ' + (careOpenP ? '▴' : '▾') + '</button>' + opts;
+  var head = document.getElementById('careHeadP');
+  if (head) head.addEventListener('click', function () { careOpenP = !careOpenP; renderCareP(); });
+  var btns = box.querySelectorAll('[data-carep]');
+  for (var i = 0; i < btns.length; i++) btns[i].addEventListener('click', function () { careSetP(this.getAttribute('data-carep')); });
+}
+async function careSetP(mode) {
+  if (!mode || mode === careModeP) { careOpenP = false; renderCareP(); return; }
+  var r = await golfApi('care_pref_set', { mode: mode }, true);
+  if (r.ok) careModeP = mode;
+  careOpenP = false; renderCareP();
+}
+async function initCareP() {
+  if (careInitP) return; careInitP = true;
+  renderCareP();
+  var r = await golfApi('care_pref_get', {}, true);
+  if (r.ok && r.data && r.data.mode) { careModeP = r.data.mode; renderCareP(); }
+}
+function syncTail() {
+  try { cdCareSync(); } catch (e) {}
+  try { syncMap(); } catch (e) {}
+}
+
+/* ---------- 模块②：页内球童（线 T 通道在 play 页的内嵌形态） ---------- */
+var CD_PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
+var CD_CHAT_API = API.replace(/\/golf-api$/, '/pro-chat');
+var CD_WELCOME = '您好！我是您的RUKIK Golf AI球童。我可以帮您了解球场、解释规则、回顾成绩，也会记住您在每一场比赛中的真实进步。';
+var CD_SUGGESTED = ['我这场比赛打得怎么样？现在排第几？', '下一洞是什么情况？', '球出界（OB）了该怎么处理？', '比杆赛和 Stableford 有什么区别？', '打高尔夫有哪些基本礼仪？'];
+var cdHistory = []; // 只含本场真实问答轮，欢迎语不入会话（与 event.html 同口径）
+var cdSending = false;
+var cdExpanded = false;
+var cdInited = false;
+
+function cdStoreKey() { return 'golf_caddie_msgs_' + (eventId || 'none'); }
+function cdPersist() { try { sessionStorage.setItem(cdStoreKey(), JSON.stringify(cdHistory.slice(-20))); } catch (e) {} }
+function cdLoadHistory() { try { var s = sessionStorage.getItem(cdStoreKey()); cdHistory = s ? (JSON.parse(s) || []) : []; } catch (e) { cdHistory = []; } }
+function cdMsgsEl() { return document.getElementById('cdMsgs'); }
+function cdScrollBottom() { var b = cdMsgsEl(); if (b) b.scrollTop = b.scrollHeight; }
+/* 轻量结构渲染（与 event.html cdRenderRich 同口径：先转义再套格式，用户文本永不注入 HTML） */
+function cdRenderRich(text) {
+  var lines = esc(text).split('\n');
+  var out = '', inList = false;
+  function closeList() { if (inList) { out += '</ul>'; inList = false; } }
+  lines.forEach(function (ln) {
+    var t = ln.trim();
+    var bold = function (s) { return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); };
+    if (/^##\s+/.test(t)) { closeList(); out += '<div class="h">' + bold(t.replace(/^##\s+/, '')) + '</div>'; }
+    else if (/^-\s+/.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + bold(t.replace(/^-\s+/, '')) + '</li>'; }
+    else if (t === '') { closeList(); }
+    else { closeList(); out += '<p>' + bold(t) + '</p>'; }
+  });
+  closeList();
+  return out;
+}
+function cdAddMsg(role, text, rich) {
+  var box = cdMsgsEl(); if (!box) return null;
+  var d = document.createElement('div');
+  d.className = 'cd-msg ' + (role === 'user' ? 'u' : 'a');
+  if (role === 'assistant' && rich) d.innerHTML = cdRenderRich(text); else d.textContent = text;
+  box.appendChild(d);
+  cdScrollBottom();
+  return d;
+}
+function cdAddSys(text) {
+  var box = cdMsgsEl(); if (!box) return;
+  var d = document.createElement('div');
+  d.className = 'cd-sys'; d.textContent = text;
+  box.appendChild(d);
+  cdScrollBottom();
+}
+function cdExpand(on) {
+  cdExpanded = on;
+  var box = cdMsgsEl(); if (box) box.hidden = !on;
+}
+function cdPaintThread() {
+  var box = cdMsgsEl(); if (!box) return;
+  box.innerHTML = '';
+  if (!cdHistory.length) {
+    var d = document.createElement('div');
+    d.className = 'cd-msg a';
+    d.textContent = CD_WELCOME;
+    box.appendChild(d);
+  } else {
+    cdHistory.forEach(function (m) { cdAddMsg(m.role, m.content, m.role === 'assistant'); });
+  }
+  cdExpand(cdHistory.length > 0 || cdExpanded);
+}
+function cdPaintChips() {
+  var box = document.getElementById('cdChips'); if (!box) return;
+  box.innerHTML = '';
+  if (!S.session) return;
+  CD_SUGGESTED.forEach(function (q) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = q;
+    b.addEventListener('click', function () { var inp = document.getElementById('cdInput'); if (inp && !cdSending) { inp.value = q; cdSend(); } });
+    box.appendChild(b);
+  });
+}
+/* 默认关怀行：只用已装载的真实数据拼装（重逢记忆→天气→下一洞事实→同组），无事实则欢迎语，绝不编造 */
+function cdCareText() {
+  var pc = S.pc || {};
+  if (pc.course_revisit && pc.course_revisit.line) return pc.course_revisit.line;
+  if (pc.weather_line) return pc.weather_line;
+  var cd2 = S.cardData;
+  if (cd2 && cd2.scorecard && (cd2.holes || []).length) {
+    var sc = cd2.scorecard, hs = cd2.holes;
+    var played = hs.filter(function (h) { return effStrokes(sc.id, h) != null; }).length;
+    var nxt = hs.filter(function (h) { return effStrokes(sc.id, h) == null; })[0];
+    var parts = [];
+    if (played) parts.push('已完成 ' + played + ' 洞' + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : ''));
+    if (nxt) parts.push('下一洞第 ' + nxt.hole + ' 洞 · Par ' + nxt.par + (nxt.yards ? ' · ' + nxt.yards + ' 码' : '') + '，按自己的节奏来');
+    else if (played) parts.push('全部洞已打完，辛苦了');
+    if (parts.length) return parts.join('。') + '。';
+  }
+  if (pc.groupmates && pc.groupmates.length) return '今天同组球员：' + pc.groupmates.join('、') + '。祝大家打得开心！';
+  return CD_WELCOME;
+}
+function cdCareSync() {
+  var care = document.getElementById('cdCare');
+  if (care) care.textContent = cdCareText();
+  var inp = document.getElementById('cdInput'), btn = document.getElementById('cdSend');
+  var on = !!S.session;
+  if (inp) { inp.disabled = !on; inp.placeholder = on ? '问球童：规则、球场、我的成绩……' : '登录后即可问 AI 球童'; }
+  if (btn) btn.disabled = !on || cdSending;
+  cdPaintChips();
+}
+async function cdSend() {
+  var inp = document.getElementById('cdInput');
+  var text = (inp && inp.value || '').trim();
+  if (!text || cdSending) return;
+  cdSending = true;
+  var btn = document.getElementById('cdSend'); if (btn) btn.disabled = true;
+  inp.value = '';
+  cdExpand(true);
+  cdHistory.push({ role: 'user', content: text });
+  cdAddMsg('user', text, false); cdPersist();
+  var bubble = cdAddMsg('assistant', '正在思考…', false);
+  var acc = '';
+  try {
+    var tk = await getAccessToken();
+    if (!tk) { if (bubble) bubble.textContent = '登录状态已过期，请重新登录后再问我。'; cdHistory.pop(); cdPersist(); return; }
+    var payload = { professional_id: CD_PRO_ID, mode: 'web', stream: true, messages: cdHistory.slice(-10), golf_event_id: eventId };
+    var res = await fetch(CD_CHAT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + tk },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      var ej = await res.json().catch(function () { return null; });
+      var code = ej && ej.error;
+      if (bubble) {
+        if (res.status === 401 || code === 'login_required') bubble.textContent = '登录状态已过期，请重新登录后再问我。';
+        else if (code === 'round_limit') bubble.textContent = '这轮会话的问题已经比较多了，请稍后再回来继续问我。';
+        else bubble.textContent = '这次没能连上（' + (code || res.status) + '），请稍后再试一次。';
+      }
+      cdHistory.pop(); cdPersist();
+      return;
+    }
+    var reader = res.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    if (bubble) bubble.textContent = '';
+    for (;;) {
+      var step = await reader.read();
+      if (step.done) break;
+      buf += dec.decode(step.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        var line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+        if (line.indexOf('data:') !== 0) continue;
+        var data = line.slice(5).trim();
+        if (!data || data === '[DONE]') continue;
+        try {
+          var j = JSON.parse(data);
+          var c = j && j.choices && j.choices[0] && j.choices[0].delta ? j.choices[0].delta.content : '';
+          if (typeof c === 'string' && c) { acc += c; if (bubble) { bubble.innerHTML = cdRenderRich(acc); cdScrollBottom(); } }
+        } catch (e) {}
+      }
+    }
+    if (!acc) { if (bubble) bubble.textContent = '这次没有拿到回答，请再问一次。'; cdHistory.pop(); cdPersist(); return; }
+    if (bubble) bubble.innerHTML = cdRenderRich(acc);
+    cdHistory.push({ role: 'assistant', content: acc });
+    cdPersist();
+  } catch (e) {
+    if (bubble) bubble.textContent = '网络好像不太顺，请稍后再试一次。';
+    cdHistory.pop(); cdPersist();
+  } finally {
+    cdSending = false;
+    var b2 = document.getElementById('cdSend'); if (b2) b2.disabled = !S.session;
+  }
+}
+function cdInit() {
+  if (cdInited) return;
+  cdInited = true;
+  cdLoadHistory();
+  cdPaintThread();
+  var btn = document.getElementById('cdSend');
+  if (btn) btn.addEventListener('click', cdSend);
+  var inp = document.getElementById('cdInput');
+  if (inp) {
+    inp.addEventListener('focus', function () { cdExpand(true); });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); cdSend(); } });
+  }
+}
+
+/* ---------- 模块③：球洞地图（Z28 渲染，切洞与记分卡联动） ---------- */
+var mapHoleShown = null;
+var geomInflight = {};
+function mapGeom(hole) {
+  var key = 'g' + hole;
+  if (geomInflight[key]) return geomInflight[key];
+  var attempt = function (n) {
+    return golfApi('course_geometry', { event_id: eventId, hole: hole }, false).then(function (r) {
+      if (!r.ok) throw new Error(r.error || 'geometry failed');
+      return r.data;
+    }).catch(function (e) {
+      if (n >= 1) throw e;
+      return new Promise(function (res) { setTimeout(res, 800); }).then(function () { return attempt(n + 1); });
+    });
+  };
+  var p = attempt(0).then(function (j) { delete geomInflight[key]; return j; }, function (e) { delete geomInflight[key]; throw e; });
+  geomInflight[key] = p;
+  return p;
+}
+function prefetchPlayGeom(h) {
+  [h - 1, h + 1].forEach(function (n) {
+    if (n < 1 || n > 18 || geomCache[n]) return;
+    mapGeom(n).then(function (j) { geomCache[n] = j; }).catch(function () {});
+  });
+}
+function syncMap() {
+  if (!S.ev) return;
+  PREVIEW = S.ev.course_preview || null;
+  var target = S.selHole || curHole || 1;
+  curHole = target;
+  var head = document.getElementById('mapHead');
+  var info = document.getElementById('mapInfo');
+  var box = document.getElementById('mapSvgBox');
+  if (!head || !box) return;
+  if (!PREVIEW) {
+    head.textContent = '';
+    box.innerHTML = '<div class="muted">本球场暂无逐洞地图数据。</div>';
+    if (info) info.textContent = '';
+    mapHoleShown = target;
+    return;
+  }
+  var hd = ((S.cardData && S.cardData.holes) || []).filter(function (h) { return h.hole === target; })[0] || null;
+  head.textContent = '第 ' + target + ' 洞' + (hd ? ' · Par ' + hd.par + (hd.yards ? ' · ' + hd.yards + ' 码' : '') : '');
+  if (info) info.textContent = hd ? ('Par ' + hd.par + (hd.stroke_index != null ? ' · 标准杆指数 ' + hd.stroke_index : '') + (hd.yards ? ' · 距离 ' + hd.yards + ' 码' : '')) : '';
+  if (mapHoleShown === target && box.getAttribute('data-done') === '1') return;
+  mapHoleShown = target;
+  loadPlayHoleSvg(target);
+}
+function loadPlayHoleSvg(hole) {
+  var box = document.getElementById('mapSvgBox');
+  if (!box) return;
+  if (geomCache[hole]) {
+    box.innerHTML = geomCache[hole].available ? renderHoleSvg(geomCache[hole]) : '<div class="muted">本洞暂无地形图</div>';
+    box.setAttribute('data-done', '1');
+    prefetchPlayGeom(hole);
+    return;
+  }
+  box.innerHTML = '<div class="skel">地图加载中…</div>';
+  box.removeAttribute('data-done');
+  mapGeom(hole).then(function (j) {
+    geomCache[hole] = j;
+    if (mapHoleShown !== hole || !S.ev) return; // 已切到别的洞：本洞只入缓存，不动画面
+    var b = document.getElementById('mapSvgBox'); if (!b) return;
+    b.innerHTML = j.available ? renderHoleSvg(j) : '<div class="muted">本洞暂无地形图</div>';
+    b.setAttribute('data-done', '1');
+    prefetchPlayGeom(hole);
+  }).catch(function () {
+    if (mapHoleShown !== hole) return;
+    var b = document.getElementById('mapSvgBox'); if (!b) return;
+    b.innerHTML = '<div class="err">本洞地图加载失败。<br><button class="btn plain" type="button" id="mapRetry" style="margin-top:8px">重试</button></div>';
+    var r = document.getElementById('mapRetry');
+    if (r) r.addEventListener('click', function () { delete geomCache[hole]; mapHoleShown = null; syncMap(); });
+  });
+}
+function openPlayHd() {
+  var src = document.getElementById('mapSvgBox'), box = document.getElementById('playHdBox'), ov = document.getElementById('playHd');
+  if (!src || !box || !ov || !src.querySelector('svg')) return;
+  box.innerHTML = src.innerHTML; // 同一份渲染放大呈现，不另画一套
+  ov.hidden = false;
+}
+function closePlayHd() { var ov = document.getElementById('playHd'); if (ov) ov.hidden = true; }
+
+/* ---------- 日常球局结束（casual_finish 简化确认，Z43） ---------- */
+function maybeCasualFinish() {
+  if (!S.ev || S.ev.kind !== 'casual' || S.ev.status !== 'in_progress') return;
+  var app = document.getElementById('app');
+  if (!app || document.getElementById('casualBar')) return;
+  var bar = document.createElement('div');
+  bar.className = 'card';
+  bar.id = 'casualBar';
+  bar.innerHTML = '<b>日常球局</b><p class="muted">全组打完后，点下面按钮结束本场——成绩会锁定并生成回忆。还没打完时，只有发起人可以提前结束。</p>' +
+    '<div class="btnrow"><button class="btn plain" id="casualFinishBtn" type="button">结束本场球局</button></div><div id="casualFinishMsg"></div>';
+  app.appendChild(bar);
+  document.getElementById('casualFinishBtn').addEventListener('click', async function () {
+    var msg = document.getElementById('casualFinishMsg');
+    if (!window.confirm('确定结束本场球局吗？有成绩的记分卡会锁定。')) return;
+    this.disabled = true;
+    var r = await golfApi('casual_finish', { event_id: S.eid }, true).catch(function () { return null; });
+    if (r && r.ok) { toast('球局已结束，正在生成回忆'); setTimeout(function () { location.reload(); }, 900); return; }
+    this.disabled = false;
+    var em = (r && r.data && (r.data.error || r.data.message)) || '';
+    if (msg) msg.innerHTML = '<p class="err">' + (r && r.status === 403 ? '还没全部打完时，只有发起人可以提前结束本场。' : '结束没有成功' + (em ? '（' + esc(em) + '）' : '') + '，请稍后再试。') + '</p>';
+  });
+}
+
+/* ---------- H5 入口（play 无参）：发起球局／加入球局／我的高尔夫回忆 ----------
+   日常球局接口按线 Z43 终报接口清单接线（CASUAL 接线点集中在 casualCreate/casualJoin 两处）。 */
+var hmCourse = null, hmTees = [], hmSearchTimer = null;
+function paintHome() {
+  document.getElementById('backLink').style.display = 'none';
+  var html = '<div class="card"><h2 style="font-size:20px">RUKIK Golf</h2>' +
+    '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p></div>' +
+    '<div class="card"><h2>开始一局</h2>' +
+    '<button class="entry main" id="hmCreate" type="button">发起球局<small>选球场 · 邀请好友 · 共同记分</small></button>' +
+    '<button class="entry" id="hmJoin" type="button">加入球局<small>输入球局码，或打开好友分享的链接</small></button>' +
+    '<a class="entry" href="memory/">我的高尔夫回忆<small>成绩 · 球场 · 球友 · 精彩瞬间</small></a>' +
+    '<div id="hmPanel"></div></div>';
+  if (!S.session) {
+    html += '<div class="card"><h2>登录</h2><p class="muted">发起或加入球局需要登录（与 RUKIK App 同一账号，同一 UID）。</p><div id="hmLogin"></div></div>';
+  }
+  app.innerHTML = html;
+  var lb = document.getElementById('hmLogin');
+  if (lb) mountLogin(lb, { onDone: function () { paintHome(); } });
+  document.getElementById('hmCreate').addEventListener('click', hmShowCreate);
+  document.getElementById('hmJoin').addEventListener('click', hmShowJoin);
+}
+function hmNeedLogin(panel) {
+  if (S.session) return false;
+  panel.innerHTML = '<p class="muted" style="margin-top:12px">请先在下方登录，再继续。</p>';
+  var lb = document.getElementById('hmLogin');
+  if (lb) lb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return true;
+}
+function hmShowCreate() {
+  var panel = document.getElementById('hmPanel');
+  if (!panel || hmNeedLogin(panel)) return;
+  hmCourse = null; hmTees = []; hmPicks = []; hmMateIndex = {};
+  panel.innerHTML = '<div style="margin-top:14px;border-top:1px dashed #e3ddd2;padding-top:14px">' +
+    '<div class="fld" style="margin-top:0"><label>选择球场</label><input id="hmQ" type="text" placeholder="输入球场名搜索（如 Friendly Hills）" autocomplete="off"></div>' +
+    '<div id="hmResults"></div>' +
+    '<div id="hmPick"></div>' +
+    '<div class="fld"><label>发球台</label><select id="hmTee" style="width:100%;border:1px solid #e3ddd2;border-radius:12px;padding:12px 14px;font-size:16px;background:#fff;min-height:44px"><option value="">先选球场</option></select></div>' +
+    '<div class="fld"><label>添加球友（可跳过）</label>' +
+    '<div id="hmMates"><p class="muted">正在读取你的球友…</p></div>' +
+    '<div class="btnrow"><button class="btn plain" id="hmLastGroup" type="button">带入上次阵容</button></div>' +
+    '<div id="hmLastMsg"></div>' +
+    '<div class="rk-row" style="margin-top:10px"><input id="hmMateQ" type="text" placeholder="搜索其他球友（姓名）" autocomplete="off"><button type="button" id="hmMateSearch" class="plain">搜索</button></div>' +
+    '<div id="hmMateResults"></div>' +
+    '<div id="hmPicks"></div>' +
+    '<p class="muted">选中的只是拟邀请名单：创建后向对方发出邀请，<b>对方确认后才进组</b>，不会替任何人报名。</p></div>' +
+    '<p class="muted">日期默认今天 · 赛制默认普通比杆 · 18 洞。创建后把链接发给好友，大家打开就能一起记分。</p>' +
+    '<div class="err" id="hmErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="hmGo" type="button">创建并邀请好友</button></div>' +
+    '<div id="hmShare"></div></div>';
+  var q = document.getElementById('hmQ');
+  q.addEventListener('input', function () {
+    var qv = q.value.trim();
+    var box = document.getElementById('hmResults');
+    clearTimeout(hmSearchTimer);
+    if (qv.length < 2) { box.innerHTML = ''; return; }
+    hmSearchTimer = setTimeout(async function () {
+      var r = await golfApi('course_search', { q: qv, limit: 10 }, false).catch(function () { return null; });
+      var list = (r && r.ok && r.data.courses) || [];
+      if (!list.length) { box.innerHTML = '<p class="muted">未找到这个球场，可换个关键词试试。</p>'; return; }
+      box.innerHTML = list.map(function (c, i) {
+        var tier = c.completeness && c.completeness.tier === 'L3' ? '发球台详情全' : c.completeness && c.completeness.tier === 'L2' ? '记分卡 Par 已备' : '仅位置资料';
+        return '<div class="csr" data-i="' + i + '"><b>' + esc(c.name) + '</b><small>' + esc((c.city || '') + (c.state ? ', ' + c.state : '')) + ' · ' + tier + (c.completeness && c.completeness.total_par ? ' · Par ' + c.completeness.total_par : '') + '</small></div>';
+      }).join('');
+      box.querySelectorAll('.csr').forEach(function (el) {
+        el.addEventListener('click', function () { hmPickCourse(list[Number(el.getAttribute('data-i'))]); });
+      });
+    }, 300);
+  });
+  document.getElementById('hmGo').addEventListener('click', hmCreate);
+  document.getElementById('hmLastGroup').addEventListener('click', hmLoadLastGroup);
+  document.getElementById('hmMateSearch').addEventListener('click', hmSearchMates);
+  hmLoadMates();
+  q.focus();
+}
+
+/* ---------- 添加球友（球友复用定版 2026-11-11 23:52） ----------
+   默认名单＝Z40 my_companions（最近同组＋常打球友，正式/练习合并去重）；
+   搜索与上次阵容、发邀请走线 Z45 接口（player_search/last_group/round_invites），
+   接线点集中在文末三函数。选中只进拟邀请名单 hmPicks，永不替对方报名。 */
+var hmPicks = []; // [{user_id, display_name}]
+function hmIsPicked(uid) { return hmPicks.some(function (p) { return p.user_id === uid; }); }
+function hmTogglePick(m) {
+  if (hmIsPicked(m.user_id)) hmPicks = hmPicks.filter(function (p) { return p.user_id !== m.user_id; });
+  else hmPicks.push({ user_id: m.user_id, display_name: m.display_name });
+  hmPaintPicks();
+  hmPaintMateStates();
+}
+function hmPaintPicks() {
+  var box = document.getElementById('hmPicks');
+  if (!box) return;
+  if (!hmPicks.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="cd-chips">' + hmPicks.map(function (p) {
+    return '<button type="button" data-pick="' + esc(p.user_id) + '">' + esc(p.display_name) + ' ✕</button>';
+  }).join('') + '</div>';
+  box.querySelectorAll('[data-pick]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var uid = el.getAttribute('data-pick');
+      var m = hmPicks.filter(function (p) { return p.user_id === uid; })[0];
+      if (m) hmTogglePick(m);
+    });
+  });
+}
+function hmMateRow(m, sub) {
+  var picked = hmIsPicked(m.user_id);
+  return '<div class="csr" data-mate="' + esc(m.user_id) + '"><b>' + esc(m.display_name) + '</b>' +
+    '<span style="float:right;color:' + (picked ? '#B58A58' : '#14532d') + ';font-weight:700">' + (picked ? '已选 ✓' : '＋ 添加') + '</span>' +
+    '<small>' + esc(sub || '') + '</small></div>';
+}
+var hmMateIndex = {};
+function hmBindMateRows(box) {
+  box.querySelectorAll('[data-mate]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var m = hmMateIndex[el.getAttribute('data-mate')];
+      if (m) hmTogglePick(m);
+    });
+  });
+}
+function hmPaintMateStates() {
+  [['hmMates'], ['hmMateResults']].forEach(function (pair) {
+    var box = document.getElementById(pair[0]);
+    if (!box) return;
+    box.querySelectorAll('[data-mate]').forEach(function (el) {
+      var m = hmMateIndex[el.getAttribute('data-mate')];
+      if (m) { var tmp = document.createElement('div'); tmp.innerHTML = hmMateRow(m, el.getAttribute('data-sub') || ''); el.replaceWith(tmp.firstChild); }
+    });
+    hmBindMateRows(box);
+  });
+}
+async function hmLoadMates() {
+  var box = document.getElementById('hmMates');
+  if (!box) return;
+  var r = await golfApi('my_companions', {}, true).catch(function () { return null; });
+  var byId = {};
+  [['companions', '正式'], ['practice_companions', '练习']].forEach(function (pair) {
+    var list = (r && r.ok && r.data && r.data[pair[0]]) || [];
+    list.forEach(function (c) {
+      var cur = byId[c.user_id] || { user_id: c.user_id, display_name: c.display_name, total: 0, last: '' };
+      cur.total += Number(c.shared_events || 0);
+      var d = (c.last_together && c.last_together.date) || '';
+      if (d > cur.last) cur.last = d;
+      byId[c.user_id] = cur;
+    });
+  });
+  var mates = Object.keys(byId).map(function (k) { return byId[k]; }).sort(function (a, b) {
+    return a.last < b.last ? 1 : a.last > b.last ? -1 : b.total - a.total;
+  });
+  if (!mates.length) {
+    box.innerHTML = '<p class="muted">还没有一起打过球的球友记录。打完第一场后，常打球友会自动出现在这里。</p>';
+    return;
+  }
+  box.innerHTML = mates.map(function (m) {
+    hmMateIndex[m.user_id] = m;
+    var sub = '一起打过 ' + m.total + ' 场' + (m.last ? ' · 最近 ' + String(m.last).slice(0, 10) : '');
+    return hmMateRow(m, sub);
+  }).join('');
+  box.querySelectorAll('.csr').forEach(function (el) { el.setAttribute('data-sub', (el.querySelector('small') || {}).textContent || ''); });
+  hmBindMateRows(box);
+}
+async function hmLoadLastGroup() {
+  var msg = document.getElementById('hmLastMsg');
+  var list = await lastGroup();
+  if (!list) { if (msg) msg.innerHTML = '<p class="muted">上次阵容暂时没读到，请稍后再试；也可以从上方球友名单里选。</p>'; return; }
+  if (!list.length) { if (msg) msg.innerHTML = '<p class="muted">还没有可带入的上次阵容。</p>'; return; }
+  list.forEach(function (m) { hmMateIndex[m.user_id] = m; if (!hmIsPicked(m.user_id)) hmPicks.push({ user_id: m.user_id, display_name: m.display_name }); });
+  if (msg) msg.innerHTML = '<p class="okmsg">已带入上次阵容 ' + list.length + ' 人，可在名单里增减。</p>';
+  hmPaintPicks();
+  hmPaintMateStates();
+}
+async function hmSearchMates() {
+  var qEl = document.getElementById('hmMateQ');
+  var box = document.getElementById('hmMateResults');
+  var q = (qEl && qEl.value || '').trim();
+  if (!q) { box.innerHTML = '<p class="muted">输入姓名再搜索。</p>'; return; }
+  var list = await playerSearch(q);
+  if (!list) { box.innerHTML = '<p class="muted">搜索暂时没连上，请稍后再试；也可以先从上方常打球友里选，或创建后把链接发给对方。</p>'; return; }
+  if (!list.length) { box.innerHTML = '<p class="muted">没有找到允许被查找的同名球友。</p>'; return; }
+  box.innerHTML = list.map(function (m) {
+    hmMateIndex[m.user_id] = m;
+    return hmMateRow(m, m.sub || '注册球员');
+  }).join('');
+  hmBindMateRows(box);
+}
+async function hmPickCourse(c) {
+  hmCourse = c;
+  var box = document.getElementById('hmResults'); if (box) box.innerHTML = '';
+  var q = document.getElementById('hmQ'); if (q) q.value = c.name;
+  var pick = document.getElementById('hmPick');
+  if (pick) pick.innerHTML = '<p class="meta" style="margin-top:8px">球场：<b>' + esc(c.name) + '</b>' + (c.address ? '<br><span class="muted">' + esc(c.address) + '</span>' : '') + '</p>';
+  var sel = document.getElementById('hmTee');
+  if (sel) sel.innerHTML = '<option value="">正在读取发球台…</option>';
+  var r = await golfApi('course_get', { course_id: c.id }, false).catch(function () { return null; });
+  hmTees = (r && r.ok && r.data.tees) || [];
+  var sorted = hmTees.slice().sort(function (a, b) { return (b.total_yards || 0) - (a.total_yards || 0); });
+  if (sel) {
+    sel.innerHTML = sorted.length
+      ? sorted.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.name) + (t.total_yards ? ' · ' + t.total_yards + ' 码' : '') + (t.slope ? ' · Slope ' + t.slope : '') + '</option>'; }).join('')
+      : '<option value="">该球场暂无发球台资料，暂时无法创建球局，换一个球场试试</option>';
+  }
+}
+async function hmCreate() {
+  var errEl = document.getElementById('hmErr');
+  var share = document.getElementById('hmShare');
+  if (!hmCourse) { errEl.textContent = '请先搜索并选择球场。'; return; }
+  var teeSel = document.getElementById('hmTee');
+  var btn = document.getElementById('hmGo');
+  btn.disabled = true; errEl.textContent = '';
+  var sess = getSessionSync();
+  var myName = (sess && sess.user && (sess.user.user_metadata || {}).display_name) || (sess && sess.user && sess.user.email) || undefined;
+  var r = await casualCreate({ course_id: hmCourse.id, tee_id: teeSel && teeSel.value ? teeSel.value : undefined, display_name: myName });
+  btn.disabled = false;
+  if (!r || !r.ok) {
+    var em = (r && r.error) || 'network';
+    errEl.textContent = em === 'network' ? '网络没连上，请稍后再试。'
+      : /tee|scorecard/i.test(em) ? '这个球场暂时还没有发球台数据，换一个球场试试。'
+      : '创建未成功：' + em;
+    return;
+  }
+  var link = r.link;
+  share.innerHTML = '<div class="sharebox">球局已创建！把这个链接发给好友，大家打开登录后即可加入同一组记分：<br><b>' + esc(link) + '</b>' +
+    (r.code ? '<br>球局码：<b>' + esc(r.code) + '</b>' : '') +
+    '<div id="hmInvMsg"></div>' +
+    '<div class="btnrow"><button class="btn" id="hmCopy" type="button">复制邀请链接</button><a class="btn plain" href="' + esc(link) + '">进入球局记分</a></div></div>';
+  if (hmPicks.length) {
+    var invMsg = document.getElementById('hmInvMsg');
+    var inv = await roundInvitesSend(r, hmPicks.map(function (p) { return p.user_id; }));
+    if (invMsg) {
+      if (inv && inv.sent === inv.total) invMsg.innerHTML = '<br>已向 ' + inv.total + ' 位球友发出邀请，对方确认后才会进组（对方打开 App/网页的「我的邀请」即可确认）。';
+      else if (inv && inv.sent > 0) invMsg.innerHTML = '<br>已发出 ' + inv.sent + '/' + inv.total + ' 份邀请；其余球友把上面的链接发给他们即可。';
+      else invMsg.innerHTML = '<br>邀请没能发出去——把上面的链接发给 ' + hmPicks.map(function (p) { return esc(p.display_name); }).join('、') + '，打开即可加入。';
+    }
+  }
+  var cp = document.getElementById('hmCopy');
+  if (cp) cp.addEventListener('click', function () {
+    var done = function () { cp.textContent = '已复制'; setTimeout(function () { cp.textContent = '复制邀请链接'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done, done);
+    else done();
+  });
+}
+function hmShowJoin() {
+  var panel = document.getElementById('hmPanel');
+  if (!panel || hmNeedLogin(panel)) return;
+  panel.innerHTML = '<div style="margin-top:14px;border-top:1px dashed #e3ddd2;padding-top:14px">' +
+    '<div class="fld" style="margin-top:0"><label>球局码</label><input id="hmCode" type="text" placeholder="输入好友给你的球局码" autocomplete="off" style="text-transform:uppercase"></div>' +
+    '<div class="err" id="hmJoinErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="hmJoinGo" type="button">加入球局</button></div></div>';
+  document.getElementById('hmJoinGo').addEventListener('click', async function () {
+    var code = (document.getElementById('hmCode').value || '').trim();
+    var errEl = document.getElementById('hmJoinErr');
+    if (!code) { errEl.textContent = '请输入球局码。'; return; }
+    this.disabled = true; errEl.textContent = '';
+    var sess2 = getSessionSync();
+    var myName2 = (sess2 && sess2.user && (sess2.user.user_metadata || {}).display_name) || (sess2 && sess2.user && sess2.user.email) || undefined;
+    var r = await casualJoin({ invite_code: code, display_name: myName2 });
+    this.disabled = false;
+    if (!r || !r.ok) {
+      var st = r && r.status;
+      errEl.textContent = st === 404 ? '这个球局码不存在或已失效，请核对后再试。'
+        : st === 409 ? '这场球局已经结束了。'
+        : st === 400 ? '这场球局已取消，或球局码不完整。'
+        : '加入未成功，请稍后再试。';
+      return;
+    }
+    location.href = location.pathname + '?e=' + encodeURIComponent(r.event_id || '');
+  });
+  document.getElementById('hmCode').focus();
+}
+
+/* [线Z44] 日常球局接线（线 Z43 终报 §四接口清单，golf-api v84） */
+async function casualCreate(body) {
+  var r = await golfApi('casual_create', body, true).catch(function () { return null; });
+  if (!r) return { ok: false, error: 'network' };
+  if (!r.ok) return { ok: false, error: (r.data && (r.data.error || r.data.message)) || 'create_failed' };
+  var d = r.data || {}, ev = d.event || {};
+  var code = d.invite_code || ev.invite_code || '';
+  return { ok: true, code: code, event_id: ev.id || null,
+    link: location.origin + location.pathname + '?join=' + encodeURIComponent(code) };
+}
+async function casualJoin(body) {
+  var r = await golfApi('casual_join', body, true).catch(function () { return null; });
+  if (!r) return { ok: false, error: 'network' };
+  if (!r.ok) return { ok: false, error: (r.data && (r.data.error || r.data.message)) || 'join_failed', status: r.status };
+  var d = r.data || {}, ev = d.event || {};
+  return { ok: true, event_id: ev.id || null, member_count: d.member_count };
+}
+/* [线Z44] 球友复用接线（线 Z45 终报接口清单，golf-api v84） */
+async function playerSearch(q) {
+  var r = await golfApi('player_search', { q: q, limit: 10 }, true).catch(function () { return null; });
+  if (!r || !r.ok) return null;
+  return ((r.data && r.data.results) || []).map(function (u) {
+    return { user_id: u.user_id, display_name: u.display_name, sub: '注册球员' };
+  });
+}
+async function lastGroup() {
+  var r = await golfApi('last_group', {}, true).catch(function () { return null; });
+  if (!r || !r.ok) return null;
+  if (!r.data || !r.data.last_group) return [];
+  return (r.data.members || []).map(function (u) {
+    return { user_id: u.user_id, display_name: u.display_name };
+  });
+}
+async function roundInvitesSend(round, userIds) {
+  if (!round || !round.event_id || !userIds.length) return { ok: false, sent: 0, total: userIds.length };
+  var sent = 0;
+  for (var i = 0; i < userIds.length; i++) {
+    var r = await golfApi('round_invite', { event_id: round.event_id, invitee_user_id: userIds[i] }, true).catch(function () { return null; });
+    if (r && r.ok) sent++;
+  }
+  return { ok: sent > 0, sent: sent, total: userIds.length };
+}
+
+/* [线Z44] 高清层与地图按钮（静态元素，一次绑定） */
+(function () {
+  var hb = document.getElementById('mapHdBtn'); if (hb) hb.addEventListener('click', openPlayHd);
+  var sb = document.getElementById('mapSvgBox'); if (sb) sb.addEventListener('click', openPlayHd);
+  var hc = document.getElementById('playHdClose'); if (hc) hc.addEventListener('click', closePlayHd);
+  var ov = document.getElementById('playHd'); if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closePlayHd(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlayHd(); });
+})();
+
 /* ---------- 启动 ---------- */
 initAuth(function (s) {
   var wasKnown = S.authKnown;
   var was = !!S.session;
   S.session = s;
   S.authKnown = true; /* [线P] 首次回调即确认会话状态（有/无），之后才允许渲染登录表单 */
+  if (HOME_MODE) { paintHome(); return; } /* [线Z44] H5 入口：会话变化只刷新入口页 */
   if (!wasKnown || !!s !== was) loadAll(false);
   else paint();
 });
@@ -1019,6 +2312,13 @@ renderAuthBar(document.getElementById('authBar'), { onLogout: function () { load
 (function boot() {
   var s = getSessionSync();
   S.session = s;
+  if (HOME_MODE) { /* [线Z44] H5 入口：不装载默认赛事，直接呈现三入口 */
+    document.getElementById('pageTitle').textContent = 'RUKIK Golf';
+    document.title = 'RUKIK Golf · 一页球局';
+    paintHome();
+    return;
+  }
+  cdInit();
   loadAll(true);
 })();
 setInterval(function () {
