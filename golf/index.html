@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!-- [线Z66 2026-11-12] RUKIK Golf 落地页：快速球局双入口（发起/加入）。此前 /golf/ 无 index.html 落主站 404，用户找不到快速球局入口。本页只做入口与我的球局恢复，建局/加入/记分全部复用 play.html 现行流程，不另建一套。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RUKIK Golf 快速球局 · 免下载发起高尔夫球局</title>
+<meta name="description" content="RUKIK Golf 快速球局：不用下载 App，打开网页就能发起一场高尔夫球局——选球场、生成邀请链接，好友点开登录即可加入同一组共同记分。也可以输入邀请码加入球局、回到进行中的球局，或进入正式赛事。">
+<link rel="canonical" href="https://rukik.com/golf/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="RUKIK Golf 快速球局 · 免下载发起高尔夫球局">
+<meta property="og:description" content="选球场、发链接，好友打开就能一起记分。不用下载 App。">
+<meta property="og:url" content="https://rukik.com/golf/">
+<meta property="og:image" content="https://rukik.com/golf/golf-share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RUKIK Golf 快速球局 · 免下载发起高尔夫球局">
+<meta name="twitter:description" content="选球场、发链接，好友打开就能一起记分。不用下载 App。">
+<meta name="twitter:image" content="https://rukik.com/golf/golf-share.jpg">
+<link rel="icon" href="/assets/seal.png">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #04120d; color: #eaf4ec; -webkit-text-size-adjust: 100%; }
+  body::before { content: ""; position: fixed; inset: 0; z-index: -1; background:
+    radial-gradient(1100px 520px at 85% -10%, rgba(46,224,111,.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 30%, rgba(13,138,74,.20), transparent 55%),
+    linear-gradient(180deg, #04120d, #062116 55%, #04120d); }
+  .topbar { position: sticky; top: 0; z-index: 20; background: rgba(4,22,15,.88); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(110,255,180,.14); }
+  .topbar-in { max-width: 760px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { font-weight: 800; letter-spacing: .14em; font-size: 15px; color: #f2f8f3; }
+  .brand b { color: #E3C878; font-weight: 800; }
+  #authBar { font-size: 13px; color: #cfeedd; display: flex; align-items: center; gap: 6px; }
+  #authBar .rk-logout { background: none; border: none; color: #E3C878; font-size: 12px; cursor: pointer; padding: 4px 0 4px 12px; font-family: inherit; }
+  main { max-width: 760px; margin: 0 auto; padding: 4px 16px 40px; }
+  .card { background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1px solid rgba(120,255,190,.13); -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); border-radius: 18px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
+  .card h2 { margin: 0 0 6px; font-size: 18px; }
+  .pill { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(46,224,111,.12); color: #6ee7a0; border: 1px solid rgba(46,224,111,.25); font-weight: 600; }
+  .hero h1 { margin: 10px 0 8px; font-size: 30px; line-height: 1.25; }
+  .hero h1 .gold { color: #E3C878; }
+  .muted { color: #a9c4b1; font-size: 14px; line-height: 1.7; margin: 0; }
+  .entry { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1.5px solid rgba(120,255,190,.16); border-radius: 16px; padding: 16px; font-size: 17px; font-weight: 700; color: #f2f8f3; cursor: pointer; margin-top: 12px; text-decoration: none; box-shadow: 0 10px 26px rgba(0,0,0,.35); font-family: inherit; }
+  .entry .etx { flex: 1; min-width: 0; }
+  .entry small { display: block; font-size: 13px; font-weight: 400; color: #a9c4b1; margin-top: 4px; }
+  .entry.main { background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border-color: rgba(120,255,190,.35); }
+  .entry.main small { color: #c9f2d8; }
+  .entry .arr { font-size: 20px; color: #E3C878; flex: none; }
+  .entry.main .arr { color: #eafff2; }
+  .btn { display: block; width: 100%; background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: 1px solid rgba(120,255,190,.25); border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; box-shadow: 0 6px 18px rgba(6,90,45,.45), inset 0 1px 0 rgba(255,255,255,.18); font-family: inherit; }
+  .btn.plain { background: rgba(255,255,255,.05); color: #cfeedd; border: 1px solid rgba(160,220,185,.35); font-weight: 600; box-shadow: none; }
+  .btnrow { display: flex; gap: 10px; margin-top: 12px; }
+  .btnrow .btn { flex: 1; }
+  .rk-row { display: flex; gap: 8px; margin-top: 12px; }
+  .rk-row input { flex: 1; min-width: 0; border: 1px solid rgba(160,220,185,.28); border-radius: 999px; padding: 11px 16px; font-size: 16px; outline: none; background: rgba(3,18,12,.55); color: #f2f8f3; min-height: 44px; text-transform: uppercase; font-family: inherit; }
+  .rk-row button { background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: none; border-radius: 999px; padding: 11px 18px; font-size: 15px; cursor: pointer; white-space: nowrap; min-height: 44px; font-family: inherit; }
+  .err { color: #fca5a5; font-size: 14px; min-height: 20px; margin-top: 8px; }
+  .skel { color: #a9c4b1; font-size: 14px; padding: 6px 0; }
+  .csr { display: block; padding: 12px 2px; border-top: 1px solid rgba(160,220,185,.12); text-decoration: none; color: inherit; }
+  .csr:first-of-type { border-top: none; }
+  .csr b { display: block; font-size: 16px; }
+  .csr small { display: block; color: #a9c4b1; font-size: 13px; margin-top: 3px; line-height: 1.6; }
+  .meta { font-size: 14px; line-height: 1.7; margin: 0; }
+  .foot { border-top: 1px solid rgba(160,220,185,.14); margin-top: 22px; padding-top: 14px; }
+  .foot a { color: #E3C878; text-decoration: none; }
+  /* 登录组件（auth.js）与 play 同口径 */
+  .rk-tabs { display: flex; gap: 8px; margin: 10px 0 4px; }
+  .rk-tabs button { flex: 1; background: rgba(255,255,255,.05); color: #dcebe0; border: 1px solid rgba(160,220,185,.25); border-radius: 999px; padding: 10px 0; font-size: 15px; cursor: pointer; min-height: 44px; font-family: inherit; }
+  .rk-tabs button.on { background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border-color: rgba(120,255,190,.4); }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in">
+  <div class="brand">RUKIK <b>GOLF</b></div>
+  <div id="authBar"></div>
+</div></header>
+<main>
+  <section class="card hero">
+    <span class="pill">RUKIK GOLF · 快速球局</span>
+    <h1>约上好友，<span class="gold">说打就打</span></h1>
+    <p class="muted">快速球局是 RUKIK Golf 的日常球局：一分钟发起一场，选个球场、生成邀请链接，好友打开链接登录就能加入同一组共同记分。全程在网页完成，不用下载 App。</p>
+    <a class="entry main" href="play.html?create=1"><span class="etx">发起快速球局<small>选球场 · 邀请好友 · 共同记分</small></span><span class="arr">→</span></a>
+    <button class="entry" id="joinToggle" type="button"><span class="etx">加入球局<small>输入好友给您的邀请码</small></span><span class="arr">→</span></button>
+    <div id="joinPanel" style="display:none">
+      <div class="rk-row">
+        <input id="joinCode" type="text" placeholder="输入邀请码（如 NGNFTZQU）" autocomplete="off" maxlength="12">
+        <button id="joinGo" type="button">加入</button>
+      </div>
+      <div class="err" id="joinErr"></div>
+      <p class="muted">也可以直接打开好友分享的球局链接，登录后会自动加入。</p>
+    </div>
+  </section>
+
+  <section class="card" id="myRoundsCard">
+    <h2>⛳ 我的球局</h2>
+    <div id="myRounds"><div class="skel">正在确认登录状态…</div></div>
+  </section>
+
+  <section class="card">
+    <h2>正式赛事</h2>
+    <p class="muted">受邀参加正式比赛？从赛事页看海报、球场地图、排行榜并报名。</p>
+    <a class="csr" href="event.html?e=11564c2e-9c4f-40de-a54a-9803a0ae024c"><b>BD Max · 首届美国菁英高尔夫邀请赛</b><small>2026年11月23日 · Friendly Hills Country Club · 进入赛事页</small></a>
+    <a class="csr" href="memory/"><b>高光时刻</b><small>成绩 · 球场 · 球友 · 精彩瞬间</small></a>
+  </section>
+
+  <p class="foot muted">RUKIK Golf ｜ 记得你的每一场比赛，懂得你的每一次进步，预见你的下一洞。<br><a href="https://rukik.com/">Rukik 首页</a> · <a href="play.html">一页球局</a> · <a href="console/">主办方工作台</a></p>
+</main>
+
+<script type="module">
+import { initAuth, mountLogin, renderAuthBar, getAccessToken } from './auth.js?v=20261112b';
+
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+async function golfApi(action, body, needAuth) {
+  var headers = { 'apikey': ANON, 'Content-Type': 'application/json' };
+  var tk = await getAccessToken();
+  if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  else if (needAuth) return { ok: false, status: 401, data: {}, error: 'login_required' };
+  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 20000);
+  try {
+    var res = await fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(Object.assign({ action: action }, body || {})) });
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+    return { ok: res.ok && !data.error, status: res.status, data: data, error: data.error || null };
+  } finally { clearTimeout(to); }
+}
+
+/* 加入球局：只收集邀请码，加入本体走 play.html?join=CODE 的现行落地流程（未登录先登录、登录后自动加入直达记分） */
+var jt = document.getElementById('joinToggle'), jp = document.getElementById('joinPanel');
+jt.addEventListener('click', function () {
+  var open = jp.style.display !== 'none';
+  jp.style.display = open ? 'none' : 'block';
+  if (!open) { var i = document.getElementById('joinCode'); if (i) i.focus(); }
+});
+function doJoin() {
+  var v = (document.getElementById('joinCode').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var err = document.getElementById('joinErr');
+  if (v.length < 4) { err.textContent = '邀请码好像不完整，请核对后再试。'; return; }
+  err.textContent = '';
+  location.href = 'play.html?join=' + encodeURIComponent(v);
+}
+document.getElementById('joinGo').addEventListener('click', doJoin);
+document.getElementById('joinCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') doJoin(); });
+
+/* 我的球局：与 Z55 同口径——服务端 my_rounds 实时读取，进行中在前；读取失败如实报错可重试，绝不画成「没有球局」 */
+var S = { session: undefined };
+function fmtTime(iso, tz) {
+  if (!iso) return '';
+  try {
+    return new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: false, timeZone: tz || 'America/Los_Angeles' }).format(new Date(iso));
+  } catch (e) { return ''; }
+}
+function roundMeta(x) {
+  var bits = [];
+  if (x.course_name) bits.push(esc(x.course_name));
+  if (x.starts_at) bits.push(esc(fmtTime(x.starts_at, x.timezone)));
+  if (x.my_role === 'organizer') bits.push('我发起的');
+  return bits.join(' · ');
+}
+function cardLine(x) {
+  var c = x.my_card;
+  if (!c) return '尚未生成记分卡';
+  if (c.status === 'locked') return '成绩已锁定' + (c.gross_total != null ? ' · 总杆 ' + c.gross_total : '');
+  if (Number(c.thru || 0) > 0) return '已打 ' + c.thru + ' 洞' + (c.gross_total != null ? ' · 当前总杆 ' + c.gross_total : '');
+  return '记分卡已就绪 · 未开始记分';
+}
+async function loadMyRounds() {
+  var box = document.getElementById('myRounds');
+  if (!box) return;
+  if (!S.session) {
+    box.innerHTML = '<p class="muted">登录后，这里会显示您进行中的球局，点开直接继续记分（与 RUKIK App 同一账号）。</p><div id="lpLogin"></div>';
+    var lb = document.getElementById('lpLogin');
+    if (lb) mountLogin(lb, { onDone: function () { S.session = true; loadMyRounds(); } });
+    return;
+  }
+  box.innerHTML = '<div class="skel">正在加载我的球局…</div>';
+  var r = await golfApi('my_rounds', {}, true).catch(function () { return null; });
+  box = document.getElementById('myRounds');
+  if (!box) return;
+  if (!r || !r.ok) {
+    box.innerHTML = '<p class="err">我的球局加载失败（网络异常）。</p><div class="btnrow"><button class="btn plain" id="lpRetry" type="button">重新加载</button></div>';
+    var b = document.getElementById('lpRetry');
+    if (b) b.addEventListener('click', loadMyRounds);
+    return;
+  }
+  var d = r.data || {};
+  var active = d.active || [], upcoming = d.upcoming || [];
+  var out = '';
+  active.concat(upcoming).slice(0, 5).forEach(function (x) {
+    out += '<a class="csr" href="play.html?e=' + encodeURIComponent(x.id) + '"><b>' + esc(x.title) + '</b><small>' + roundMeta(x) + (roundMeta(x) ? ' · ' : '') + esc(cardLine(x)) + '</small></a>';
+  });
+  if (!out) out = '<p class="muted">暂无进行中的球局。点上方「发起快速球局」，约上好友开一场。</p>';
+  out += '<div class="btnrow"><a class="btn plain" href="play.html">全部球局与历史</a></div>';
+  box.innerHTML = out;
+}
+
+renderAuthBar(document.getElementById('authBar'), { onLogout: function () { S.session = null; loadMyRounds(); } });
+initAuth(function (s) {
+  S.session = s;
+  loadMyRounds();
+});
+</script>
+</body>
+</html>

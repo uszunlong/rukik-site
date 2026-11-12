@@ -2892,7 +2892,7 @@ var hmCourse = null, hmTees = [], hmSearchTimer = null;
 function paintHome() {
   document.getElementById('backLink').style.display = 'none';
   var html = '<div class="card brandcard"><h2 style="font-size:20px">RUKIK Golf</h2>' +
-    '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p></div>' +
+    '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p><p class="muted" style="margin-top:6px"><a href="/golf/" style="color:#E3C878;text-decoration:none">RUKIK Golf 首页 · 快速球局</a></p></div>' +
     '<div id="hmJoinBox"></div>' +
     '<div id="hmRounds"></div>' +
     '<div class="card"><h2>开始一局</h2>' +
@@ -2908,6 +2908,8 @@ function paintHome() {
   if (lb) mountLogin(lb, { onDone: function () { paintHome(); } });
   document.getElementById('hmCreate').addEventListener('click', hmShowCreate);
   document.getElementById('hmJoin').addEventListener('click', hmShowJoin);
+  /* [线Z66] 落地页 /golf/「发起快速球局」直达 play.html?create=1：自动展开创建面板；未登录时面板先提示登录，登录后本页重绘会自动展开表单，不用再点一次。 */
+  if (qs.get('create') && !document.getElementById('hmGo')) { hmShowCreate(); var _cp = document.getElementById('hmPanel'); if (_cp && document.getElementById('hmGo')) _cp.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   paintJoinBox();
   if (S.session) loadMyRounds();
 }
