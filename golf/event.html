@@ -146,6 +146,17 @@
   .mapsum{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:6px 0;font-size:15px;color:#1c2a1e;text-align:left}
   .mapsum .ms-t{font-weight:600}
   .mapsum .ms-r{color:#14532d;font-weight:600;font-size:14px;white-space:nowrap}
+  .teebar{display:flex;align-items:center;gap:8px;width:100%;background:#fff;border:1px solid #cfe0d2;border-radius:999px;cursor:pointer;padding:7px 12px;font-size:14px;color:#1c2a1e;text-align:left;margin-top:2px}
+  .teebar .tb-l{color:#5b6b5e;white-space:nowrap}
+  .teebar .tb-v{flex:1;font-weight:600;color:#14532d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .teebar .tb-tag{background:#14532d;color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+  .teebar .tb-a{color:#14532d;font-weight:600}
+  .teepick{border:1px solid #cfe0d2;border-radius:12px;overflow:hidden;margin-top:6px}
+  .teeitem{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:#fff;border:none;border-bottom:1px solid #eef3ee;cursor:pointer;padding:9px 12px;font-size:14px;color:#1c2a1e;text-align:left}
+  .teeitem:last-child{border-bottom:none}
+  .teeitem.on{background:#14532d;color:#fff;font-weight:600}
+  .teeitem .ti-m{font-size:12px;color:#5b6b5e;white-space:nowrap}
+  .teeitem.on .ti-m{color:#fff}
   #mapPick.hidden{display:none}
   .hdlink{border:1px solid #cfe0d2;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:#14532d;font-weight:600}
   #orgSheet{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;justify-content:flex-end}
@@ -1074,6 +1085,8 @@ function holeData() {
 }
 /* 减法重构第 3 项（Z29）：选择器默认收起，状态跨重渲染保留 */
 var mapPickOpen = false;
+/* 发球台单行折叠下拉（Z33）：展开状态与赛事官方指定台 id（默认解析后落位，见 loadDynamic） */
+var teePickOpen = false, officialTeeId = null;
 function openHdOverlay() {
   var src = document.getElementById('holeSvg'), box = document.getElementById('hdBox');
   if (!src || !box) return;
@@ -1087,16 +1100,28 @@ function renderMap() {
   var comp = PREVIEW.completeness || {};
   var h = holeData();
   var suspect = h ? suspectNote(h.hole) : '';
-  var teeOpts = (PREVIEW.tees || []).map(function (t) { return '<option value="' + t.id + '"' + (t.id === curTee ? ' selected' : '') + '>' + esc(t.name) + (t.course_rating ? '（' + t.course_rating + '/' + t.slope + '）' : '') + '</option>'; }).join('');
   var dots = '';
   for (var i = 1; i <= 18; i++) dots += '<button type="button" data-hole="' + i + '"' + (i === curHole ? ' class="on"' : '') + '>' + i + '</button>';
-  var teeName = (PREVIEW.tees || []).filter(function (t) { return t.id === curTee; }).map(function (t) { return t.name; })[0] || '';
+  var teeCur = (PREVIEW.tees || []).filter(function (t) { return t.id === curTee; })[0] || null;
+  var teeName = teeCur ? teeCur.name : '';
+  /* 发球台单行折叠下拉（Z33）：默认一行只显当前台＋总码数（＋官方台「比赛指定」标），
+     点开为列表、点选立即收起并整页换绑（逐洞码数/地图/Rating/Slope 随 curTee 重渲染）；
+     洞号选择仍走 Z29 的 mapSum 展开，两者相互独立 */
+  var teeBar = (PREVIEW.tees || []).length ?
+    '<button type="button" class="teebar" id="teeBar"><span class="tb-l">发球台</span><span class="tb-v">' + esc(teeName || '默认') + (teeCur && teeCur.total_yards ? ' · ' + teeCur.total_yards + ' 码' : '') + '</span>' +
+    (officialTeeId && curTee === officialTeeId ? '<span class="tb-tag">比赛指定</span>' : '') +
+    '<span class="tb-a">' + (teePickOpen ? '▴' : '▾') + '</span></button>' +
+    '<div id="teePick" class="teepick' + (teePickOpen ? '' : ' hidden') + '">' +
+    (PREVIEW.tees || []).map(function (t) {
+      var meta = officialTeeId === t.id ? '比赛指定' : (t.course_rating ? 'Rating ' + t.course_rating + (t.slope ? ' · Slope ' + t.slope : '') : '');
+      return '<button type="button" class="teeitem' + (t.id === curTee ? ' on' : '') + '" data-tee="' + t.id + '"><span>' + esc(t.name) + (t.total_yards ? ' · ' + t.total_yards + ' 码' : '') + '</span>' + (meta ? '<span class="ti-m">' + meta + '</span>' : '') + '</button>';
+    }).join('') + '</div>' : '';
   el.innerHTML = '<div class="card"><h2>球场地图</h2>' +
     '<div id="lmapBox"></div>' +
-    '<button type="button" class="mapsum" id="mapSum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span><span class="ms-r">发球台：' + esc(teeName || '默认') + ' ' + (mapPickOpen ? '▴' : '▾') + '</span></button>' +
+    '<button type="button" class="mapsum" id="mapSum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span><span class="ms-r">' + (mapPickOpen ? '▴' : '▾') + '</span></button>' +
+    teeBar +
     '<div id="mapPick"' + (mapPickOpen ? '' : ' class="hidden"') + '>' +
-    '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button>' +
-    (teeOpts ? '<select id="teeSel">' + teeOpts + '</select>' : '') + '</div>' +
+    '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button></div>' +
     '<div class="dots">' + dots + '</div></div>' +
     '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><button type="button" class="hdlink" id="hdOpen">查看高清球洞图</button><button type="button" id="nextHole">下一洞 →</button></div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
@@ -1114,8 +1139,14 @@ function renderMap() {
   var hdBtn = el.querySelector('#hdOpen');
   if (hdBtn) hdBtn.addEventListener('click', openHdOverlay);
   el.querySelectorAll('.dots button').forEach(function (b) { b.addEventListener('click', function () { setHole(Number(b.getAttribute('data-hole'))); }); });
-  var sel = el.querySelector('#teeSel');
-  if (sel) sel.addEventListener('change', function () { curTee = sel.value; renderMap(); });
+  var tbBtn = el.querySelector('#teeBar'), tpBox = el.querySelector('#teePick');
+  if (tbBtn && tpBox) tbBtn.addEventListener('click', function () {
+    teePickOpen = !teePickOpen;
+    tpBox.classList.toggle('hidden', !teePickOpen);
+    var tba = tbBtn.querySelector('.tb-a');
+    if (tba) tba.textContent = teePickOpen ? '▴' : '▾';
+  });
+  el.querySelectorAll('.teeitem').forEach(function (b) { b.addEventListener('click', function () { curTee = b.getAttribute('data-tee'); teePickOpen = false; renderMap(); }); });
   setupBigMap();
   loadHoleSvg();
 }
@@ -1443,7 +1474,17 @@ function loadDynamic() {
   dyn('event_get', {}).then(function (j) {
     EV = j; PREVIEW = j.course_preview || null;
     applyShare(j.event);
-    curTee = PREVIEW && PREVIEW.main_tee_id;
+    /* 发球台默认优先级（Z33）：赛事官方指定台（rounds.default_tee_id 且能在预览台列表中
+       解析；记分卡/分组在服务端同取此值、即球员已确认台同源）＞ 球场主台 main_tee_id。
+       curTee 只是页面查看态，重进页面回到默认，查看切换永不覆盖官方指定。 */
+    officialTeeId = null;
+    if (PREVIEW && (PREVIEW.tees || []).length && j.rounds) {
+      for (var ri = 0; ri < j.rounds.length; ri++) {
+        var dt = j.rounds[ri] && j.rounds[ri].default_tee_id;
+        if (dt && (PREVIEW.tees || []).some(function (t) { return t.id === dt; })) { officialTeeId = dt; break; }
+      }
+    }
+    curTee = officialTeeId || (PREVIEW && PREVIEW.main_tee_id);
     renderHero(); renderPartners(); renderMap();
     if (LASTBOARD) loadBoardIntoFunc();
     if (WALL) renderLive(); // wall 先于动态层到达时在此补渲染 Hero 照片墙
