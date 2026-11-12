@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RUKIK Event｜发现值得参加的活动</title>
+<meta name="description" content="RUKIK Event：高尔夫、商务与城市活动统一列表。发现值得参加的活动，点开即可查看详情与报名。"/>
+<meta property="og:title" content="RUKIK Event｜发现值得参加的活动"/>
+<meta property="og:description" content="高尔夫、商务与城市活动，都在这里。"/>
+<meta property="og:url" content="https://rukik.com/event/"/>
+<meta property="og:site_name" content="Rukik"/>
+<meta property="og:image" content="https://rukik.com/assets/og-share.png"/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="/assets/seal.png"/>
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"/>
+<style>
+:root{--ink:#12283d;--line:#e3ebf2;--green:#0d6e3f;--accent-soft:#e8f4ec}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#f6f8fa}
+a{text-decoration:none;color:inherit}
+.site-head{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.site-head-in{max-width:1080px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px}
+.brand img{width:30px;height:30px;border-radius:8px}
+.brand b{font-size:19px;letter-spacing:.14em}
+.main-nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.main-nav a{color:#33506e;font-size:13px;padding:5px 7px;border-radius:999px;white-space:nowrap}
+.main-nav a:hover{background:var(--accent-soft);color:var(--ink)}
+.main-nav a.on{background:#123c5e;color:#fff;font-weight:600}
+.hero{background:linear-gradient(120deg,#0b1f33 0%,#123c5e 60%,#1d5c46 100%);color:#fff}
+.hero-in{max-width:1080px;margin:0 auto;padding:38px 20px 40px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.hero h1{font-size:clamp(26px,4vw,38px);margin:0 0 8px;font-weight:800;letter-spacing:.01em}
+.hero p{margin:0;color:#cfe0ee;font-size:15px}
+.hero .mgmt{margin-left:auto;font-size:13px;color:#bcd2e4;border:1px solid rgba(255,255,255,.35);padding:8px 14px;border-radius:999px;white-space:nowrap}
+.hero .mgmt:hover{background:rgba(255,255,255,.12);color:#fff}
+.tabs{position:sticky;top:53px;z-index:40;background:rgba(246,248,250,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tabs-in{max-width:1080px;margin:0 auto;padding:14px 20px 4px;display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid #cfdce8;background:#fff;color:#33506e;border-radius:999px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer}
+.tab.on{background:#123c5e;border-color:#123c5e;color:#fff}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 20px 56px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.card{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 2px 10px rgba(10,35,55,.05);transition:transform .18s ease,box-shadow .18s ease}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(10,35,55,.13)}
+.thumb{position:relative;aspect-ratio:16/10;background:#dfe9f0}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:center 22%;display:block}
+.thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px}
+.ph-golf{background:linear-gradient(135deg,#128a4c,#08351f)}
+.ph-biz{background:linear-gradient(135deg,#2f7fd0,#123c5e)}
+.ph-etc{background:linear-gradient(135deg,#e8a04c,#b3541e)}
+.chip{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;background:#7c8a96}
+.chip.golf{background:#12a150}.chip.biz{background:#2f7fd0}.chip.etc{background:#8a97a3}
+.st{position:absolute;top:12px;right:12px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;background:rgba(10,30,45,.72)}
+.info{padding:15px 18px 17px}
+.info h3{margin:0 0 8px;font-size:16.5px;line-height:1.42;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{margin:3px 0;font-size:13.5px;color:#4c647a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.state{grid-column:1/-1;text-align:center;padding:52px 16px;background:#fff;border:1px dashed #c9d6e0;border-radius:18px;color:#5a7185;font-size:16px}
+.state .big{font-size:34px;display:block;margin-bottom:10px}
+.state button,.more button{background:#123c5e;color:#fff;border:0;border-radius:999px;padding:11px 26px;font-size:14px;font-weight:600;cursor:pointer}
+.more{grid-column:1/-1;text-align:center;padding-top:6px}
+.skel{height:262px;border-radius:18px;background:linear-gradient(100deg,#e6edf2 40%,#f3f7fa 50%,#e6edf2 60%);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.site-foot{border-top:1px solid var(--line);background:#fff}
+.site-foot-in{max-width:1080px;margin:0 auto;padding:26px 20px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:#5a7185}
+.site-foot a{color:#33506e}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.hero .mgmt{margin-left:0}.tabs{top:49px}}
+</style>
+</head>
+<body>
+<header class="site-head"><div class="site-head-in"><a class="brand" href="/"><img src="/assets/seal.png" alt="Rukik"/><b>RUKIK</b></a><nav class="main-nav"><a href="/ask/">问 Rukik</a><a href="/experts/">专家 AI</a><a href="/studio/">专业工作台</a><a href="/content/">内容中心</a><a href="/event/" class="on">RUKIK Event</a><a href="/join/">专家入驻</a><a href="/download/">下载 App</a><a href="/contact/">联系我们</a><a href="/build/">登录</a></nav></div></header>
+
+<section class="hero"><div class="hero-in">
+  <div><h1>RUKIK Event</h1><p>高尔夫、商务与城市活动，都在这里。</p></div>
+  <a class="mgmt" href="/download/">我发布的活动 / 活动管理（App）</a>
+</div></section>
+
+<div class="tabs"><div class="tabs-in" id="tabs">
+  <button class="tab on" data-f="all" type="button">全部</button>
+  <button class="tab" data-f="golf" type="button">高尔夫</button>
+  <button class="tab" data-f="biz" type="button">商务</button>
+  <button class="tab" data-f="etc" type="button">其他</button>
+</div></div>
+
+<main class="wrap"><div class="grid" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></main>
+
+<footer class="site-foot"><div class="site-foot-in"><div>AI懂很多，RUKIK更懂您。</div><div><a href="/privacy-policy">隐私政策</a> · <a href="/terms">服务条款</a> · <a href="/contact/">联系我们</a> · <a href="/download/">下载 Rukik App</a></div></div></footer>
+
+<script>
+var BASE = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var REST = { 'apikey': ANON, 'Authorization': 'Bearer ' + ANON };
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function jget(url, headers, body){
+  var ctrl = new AbortController(); var to = setTimeout(function(){ctrl.abort();}, 15000);
+  var opt = { signal: ctrl.signal, headers: headers };
+  if(body){ opt.method='POST'; opt.body = JSON.stringify(body); }
+  return fetch(url, opt).then(function(r){ clearTimeout(to); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .catch(function(e){ clearTimeout(to); throw e; });
+}
+function fmtDate(iso, tz){
+  if(!iso) return '';
+  try{
+    return new Intl.DateTimeFormat('zh-CN',{timeZone:tz||'America/Los_Angeles',month:'long',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso));
+  }catch(e){ return String(iso).slice(0,10); }
+}
+var GST = { published:'报名中', in_progress:'进行中', completed:'已结束' };
+var ALL = [], FILTER = 'all', PAGE = 0, PER = 24;
+
+function golfEvents(){
+  return jget(BASE + '/functions/v1/golf-api', { 'apikey': ANON, 'Content-Type': 'application/json' }, { action: 'event_list' })
+  .then(function(j){
+    var evs = (j && j.events) || [];
+    var mirrorIds = {};
+    var jobs = evs.filter(function(e){ return e.status!=='cancelled' && e.status!=='draft'; }).map(function(e){
+      if(e.public_event_id) mirrorIds[e.public_event_id] = 1;
+      return jget(BASE + '/functions/v1/golf-api', { 'apikey': ANON, 'Content-Type': 'application/json' }, { action: 'event_get', event_id: e.id })
+        .then(function(g){ var c = g && g.course; e.__course = c ? (c.name + (c.city ? ' · ' + c.city : '')) : ''; })
+        .catch(function(){ e.__course=''; })
+        .then(function(){
+          return { kind:'golf', id:e.id, title:e.title, img: e.cover_url || (Array.isArray(e.poster_urls)&&e.poster_urls[0]) || '',
+                   date: e.starts_at || '', tz: e.timezone || 'America/Los_Angeles',
+                   place: e.__course || '', st: GST[e.status] || '',
+                   href: '/golf/event.html?e=' + encodeURIComponent(e.id) };
+        });
+    });
+    return Promise.all(jobs).then(function(cards){ return { cards: cards, mirrorIds: mirrorIds }; });
+  });
+}
+function pubEvents(mirrorIds){
+  var q = '/rest/v1/public_events?select=id,title,category,cover_image_url,venue_name,city,venue_timezone'
+        + '&review_status=eq.APPROVED&event_status=eq.UPCOMING&order=created_at.desc&limit=300';
+  return jget(BASE + q, REST).then(function(rows){
+    rows = rows.filter(function(r){ return !mirrorIds[r.id]; });
+    var ids = rows.map(function(r){ return r.id; });
+    var chunks = [];
+    for(var i=0;i<ids.length;i+=60) chunks.push(ids.slice(i,i+60));
+    return Promise.all(chunks.map(function(ch){
+      var sq = '/rest/v1/event_sessions?select=event_id,start_at,timezone&event_id=in.(' + ch.join(',') + ')&order=start_at.asc&limit=2000';
+      return jget(BASE + sq, REST).catch(function(){ return []; });
+    })).then(function(parts){
+      var byEv = {};
+      parts.forEach(function(ss){ ss.forEach(function(s){ (byEv[s.event_id] = byEv[s.event_id] || []).push(s); }); });
+      var now = Date.now() - 12*3600*1000;
+      return rows.map(function(r){
+        var ss = byEv[r.id] || [];
+        var pick = null;
+        for(var k=0;k<ss.length;k++){ if(new Date(ss[k].start_at).getTime() >= now){ pick = ss[k]; break; } }
+        if(!pick && ss.length) pick = ss[ss.length-1];
+        var place = r.venue_name ? (r.venue_name + (r.city ? ' · ' + r.city : '')) : (r.city || '');
+        return { kind: (r.category === 'BUSINESS' ? 'biz' : 'etc'), id: r.id, title: r.title,
+                 img: r.cover_image_url || '', date: pick ? pick.start_at : '', tz: (pick && pick.timezone) || r.venue_timezone || 'America/Los_Angeles',
+                 place: place, st: '', href: '/event/' + encodeURIComponent(r.id) + '/' };
+      });
+    });
+  });
+}
+function filtered(){
+  return ALL.filter(function(c){ return FILTER==='all' || c.kind===FILTER; });
+}
+function paint(){
+  var grid = document.getElementById('grid');
+  var list = filtered();
+  var show = list.slice(0, PER*(PAGE+1));
+  if(!list.length){
+    grid.innerHTML = '<div class="state"><span class="big">🎫</span>这个分类下暂时没有活动。</div>';
+    return;
+  }
+  var html = show.map(function(c){
+    var chip = c.kind==='golf' ? '<span class="chip golf">高尔夫</span>' : (c.kind==='biz' ? '<span class="chip biz">商务</span>' : '<span class="chip etc">其他</span>');
+    var ph = c.kind==='golf' ? '⛳' : (c.kind==='biz' ? '💼' : '🎉');
+    return '<a class="card" href="'+esc(c.href)+'"><div class="thumb">'
+      + (c.img ? '<img src="'+esc(c.img)+'" alt="" loading="lazy"/>' : '<div class="ph ph-'+c.kind+'">'+ph+'</div>')
+      + chip + (c.st ? '<span class="st">'+esc(c.st)+'</span>' : '') + '</div>'
+      + '<div class="info"><h3>'+esc(c.title)+'</h3>'
+      + (c.date ? '<p class="meta">📅 '+esc(fmtDate(c.date, c.tz))+'</p>' : '')
+      + (c.place ? '<p class="meta">📍 '+esc(c.place)+'</p>' : '')
+      + '</div></a>';
+  }).join('');
+  if(list.length > show.length) html += '<div class="more"><button type="button" id="moreBtn">查看更多活动（' + (list.length - show.length) + '）</button></div>';
+  grid.innerHTML = html;
+  var mb = document.getElementById('moreBtn');
+  if(mb) mb.onclick = function(){ PAGE++; paint(); };
+}
+function load(){
+  var grid = document.getElementById('grid');
+  grid.innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  var g = golfEvents().catch(function(){ return { cards: [], mirrorIds: {} }; });
+  g.then(function(gr){
+    return pubEvents(gr.mirrorIds).catch(function(){ return []; }).then(function(pc){ return gr.cards.concat(pc); });
+  }).then(function(cards){
+    ALL = cards;
+    ALL.sort(function(a,b){
+      if(a.date && b.date) return String(a.date).localeCompare(String(b.date));
+      if(a.date) return -1; if(b.date) return 1; return 0;
+    });
+    PAGE = 0; paint();
+    if(!ALL.length) grid.innerHTML = '<div class="state"><span class="big">🎫</span>近期活动筹备中，敬请期待。</div>';
+  }).catch(function(){
+    grid.innerHTML = '<div class="state"><span class="big">🎫</span>活动加载遇到一点问题。<br/><button onclick="load()">重新加载</button></div>';
+  });
+}
+document.getElementById('tabs').addEventListener('click', function(ev){
+  var b = ev.target.closest ? ev.target.closest('.tab') : null; if(!b) return;
+  FILTER = b.getAttribute('data-f'); PAGE = 0;
+  var tabs = document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i]===b);
+  if(ALL.length) paint();
+});
+var qf = new URLSearchParams(location.search).get('f');
+if(qf && ['golf','biz','etc'].indexOf(qf) >= 0){
+  FILTER = qf;
+  var tabs = document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-f')===qf);
+}
+load();
+</script>
+</body>
+</html>
