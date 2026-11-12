@@ -675,7 +675,8 @@ function showCelebration(o) {
   var reduced = false; try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var el = document.createElement('div');
   el.id = 'w2Celeb';
-  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s');
+  /* [线Z3] 浮层只呈现、不拦截点击：快速连点记分时曾遮挡洞位按钮导致漏录；pointer-events:none 后点按直接落到页面，浮层仍按原时长自动关闭（保存/同步逻辑未动） */
+  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s;pointer-events:none');
   var cardCss = 'background:#F7F3EC;border-radius:16px;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)' + (o.round ? ';border:1.5px solid #B58A58' : '');
   var inner = '<div style="' + cardCss + '"><div style="font-size:12px;letter-spacing:2px;color:#8B857D">' + (o.round ? '🏆 RUKIK GOLF' : '⛳ RUKIK GOLF') + '</div>' +
     '<div style="font-size:' + (o.round ? '26px' : '22px') + ';font-weight:700;color:#14304A;margin:8px 0">' + esc(o.title) + '</div>';

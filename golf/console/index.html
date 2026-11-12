@@ -127,7 +127,6 @@
           <button class="ghost" id="pairBtn">生成分组</button>
           <button class="ghost" id="snapBtn">生成差点快照</button>
           <button class="ghost" id="cardsBtn">生成记分卡</button>
-          <button class="ghost" id="pubBtn">发布排行榜</button>
           <button class="ghost" id="awardBtn">计算奖项</button>
           <button class="ghost" id="reportBtn">运营报表</button>
           <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
@@ -193,6 +192,27 @@ function call(action, body) {
   return fetch(API, { method: 'POST', headers: headers(), body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
 }
 function show(obj) { var o = document.getElementById('out'); o.style.display = 'block'; o.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 1); }
+/* [线Z3] 页面内统一确认弹窗，替代浏览器原生确认框：原生框会吞掉浏览器自动化验收、真机上也无法统一样式。
+   uiConfirm(文案) → Promise<boolean>：点「确定」true；点「取消」或点遮罩 false。文案与原确认框逐字一致。 */
+function uiConfirm(message) {
+  return new Promise(function (resolve) {
+    var old = document.getElementById('z3Confirm'); if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 'z3Confirm';
+    el.setAttribute('style', 'position:fixed;inset:0;z-index:200;background:rgba(20,34,53,.45);display:flex;align-items:center;justify-content:center;padding:20px');
+    el.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px 22px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25)">' +
+      '<div style="font-size:16px;color:#14304A;line-height:1.6">' + escapeHtml(message) + '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">' +
+      '<button type="button" id="z3ConfirmNo" class="ghost">取消</button>' +
+      '<button type="button" id="z3ConfirmYes">确定</button></div></div>';
+    document.body.appendChild(el);
+    var done = false;
+    function close(v) { if (done) return; done = true; el.remove(); resolve(v); }
+    el.querySelector('#z3ConfirmYes').addEventListener('click', function () { close(true); });
+    el.querySelector('#z3ConfirmNo').addEventListener('click', function () { close(false); });
+    el.addEventListener('click', function (e) { if (e.target === el) close(false); });
+  });
+}
 document.getElementById('loginBtn').onclick = function () {
   var email = document.getElementById('email').value, pw = document.getElementById('password').value;
   fetch(SB + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON }, body: JSON.stringify({ email: email, password: pw }) })
@@ -312,8 +332,11 @@ function bindKnowButtons(rows) {
     call('knowledge_unpublish', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { kMsg(d.ok ? '已撤下，回到草稿。' : ('撤下失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
   }; });
   Array.prototype.forEach.call(document.querySelectorAll('.k-del'), function (b) { b.onclick = function () {
-    if (!confirm('确定删除这条赛事知识？删除后 AI 球童不再引用。')) return;
-    call('knowledge_delete', { event_id: currentEvent.id, id: b.getAttribute('data-id') }).then(function (d) { kMsg(d.ok ? '已删除。' : ('删除失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
+    var kid = b.getAttribute('data-id');
+    uiConfirm('确定删除这条赛事知识？删除后 AI 球童不再引用。').then(function (ok) {
+      if (!ok) return;
+      call('knowledge_delete', { event_id: currentEvent.id, id: kid }).then(function (d) { kMsg(d.ok ? '已删除。' : ('删除失败：' + (d.error || '未知错误'))); if (d.ok) loadKnowledge(); });
+    });
   }; });
 }
 function resetKnowForm() {
@@ -469,13 +492,20 @@ function handleCardAction(step, cardId, decision) {
     if (!note) { if (m) m.textContent = '已取消解锁（未填写原因）。'; return; }
     body.note = note;
   }
-  if (step === 'admin_lock' && !confirm('锁定后成绩即为正式成绩，球员端不能再更正。确定锁定？')) return;
-  call('certify', body).then(function (d) {
-    if (d.ok) {
-      if (m) m.textContent = '已处理，成绩状态已更新。';
-      refreshDash(); /* 计数区与成绩区一并刷新（refreshDash 内含成绩重拉） */
-    } else if (m) m.textContent = '处理失败：' + (d.error || '未知错误');
-  });
+  var doCall = function () {
+    call('certify', body).then(function (d) {
+      if (d.ok) {
+        if (m) m.textContent = '已处理，成绩状态已更新。';
+        refreshDash(); /* 计数区与成绩区一并刷新（refreshDash 内含成绩重拉） */
+      } else if (m) m.textContent = '处理失败：' + (d.error || '未知错误');
+    });
+  };
+  if (step === 'admin_lock') {
+    /* [线Z3] 原生确认框换页面内统一弹窗（语义与文案不变：取消则不锁定、不发请求） */
+    uiConfirm('锁定后成绩即为正式成绩，球员端不能再更正。确定锁定？').then(function (ok) { if (ok) doCall(); });
+    return;
+  }
+  doCall();
 }
 function refreshDash() {
   if (!currentEvent) return;
@@ -526,7 +556,10 @@ function updateStatus(s) {
 // [线X 补齐 2026-11-11] 结束比赛：与 App「结束比赛（切换回忆馆）」同口径——同一 event_update 动作、
 // 同一 requireStaff 权限、同一状态机（in_progress → completed），不另造结束逻辑。
 function finishEvent() {
-  if (!confirm('确定结束比赛吗？结束后赛事页将切换为回忆馆，记分到此为止。')) return;
+  /* [线Z3] 原生确认框换页面内统一弹窗（语义与文案不变：取消则不结束、不发请求） */
+  uiConfirm('确定结束比赛吗？结束后赛事页将切换为回忆馆，记分到此为止。').then(function (ok) { if (ok) doFinishEvent(); });
+}
+function doFinishEvent() {
   call('event_update', { event_id: currentEvent.id, status: 'completed' }).then(function (d) {
     if (d.event) {
       currentEvent = d.event;
@@ -585,11 +618,10 @@ document.getElementById('createBtn').onclick = function () {
   });
 };
 document.getElementById('boardBtn').onclick = function () { if (currentEvent) window.open('/golf/board/?e=' + currentEvent.id, '_blank'); };
-document.getElementById('shareBtn').onclick = function () { if (currentEvent) window.open('/golf/event/?e=' + currentEvent.id, '_blank'); };
+document.getElementById('shareBtn').onclick = function () { if (currentEvent) window.open('/golf/event.html?e=' + currentEvent.id, '_blank'); };
 document.getElementById('pairBtn').onclick = function () { call('pairings_generate', { event_id: currentEvent.id, round_id: currentRound.id, method: document.getElementById('pMethod').value, group_size: Number(document.getElementById('pSize').value || 4) }).then(show); };
 document.getElementById('snapBtn').onclick = function () { call('handicap_snapshot_all', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
 document.getElementById('cardsBtn').onclick = function () { call('scorecard_ensure', { event_id: currentEvent.id, round_id: currentRound.id }).then(show); };
-document.getElementById('pubBtn').onclick = function () { call('leaderboard_publish', { event_id: currentEvent.id }).then(show); };
 document.getElementById('awardBtn').onclick = function () { call('awards_compute', { event_id: currentEvent.id }).then(function (d) { show(d); loadAwardsAdmin(); }); };
 /* [线Z2 P0-8] 主办方报表导出：浏览器端生成 CSV 下载（不建服务端文件）。
    数据源：成绩表＝scorecards_staff_list（线Y，requireStaff）；报名名单＝registrations_list（requireStaff）。
