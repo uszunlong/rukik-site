@@ -240,6 +240,8 @@
   .defcov .ttl{font-size:13px;color:rgba(255,255,255,.88);margin-top:3px}
   /* [Z65] hero 内「管理封面」入口（仅 staff 渲染，口径同 renderStaff） */
   .pcBtn{position:absolute;left:10px;bottom:10px;z-index:6;background:rgba(8,26,44,.80);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  /* [Z65 微修] 默认封面内按钮改置左上，避免与左下球场名/副标题文字重叠（相册形态不受影响） */
+  .defcov .pcBtn{top:10px;bottom:auto}
   /* [Z65] 封面管理弹层（结构复用 pm-* 样式类） */
   #pcSheet{position:fixed;inset:0;z-index:86;display:flex;flex-direction:column;justify-content:flex-end}
   #pcSheet.hidden{display:none}
