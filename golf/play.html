@@ -71,6 +71,15 @@
   .stepper .val { font-size: 40px; font-weight: 800; min-width: 64px; text-align: center; }
   .stepper.small button { width: 42px; height: 42px; font-size: 21px; }
   .stepper.small .val { font-size: 24px; min-width: 44px; }
+  /* [线Z39] 同组共享记分卡 */
+  .grow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #EFE9DC; }
+  .grow.me { background: #FBF7EC; }
+  .grow.flash { background: #EFF6F0; }
+  .ginfo { flex: 1; min-width: 0; }
+  .gname { font-weight: 600; color: #14304A; }
+  .gsub { font-size: 12px; color: #8B857D; margin-top: 2px; line-height: 1.5; }
+  .grow .stepper { margin: 0; gap: 10px; }
+  table.scores.mx td, table.scores.mx th { padding: 4px 6px; text-align: center; white-space: nowrap; }
   .edlabel { text-align: center; font-size: 13px; color: #8B857D; }
   .statetag { text-align: center; font-size: 13px; margin-top: 6px; }
   .conflictbox { margin-top: 12px; background: #fdf0f0; border: 1px solid #f3c2c2; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.7; }
@@ -156,6 +165,7 @@ function cacheSet(patch) {
 var S = {
   session: null, ev: null, pc: null, askCtx: null, cardData: null,
   selHole: null, edStrokes: null, edPutts: null,
+  group: null, gEdits: {}, gDirty: {}, gConflicts: {}, gFlash: {}, gMatrix: false, gInitFor: null, gSaving: false, /* [线Z39] 同组共享记分卡状态 */
   flushing: false, conflicts: {}, failed: {}, preview: null, loadedAt: 0,
   authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
 };
@@ -202,6 +212,7 @@ async function loadAll(useCachePaint) {
   if (card) {
     var cd = await golfApi('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; });
     if (cd && cd.ok) { S.cardData = cd.data; cacheSet({ cardData: S.cardData }); }
+    await loadGroup(card, false); /* [线Z39] 同组共享判定：组内个人卡 ≥2 才进共享模式 */
   }
   if (seq !== S.loadSeq) return; /* [线P] 陈旧运行不得重绘 */
   paint();
@@ -427,6 +438,263 @@ function effStrokes(cardId, h) {
   return h.strokes;
 }
 
+/* ---------- [线Z39] 同组共享记分卡（与 App 同口径） ----------
+   同组任一 registered 球员可代记全组：group 视图＝pairing 全组球员
+   ×18 洞矩阵（服务端唯一数据源）；整组提交逐人走同一 op_id 幂等/
+   409/审计/celebration 口径；未填不提交、不当 0 杆；断网整组条目逐人
+   入既有本机队列、回放逐人对账。 */
+async function loadGroup(card, keepEdits) {
+  var r = await golfApi('score_get_group', { scorecard_id: card.id }, true).catch(function () { return null; });
+  if (!r || !r.ok || !r.data || (r.data.players || []).filter(function (p) { return p.scorecard_id; }).length < 2) { S.group = null; return null; }
+  S.group = r.data;
+  if (!keepEdits || !Object.keys(S.gDirty).length) {
+    if (S.selHole != null) { initGEdits(S.selHole); S.gInitFor = S.selHole; }
+  } else {
+    (S.group.players || []).forEach(function (p) {
+      if (!S.gDirty[p.player_id]) {
+        var c = (S.group.cells[p.player_id] || {})[S.selHole];
+        S.gEdits[p.player_id] = c ? c.strokes : null;
+      }
+    });
+  }
+  return S.group;
+}
+function initGEdits(hole) {
+  S.gEdits = {}; S.gDirty = {};
+  if (!S.group) return;
+  (S.group.players || []).forEach(function (p) {
+    var c = (S.group.cells[p.player_id] || {})[hole];
+    S.gEdits[p.player_id] = c ? c.strokes : null;
+  });
+}
+function gOpenHole() {
+  if (!S.group) return null;
+  var hs = S.group.holes || [];
+  for (var i = 0; i < hs.length; i++) {
+    var missing = (S.group.players || []).some(function (p) { return p.scorecard_id && !(S.group.cells[p.player_id] || {})[hs[i].hole]; });
+    if (missing) return hs[i].hole;
+  }
+  return hs.length ? hs[hs.length - 1].hole : null;
+}
+function gRelTxt(v) { return v == null ? '' : v === 0 ? ' · Par' : v < 0 ? ' · ' + v : ' · +' + v; }
+
+function paintGroupScoring(card) {
+  var g = S.group;
+  var me = (g.players || []).filter(function (p) { return p.is_me; })[0] || null;
+  var lockedG = !!me && me.card_status === 'locked';
+  if (S.selHole == null) S.selHole = gOpenHole() || 1;
+  if (S.gInitFor !== S.selHole) { initGEdits(S.selHole); S.gInitFor = S.selHole; }
+  var curH = (g.holes || []).filter(function (h) { return h.hole === S.selHole; })[0] || (g.holes || [])[0];
+  if (!curH) return paintScoringFallbackToSingle(card);
+  var par = curH.par;
+  var cardIds = {};
+  (g.players || []).forEach(function (p) { if (p.scorecard_id) cardIds[p.scorecard_id] = 1; });
+  var qAll = loadQueue().filter(function (x) { return cardIds[x.scorecard_id]; });
+  var syncHtml;
+  if (lockedG) syncHtml = '<div class="syncbar good">成绩已锁定（正式成绩），不可再修改。</div>';
+  else if (Object.keys(S.gConflicts).length) syncHtml = '<div class="syncbar bad">有成绩冲突等待确认（见下方球员行），不会被静默覆盖。</div>';
+  else if (qAll.length) syncHtml = '<div class="syncbar">有 ' + qAll.length + ' 条记分待同步（已保存在本机，联网后自动同步、全组可见）。</div>';
+  else syncHtml = '<div class="syncbar good">全组记分已保存到服务端。</div>';
+
+  var rows = (g.players || []).map(function (p) {
+    var cell = (g.cells[p.player_id] || {})[curH.hole];
+    var v = S.gEdits[p.player_id];
+    var flash = S.gFlash[p.player_id];
+    var cf = S.gConflicts[p.player_id];
+    var sub;
+    if (cf) sub = '<span style="color:#dc2626">冲突：服务端现为 ' + (cf.current == null ? '—' : cf.current) + ' 杆，你记的是 ' + cf.mine + ' 杆</span>';
+    else if (flash) sub = '<span style="color:#15803d">✓ 已保存 · ' + esc(flash.text) + '</span>';
+    else if (v == null && !cell) sub = '待记录';
+    else if (S.gDirty[p.player_id]) sub = '<span style="color:#d97706">待保存（已修改，未提交）</span>';
+    else sub = '<span style="color:#15803d">已保存' + gRelTxt(cell ? cell.strokes - par : null) + (cell && cell.updated_by_name ? ' · ' + esc(cell.updated_by_name) + ' 记录' : '') + '</span>';
+    return '<div class="grow' + (p.is_me ? ' me' : '') + (flash ? ' flash' : '') + '">' +
+      '<div class="ginfo"><div class="gname">' + esc(p.display_name) + (p.is_me ? '（我）' : '') + '</div><div class="gsub">' + sub + '</div>' +
+      (cf ? '<div class="btnrow"><button class="btn plain" data-gcf="server" data-pid="' + p.player_id + '">用服务端的</button><button class="btn gold" data-gcf="mine" data-pid="' + p.player_id + '">以我的为准</button></div>' : '') +
+      '</div>' +
+      (lockedG ? '<div class="val" style="font-size:24px;font-weight:800">' + (v == null ? '—' : v) + '</div>'
+        : '<div class="stepper small"><button type="button" data-gstep="-1" data-pid="' + p.player_id + '" aria-label="减一杆">−</button><div class="val">' + (v == null ? '—' : v) + '</div><button type="button" data-gstep="1" data-pid="' + p.player_id + '" aria-label="加一杆">＋</button></div>') +
+      '</div>';
+  }).join('');
+
+  var matrix = '';
+  if (S.gMatrix) {
+    var head = '<tr><th>球员</th>' + (g.holes || []).map(function (h) { return '<th>' + h.hole + '</th>'; }).join('') + '<th>总杆</th></tr>';
+    var parRow = '<tr><td>Par</td>' + (g.holes || []).map(function (h) { return '<td>' + h.par + '</td>'; }).join('') + '<td>' + (g.holes || []).reduce(function (a, h) { return a + (h.par || 0); }, 0) + '</td></tr>';
+    var pRows = (g.players || []).map(function (p) {
+      return '<tr><td>' + esc(p.display_name) + '</td>' + (g.holes || []).map(function (h) {
+        var c = (g.cells[p.player_id] || {})[h.hole];
+        return '<td>' + (c ? '<b>' + c.strokes + '</b>' : '·') + '</td>';
+      }).join('') + '<td>' + (p.gross_total == null ? '—' : '<b>' + p.gross_total + '</b>') + '</td></tr>';
+    }).join('');
+    matrix = '<div style="overflow-x:auto;margin-top:10px"><table class="scores mx">' + head + parRow + pRows + '</table></div>';
+  }
+
+  var certHtml = '';
+  if (!lockedG && me && me.scorecard_id) {
+    var totalHoles = (g.holes || []).length;
+    if ((me.card_status === 'in_progress' || me.card_status === 'not_started' || me.card_status === 'disputed') && me.thru >= totalHoles && totalHoles) {
+      certHtml = '<div class="btnrow"><button class="btn gold" id="gCertSubmit">全部洞已录完 · 提交成绩核对</button></div>';
+    }
+    if (me.card_status === 'submitted') {
+      certHtml = '<div class="btnrow"><button class="btn gold" id="gCertApprove">确认成绩无误</button><button class="btn plain" id="gCertFlag">成绩有异议</button></div>' +
+        '<p class="muted" style="margin-top:10px">成绩已提交，等待球员确认 / 裁判核对。</p>';
+    }
+    if (me.card_status === 'verified') certHtml = '<p class="muted" style="margin-top:10px">成绩已确认，等待主办方锁定为正式成绩。</p>';
+  }
+
+  var html = evMetaHtml() +
+    '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 同组共享记分</h2><span class="tot">第 ' + (g.pairing.group_no == null ? '' : g.pairing.group_no + ' 组 · ') + '第 ' + curH.hole + ' 洞 · Par ' + par + (curH.yards ? ' · ' + curH.yards + ' 码' : '') + '</span></div>' +
+    syncHtml + myStatusHtml() +
+    '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
+    rows +
+    (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
+    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（18 洞）') + '</button></div>' +
+    matrix + certHtml +
+    '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>' +
+    backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
+  app.innerHTML = html;
+  bindMyStatus();
+  app.querySelectorAll('[data-gstep]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var pid = el.dataset.pid;
+      var p = (g.players || []).filter(function (x) { return x.player_id === pid; })[0];
+      var cell = (g.cells[pid] || {})[curH.hole];
+      var base = S.gEdits[pid] != null ? S.gEdits[pid] : (cell ? cell.strokes : par);
+      var nv = Math.max(1, Math.min(15, base + Number(el.dataset.gstep)));
+      S.gEdits[pid] = nv; S.gDirty[pid] = 1;
+      paint();
+    });
+  });
+  app.querySelectorAll('[data-gcf]').forEach(function (el) {
+    el.addEventListener('click', function () { gResolve(el.dataset.pid, el.dataset.gcf === 'mine'); });
+  });
+  var sv = document.getElementById('gSave');
+  if (sv) sv.addEventListener('click', gSave);
+  var pv = document.getElementById('gPrev');
+  if (pv) pv.addEventListener('click', function () { if (S.selHole > 1) { S.selHole--; paint(); } });
+  var nx = document.getElementById('gNext');
+  if (nx) nx.addEventListener('click', function () { if (S.selHole < (g.holes || []).length) { S.selHole++; paint(); } });
+  var mx = document.getElementById('gMx');
+  if (mx) mx.addEventListener('click', function () { S.gMatrix = !S.gMatrix; paint(); });
+  var cs = document.getElementById('gCertSubmit');
+  if (cs && me) cs.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'scorer_submit' }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+  var ca = document.getElementById('gCertApprove');
+  if (ca && me) ca.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'player_verify', decision: 'approve' }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('确认失败：' + (r.error || '请稍后重试')); }
+  });
+  var cf2 = document.getElementById('gCertFlag');
+  if (cf2 && me) cf2.addEventListener('click', async function () {
+    var note = prompt('请简单说明异议（如：第 7 洞应为 4 杆）');
+    if (note == null) return;
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'player_verify', decision: 'flag', note: note }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+}
+function paintScoringFallbackToSingle(card) { S.group = null; paintScoring(card); }
+
+async function gSave() {
+  var g = S.group; if (!g || S.gSaving) return;
+  var hole = S.selHole;
+  var entries = [], sent = {};
+  (g.players || []).forEach(function (p) {
+    if (!S.gDirty[p.player_id]) return;
+    var v = S.gEdits[p.player_id];
+    var cell = (g.cells[p.player_id] || {})[hole];
+    entries.push({ player_id: p.player_id, strokes: v == null ? null : v, op_id: newOpId(), base_strokes: cell ? cell.strokes : null });
+    if (v != null) sent[p.player_id] = v;
+  });
+  if (!entries.length) return;
+  S.gSaving = true; paint();
+  try {
+    var r = await golfApi('score_submit_group', { pairing_id: g.pairing.id, hole: hole, entries: entries }, true);
+    if (!r.ok) throw new Error(r.error || 'submit failed');
+    var myRound = null, myCardId = null;
+    (r.data.results || []).forEach(function (res) {
+      var pl = (g.players || []).filter(function (x) { return x.player_id === res.player_id; })[0];
+      if (res.status === 'saved' || res.status === 'idempotent') {
+        delete S.gDirty[res.player_id];
+        var cel = res.celebration;
+        if (cel && cel.first_confirm) S.gFlash[res.player_id] = { text: cel.strokes + ' 杆 · ' + cel.label, level: cel.level };
+        if (pl && pl.is_me) { myCardId = pl.scorecard_id; if (cel && cel.round_complete && cel.round) myRound = cel; }
+      } else if (res.status === 'conflict') {
+        S.gConflicts[res.player_id] = { current: res.current_strokes != null ? res.current_strokes : null, mine: sent[res.player_id] };
+      } else if (res.status === 'error') {
+        var e0 = entries.filter(function (x) { return x.player_id === res.player_id; })[0];
+        if (pl && pl.scorecard_id && e0 && e0.strokes != null) {
+          enqueueScore({ op_id: e0.op_id, scorecard_id: pl.scorecard_id, hole: hole, strokes: e0.strokes, base_strokes: e0.base_strokes, uid: S.session ? S.session.user.id : null });
+          delete S.gDirty[res.player_id];
+        }
+      }
+    });
+    setTimeout(function () { S.gFlash = {}; if (S.group) paint(); }, 2600);
+    var card = myCard();
+    if (card) await loadGroup(card, false);
+    S.gSaving = false;
+    if (myRound && myCardId) {
+      var flagKey = 'rukik.golf.roundCelebrated.v1.' + myCardId;
+      var seen = null; try { seen = localStorage.getItem(flagKey); } catch (e) {}
+      if (!seen) {
+        try { localStorage.setItem(flagKey, new Date().toISOString()); } catch (e) {}
+        var rd = myRound.round; var relS = rd.to_par;
+        var hlHoles = (rd.highlight_holes || []).map(function (x) { return x.hole; });
+        var linesR = ['完成球洞 ' + myRound.holes_completed + ' / ' + myRound.holes_total + ' · 本场总杆 ' + rd.gross_total + ' 杆（相对标准杆 ' + (relS === 0 ? '±0' : relS > 0 ? '+' + relS : '' + relS) + '）'];
+        if (rd.birdie_plus_count > 0) linesR.push('今天打出 ' + rd.birdie_plus_count + ' 次 Birdie 及更好' + (hlHoles.length ? '，亮点洞：第 ' + hlHoles.join('、') + ' 洞' : '') + '——都已记入你的赛事回忆。');
+        linesR.push('今天的每一杆，都值得被记住。');
+        linesR.push(rd.status_line);
+        paint();
+        showCelebration({ title: (g.holes || []).length + ' 洞，精彩完赛！', lines: linesR, round: true, level: 'round' });
+        return;
+      }
+    }
+    if (!Object.keys(S.gConflicts).length && hole < (g.holes || []).length) S.selHole = hole + 1;
+    paint();
+  } catch (e) {
+    entries.forEach(function (e0) {
+      var pl = (g.players || []).filter(function (x) { return x.player_id === e0.player_id; })[0];
+      if (pl && pl.scorecard_id && e0.strokes != null) {
+        enqueueScore({ op_id: e0.op_id, scorecard_id: pl.scorecard_id, hole: hole, strokes: e0.strokes, base_strokes: e0.base_strokes, uid: S.session ? S.session.user.id : null });
+        delete S.gDirty[e0.player_id];
+        S.gEdits[e0.player_id] = e0.strokes;
+      }
+    });
+    S.gInitFor = hole;
+    S.gSaving = false;
+    paint(); flushQueue();
+    alert('网络暂时不可用，本洞成绩已保存在本机，联网后会自动同步、全组可见。');
+  }
+}
+
+async function gResolve(pid, useMine) {
+  var cf = S.gConflicts[pid]; var g = S.group;
+  if (!cf || !g) return;
+  delete S.gConflicts[pid];
+  if (!useMine) {
+    delete S.gDirty[pid];
+    var c0 = myCard(); if (c0) await loadGroup(c0, true);
+    paint();
+    return;
+  }
+  try {
+    var r = await golfApi('score_submit_group', { pairing_id: g.pairing.id, hole: S.selHole, entries: [{ player_id: pid, strokes: cf.mine, op_id: newOpId(), base_strokes: cf.current, force: true, reason: '同组记分员核对后确认覆盖' }] }, true);
+    var res = ((r.data || {}).results || [])[0];
+    if (res && res.status === 'conflict') S.gConflicts[pid] = { current: res.current_strokes != null ? res.current_strokes : null, mine: cf.mine };
+    else if (res && (res.status === 'saved' || res.status === 'idempotent')) delete S.gDirty[pid];
+    else { S.gConflicts[pid] = cf; alert('提交失败，请稍后重试。'); }
+  } catch (e) {
+    S.gConflicts[pid] = cf;
+    alert('提交失败，请检查网络后再试。');
+  }
+  var c1 = myCard(); if (c1) await loadGroup(c1, true);
+  paint();
+}
+
 function paintScoring(card) {
   var cd = S.cardData;
   if (!cd || !cd.scorecard || cd.scorecard.id !== card.id) {
@@ -437,6 +705,7 @@ function paintScoring(card) {
     });
     return;
   }
+  if (S.group) return paintGroupScoring(card);
   var sc = cd.scorecard;
   var locked = sc.status === 'locked';
   var holes = cd.holes || [];
@@ -752,7 +1021,12 @@ renderAuthBar(document.getElementById('authBar'), { onLogout: function () { load
   S.session = s;
   loadAll(true);
 })();
-setInterval(function () { if (!document.hidden) flushQueue(); }, 15000);
+setInterval(function () {
+  if (document.hidden) return;
+  flushQueue();
+  /* [线Z39] 共享模式聚焦期同节奏刷新全组视图：他人保存，我这边可见 */
+  if (S.group && S.session) { var c = myCard(); if (c) loadGroup(c, true).then(function () { if (S.group) paint(); }); }
+}, 15000);
 window.addEventListener('online', function () { flushQueue(); });
 document.addEventListener('visibilitychange', function () { if (!document.hidden) flushQueue(); });
 </script>
