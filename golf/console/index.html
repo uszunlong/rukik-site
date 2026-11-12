@@ -71,6 +71,14 @@
           </select></div>
           <div><label>人数上限 *</label><input id="fCap" type="number" value="40"></div>
         </div>
+        <div class="row">
+          <div><label>报名费模式</label><select id="fFeeMode">
+            <option value="free">免费报名</option>
+            <option value="offline">线下收款（主办方确认）</option>
+            <option value="online" disabled>线上支付（尚未开通）</option>
+          </select></div>
+          <div><label>报名费金额（美元，线下收款时填）</label><input id="fFeeAmt" type="number" min="0" step="1" placeholder="如 180"></div>
+        </div>
         <button id="createBtn">创建草稿</button>
         <p class="ok" id="createMsg"></p>
       </details>
@@ -89,6 +97,11 @@
         <h4 style="margin:6px 0">报名名单</h4>
         <div id="regList"></div>
         <p class="ok" id="regMsg"></p>
+      </div>
+      <div id="feeSection" style="margin-top:16px">
+        <h4 style="margin:6px 0">报名费设置</h4>
+        <div id="feeBox"><p style="color:#5c7260;font-size:13px">打开赛事后加载。</p></div>
+        <p class="ok" id="feeMsg"></p>
       </div>
       <div id="scoreSection" style="margin-top:16px">
         <h4 style="margin:6px 0">参赛成绩</h4>
@@ -293,6 +306,48 @@ function resetKnowForm() {
 /* [线P] 报名名单区：姓名/状态/球队/分组全量渲染（此前 registrations_list 只被用来数计数，
    主办方看不见谁报了名）；pending 行带通过/拒绝；待审核数进计数区与待办提示区 */
 var REG_STATUS_TXT = { registered: '已生效', checked_in: '已签到', pending: '待审核', waitlisted: '候补', rejected: '未通过', withdrawn: '已退出', no_show: '未到场', cancelled: '已取消' };
+/* [线Z1] 报名费设置＋名单付款/签到操作：fee_mode 三模式（online 未开通、只留禁用态、无任何支付按钮）；
+   付款三态以 payment_status 为准（审核通过 ≠ 已确认收款 ≠ 参赛资格），确认/撤销走 payment_set
+   （requireStaff、服务端 golf_payment_audit 留痕）；签到走 registration_status（主办方标记/纠正），
+   球员也可在赛事页自助签到；漏签不影响记分资格，此处只呈现与纠正。 */
+var FEE_MODE_TXT = { free: '免费报名', offline: '线下收款（主办方确认）', online: '线上支付（尚未开通）' };
+var PAY_TXT = { not_required: '无需付款', pending: '待确认收款', confirmed: '已确认收款' };
+function feeModeNow() { return currentEvent ? (currentEvent.fee_mode || (Number(currentEvent.fee_cents) > 0 ? 'offline' : 'free')) : 'free'; }
+function renderFeeBox() {
+  var box = document.getElementById('feeBox');
+  if (!box || !currentEvent) return;
+  var mode = feeModeNow(), cents = Number(currentEvent.fee_cents || 0);
+  box.innerHTML = '<div style="font-size:14px">当前：<b>' + (FEE_MODE_TXT[mode] || mode) + '</b>' +
+    (mode === 'offline' ? ' · 每人 $' + (cents / 100) : '') + '</div>' +
+    '<div class="row" style="margin-top:8px"><div><label>模式</label><select id="feeModeSel">' +
+    '<option value="free"' + (mode === 'free' ? ' selected' : '') + '>免费报名</option>' +
+    '<option value="offline"' + (mode === 'offline' ? ' selected' : '') + '>线下收款（主办方确认）</option>' +
+    '<option value="online" disabled>线上支付（尚未开通）</option></select></div>' +
+    '<div><label>金额（美元）</label><input id="feeAmtInp" type="number" min="0" step="1" value="' + (cents / 100) + '"></div></div>' +
+    '<p><button class="ghost" id="feeSaveBtn" type="button">保存报名费设置</button></p>' +
+    '<p style="color:#5c7260;font-size:13px">审核通过 ≠ 已付款：线下收款模式下，球员付款状态为「已确认收款」后才进入正式分组；可在下方名单中逐人确认或撤销。</p>';
+  document.getElementById('feeSaveBtn').onclick = function () {
+    call('fee_config_set', { event_id: currentEvent.id, fee_mode: document.getElementById('feeModeSel').value, fee_cents: Math.round(Number(document.getElementById('feeAmtInp').value || 0) * 100) }).then(function (d) {
+      var m = document.getElementById('feeMsg');
+      if (d.ok) { currentEvent = d.event; m.textContent = '已保存。当前付款状态分布：' + JSON.stringify(d.payment_counts || {}); refreshDash(); }
+      else m.textContent = '保存失败：' + (d.error || '未知错误');
+    });
+  };
+}
+function paySet(regId, next) {
+  call('payment_set', { event_id: currentEvent.id, registration_id: regId, payment_status: next }).then(function (d) {
+    var m = document.getElementById('regMsg');
+    if (d.ok) { m.textContent = next === 'confirmed' ? '已确认收款：该球员参赛资格完整生效。' : '已撤销确认：该球员回到待确认收款。'; refreshDash(); }
+    else m.textContent = '付款状态更新失败：' + (d.error || '未知错误');
+  });
+}
+function checkinSet(regId, status) {
+  call('registration_status', { event_id: currentEvent.id, registration_id: regId, status: status }).then(function (d) {
+    var m = document.getElementById('regMsg');
+    if (d.ok) { m.textContent = status === 'checked_in' ? '已标记签到。' : '已取消签到（主办方可随时纠正）。'; refreshDash(); }
+    else m.textContent = '签到更新失败：' + (d.error || '未知错误');
+  });
+}
 function renderRegList(regs, teams, pairings) {
   var box = document.getElementById('regList');
   if (!box) return;
@@ -306,14 +361,28 @@ function renderRegList(regs, teams, pairings) {
     var stColor = r.status === 'pending' ? '#a16207' : r.status === 'rejected' ? '#b91c1c' : '#1d7a3a';
     var btns = r.status === 'pending'
       ? ' <button class="ghost rv-ok" data-id="' + r.id + '" type="button">通过</button> <button class="ghost rv-no" data-id="' + r.id + '" type="button">拒绝</button>' : '';
+    /* [线Z1] 付款列＋确认/撤销（仅线下收款模式）与签到/取消签到按钮 */
+    var paySeg = '', actBtns = btns;
+    if (feeModeNow() === 'offline') {
+      var pc = r.payment_status === 'confirmed' ? '#1d7a3a' : r.payment_status === 'pending' ? '#a16207' : '#5c7260';
+      paySeg = ' · <span style="color:' + pc + '">付款：' + (PAY_TXT[r.payment_status] || r.payment_status || '—') + '</span>';
+      if (r.payment_status === 'pending') actBtns += ' <button class="ghost pay-ok" data-id="' + r.id + '" type="button">确认已付款</button>';
+      if (r.payment_status === 'confirmed') actBtns += ' <button class="ghost pay-no" data-id="' + r.id + '" type="button">撤销确认</button>';
+    }
+    if (r.status === 'registered') actBtns += ' <button class="ghost ci-in" data-id="' + r.id + '" type="button">标记签到</button>';
+    if (r.status === 'checked_in') actBtns += ' <button class="ghost ci-out" data-id="' + r.id + '" type="button">取消签到</button>';
     return '<div style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px"><b>' + escapeHtml(p.display_name || '（未命名）') + '</b>' +
       ' <span style="color:' + stColor + '">' + (REG_STATUS_TXT[r.status] || r.status) + '</span>' +
       '<span style="color:#5c7260"> · 球队：' + escapeHtml(r.team_id ? (teamName[r.team_id] || '—') : '—') +
       ' · 分组：' + (groupOf[r.player_id] ? '第 ' + groupOf[r.player_id] + ' 组' : '未分组') +
-      (p.org_name ? ' · ' + escapeHtml(p.org_name) : '') + (p.division ? ' · ' + escapeHtml(p.division) : '') + '</span>' + btns + '</div>';
+      (p.org_name ? ' · ' + escapeHtml(p.org_name) : '') + (p.division ? ' · ' + escapeHtml(p.division) : '') + '</span>' + paySeg + actBtns + '</div>';
   }).join('');
   Array.prototype.forEach.call(box.querySelectorAll('.rv-ok'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'approve'); }; });
   Array.prototype.forEach.call(box.querySelectorAll('.rv-no'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'reject'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('.pay-ok'), function (b) { b.onclick = function () { paySet(b.getAttribute('data-id'), 'confirmed'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('.pay-no'), function (b) { b.onclick = function () { paySet(b.getAttribute('data-id'), 'pending'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('.ci-in'), function (b) { b.onclick = function () { checkinSet(b.getAttribute('data-id'), 'checked_in'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('.ci-out'), function (b) { b.onclick = function () { checkinSet(b.getAttribute('data-id'), 'registered'); }; });
 }
 function reviewReg(regId, decision) {
   call('registration_review', { event_id: currentEvent.id, registration_id: regId, decision: decision }).then(function (d) {
@@ -402,8 +471,11 @@ function refreshDash() {
     document.getElementById('cIn').textContent = ci;
     document.getElementById('cReview').textContent = pendReg;
     renderRegList(regs, d.teams || [], eg.pairings || []);
+    renderFeeBox();
     var pend = 0, todos = [];
     if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请在下方「报名名单」中通过或拒绝');
+    var unpaidN = feeModeNow() === 'offline' ? regs.filter(function (x) { return (x.status === 'registered' || x.status === 'checked_in') && x.payment_status === 'pending'; }).length : 0;
+    if (unpaidN > 0) todos.push('有 ' + unpaidN + ' 位球员待确认收款：未确认收款前不会进入正式分组，请在名单中点「确认已付款」');
     if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点上方「结束比赛」，赛事页将切换为回忆馆');
     if (r.report) {
       var sc = r.report.scoring.by_status || {};
@@ -481,7 +553,9 @@ document.getElementById('createBtn').onclick = function () {
     title: document.getElementById('fTitle').value, course_id: document.getElementById('fCourse').value,
     default_tee_id: document.getElementById('fTee').value || undefined,
     starts_at: document.getElementById('fDate').value + 'T09:00:00', play_dates: [document.getElementById('fDate').value],
-    format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40)
+    format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40),
+    fee_mode: document.getElementById('fFeeMode').value,
+    fee_cents: Math.round(Number(document.getElementById('fFeeAmt').value || 0) * 100)
   }).then(function (d) {
     if (d.event) { document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents(); }
     else show(d);

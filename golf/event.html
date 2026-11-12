@@ -265,9 +265,13 @@ function renderHero() {
   var myReg = EV.my_registration;
   if (myReg && st !== 'post') {
     if (myReg.status === 'pending') btn.textContent = '报名审核中 · 查看进度';
-    else if (myReg.status === 'registered' || myReg.status === 'checked_in') btn.textContent = '已报名 · 进入我的比赛';
+    else if (myReg.status === 'checked_in') btn.textContent = '已签到 · 进入我的比赛';
+    else if (myReg.status === 'registered') btn.textContent = '已报名 · 进入我的比赛';
     else if (myReg.status === 'waitlisted') btn.textContent = '候补中 · 查看进度';
     else if (myReg.status === 'rejected') btn.textContent = '报名未通过 · 查看详情';
+    /* [线Z1] 线下收款未确认时如实标注（不暗示已在线支付）；已确认不额外打扰 */
+    var feeModeEv = EV.event && (EV.event.fee_mode || (Number(EV.event.fee_cents) > 0 ? 'offline' : 'free'));
+    if (feeModeEv === 'offline' && myReg.payment_status === 'pending' && (myReg.status === 'registered' || myReg.status === 'checked_in')) btn.textContent += '（费用待主办方确认）';
   }
   /* [线P] 主办方入口：my_role=organizer 时在 CTA 区给出主办方台直达（此前 App/网页均无入口，用户找不到） */
   var orgBtn = document.getElementById('orgBtn');

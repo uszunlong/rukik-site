@@ -285,7 +285,7 @@ function paintRegister() {
   var fee = Number(e.fee_cents || 0);
   app.innerHTML = evMetaHtml() +
     '<div class="card"><h2>报名参加</h2>' +
-    (fee > 0 ? '<p class="muted">本场费用：$' + (fee / 100).toFixed(fee % 100 ? 2 : 0) + ' / 人（报名先在此登记，缴费按主办方通知办理）。</p>' : '<p class="muted">本场免费报名。</p>') +
+    (fee > 0 ? '<p class="muted">本场费用：$' + (fee / 100).toFixed(fee % 100 ? 2 : 0) + ' / 人（线下收款：报名先在此登记，缴费按主办方通知办理；主办方确认收款后，正式分组资格生效）。</p>' : '<p class="muted">本场免费报名。</p>') +
     '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="regName" type="text" autocomplete="name" placeholder="您的姓名"></div>' +
     (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="regInvite" type="text" placeholder="主办方提供的邀请码"></div>' : '') +
     '<div class="fld"><label>差点指数（选填）</label><input id="regHcp" type="number" step="0.1" min="-10" max="54" placeholder="如 18.5，没有可留空"></div>' +
@@ -314,14 +314,50 @@ function paintRegister() {
   });
 }
 
+/* [线Z1] 本人付款状态＋自助签到：线下收款只表述为「主办方确认收款」，不暗示在线支付；
+   签到窗口＝开赛前 12 小时起至赛事完成前、赛事 published/in_progress（服务端 check_in 同口径校验）；
+   漏签不影响记分资格，此处只呈现状态与自助入口，主办方可在名单中纠正。 */
+function myStatusHtml() {
+  var reg = S.ev && S.ev.my_registration, e = S.ev && S.ev.event;
+  if (!reg || !e) return '';
+  var out = '';
+  var mode = e.fee_mode || (Number(e.fee_cents) > 0 ? 'offline' : 'free');
+  if (mode === 'offline') {
+    var amt = '$' + (Number(e.fee_cents) / 100);
+    if (reg.payment_status === 'confirmed') out += '<p class="meta">参赛费用 ' + amt + '：<b>主办方已确认收款</b> ✅</p>';
+    else if (reg.payment_status === 'pending') out += '<p class="meta">参赛费用 ' + amt + '：<b>待主办方确认收款</b>。本场为线下收款，请按主办方通知缴费；主办方确认后，您的正式分组资格即完整生效。</p>';
+  }
+  if (reg.status === 'checked_in') out += '<p class="meta">签到状态：<b>✅ 已签到</b></p>';
+  else if (reg.status === 'registered' && (e.status === 'published' || e.status === 'in_progress')) {
+    out += '<div class="btnrow"><button class="btn plain" id="ciBtn" type="button">我已到场 · 签到</button></div><div class="err" id="ciErr"></div>';
+  }
+  return out;
+}
+function bindMyStatus() {
+  var b = document.getElementById('ciBtn');
+  if (!b) return;
+  b.addEventListener('click', function () {
+    b.disabled = true;
+    golfApi('check_in', { event_id: eventId }, true).then(function (r) {
+      if (r.ok) loadAll(false);
+      else {
+        var e2 = document.getElementById('ciErr');
+        if (e2) e2.textContent = r.error === 'check-in window not open' ? '尚未到签到时间：开赛前 12 小时起可自助签到。' : '签到未成功：' + (r.error || '请稍后重试');
+        b.disabled = false;
+      }
+    });
+  });
+}
+
 function paintWaitingGroup() {
   app.innerHTML = evMetaHtml() +
     '<div class="card"><h2>✅ 报名成功</h2>' +
     '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
     '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>' +
-    organizerHint() +
+    organizerHint() + myStatusHtml() +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
 }
 
 function paintPreStart() {
@@ -334,9 +370,11 @@ function paintPreStart() {
     (pc.start_hole ? '<br>出发洞：第 ' + esc(pc.start_hole) + ' 洞' : '') + mates + '</p>' +
     (pc.course_name ? '<p class="meta">球场：' + esc(pc.course_name) + (pc.course_address ? '（' + esc(pc.course_address) + '）' : '') + '</p>' : '') +
     (pc.weather_line ? '<p class="muted">' + esc(pc.weather_line) + '</p>' : '') +
+    myStatusHtml() +
     '<h3>比赛准备</h3><p class="muted">请提前到达出发洞附近等候；开赛后本页会自动切换为记分模式。记分与 App 共用同一张记分卡，断网时成绩先保存在本机、恢复网络后自动同步。</p>' +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
 }
 
 function paintNoCard() {
@@ -346,9 +384,10 @@ function paintNoCard() {
     (grouped
       ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
       : '<p class="muted">您已报名，但尚未分组，暂时无法记分。请等待主办方完成分组与记分卡设置。</p>') +
-    organizerHint() +
+    organizerHint() + myStatusHtml() +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
 }
 
 function paintRecap(card) {
@@ -369,6 +408,7 @@ function paintRecap(card) {
       S.cardData.holes.map(function (h) { return '<tr><td>' + h.hole + '</td><td>' + h.par + '</td><td>' + (h.strokes == null ? '—' : '<b>' + h.strokes + '</b>') + '</td></tr>'; }).join('') + '</table>';
   }
   /* [主会话] 完赛回顾态亦保留球童入口（与 paintScoring 同口径；复盘本场成绩是球童核心用法，完赛不得消失） */
+  html += myStatusHtml();
   html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
   html += '<div class="btnrow"><a class="btn" href="event.html?e=' + encodeURIComponent(eventId) + '">查看排行榜与赛事回忆</a></div></div>';
   app.innerHTML = html;
@@ -426,7 +466,7 @@ function paintScoring(card) {
   var html = evMetaHtml() +
     '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 逐洞记分</h2><span class="tot">' +
     esc((cd.player || {}).display_name || '') + (sc.thru != null ? ' · 已完成 ' + sc.thru + ' 洞' : '') + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : '') + '</span></div>' +
-    syncHtml +
+    syncHtml + myStatusHtml() +
     '<div class="holegrid">' + grid + '</div>';
 
   if (sel && !locked) {
@@ -466,7 +506,7 @@ function paintScoring(card) {
   html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
   html += backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
   app.innerHTML = html;
-
+  bindMyStatus();
   app.querySelectorAll('.hole').forEach(function (el) {
     el.addEventListener('click', function () {
       S.selHole = Number(el.dataset.hole);
