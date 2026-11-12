@@ -193,6 +193,13 @@
     </div>
 
     <div class="card">
+      <h2>活动审核（用户发布先待审 · 0706）</h2>
+      <p class="muted">口径说明：用户在 App 发布的活动先落「待审核」、不公开（列表 / 详情 / 检索均不可见）。此处通过即刻公开上架，不被质量评分或历史自动结果拦截；驳回必须填理由，发布者会收到通知（含理由），可修改后重新提交。审核动作由服务端复核管理员权限（admin_review_user_event），发布者通知由数据库触发器落 notifications。</p>
+      <div id="eventReviewQueue"><div class="empty">加载中…</div></div>
+      <div id="eventReviewDetail" class="mt"></div>
+    </div>
+
+    <div class="card">
       <h2>房源情报完整度（房产情报引擎）</h2>
       <p class="muted">口径说明：试点房源 × 六个情报维度（学校表现 / 城市级治安 / 洪水 / 对口学校 / 街区级治安 / 价格参考）的核验状态，来自 re_listing_intel_status（迁移 0251）。状态＝已接通 / 待地址级核验 / 待数据源；「最近核验」为该维度最近一次真实查询成功或有效缓存命中的时间。区域公共数据（学校表现、城市级治安）走区域缓存共享、不逐房复制；前台不展示此技术状态、只交付结果并标注数据范围与时间。</p>
       <div id="reIntelStats"><div class="empty">加载中…</div></div>
@@ -514,6 +521,7 @@ async function loadAll() {
     loadReIntelStatus();
     loadSchoolAssign();
     loadReviewQueues();
+    loadEventReviewQueue();
     loadSupport();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
@@ -959,6 +967,74 @@ async function decideArticleReview(id, decision) {
     $('appErr').textContent = '';
     $('articleReviewDetail').innerHTML = '<div class="empty">' + (decision === 'approve' ? '已通过并发布。' : '已驳回，原因已记给作者。') + '</div>';
     loadReviewQueues();
+  } catch (e) { $('appErr').textContent = '操作失败：' + e.message; }
+}
+
+// ── 活动人工审核（0706）：队列与 App 端共用 admin_review_events_queue，
+// 决定走既有 admin_review_user_event（服务端复核 is_admin）。
+let eventReviewRows = {};
+async function loadEventReviewQueue() {
+  try {
+    const list = await rpc('admin_review_events_queue', { p_limit: 50 });
+    renderEventReviewQueue(list);
+  } catch (e) {
+    $('eventReviewQueue').innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+function renderEventReviewQueue(list) {
+  eventReviewRows = {};
+  if (!list || list.length === 0) { $('eventReviewQueue').innerHTML = '<div class="empty">暂无待审核活动。</div>'; return; }
+  for (const e of list) eventReviewRows[e.id] = e;
+  $('eventReviewQueue').innerHTML = '<table><tr><th>提交时间</th><th>发布者</th><th>活动</th><th>地点</th><th>场次</th><th></th></tr>' +
+    list.map((e) => `<tr>
+      <td class="muted">${fmtDate(e.created_at)}</td>
+      <td><b>${esc(e.publisher_name || '')}</b></td>
+      <td>${esc(e.title_zh || e.title || '（无标题）')}</td>
+      <td>${esc(e.venue_name || '')}<br><span class="muted">${esc(e.city || '')}</span></td>
+      <td>${(e.sessions || []).length} 场</td>
+      <td><button class="btn small gold" data-erq="${e.id}">查看并审核</button></td>
+    </tr>`).join('') + '</table>';
+  $('eventReviewQueue').querySelectorAll('button[data-erq]').forEach((btn) => {
+    btn.onclick = () => showEventReviewDetail(btn.dataset.erq);
+  });
+}
+
+function showEventReviewDetail(id) {
+  const e = eventReviewRows[id];
+  if (!e) { $('eventReviewDetail').innerHTML = '<div class="empty">详情不在队列里，请刷新。</div>'; return; }
+  const sess = (e.sessions || []).map((x, i) => `<div class="muted">场次 ${i + 1}：${fmtDate(x.start_at)}${x.end_at ? ' – ' + fmtDate(x.end_at) : ''}${x.venue_name || x.address ? ' · ' + esc([x.venue_name, x.address, x.city].filter(Boolean).join(' ')) : ''}${x.note ? ' · ' + esc(x.note) : ''}</div>`).join('');
+  $('eventReviewDetail').innerHTML = `
+    <div class="cred" style="margin:10px 0 6px">活动详情 · ${esc(e.id)}</div>
+    <p class="muted">发布者：<b>${esc(e.publisher_name || '')}</b> · 提交时间：${fmtDate(e.created_at)} · 类别：${esc(e.category || '')}${e.organizer ? ' · 主办：' + esc(e.organizer) : ''}${e.price_text ? ' · 费用：' + esc(e.price_text) : ''}</p>
+    <h3 style="margin:10px 0 6px">${esc(e.title_zh || e.title || '')}</h3>
+    ${e.highlight ? `<p class="muted">${esc(e.highlight)}</p>` : ''}
+    ${e.description ? `<div style="white-space:pre-wrap;border:1px solid var(--line);border-radius:10px;padding:14px;max-height:320px;overflow:auto">${esc(e.description)}</div>` : ''}
+    <div class="mt">${sess}</div>
+    <p class="muted">活动页（通过后可打开）：<a href="https://rukik.com/e/${esc(e.id)}" target="_blank" rel="noopener">rukik.com/e/${esc(e.id.slice(0, 8))}…</a></p>
+    <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input id="erReason" type="text" placeholder="驳回理由（驳回时必填，发布者可见）" style="flex:1;min-width:240px">
+      <button class="btn gold" id="erApprove" type="button">通过并上架</button>
+      <button class="btn ghost" id="erReject" type="button">驳回</button>
+    </div>`;
+  $('erApprove').onclick = () => decideEventReview(id, 'APPROVE');
+  $('erReject').onclick = () => decideEventReview(id, 'REJECT');
+}
+
+async function decideEventReview(id, decision) {
+  const reason = (($('erReason') || {}).value || '').trim();
+  if (decision === 'REJECT' && !reason) { $('appErr').textContent = '驳回必须填写理由。'; return; }
+  try {
+    await rpc('admin_review_user_event', { p_event_id: id, p_decision: decision, p_note: reason || null });
+    // 回读验真：通过必须真的转 APPROVED（公开读口径只认 APPROVED）
+    const chk = await sb.from('public_events').select('review_status,event_status').eq('id', id).single();
+    if (decision === 'APPROVE' && (!chk.data || chk.data.review_status !== 'APPROVED')) {
+      $('appErr').textContent = '审核未生效：回读状态不是 APPROVED。';
+      return;
+    }
+    $('appErr').textContent = '';
+    $('eventReviewDetail').innerHTML = '<div class="empty">' + (decision === 'APPROVE' ? '已通过并上架，发布者已收到通知。' : '已驳回，理由已通知发布者，可修改后重新提交。') + '</div>';
+    loadEventReviewQueue();
   } catch (e) { $('appErr').textContent = '操作失败：' + e.message; }
 }
 
