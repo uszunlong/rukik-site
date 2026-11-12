@@ -162,8 +162,15 @@
   .hole-badge.cur { background: #c9962e; border-color: #ffe9a8; }
   .holeinfo { margin-top: 10px; font-size: 13.5px; color: #c4d8c9; line-height: 1.7; }
   .hdov { position: fixed; inset: 0; z-index: 95; background: rgba(2,12,8,.72); display: flex; align-items: center; justify-content: center; padding: 16px; }
-  .hdov .hd-box { background: #fdfdf8; color: #20242a; border-radius: 16px; padding: 12px; max-width: 860px; width: 100%; max-height: 88vh; overflow: auto; }
-  .hdov .hd-box svg.map { width: 100%; height: auto; display: block; }
+  /* [地图取景四修打磨20261112] 全屏盒改定比舞台：旧版盒宽自适应（≤860）、
+   * 高随内容，全屏图形占视口舞台的比例与纵向位置不受取景口径约束（终判
+   * 实拍球道偏上、上留白 15%/下 35%）。现盒宽 ≤1180 且定纵横比 118/70、
+   * 高不超过 88vh，SVG 以 width/height:100%＋viewBox 默认 meet 拟合，在
+   * 舞台内双轴居中——与嵌入式同一拟合口径（跨度与居中由同一幅图决定）。
+   * [全屏恢复20261112] 本 hunk 与 openPlayHd 克隆段曾被 Z68 旧暂存整文件
+   * 发布冲回，本线自 fit4 发布版（a9cc901e）在现行 96661165 基线上恢复。 */
+  .hdov .hd-box { background: #fdfdf8; color: #20242a; border-radius: 16px; padding: 12px; width: min(1180px, calc(100vw - 32px)); aspect-ratio: 118 / 70; max-height: 88vh; overflow: hidden; box-sizing: border-box; }
+  .hdov .hd-box svg.map { width: 100%; height: 100%; display: block; }
   .hdov .hd-close { position: fixed; top: 14px; right: 14px; background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: none; border-radius: 999px; padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer; z-index: 96; }
   .entry { display: block; width: 100%; text-align: left; background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1.5px solid rgba(120,255,190,.16); border-radius: 16px; padding: 16px; font-size: 17px; font-weight: 700; color: #f2f8f3; cursor: pointer; margin-top: 12px; text-decoration: none; box-shadow: 0 10px 26px rgba(0,0,0,.35); font-family: inherit; }
   .entry small { display: block; font-size: 13px; font-weight: 400; color: #a9c4b1; margin-top: 4px; }
@@ -2416,7 +2423,17 @@ function loadPlayHoleSvg(hole) {
 function openPlayHd() {
   var src = document.getElementById('mapSvgBox'), box = document.getElementById('playHdBox'), ov = document.getElementById('playHd');
   if (!src || !box || !ov || !src.querySelector('svg')) return;
-  box.innerHTML = src.innerHTML; // 同一份渲染放大呈现，不另画一套
+  /* [地图取景四修打磨20261112] 全屏改克隆 SVG 本体并清除 pz 平移缩放的
+   * 内联 transform：旧版 box.innerHTML 整段复制会把嵌入视图的 pz 位移
+   * 状态一并带进全屏（平移/缩放过后全屏图形带着偏移呈现）；克隆后清
+   * transform，全屏与嵌入式同一幅图、同一拟合口径，舞台口径见 .hd-box。
+   * [全屏恢复20261112] 本段曾被 Z68 旧暂存整文件发布冲回，本线自 fit4
+   * 发布版（a9cc901e）在现行 96661165 基线上恢复。 */
+  var clone = src.querySelector('svg').cloneNode(true);
+  clone.style.transform = '';
+  clone.classList.remove('pz-anim');
+  box.innerHTML = '';
+  box.appendChild(clone);
   ov.hidden = false;
 }
 function closePlayHd() { var ov = document.getElementById('playHd'); if (ov) ov.hidden = true; }
