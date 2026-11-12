@@ -251,7 +251,21 @@ var eventId = qs.get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
    event_get 时随请求体转发（服务端 linkAccess 口径），未登录好友凭完整链接即可打开
    invite_only 私密球局。此前 play.html 从不转发邀请码，未登录打开必撞 403、
    且被误报成「网络异常」（诊断定谳见 golf-load-failure-20261112/DIAG.md）。 */
-var linkCode = (qs.get('c') || qs.get('join') || '').trim();
+var linkCode = normCode(qs.get('c') || qs.get('join') || '');
+/* [邀请码根治 20261112] 输码统一口径与加入错误文案：normCode＝NFKC 全角折叠＋
+   trim＋转大写（与服务端 casual_join 规范化一致，首页 hmJoin 同口径）；
+   casual 局加入一律走 casual_join(event_id＋码)，不再落正式 register。 */
+function normCode(v) { return String(v || '').normalize('NFKC').trim().toUpperCase(); }
+function joinErrText(jn) {
+  var m = (jn && jn.error) || '';
+  if (m === 'invite_code_rotated') return '该邀请码已被组织者更新，请向组织者索取最新邀请码或最新链接。';
+  if (m === 'invalid invite code') return '邀请码不正确，请向组织者确认。';
+  if (m === 'joins closed by organizer') return '组织者已关闭这场球局的加入，可直接联系组织者。';
+  if (m === 'round already finished' || (jn && jn.status === 409)) return '这场球局已经结束了。';
+  if (m === 'round cancelled') return '这场球局已取消。';
+  if (m === 'network') return '网络异常，请稍后重试。';
+  return '加入未成功：' + (m || '请稍后重试');
+}
 var HOME_MODE = !qs.get('e'); /* [线Z44] 无 e 参数＝H5 入口（发起/加入/回忆），不默认落入某场赛事 */
 document.getElementById('backLink').href = 'event.html?e=' + encodeURIComponent(eventId) + (linkCode ? '&c=' + encodeURIComponent(linkCode) : '');
 
@@ -883,6 +897,7 @@ var S = {
   flushing: false, conflicts: {}, failed: {}, preview: null, loadedAt: 0,
   authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
   fresh: false, freshPc: false, freshAsk: false, cardStale: false, cardLoadFail: false, loadNote: '', /* [线Z55] fresh＝本轮实时 event_get 已确认；未确认前 paint 只出骨架，禁止用缓存/默认值画状态模块 */
+  autoJoinTried: false, autoJoinErr: '', /* [匿名邀请完善20261112] 登录后凭 linkCode 自动加入（仅 casual、每页只试一次） */
 };
 var app = document.getElementById('app');
 
@@ -938,14 +953,16 @@ function renderForbiddenGuide() {
   app.innerHTML = (S.ev && S.ev.event ? evMetaHtml() : '') +
     '<div class="card"><h2>' + (loggedIn ? '您尚未加入这场球局' : '这是私密球局') + '</h2>' +
     '<p class="muted">' + (loggedIn ? '您已登录，但还不是这场球局的参与者。请输入组织者给您的邀请码加入，或向组织者索取最新分享链接。' : '本球局仅限受邀参加，登录后即可查看并加入。如果您是经分享链接打开的，请确认打开的是组织者最新分享的完整链接——链接不完整、或邀请码已被组织者更新，都会看到本页。') + '</p>' +
+    (linkCode ? '<p class="err">您打开的链接中的邀请码不正确，或已被组织者更新，请核对后重新输入。</p>' : '') +
     (loggedIn ? '' : '<div id="forbidLogin"></div>') +
     '<div class="fld"><label>有邀请码？输入后直接打开</label><input id="forbidCode" type="text" placeholder="邀请码" autocomplete="off"></div>' +
+    '<div class="err" id="forbidCodeErr"></div>' +
     '<div class="btnrow"><button class="btn" id="forbidCodeBtn" type="button">用邀请码打开</button><button class="btn plain" id="forbidRetry" type="button">重新加载</button></div></div>';
   if (!loggedIn) mountLogin(document.getElementById('forbidLogin'), { onDone: function () { loadAll(false); } });
   var cb = document.getElementById('forbidCodeBtn');
   if (cb) cb.addEventListener('click', function () {
-    var v = (document.getElementById('forbidCode').value || '').trim();
-    if (!v) return;
+    var v = normCode(document.getElementById('forbidCode').value);
+    if (!v) { var fe = document.getElementById('forbidCodeErr'); if (fe) fe.textContent = '请先输入邀请码。'; return; }
     location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
   });
   var rb2 = document.getElementById('forbidRetry');
@@ -990,6 +1007,17 @@ async function loadAll(useCachePaint) {
   S.fresh = true;
   applyPlayShare(); /* [分享修复20261112] 数据确认后刷新分享卡片（og＋微信分享数据） */
   if (!S.session) { paint(); return; }
+  /* [匿名邀请完善20261112] 登录后自动加入：持有效邀请码打开 casual 球局、登录
+     成功且尚非成员时，自动以邀请码加入一次（与首页 ?join= 自动加入流同口径），
+     成功即整页重载落成员视图；失败如实记录、回落报名表单（邀请码已预填）。 */
+  if (linkCode && S.ev.event.kind === 'casual' && !S.ev.my_player && !S.autoJoinTried) {
+    S.autoJoinTried = true;
+    var sessU = (S.session && S.session.user) || {};
+    var jn = await casualJoin({ event_id: eventId, invite_code: linkCode, display_name: (sessU.user_metadata || {}).display_name || sessU.email || undefined });
+    if (seq !== S.loadSeq) return;
+    if (jn && jn.ok) { loadAll(false); return; }
+    S.autoJoinErr = joinErrText(jn);
+  }
   var rs = await Promise.all([
     golfApiRetry('player_card', { event_id: eventId }, true).catch(function () { return null; }),
     golfApiRetry('ask_context', { event_id: eventId }, true).catch(function () { return null; }),
@@ -1100,21 +1128,49 @@ function paint() {
 }
 
 function paintGuest() {
+  var e = (S.ev && S.ev.event) || {};
+  /* [匿名邀请完善20261112] 邀请感知登录墙：经邀请链接打开（带码）或赛事本身为
+     invite_only 时，墙面先认邀请、再讲登录，并给出输码入口；普通公开赛事保持
+     原通用文案。登录成功走 loadAll——casual 球局会在那里凭 linkCode 自动加入。 */
+  var inviteCtx = !!linkCode || e.visibility === 'invite_only';
+  if (!inviteCtx) {
+    app.innerHTML = evMetaHtml() +
+      '<div class="card"><h2>报名 / 记分需要登录</h2>' +
+      '<p class="muted">公开海报、球场地图与排名可直接在赛事页浏览；报名、提交成绩与保存个人 AI 对话需要登录（与 RUKIK App 同一账号）。</p>' +
+      '<div id="loginBox"></div></div>' + backToEventBtn('先去赛事页逛逛');
+    mountLogin(document.getElementById('loginBox'), { onDone: function () { loadAll(false); } });
+    return;
+  }
+  var casual = e.kind === 'casual';
   app.innerHTML = evMetaHtml() +
-    '<div class="card"><h2>报名 / 记分需要登录</h2>' +
-    '<p class="muted">公开海报、球场地图与排名可直接在赛事页浏览；报名、提交成绩与保存个人 AI 对话需要登录（与 RUKIK App 同一账号）。</p>' +
-    '<div id="loginBox"></div></div>' + backToEventBtn('先去赛事页逛逛');
+    '<div class="card"><h2>您受邀参加这场' + (casual ? '球局' : '赛事') + '</h2>' +
+    '<p class="muted">' + (casual
+      ? '组织者邀请您参加这场球局。登录后将自动完成加入、直接开始记分（与 RUKIK App 同一账号），无需再输入邀请码。'
+      : '本场为邀请制赛事。登录后即可报名参加，邀请码已由链接带入、无需手输（与 RUKIK App 同一账号）。') + '</p>' +
+    '<div id="loginBox"></div>' +
+    '<div class="fld"><label>有邀请码？输入后直接打开</label><input id="guestCode" type="text" placeholder="邀请码" autocomplete="off"></div>' +
+    '<div class="err" id="guestCodeErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="guestCodeBtn" type="button">用邀请码打开</button></div></div>' + backToEventBtn('先去赛事页逛逛');
   mountLogin(document.getElementById('loginBox'), { onDone: function () { loadAll(false); } });
+  var gb = document.getElementById('guestCodeBtn');
+  if (gb) gb.addEventListener('click', function () {
+    var v = normCode(document.getElementById('guestCode').value);
+    if (!v) { var ge = document.getElementById('guestCodeErr'); if (ge) ge.textContent = '请先输入邀请码。'; return; }
+    location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
+  });
 }
 
 function paintRegister() {
   var e = S.ev.event;
+  /* [邀请码根治 20261112] casual 球局不走正式报名（正式 register 对 casual 只落
+     pending、不建组不建卡，且码校验口径不一致）——分流到 casual_join 加入卡。 */
+  if (e.kind === 'casual') return paintCasualJoin();
   var fee = Number(e.fee_cents || 0);
   app.innerHTML = evMetaHtml() +
     '<div class="card"><h2>报名参加</h2>' +
     (fee > 0 ? '<p class="muted">本场费用：$' + (fee / 100).toFixed(fee % 100 ? 2 : 0) + ' / 人（线下收款：报名先在此登记，缴费按主办方通知办理；主办方确认收款后，正式分组资格生效）。</p>' : '<p class="muted">本场免费报名。</p>') +
     '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="regName" type="text" autocomplete="name" placeholder="您的姓名"></div>' +
-    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="regInvite" type="text" placeholder="主办方提供的邀请码"></div>' : '') +
+    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="regInvite" type="text" placeholder="主办方提供的邀请码" value="' + esc(linkCode || '') + '"></div>' : '') +
     '<div class="fld"><label>差点指数（选填）</label><input id="regHcp" type="number" step="0.1" min="-10" max="54" placeholder="如 18.5，没有可留空"></div>' +
     '<div class="fld"><label>组别（选填）</label><input id="regDiv" type="text" placeholder="如 男子组 / 女子组"></div>' +
     '<div class="fld"><label>单位 / 机构（选填）</label><input id="regOrg" type="text" placeholder="公司或社团名称"></div>' +
@@ -1138,6 +1194,37 @@ function paintRegister() {
       var m = r.error || '';
       errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : ('报名未成功：' + (m || '请稍后重试'));
     }
+  });
+  if (S.autoJoinErr) { var re0 = document.getElementById('regErr'); if (re0) re0.textContent = S.autoJoinErr; }
+}
+
+/* [邀请码根治 20261112] casual 球局加入卡：姓名＋邀请码（链接带入预填），提交走
+   casual_join(event_id＋规范化码)，成功即重载落成员视图；正式 register 不再承接。 */
+function paintCasualJoin() {
+  var e = S.ev.event;
+  var sessU2 = (S.session && S.session.user) || {};
+  var preName = (sessU2.user_metadata || {}).display_name || '';
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>加入这场球局</h2>' +
+    '<p class="muted">确认姓名即可加入本局一起记分（与 RUKIK App 同一账号）。</p>' +
+    '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="cjName" type="text" autocomplete="name" placeholder="您的姓名" value="' + esc(preName) + '"></div>' +
+    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="cjInvite" type="text" placeholder="组织者提供的球局码" value="' + esc(linkCode || '') + '"></div>' : '') +
+    '<div class="err" id="cjErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="cjBtn" type="button">加入球局</button></div>' +
+    backToEventBtn() + '</div>';
+  if (S.autoJoinErr) { var ce0 = document.getElementById('cjErr'); if (ce0) ce0.textContent = S.autoJoinErr; }
+  document.getElementById('cjBtn').addEventListener('click', async function () {
+    var errEl = document.getElementById('cjErr');
+    var name = (document.getElementById('cjName').value || '').trim();
+    if (!name) { errEl.textContent = '请填写姓名。'; return; }
+    var inv = document.getElementById('cjInvite');
+    var code = inv ? normCode(inv.value) : linkCode;
+    if (e.visibility === 'invite_only' && !code) { errEl.textContent = '请输入邀请码。'; return; }
+    var btn = this; btn.disabled = true; errEl.textContent = '';
+    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name });
+    btn.disabled = false;
+    if (jn && jn.ok) { loadAll(false); return; }
+    errEl.textContent = joinErrText(jn);
   });
 }
 
@@ -2568,7 +2655,7 @@ function paintHome() {
    旧版 casualCreate 生成的 ?join= 链接从未被消费：打开只落首页、码被丢弃。
    现在：带码打开 → 未登录先登录（登录后自动继续）、已登录自动加入并直达
    该局记分；加入失败如实显示（码失效/已关闭/已结束），不静默吞掉。 */
-var hmJoin = { code: (qs.get('join') || '').trim().toUpperCase(), state: 'idle', msg: '' };
+var hmJoin = { code: normCode(qs.get('join') || ''), state: 'idle', msg: '' };
 function paintJoinBox() {
   var box = document.getElementById('hmJoinBox');
   if (!box) return;
@@ -2893,7 +2980,7 @@ function hmShowJoin() {
     '<div class="err" id="hmJoinErr"></div>' +
     '<div class="btnrow"><button class="btn" id="hmJoinGo" type="button">加入球局</button></div></div>';
   document.getElementById('hmJoinGo').addEventListener('click', async function () {
-    var code = (document.getElementById('hmCode').value || '').trim();
+    var code = normCode(document.getElementById('hmCode').value);
     var errEl = document.getElementById('hmJoinErr');
     if (!code) { errEl.textContent = '请输入球局码。'; return; }
     this.disabled = true; errEl.textContent = '';
@@ -2903,8 +2990,9 @@ function hmShowJoin() {
     this.disabled = false;
     if (!r || !r.ok) {
       var st = r && r.status;
-      errEl.textContent = st === 404 ? '这个球局码不存在或已失效，请核对后再试。'
-        : st === 403 ? '组织者已关闭这场球局的加入。'
+      errEl.textContent = (r && r.error === 'invite_code_rotated') ? '该球局码已被组织者更新，请向组织者索取最新球局码或最新链接。'
+        : st === 404 ? '这个球局码不存在或已失效，请核对后再试。'
+        : st === 403 ? joinErrText(r)
         : st === 409 ? '这场球局已经结束了。'
         : st === 400 ? '这场球局已取消，或球局码不完整。'
         : '加入未成功，请稍后再试。';
