@@ -448,7 +448,7 @@ function paintScoring(card) {
   if (locked && sel) {
     html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + ' · ' + (sel.strokes == null ? '未录入' : sel.strokes + ' 杆') + '</div></div>';
   }
-  if (S.preview) html += '<div class="preview"><span class="t">下一洞预见</span><br>' + S.preview + '</div>';
+  if (S.preview) html += '<div class="preview"><span class="t">下一洞</span><br>' + S.preview + '</div>';
   /* 确认流（与 App/服务端同一流程） */
   if (!locked) {
     if ((sc.status === 'in_progress' || sc.status === 'not_started' || sc.status === 'disputed') && sc.thru >= holes.length && holes.length) {
@@ -460,6 +460,8 @@ function paintScoring(card) {
     if (sc.status === 'submitted') html += '<p class="muted" style="margin-top:10px">成绩已提交，等待球员确认 / 裁判核对。</p>';
     if (sc.status === 'verified') html += '<p class="muted" style="margin-top:10px">成绩已确认，等待主办方锁定为正式成绩。</p>';
   }
+  /* [线W2] 问RUKIK Golf 直达本场球童（pro-chat＋官方球童角色，独立赛事会话；球童页顶栏可返回比赛） */
+  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问RUKIK Golf（本场球童）</a></div>';
   html += backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
   app.innerHTML = html;
 
@@ -486,6 +488,8 @@ function paintScoring(card) {
         uid: S.session ? S.session.user.id : null,
       };
       enqueueScore(item);
+      /* [线W2] 记住用户刚主动保存的这一洞：只有它在回放中被服务端确认，才触发仪式反馈（后台回放不触发） */
+      S.justSaved = { scorecard_id: card.id, hole: item.hole, strokes: item.strokes, par: sel.par, at: Date.now() };
       delete S.failed[sel.hole];
       paint();
       flushQueue();
@@ -558,6 +562,7 @@ async function flushQueue() {
   S.flushing = true;
   var remain = loadQueue().filter(function (x) { return x.uid && x.uid !== uid; });
   var sentAny = false;
+  var confirmedJS = null;
   for (var i = 0; i < q.length; i++) {
     var item = q[i];
     try {
@@ -566,6 +571,7 @@ async function flushQueue() {
         sentAny = true;
         delete S.conflicts[item.hole]; delete S.failed[item.hole];
         if (r.data && r.data.next_hole_preview) S.preview = previewText(r.data.next_hole_preview);
+        if (S.justSaved && item.scorecard_id === S.justSaved.scorecard_id && item.hole === S.justSaved.hole && Date.now() - S.justSaved.at < 30000) confirmedJS = S.justSaved;
       } else if (r.status === 409) {
         S.conflicts[item.hole] = { item: item, current_strokes: r.data.current_strokes != null ? r.data.current_strokes : null };
         remain.push(item);
@@ -585,17 +591,72 @@ async function flushQueue() {
     if (sentAny) { var cd = await golfApi('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; }); if (cd && cd.ok) { S.cardData = cd.data; cacheSet({ cardData: S.cardData }); } }
     paint();
   }
+  /* [线W2] 记分仪式感（与 App 同口径）：仅当用户刚主动保存的那一洞在本轮
+     回放中被服务端确认（r.ok）才触发；待同步/失败/409 不庆祝；后台定时
+     回放无 justSaved 不触发。整轮打满＝完赛喝彩（一轮一次，localStorage
+     持久标记防刷新/重进重播），数据全部取已保存成绩，不编造。 */
+  if (confirmedJS) {
+    S.justSaved = null;
+    var cd2 = S.cardData;
+    if (card && cd2 && cd2.scorecard && cd2.scorecard.id === card.id) {
+      var hs = cd2.holes || [];
+      var queueLeft = loadQueue().some(function (x) { return x.scorecard_id === card.id; });
+      var allPlayed = hs.length > 0 && hs.every(function (h) { return effStrokes(card.id, h) != null; });
+      if (allPlayed && !queueLeft) {
+        var flagKey = 'rukik.golf.roundCelebrated.v1.' + card.id;
+        var seen = null; try { seen = localStorage.getItem(flagKey); } catch (e) {}
+        if (!seen) {
+          try { localStorage.setItem(flagKey, new Date().toISOString()); } catch (e) {}
+          var gross = 0, parT = 0, birdies = 0, best = null, bestRel = Infinity;
+          hs.forEach(function (h) { var sc = effStrokes(card.id, h); gross += sc; parT += (h.par || 0); if (sc < (h.par || 0)) birdies++; var rl = sc - (h.par || 0); if (rl < bestRel) { bestRel = rl; best = h; } });
+          var relT = gross - parT;
+          var lines = ['完成球洞 ' + hs.length + ' / ' + hs.length + ' · 本场总杆 ' + gross + ' 杆（相对标准杆 ' + (relT === 0 ? '±0' : relT > 0 ? '+' + relT : '' + relT) + '）'];
+          if (birdies) lines.push('今天打出 ' + birdies + ' 个 Birdie' + (best ? '，最佳一洞是第 ' + best.hole + ' 洞' : '') + '——都已记入你的赛事回忆。');
+          else if (best) lines.push('最佳一洞：第 ' + best.hole + ' 洞，' + effStrokes(card.id, best) + ' 杆。');
+          lines.push('今天的每一杆，都值得被记住。');
+          lines.push(cd2.scorecard.status === 'locked' ? '成绩已锁定（正式成绩）' : '实时成绩，待赛事最终确认');
+          showCelebration({ title: hs.length + ' 洞，精彩完赛！', lines: lines, round: true });
+        }
+      } else {
+        var rel = confirmedJS.strokes - confirmedJS.par;
+        var label = rel <= -3 ? 'Albatross' : rel === -2 ? 'Eagle' : rel === -1 ? 'Birdie' : rel === 0 ? 'Par' : rel === 1 ? 'Bogey' : rel === 2 ? 'Double Bogey' : '+' + rel;
+        var fb = rel <= -1 ? '带着这份好状态，迎接下一洞。' : rel === 0 ? '稳稳完成这一洞。下一洞，继续享受挥杆。' : rel === 1 ? '这一洞已经过去，下一洞又是新的开始。' : '这一洞已经过去，下一洞按自己的节奏来。';
+        showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞，已记录！', lines: [confirmedJS.strokes + ' 杆 · ' + label, fb], round: rel <= -1 });
+      }
+    }
+  }
+}
+
+/* [线W2] 仪式呈现层：轻量浮层，点按任意处关闭；减动效偏好时静态短呈现 */
+function showCelebration(o) {
+  var old = document.getElementById('w2Celeb'); if (old) old.remove();
+  var reduced = false; try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var el = document.createElement('div');
+  el.id = 'w2Celeb';
+  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s');
+  var cardCss = 'background:#F7F3EC;border-radius:16px;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)' + (o.round ? ';border:1.5px solid #B58A58' : '');
+  var inner = '<div style="' + cardCss + '"><div style="font-size:12px;letter-spacing:2px;color:#8B857D">' + (o.round ? '🏆 RUKIK GOLF' : '⛳ RUKIK GOLF') + '</div>' +
+    '<div style="font-size:' + (o.round ? '26px' : '22px') + ';font-weight:700;color:#14304A;margin:8px 0">' + esc(o.title) + '</div>';
+  (o.lines || []).forEach(function (ln, i) { inner += '<div style="font-size:' + (i === 0 ? '16px' : '14px') + ';color:#2B2B28;margin-top:4px;line-height:1.55">' + esc(ln) + '</div>'; });
+  inner += '<div style="font-size:12px;color:#8B857D;margin-top:10px">轻点任意处继续</div></div>';
+  el.innerHTML = inner;
+  document.body.appendChild(el);
+  requestAnimationFrame(function () { el.style.opacity = '1'; });
+  var done = false;
+  var close = function () { if (done) return; done = true; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 180); };
+  el.addEventListener('click', close);
+  setTimeout(close, reduced ? 1400 : (o.round ? 3200 : 1900));
 }
 
 function previewText(p) {
   if (!p) return '';
   var parts = [];
   var nx = p.next_hole || p.next || null;
-  if (nx && nx.hole) parts.push('下一洞：第 ' + nx.hole + ' 洞' + (nx.par ? ' · Par ' + nx.par : '') + (nx.yards ? ' · ' + nx.yards + ' 码' : ''));
+  if (nx && nx.hole) parts.push('第 ' + nx.hole + ' 洞' + (nx.par ? ' · Par ' + nx.par : '') + (nx.yards ? ' · ' + nx.yards + ' 码' : ''));
   if (p.history_line) parts.push(esc(p.history_line));
   (p.care_lines || []).slice(0, 2).forEach(function (t) { parts.push(esc(t)); });
   (p.safety || []).forEach(function (t) { parts.push('⚠️ ' + esc(t)); });
-  (p.missing || []).forEach(function (t) { parts.push(esc(t)); });
+  /* [线W2] 不渲染 missing[]：其中可能含引擎口径（如天气缓存说明），内部口径禁入用户可见字段 */
   return parts.join('<br>');
 }
 
