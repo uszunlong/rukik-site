@@ -148,8 +148,29 @@
         </div>
         <label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
         <button class="ghost" id="annBtn">发布公告</button>
-        <label>添加赞助商</label><input id="spName" placeholder="赞助商名称"><input id="spLogo" placeholder="Logo 图片地址（可选）">
-        <button class="ghost" id="spBtn">添加赞助商</button>
+        <div id="sponsorCard" style="margin-top:14px">
+        <label>合作伙伴管理（本场赞助商：名称 / 类别 / 官网 / 简介 / 排序 / Logo 自助维护，保存后赛事页与大屏同步展示）</label>
+        <div id="spList"></div>
+        <div style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">
+          <div class="row">
+            <div><label>名称 *</label><input id="spxName" placeholder="合作伙伴完整名称"></div>
+            <div><label>类别</label><select id="spxTier"><option value="title">冠名赞助</option><option value="gold">金牌赞助</option><option value="silver">银牌赞助</option><option value="bronze">铜牌赞助</option><option value="sponsor">赞助商</option><option value="partner" selected>合作伙伴</option></select></div>
+            <div><label>排序（小在前）</label><input id="spxOrder" type="number" value="0"></div>
+          </div>
+          <div class="row">
+            <div><label>官网</label><input id="spxWeb" placeholder="如 example.com 或 https://…（可空）"></div>
+            <div><label>Logo（PNG/JPG/WebP/GIF，≤2MB）</label><input id="spxLogoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></div>
+          </div>
+          <input id="spxLogoUrl" type="hidden">
+          <div id="spxLogoPrev" style="margin:4px 0"></div>
+          <label>简介</label><textarea id="spxIntro" rows="2" placeholder="一句话介绍这家合作伙伴（赛事页点开可见，AI 球童介绍时引用）"></textarea>
+          <p>
+            <button class="ghost" id="spxSave" type="button">保存合作伙伴</button>
+            <button class="ghost" id="spxCancel" type="button" style="display:none">取消编辑</button>
+            <span id="spxMsg" style="font-size:13px;color:#5c7260"></span>
+          </p>
+        </div>
+        </div>
         <div id="orgCard" style="margin-top:14px">
         <label>赛事合作伙伴 · 智能品牌档案（主办必填一家；品牌资料会同步给本场 AI 球童做介绍，球员点赛事页 Logo 即可请球童详细介绍。同一品牌建档一次，后续赛事可直接复用）</label>
         <div id="orgRows"></div>
@@ -310,7 +331,7 @@ function openEvent(id) {
     currentEvent = d.event; currentRound = (d.rounds || [])[0];
     document.getElementById('dash').style.display = 'block';
     document.getElementById('dashTitle').textContent = d.event.title + ' · 赛事进度';
-    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel();
+    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -1204,7 +1225,104 @@ document.getElementById('memGenBtn').onclick = function () {
 };
 document.getElementById('reportBtn').onclick = function () { call('event_report', { event_id: currentEvent.id }).then(show); };
 document.getElementById('annBtn').onclick = function () { call('announcement_create', { event_id: currentEvent.id, title: document.getElementById('annTitle').value, body: document.getElementById('annBody').value }).then(show); };
-document.getElementById('spBtn').onclick = function () { call('sponsor_create', { event_id: currentEvent.id, name: document.getElementById('spName').value, logo_url: document.getElementById('spLogo').value || null, placements: ['event_page', 'big_screen'] }).then(show); };
+/* [线Z47] 合作伙伴管理（golf_sponsors）：列表 / 新增 / 编辑 / 删除 / Logo 签名直传。
+   服务端 sponsor_upsert/sponsor_delete 保存后同步投影到赛事页展示通道，保存即前台同步。 */
+var SPONSOR_TIER_LABEL = { title: '冠名赞助', gold: '金牌赞助', silver: '银牌赞助', bronze: '铜牌赞助', sponsor: '赞助商', partner: '合作伙伴' };
+var spxRows = [], spxEditingId = null;
+function spxLogoPrevHtml(url) {
+  return url ? '<img src="' + escapeHtml(url) + '" style="height:40px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 6px;vertical-align:middle"> <button class="ghost" id="spxLogoClear" type="button">移除 Logo</button>' : '';
+}
+function spxBindLogoPrev() {
+  var c = document.getElementById('spxLogoClear');
+  if (c) c.onclick = function () { document.getElementById('spxLogoUrl').value = ''; document.getElementById('spxLogoPrev').innerHTML = ''; document.getElementById('spxLogoFile').value = ''; };
+}
+function spxReset() {
+  spxEditingId = null;
+  ['spxName', 'spxWeb', 'spxIntro', 'spxLogoUrl', 'spxLogoFile'].forEach(function (id) { document.getElementById(id).value = ''; });
+  document.getElementById('spxTier').value = 'partner';
+  document.getElementById('spxOrder').value = '0';
+  document.getElementById('spxLogoPrev').innerHTML = '';
+  document.getElementById('spxCancel').style.display = 'none';
+}
+function loadSponsors() {
+  var box = document.getElementById('spList');
+  if (!box || !currentEvent) return;
+  call('sponsor_list', { event_id: currentEvent.id }).then(function (d) {
+    if (!d || !d.ok) { box.innerHTML = '<p style="color:#8c2f2f;font-size:13px">合作伙伴加载失败：' + escapeHtml((d && d.error) || '未知错误') + '</p>'; return; }
+    spxRows = d.sponsors || [];
+    if (!spxRows.length) { box.innerHTML = '<p style="font-size:13px;color:#5c7260">本场暂无合作伙伴，在下方填写并保存即可添加。</p>'; return; }
+    box.innerHTML = spxRows.map(function (s) {
+      var logo = s.logo_url ? '<img src="' + escapeHtml(s.logo_url) + '" style="height:34px;max-width:90px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 6px">' : '<span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;background:#e8f0e8;border-radius:8px;font-weight:600">' + escapeHtml((s.name || '').slice(0, 1)) + '</span>';
+      return '<div style="display:flex;gap:8px;align-items:center;border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">' + logo +
+        '<div style="flex:1;min-width:0"><div style="font-weight:600">' + escapeHtml(s.name || '') + ' <span style="font-weight:400;color:#5c7260;font-size:12px">' + escapeHtml(SPONSOR_TIER_LABEL[s.tier] || '合作伙伴') + ' · 排序 ' + (s.display_order || 0) + '</span></div>' +
+        (s.intro ? '<div style="font-size:12px;color:#5c7260">' + escapeHtml(s.intro) + '</div>' : '') +
+        (s.website ? '<div style="font-size:12px"><a href="' + escapeHtml(s.website) + '" target="_blank" rel="noopener">' + escapeHtml(s.website) + '</a></div>' : '') + '</div>' +
+        '<button class="ghost spx-edit" type="button" data-id="' + s.id + '">编辑</button>' +
+        '<button class="ghost spx-del" type="button" data-id="' + s.id + '">删除</button></div>';
+    }).join('');
+    box.querySelectorAll('.spx-edit').forEach(function (btn) { btn.onclick = function () { spxEdit(btn.getAttribute('data-id')); }; });
+    box.querySelectorAll('.spx-del').forEach(function (btn) { btn.onclick = function () { spxDelete(btn.getAttribute('data-id')); }; });
+  });
+}
+function spxEdit(id) {
+  var s = spxRows.find(function (x) { return x.id === id; });
+  if (!s) return;
+  spxEditingId = id;
+  document.getElementById('spxName').value = s.name || '';
+  document.getElementById('spxTier').value = SPONSOR_TIER_LABEL[s.tier] ? s.tier : 'partner';
+  document.getElementById('spxOrder').value = s.display_order || 0;
+  document.getElementById('spxWeb').value = s.website || '';
+  document.getElementById('spxIntro').value = s.intro || '';
+  document.getElementById('spxLogoUrl').value = s.logo_url || '';
+  document.getElementById('spxLogoFile').value = '';
+  document.getElementById('spxLogoPrev').innerHTML = spxLogoPrevHtml(s.logo_url || '');
+  spxBindLogoPrev();
+  document.getElementById('spxCancel').style.display = '';
+  document.getElementById('spxMsg').textContent = '正在编辑「' + s.name + '」，改完点「保存合作伙伴」。';
+}
+function spxDelete(id) {
+  var s = spxRows.find(function (x) { return x.id === id; });
+  uiConfirm('确定删除合作伙伴「' + (s ? s.name : '') + '」？删除后赛事页同步移除。').then(function (ok) {
+    if (!ok) return;
+    call('sponsor_delete', { event_id: currentEvent.id, sponsor_id: id }).then(function (d) {
+      var msg = document.getElementById('spxMsg');
+      if (d && d.ok) { if (spxEditingId === id) spxReset(); msg.textContent = '已删除，赛事页已同步。'; loadSponsors(); }
+      else msg.textContent = '删除失败：' + ((d && d.error) || '未知错误');
+    });
+  });
+}
+document.getElementById('spxCancel').onclick = function () { spxReset(); document.getElementById('spxMsg').textContent = ''; };
+document.getElementById('spxLogoFile').addEventListener('change', function () {
+  var f = this.files && this.files[0];
+  if (!f || !currentEvent) return;
+  var msg = document.getElementById('spxMsg');
+  if (f.size > 2000000) { msg.textContent = 'Logo 超过 2MB，请压缩后重试。'; this.value = ''; return; }
+  msg.textContent = 'Logo 上传中…';
+  call('sponsor_logo_upload', { event_id: currentEvent.id, content_type: f.type || 'image/png' }).then(function (d) {
+    if (!d || !d.ok) { msg.textContent = 'Logo 上传失败：' + ((d && d.error) || '未知错误'); return; }
+    fetch(d.signed_url, { method: 'PUT', headers: { 'Content-Type': f.type || 'image/png' }, body: f }).then(function (r) {
+      if (!r.ok) { msg.textContent = 'Logo 上传失败（存储返回 ' + r.status + '）。'; return; }
+      document.getElementById('spxLogoUrl').value = d.public_url;
+      document.getElementById('spxLogoPrev').innerHTML = spxLogoPrevHtml(d.public_url);
+      spxBindLogoPrev();
+      msg.textContent = 'Logo 已上传，点「保存合作伙伴」后生效。';
+    }).catch(function () { msg.textContent = 'Logo 上传网络失败，请重试。'; });
+  });
+});
+document.getElementById('spxSave').onclick = function () {
+  if (!currentEvent) return;
+  var msg = document.getElementById('spxMsg');
+  var name = document.getElementById('spxName').value.trim();
+  if (!name) { msg.textContent = '请填写合作伙伴名称。'; return; }
+  var web = document.getElementById('spxWeb').value.trim();
+  if (web && !/^https?:\/\//i.test(web)) web = 'https://' + web;
+  var payload = { event_id: currentEvent.id, name: name, tier: document.getElementById('spxTier').value, website: web || null, intro: document.getElementById('spxIntro').value.trim() || null, display_order: Number(document.getElementById('spxOrder').value || 0), logo_url: document.getElementById('spxLogoUrl').value || null };
+  if (spxEditingId) payload.sponsor_id = spxEditingId;
+  call('sponsor_upsert', payload).then(function (d) {
+    if (d && d.ok) { msg.textContent = '已保存，赛事页已同步展示。'; spxReset(); loadSponsors(); }
+    else msg.textContent = '保存失败：' + ((d && (d.message || d.error)) || '未知错误');
+  });
+};
 /* [线Z12] 智能赛事关怀 20 类模板：一键带入知识编辑框（类别/标题/正文），
    仍走既有「保存草稿→主办方确认→发布」流程才生效；时间为占位示例，必须改真实值。 */
 var CARE_TEMPLATES = [
