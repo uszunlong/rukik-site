@@ -82,15 +82,15 @@
   iframe.osm{width:100%;height:230px;border:0;border-radius:14px}
   .lmap{width:100%;height:230px;border-radius:14px;overflow:hidden;background:#eef4ef;z-index:0}
   .holebar button.all.on{background:#14532d;color:#fff;border-color:#14532d}
-  .car{position:relative;border-radius:14px;overflow:hidden;background:#0e2416}
-  .carTrack{display:flex;transition:transform .45s ease}
-  .carSlide{flex:0 0 100%;margin:0}
-  .carSlide img{width:100%;height:230px;object-fit:cover;display:block;cursor:pointer;background:#1c3a26}
-  .carDots{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:5px;justify-content:center;pointer-events:none}
+  .car{position:relative;height:264px;border-radius:14px;overflow:hidden;background:#0e2416;isolation:isolate}
+  .carTrack{display:flex;transition:transform .45s ease;height:100%}
+  .carSlide{flex:0 0 100%;margin:0;height:100%}
+  .carSlide img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;background:#1c3a26}
+  .carDots{position:absolute;left:0;right:0;bottom:54px;display:flex;gap:5px;justify-content:center;pointer-events:none;z-index:6}
   .carDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
   .carDots i.on{background:#fff}
   /* 线 Z27 照片管理（2026-11-11）：照片墙管理条＋管理弹层（删除只列本人上传，服务端按上传者校验） */
-  .wallbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
+  .wallbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;box-sizing:border-box;padding:7px 12px;background:linear-gradient(180deg,rgba(6,24,14,0),rgba(6,24,14,.82) 38%,rgba(6,24,14,.92))}
   .wallbar .wb-t{font-size:13px;font-weight:600;color:#e8f5ea}
   .pmBtn{background:#1d7a3d;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
   #pmSheet{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;justify-content:flex-end}
@@ -231,7 +231,7 @@
   /* [Z53] 赛事海报相册：原图比例自适应（height:auto 不裁切）、2 秒轮播、点开灯箱 contain 全屏 */
   /* [Z65] 无海报默认封面：品牌主题图（内联 SVG，与 golf-share.jpg 同族）＋球场名/RUKIK GOLF 叠加，
      设计稿形态、永不空白；图片缺失时深绿底+文字仍成立 */
-  .defcov{position:relative;border-radius:16px;overflow:hidden;background:#06231a;aspect-ratio:16/9}
+  .defcov{position:relative;border-radius:16px;overflow:hidden;background:#06231a;aspect-ratio:16/9;max-height:min(72dvh,640px)}
   .defcov svg.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
   .defcov .scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,20,12,.55) 0%,rgba(3,20,12,.10) 55%,rgba(3,20,12,0) 100%)}
   .defcov .tx{position:absolute;left:18px;bottom:16px;right:18px;color:#fff}
@@ -252,17 +252,19 @@
   .pc-cov{font-size:11px;font-weight:700;color:#fff;background:#C9A227;border-radius:999px;padding:2px 8px;flex:none}
   .pc-up{display:block;border:1px dashed #9db8a4;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;color:#14401f;background:#f4faf5;cursor:pointer}
   .pc-up small{display:block;font-weight:400;color:#6b7d6f;font-size:12px;margin-top:2px}
-  .pal{position:relative;border-radius:16px;overflow:hidden;background:#0B2033}
-  .palTrack{display:flex;transition:transform .45s ease;align-items:flex-start}
-  .palSlide{flex:0 0 100%;margin:0;cursor:pointer}
-  .palSlide img{width:100%;height:auto;display:block}
+  .pal{position:relative;border-radius:16px;overflow:hidden;background:#0B2033;aspect-ratio:16/9;max-height:min(72dvh,640px);isolation:isolate}
+  .palTrack{display:flex;transition:transform .45s ease;height:100%;align-items:stretch}
+  .palSlide{flex:0 0 100%;margin:0;cursor:pointer;position:relative;height:100%;overflow:hidden;background:#0B2033}
+  .palSlide::before{content:"";position:absolute;inset:-24px;background-image:var(--pal-bg,none);background-position:center;background-size:cover;filter:blur(22px) saturate(1.08);opacity:.58;transform:scale(1.08)}
+  .palSlide::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(4,12,20,0) 52%,rgba(4,12,20,.28) 100%);pointer-events:none}
+  .palSlide img{position:relative;z-index:1;width:100%;height:100%;display:block;object-fit:contain}
   .palNum{position:absolute;top:10px;right:10px;background:rgba(8,26,44,.72);color:#F4F1EA;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;z-index:3}
   .palDots{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:5px;justify-content:center;pointer-events:none;z-index:3}
   .palDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
   .palDots i.on{background:#C9A227}
   .palChipRow{margin-top:10px}
   .palChip{background:rgba(201,162,39,.10);border:1px solid #C9A227;color:#E3C878;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer}
-  .palIco{position:absolute;right:10px;bottom:52px;z-index:4;width:36px;height:36px;border-radius:50%;background:rgba(8,26,44,.72);border:1px solid rgba(201,162,39,.6);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  .palIco{position:absolute;right:10px;bottom:56px;z-index:6;width:36px;height:36px;border-radius:50%;background:rgba(8,26,44,.72);border:1px solid rgba(201,162,39,.6);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
   #palOverlay{position:fixed;inset:0;z-index:90;background:rgba(4,12,20,.96);display:flex;align-items:center;justify-content:center}
   #palOverlay.hidden{display:none}
   #palOverlay img{max-width:94vw;max-height:86dvh;object-fit:contain;border-radius:8px}
@@ -421,7 +423,7 @@ function stateOf() {
   return st === 'completed' ? 'post' : st === 'in_progress' ? 'live' : 'pre';
 }
 /* [Z53] 赛事海报相册：封面置顶、原序去重；加载失败的图自动剔除（回退剩余/封面/标题块） */
-var PALB = { list: [], idx: 0, timer: null, resumeTo: null, paused: false, dead: {} };
+var PALB = { list: [], idx: 0, timer: null, resumeTo: null, paused: false, dead: {}, natural: [] };
 function postersOf() {
   var e = (EV && EV.event) || {};
   var raw = (Array.isArray(e.poster_urls) ? e.poster_urls : []).filter(function (u) { return typeof u === 'string' && u && !PALB.dead[u]; });
@@ -440,6 +442,19 @@ function palGo(i) {
   if (dots) for (var k = 0; k < dots.children.length; k++) dots.children[k].className = k === PALB.idx ? 'on' : '';
   var num = document.getElementById('palNum');
   if (num) num.textContent = (PALB.idx + 1) + ' / ' + PALB.list.length;
+}
+/* [Z81] 海报舞台与图片实际渲染高度解耦：舞台高度只由容器宽度、图片原始
+   宽高比与统一上限（72dvh 且 ≤640px）决定；悬浮按钮/张数/圆点全部锚定
+   #palBox。混排相册取已加载图片中最竖的一张定高，轮播切张时舞台不再跳动。 */
+function palFitStage() {
+  var box = document.getElementById('palBox');
+  if (!box) return;
+  var ratios = (PALB.natural || []).filter(function (r) { return typeof r === 'number' && isFinite(r) && r > 0; });
+  if (!ratios.length || !box.clientWidth) return;
+  var tallest = Math.min.apply(null, ratios); // width / height，越小越竖
+  var cap = Math.min(window.innerHeight * 0.72 || 640, 640);
+  var h = Math.max(200, Math.min(box.clientWidth / tallest, cap));
+  box.style.height = h + 'px';
 }
 function palStart() {
   palStop();
@@ -484,6 +499,7 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   palStop();
   var list = postersOf();
   PALB.list = list;
+  PALB.natural = list.map(function () { return null; });
   if (PALB.idx >= list.length) PALB.idx = 0;
   if (!list.length) { /* [Z65] 无海报默认封面：品牌横幅＋球场名＋RUKIK GOLF（有海报后自动让位）；图缺失时深绿底纹仍成立 */
     var cN = (EV.course && EV.course.name) || EV.event.title;
@@ -501,6 +517,17 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
     (list.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + list.length + '</div><div class="palDots" id="palDots">' + list.map(function (u, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
     pcBtnHtml() + '</div>';
   var palBox = document.getElementById('palBox');
+  Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
+    var i = Number(fig.getAttribute('data-pi'));
+    var u = list[i];
+    if (u) fig.style.setProperty('--pal-bg', 'url("' + u + '")');
+    var pre = new Image();
+    pre.addEventListener('load', function () {
+      if (pre.naturalWidth && pre.naturalHeight) { PALB.natural[i] = pre.naturalWidth / pre.naturalHeight; palFitStage(); }
+    });
+    pre.src = u;
+  });
+  palFitStage();
   Array.prototype.forEach.call(palBox.querySelectorAll('img'), function (img) {
     img.addEventListener('error', function () {
       var fig = img.parentNode;
@@ -524,6 +551,7 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
 }
 (function bindPalOverlay() {
   var c = document.getElementById('palClose'), pv = document.getElementById('palPrev'), nx = document.getElementById('palNext'), ov = document.getElementById('palOverlay');
+  window.addEventListener('resize', palFitStage);
   if (!c) return;
   c.addEventListener('click', closePal);
   if (pv) pv.addEventListener('click', function () { PALB.idx = (PALB.idx - 1 + PALB.list.length) % PALB.list.length; palLbShow(); palGo(PALB.idx); });
