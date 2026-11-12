@@ -148,13 +148,39 @@ export function mountLogin(el, opts) {
     } catch (e) { say('验证失败，请检查网络后重试。'); } finally { btn.disabled = false; }
   });
 
+  var PHONE_LOCAL_LEN = { '1': 10, '86': 11, '852': 8, '886': 9, '65': 8, '44': 10, '61': 9, '81': 11, '82': 11 };
+  function normalizePhoneDigits(raw, cc) {
+    var digits = String(raw == null ? '' : raw).replace(/[^\d]/g, '');
+    var code = String(cc || '+1').replace(/[^\d]/g, '');
+    if (code && digits.length > code.length && digits.indexOf(code) === 0) {
+      var rest = digits.length - code.length;
+      var local = PHONE_LOCAL_LEN[code];
+      if ((local && digits.length > local && rest >= 6) || (!local && rest >= 6 && rest <= 11 && digits.length > 11)) {
+        digits = digits.slice(code.length);
+      }
+    }
+    return digits;
+  }
   function buildPhone() {
     var cc = q('[data-f="cc"]').value || '+1';
-    var digits = (q('[data-f="phone"]').value || '').replace(/[^\d]/g, '');
-    if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+    var input = q('[data-f="phone"]');
+    var digits = normalizePhoneDigits(input && input.value, cc);
+    if (input && digits && digits !== input.value) input.value = digits;
     if (digits.length < 6 || digits.length > 14) return '';
     return cc + digits;
   }
+  (function () {
+    var input = q('[data-f="phone"]');
+    var ccSel = q('[data-f="cc"]');
+    if (!input) return;
+    var clean = function () {
+      var d = normalizePhoneDigits(input.value, ccSel && ccSel.value);
+      if (d && d !== input.value) input.value = d;
+    };
+    input.addEventListener('input', clean);
+    input.addEventListener('change', clean);
+    if (ccSel) ccSel.addEventListener('change', clean);
+  })();
   function startSmsCooldown() {
     var btn = q('[data-a="sendSms"]');
     var left = 60;

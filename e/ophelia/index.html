@@ -731,12 +731,34 @@
     });
     var ccEl = $('authCc'), phoneEl = $('authPhone'), sendSmsBtn = $('authSendSms'), smsRow = $('authSmsRow'), smsCodeEl = $('authSmsCode'), verifySmsBtn = $('authVerifySms');
     var branchEl = $('authBranch'), regEl = $('authRegConfirm');
+    var PHONE_LOCAL_LEN = { '1': 10, '86': 11, '852': 8, '886': 9, '65': 8, '44': 10, '61': 9, '81': 11, '82': 11 };
+    function normalizePhoneDigits(raw, cc) {
+      var digits = String(raw == null ? '' : raw).replace(/[^\d]/g, '');
+      var code = String(cc || '+1').replace(/[^\d]/g, '');
+      if (code && digits.length > code.length && digits.indexOf(code) === 0) {
+        var rest = digits.length - code.length;
+        var local = PHONE_LOCAL_LEN[code];
+        if ((local && digits.length > local && rest >= 6) || (!local && rest >= 6 && rest <= 11 && digits.length > 11)) {
+          digits = digits.slice(code.length);
+        }
+      }
+      return digits;
+    }
     function buildPhone() {
       var cc = (ccEl && ccEl.value) || '+1';
-      var digits = ((phoneEl && phoneEl.value) || '').replace(/[^\d]/g, '');
-      if (cc === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+      var digits = normalizePhoneDigits(phoneEl && phoneEl.value, cc);
+      if (phoneEl && digits && digits !== phoneEl.value) phoneEl.value = digits;
       if (digits.length < 6 || digits.length > 14) return '';
       return cc + digits;
+    }
+    if (phoneEl) {
+      var cleanPhoneField = function () {
+        var d = normalizePhoneDigits(phoneEl.value, ccEl && ccEl.value);
+        if (d && d !== phoneEl.value) phoneEl.value = d;
+      };
+      phoneEl.addEventListener('input', cleanPhoneField);
+      phoneEl.addEventListener('change', cleanPhoneField);
+      if (ccEl) ccEl.addEventListener('change', cleanPhoneField);
     }
     var smsTimer = null;
     function startSmsCooldown() {
