@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>我的比赛 · RUKIK Golf</title>
+<!-- build-marker: z55-20261112c -->
 <meta name="description" content="RUKIK Golf 网页记分：报名、分组、逐洞记分与成绩回顾，无需下载 App。">
 <style>
   * { box-sizing: border-box; }
@@ -170,7 +171,7 @@
   <div class="foot">RUKIK Golf · 网页记分与 App 共用同一记分卡与成绩记录<br>报名、记分、基础 AI 球童、球场地图与个人成绩永久免费</div>
 </div>
 <script type="module">
-import { initAuth, mountLogin, renderAuthBar, getSessionSync, getAccessToken } from './auth.js';
+import { initAuth, mountLogin, renderAuthBar, getSessionSync, getAccessToken } from './auth.js?v=20261112b';
 
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
@@ -217,12 +218,13 @@ function enqueueScore(item) {
 }
 
 /* ---------- 页面缓存（分层口径：缓存先显、后台刷新） ---------- */
-var CACHE_KEY = 'rukik.golf.playCache.v1';
+var CACHE_KEY = 'rukik.golf.playCache.v2'; /* [线Z55] v2 起 cardData 必须带 cardMeta（卡 version/updated_at）才可跨会话复用；v1 无校验缓存整体弃用 */
 function cacheGet() { try { var c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); return (c && c.eventId === eventId) ? c : null; } catch (e) { return null; } }
 function cacheSet(patch) {
   try {
     var c = cacheGet() || { eventId: eventId };
     Object.assign(c, patch); c.at = Date.now();
+    if (patch.cardData && patch.cardData.scorecard) c.cardMeta = { id: patch.cardData.scorecard.id, version: patch.cardData.scorecard.version, updated_at: patch.cardData.scorecard.updated_at };
     localStorage.setItem(CACHE_KEY, JSON.stringify(c));
   } catch (e) {}
 }
@@ -805,6 +807,7 @@ var S = {
   group: null, gEdits: {}, gDirty: {}, gConflicts: {}, gFlash: {}, gMatrix: false, gInitFor: null, gSaving: false, /* [线Z39] 同组共享记分卡状态 */
   flushing: false, conflicts: {}, failed: {}, preview: null, loadedAt: 0,
   authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
+  fresh: false, freshPc: false, freshAsk: false, cardStale: false, cardLoadFail: false, loadNote: '', /* [线Z55] fresh＝本轮实时 event_get 已确认；未确认前 paint 只出骨架，禁止用缓存/默认值画状态模块 */
 };
 var app = document.getElementById('app');
 
@@ -817,38 +820,97 @@ function queuedFor(cardId, hole) {
   return loadQueue().filter(function (x) { return x.scorecard_id === cardId && (hole == null || x.hole === hole); });
 }
 
+/* ---------- [线Z55] 关键读取自动重试（有限次＋指数退避） ----------
+   用户设备实证：event_get 首查失败、旧版只给一次手动重试就停，与今晨 OTP
+   「发送失败」误报同族（服务端成功、响应回程失败）。关键读取失败先自动
+   重试；重试期间显示「正在重试」，不画错误终态、更不画成空数据。 */
+function sleepMs(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+async function golfApiRetry(action, body, needAuth) {
+  var delays = [700, 1800, 4000];
+  var r = null;
+  for (var i = 0; i <= delays.length; i++) {
+    r = await golfApi(action, body, needAuth).catch(function () { return null; });
+    if (r && r.ok) return r;
+    if (r && (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404)) return r; /* 业务性失败不重试 */
+    if (i < delays.length) {
+      S.loadNote = '网络异常，正在自动重试（第 ' + (i + 2) + ' 次）…';
+      paintLoading();
+      await sleepMs(delays[i]);
+    }
+  }
+  return r;
+}
+function paintLoading() {
+  var t = esc(S.loadNote || '正在加载最新状态…');
+  if (S.ev && S.ev.event) app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">' + t + '</div></div>';
+  else app.innerHTML = '<div class="card"><div class="skel">' + t + '</div></div>';
+}
+function errCardHtml(msg) {
+  return '<div class="card"><div class="err">' + esc(msg) + '</div><div class="btnrow"><button class="btn" id="retryBtn">重新加载</button></div></div>';
+}
+function bindRetry() {
+  var rb = document.getElementById('retryBtn');
+  if (rb) rb.addEventListener('click', function () { loadAll(false); });
+}
+
 /* ---------- 数据装载 ---------- */
 async function loadAll(useCachePaint) {
   var seq = ++S.loadSeq; /* [线P] 运行序号：后发运行优先，陈旧运行返回后不得再 paint */
+  S.fresh = false; S.freshPc = false; S.freshAsk = false; S.cardLoadFail = false; S.loadNote = '';
   var cached = cacheGet();
-  if (useCachePaint && cached && cached.ev) {
-    S.ev = cached.ev; S.pc = cached.pc || null; S.askCtx = cached.askCtx || null; S.cardData = cached.cardData || null;
-    paint();
+  if (cached && cached.ev) {
+    /* [线Z55] 缓存只种「赛事头」供标题与骨架：状态模块（报名/等待/记分）
+       一律等实时数据确认（S.fresh）后才画。旧版用缓存 ev/pc/askCtx/cardData
+       直接 paint，是首屏闪现「报名参加」错误态与旧球场卡（Par 71）的根因。 */
+    S.ev = cached.ev;
+    document.getElementById('pageTitle').textContent = (cached.ev.event && cached.ev.event.title) || '我的比赛';
   }
-  var evR = await golfApi('event_get', { event_id: eventId }, false);
+  paint();
+  var evR = await golfApiRetry('event_get', { event_id: eventId }, false);
   if (seq !== S.loadSeq) return;
-  if (!evR.ok) {
-    if (!S.ev) { app.innerHTML = '<div class="card"><div class="err">' + (evR.status === 404 ? '赛事不存在或链接无效。' : '赛事信息加载失败，请检查网络后重试。') + '</div><div class="btnrow"><button class="btn" id="retryBtn">重试</button></div></div>'; var rb = document.getElementById('retryBtn'); if (rb) rb.addEventListener('click', function () { loadAll(false); }); }
-    /* [线P] 已有赛事状态时按现状态重绘（已登录用户永不因一次接口失败被打回登录表单——走查实证根因） */
-    else paint();
+  if (!evR || !evR.ok) {
+    /* [线Z55] 实时确认失败＝显式失败态：有缓存头也只显示赛事头＋错误，
+       绝不拿缓存画状态（故障不能伪装成无数据/旧数据） */
+    if (!S.ev) { app.innerHTML = errCardHtml(evR && evR.status === 404 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络异常，已自动重试多次）。请检查网络后重新加载。'); }
+    else { app.innerHTML = evMetaHtml() + errCardHtml('赛事最新状态加载失败（网络异常，已自动重试多次）。为避免显示过期信息，这里不展示缓存状态，请重新加载。'); }
+    bindRetry();
     return;
   }
   S.ev = evR.data;
   S.loadedAt = Date.now();
   document.getElementById('pageTitle').textContent = (evR.data.event && evR.data.event.title) || '我的比赛';
   cacheSet({ ev: S.ev });
+  S.fresh = true;
   if (!S.session) { paint(); return; }
   var rs = await Promise.all([
-    golfApi('player_card', { event_id: eventId }, true).catch(function () { return null; }),
-    golfApi('ask_context', { event_id: eventId }, true).catch(function () { return null; }),
+    golfApiRetry('player_card', { event_id: eventId }, true).catch(function () { return null; }),
+    golfApiRetry('ask_context', { event_id: eventId }, true).catch(function () { return null; }),
   ]);
-  if (rs[0] && rs[0].ok) S.pc = rs[0].data.player_card; else if (rs[0] && rs[0].status === 404) S.pc = null;
-  if (rs[1] && rs[1].ok) S.askCtx = rs[1].data.ask_context;
+  if (seq !== S.loadSeq) return;
+  if (rs[0] && rs[0].ok) { S.pc = rs[0].data.player_card; S.freshPc = true; }
+  else if (rs[0] && rs[0].status === 404) { S.pc = null; S.freshPc = true; }
+  if (rs[1] && rs[1].ok) { S.askCtx = rs[1].data.ask_context; S.freshAsk = true; }
   cacheSet({ pc: S.pc, askCtx: S.askCtx });
+  if (!S.freshPc || !S.freshAsk) {
+    /* 个人参赛数据没拿到：显式失败，禁止用缓存/默认值继续画状态机 */
+    app.innerHTML = evMetaHtml() + errCardHtml('您的参赛信息加载失败（网络异常，已自动重试多次）。为避免显示错误状态，请重新加载。');
+    bindRetry();
+    return;
+  }
   var card = myCard();
   if (card) {
-    var cd = await golfApi('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; });
-    if (cd && cd.ok) { S.cardData = cd.data; cacheSet({ cardData: S.cardData }); }
+    /* [线Z55] 跨会话 cardData 复用必须过版本校验：缓存 cardMeta 与实时
+       ask_context 中同卡 version/updated_at 完全一致才可作秒开占位，
+       不一致即弃缓存等实时返回；实时返回一到立即覆盖（cardStale 标记）。 */
+    var meta = cached && cached.cardMeta;
+    var live = (S.askCtx.my_scorecards || []).filter(function (c) { return c.id === card.id; })[0];
+    if (cached && cached.cardData && meta && live && meta.id === card.id && meta.version === live.version && meta.updated_at === live.updated_at && (!S.cardData || S.cardData.scorecard.id !== card.id)) {
+      S.cardData = cached.cardData; S.cardStale = true;
+    }
+    var cd = await golfApiRetry('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; });
+    if (seq !== S.loadSeq) return;
+    if (cd && cd.ok) { S.cardData = cd.data; S.cardStale = false; cacheSet({ cardData: S.cardData }); }
+    else if (!S.cardData) S.cardLoadFail = true;
     await loadGroup(card, false); /* [线Z39] 同组共享判定：组内个人卡 ≥2 才进共享模式 */
   }
   if (seq !== S.loadSeq) return; /* [线P] 陈旧运行不得重绘 */
@@ -879,6 +941,9 @@ function organizerHint() {
 /* ---------- 状态机渲染 ---------- */
 function paint() {
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
+  /* [线Z55] 实时状态未确认（S.fresh=false）前只出骨架：禁止用缓存/默认值
+     画报名、等待、记分等状态模块（首屏错误中间态根因修复） */
+  if (!S.fresh) { paintLoading(); return; }
   setTailVisible(false); /* [线Z44] 尾部两模块只在记生态呈现，其余状态一律隐藏 */
   var e = S.ev.event;
   /* [线P] 会话状态未确认（auth.js 尚在恢复本地会话）时只显示赛事信息＋确认中骨架，
@@ -913,7 +978,11 @@ function paint() {
   var card = myCard();
   if (e.status === 'completed') return paintRecap(card);
   if (e.status === 'in_progress') {
-    if (card) return paintScoring(card);
+    if (card) {
+      /* [线Z55] 记分卡实时加载失败且无可用数据：显式失败，禁止静默画空网格 */
+      if (S.cardLoadFail) { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); return; }
+      return paintScoring(card);
+    }
     return paintNoCard();
   }
   /* published / draft：未开赛 */
@@ -1052,7 +1121,7 @@ function paintRecap(card) {
     html += '<p class="muted">本场暂无您的成绩记录。</p>';
   }
   if (pc.course_revisit && pc.course_revisit.line) html += '<div class="preview"><span class="t">球场记忆</span><br>' + esc(pc.course_revisit.line) + '</div>';
-  if (S.cardData && S.cardData.holes) {
+  if (S.cardData && S.cardData.holes && (!card || (S.cardData.scorecard && S.cardData.scorecard.id === card.id))) {
     html += '<h3>逐洞成绩</h3><table class="scores"><tr><th>洞</th><th>Par</th><th>杆数</th></tr>' +
       S.cardData.holes.map(function (h) { return '<tr><td>' + h.hole + '</td><td>' + h.par + '</td><td>' + (h.strokes == null ? '—' : '<b>' + h.strokes + '</b>') + '</td></tr>'; }).join('') + '</table>';
   }
@@ -1190,7 +1259,7 @@ function paintGroupScoring(card) {
     matrix + certHtml +
     backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
-  setTailVisible(true); syncTail(); maybeCasualFinish(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
+  setTailVisible(true); syncTail(); maybeCasualFinish(); maybeInviteCtl(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
   bindMyStatus();
   app.querySelectorAll('[data-gstep]').forEach(function (el) {
     el.addEventListener('click', function () {
@@ -1337,9 +1406,9 @@ function paintScoring(card) {
   var cd = S.cardData;
   if (!cd || !cd.scorecard || cd.scorecard.id !== card.id) {
     app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">正在加载记分卡…</div></div>';
-    golfApi('score_get_card', { scorecard_id: card.id }, true).then(function (r) {
-      if (r.ok) { S.cardData = r.data; cacheSet({ cardData: S.cardData }); paint(); }
-      else app.innerHTML = evMetaHtml() + '<div class="card"><div class="err">记分卡加载失败，请重试。</div><div class="btnrow"><button class="btn" onclick="location.reload()">重新加载</button></div></div>';
+    golfApiRetry('score_get_card', { scorecard_id: card.id }, true).then(function (r) {
+      if (r && r.ok) { S.cardData = r.data; S.cardStale = false; cacheSet({ cardData: S.cardData }); paint(); }
+      else { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); }
     });
     return;
   }
@@ -1485,7 +1554,7 @@ function paintScoring(card) {
     var r = await golfApi('certify', { scorecard_id: card.id, step: 'player_verify', decision: 'flag', note: note }, true);
     if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
   });
-  setTailVisible(true); syncTail(); maybeCasualFinish(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
+  setTailVisible(true); syncTail(); maybeCasualFinish(); maybeInviteCtl(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
 }
 
 function sendShape(item) {
@@ -1957,8 +2026,56 @@ function openPlayHd() {
 function closePlayHd() { var ov = document.getElementById('playHd'); if (ov) ov.hidden = true; }
 
 /* ---------- 日常球局结束（casual_finish 简化确认，Z43） ---------- */
+/* ---------- [线Z55] 日常球局组织者邀请管理（根治指令三） ----------
+   邀请两路并行：稳定链接 play.html?e=<event_id>（成员回访、登录后续进原局）
+   ＋邀请链接 ?join=CODE（新成员打开、登录后自动加入）。组织者可重置邀请码
+   （旧码立即失效）与关闭/恢复加入；服务端逐项校验组织者身份，邀请码不替代
+   登录与权限校验。 */
+function maybeInviteCtl() {
+  if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return;
+  if (S.ev.my_role !== 'organizer') return;
+  var app = document.getElementById('app');
+  if (!app || document.getElementById('inviteBar')) return;
+  var code = S.ev.event.invite_code || '';
+  var joinLink = location.origin + location.pathname + '?join=' + encodeURIComponent(code);
+  var closed = !!((S.ev.event.competition_config || {}).joins_closed);
+  var bar = document.createElement('div');
+  bar.className = 'card';
+  bar.id = 'inviteBar';
+  bar.innerHTML = '<b>邀请好友</b>' +
+    '<p class="muted">把邀请链接发给好友，对方打开、登录后即可加入本局一起记分。球局码：<b>' + esc(code) + '</b>' + (closed ? '<br><b style="color:#b91c1c">加入已关闭</b>：新成员暂时不能凭码加入（已加入的球友不受影响）。' : '') + '</p>' +
+    '<div class="sharebox">' + esc(joinLink) + '</div>' +
+    '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制邀请链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
+    '<div class="btnrow"><button class="btn plain" id="invReset" type="button">重置邀请码</button><button class="btn plain" id="invToggle" type="button">' + (closed ? '恢复加入' : '关闭加入') + '</button></div>' +
+    '<div id="invMsg"></div>';
+  app.appendChild(bar);
+  var msg = document.getElementById('invMsg');
+  function say(html) { if (msg) msg.innerHTML = html; }
+  document.getElementById('invCopy').addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制。</p>'); }, function () { say('<p class="err">复制没成功，请长按上方链接手动复制。</p>'); });
+    else say('<p class="err">当前浏览器不支持自动复制，请长按上方链接手动复制。</p>');
+  });
+  document.getElementById('invShare').addEventListener('click', function () {
+    if (navigator.share) navigator.share({ title: 'RUKIK Golf 球局邀请', text: '一起来打球！打开链接登录后加入我的球局：', url: joinLink }).catch(function () {});
+    else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制，去粘贴发送吧。</p>'); });
+  });
+  document.getElementById('invReset').addEventListener('click', async function () {
+    if (!window.confirm('重置邀请码后，旧邀请链接和旧球局码将立即失效。确定重置吗？')) return;
+    this.disabled = true;
+    var r = await golfApi('casual_invite_reset', { event_id: eventId }, true).catch(function () { return null; });
+    if (r && r.ok) { say('<p class="okmsg">已生成新邀请码，正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
+    else { this.disabled = false; say('<p class="err">重置没有成功，请稍后再试。</p>'); }
+  });
+  document.getElementById('invToggle').addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('casual_joins_set', { event_id: eventId, closed: !closed }, true).catch(function () { return null; });
+    if (r && r.ok) { say('<p class="okmsg">' + (!closed ? '已关闭加入。' : '已恢复加入。') + '正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
+    else { this.disabled = false; say('<p class="err">设置没有成功，请稍后再试。</p>'); }
+  });
+}
+
 function maybeCasualFinish() {
-  if (!S.ev || S.ev.kind !== 'casual' || S.ev.status !== 'in_progress') return;
+  if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return; /* [线Z55 修复] 原读 S.ev.kind/status（event_get 顶层无此二字段）致结束入口永不渲染 */
   var app = document.getElementById('app');
   if (!app || document.getElementById('casualBar')) return;
   var bar = document.createElement('div');
@@ -1971,7 +2088,7 @@ function maybeCasualFinish() {
     var msg = document.getElementById('casualFinishMsg');
     if (!window.confirm('确定结束本场球局吗？有成绩的记分卡会锁定。')) return;
     this.disabled = true;
-    var r = await golfApi('casual_finish', { event_id: S.eid }, true).catch(function () { return null; });
+    var r = await golfApi('casual_finish', { event_id: eventId }, true).catch(function () { return null; }); /* [线Z55 修复] 原 S.eid 从未赋值 */
     if (r && r.ok) { toast('球局已结束，正在生成回忆'); setTimeout(function () { location.reload(); }, 900); return; }
     this.disabled = false;
     var em = (r && r.data && (r.data.error || r.data.message)) || '';
@@ -1986,6 +2103,8 @@ function paintHome() {
   document.getElementById('backLink').style.display = 'none';
   var html = '<div class="card"><h2 style="font-size:20px">RUKIK Golf</h2>' +
     '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p></div>' +
+    '<div id="hmJoinBox"></div>' +
+    '<div id="hmRounds"></div>' +
     '<div class="card"><h2>开始一局</h2>' +
     '<button class="entry main" id="hmCreate" type="button">发起球局<small>选球场 · 邀请好友 · 共同记分</small></button>' +
     '<button class="entry" id="hmJoin" type="button">加入球局<small>输入球局码，或打开好友分享的链接</small></button>' +
@@ -1999,6 +2118,112 @@ function paintHome() {
   if (lb) mountLogin(lb, { onDone: function () { paintHome(); } });
   document.getElementById('hmCreate').addEventListener('click', hmShowCreate);
   document.getElementById('hmJoin').addEventListener('click', hmShowJoin);
+  paintJoinBox();
+  if (S.session) loadMyRounds();
+}
+
+/* ---------- [线Z55] 邀请链接 ?join=CODE 落地（根治指令三） ----------
+   旧版 casualCreate 生成的 ?join= 链接从未被消费：打开只落首页、码被丢弃。
+   现在：带码打开 → 未登录先登录（登录后自动继续）、已登录自动加入并直达
+   该局记分；加入失败如实显示（码失效/已关闭/已结束），不静默吞掉。 */
+var hmJoin = { code: (qs.get('join') || '').trim().toUpperCase(), state: 'idle', msg: '' };
+function paintJoinBox() {
+  var box = document.getElementById('hmJoinBox');
+  if (!box) return;
+  if (!hmJoin.code) { box.innerHTML = ''; return; }
+  if (hmJoin.state === 'failed') {
+    box.innerHTML = '<div class="card"><h2>加入球局</h2><p class="err">' + esc(hmJoin.msg) + '</p><p class="muted">也可以在下方用球局码手动加入，或请组织者确认邀请码是否已被重置。</p></div>';
+    return;
+  }
+  if (!S.session) {
+    box.innerHTML = '<div class="card"><h2>您收到一场球局邀请</h2><p class="muted">登录后将自动加入这场球局（球局码 ' + esc(hmJoin.code) + '），无需再输入。</p></div>';
+    return;
+  }
+  if (hmJoin.state === 'idle') {
+    hmJoin.state = 'doing';
+    box.innerHTML = '<div class="card"><div class="skel">正在加入球局…</div></div>';
+    doJoinFromLink();
+    return;
+  }
+  box.innerHTML = '<div class="card"><div class="skel">正在加入球局…</div></div>';
+}
+async function doJoinFromLink() {
+  var sess = getSessionSync();
+  var myName = (sess && sess.user && (sess.user.user_metadata || {}).display_name) || (sess && sess.user && sess.user.email) || undefined;
+  var r = await casualJoin({ invite_code: hmJoin.code, display_name: myName });
+  if (r && r.ok && r.event_id) { location.replace(location.pathname + '?e=' + encodeURIComponent(r.event_id)); return; }
+  hmJoin.state = 'failed';
+  var st = r && r.status;
+  hmJoin.msg = st === 404 ? '这个邀请链接已失效（邀请码可能已被组织者重置）。'
+    : st === 403 ? '组织者已关闭这场球局的加入。'
+    : st === 409 ? '这场球局已经结束了。'
+    : st === 400 ? '这场球局已取消，或邀请码不完整。'
+    : '加入没有成功，请检查网络后重试。';
+  paintJoinBox();
+}
+
+/* ---------- [线Z55] 我的球局（根治指令一）：服务端 my_rounds 实时读取 ----------
+   进行中在最上方（服务端已按最近参与排序）；只有一场时突出「计分卡」主按钮；
+   已结束进「历史球局」；已取消只在历史区灰显、永不回进行中。无进行中球局
+   时不显示进行中区块。列表失败显式报错可重试，绝不画成「没有球局」。 */
+async function loadMyRounds() {
+  var box = document.getElementById('hmRounds');
+  if (!box) return;
+  box.innerHTML = '<div class="card"><div class="skel">正在加载我的球局…</div></div>';
+  var r = await golfApiRetry('my_rounds', {}, true).catch(function () { return null; });
+  box = document.getElementById('hmRounds');
+  if (!box) return;
+  if (!r || !r.ok) {
+    box.innerHTML = '<div class="card"><div class="err">我的球局加载失败（网络异常，已自动重试多次）。</div><div class="btnrow"><button class="btn plain" id="hmRoundsRetry" type="button">重新加载</button></div></div>';
+    var b = document.getElementById('hmRoundsRetry');
+    if (b) b.addEventListener('click', loadMyRounds);
+    return;
+  }
+  box.innerHTML = hmRoundsHtml(r.data);
+  box.querySelectorAll('[data-round]').forEach(function (el) {
+    el.addEventListener('click', function () { location.href = location.pathname + '?e=' + encodeURIComponent(el.getAttribute('data-round')); });
+  });
+}
+function hmRoundMeta(x) {
+  var bits = [];
+  if (x.course_name) bits.push(esc(x.course_name));
+  if (x.starts_at) bits.push(fmtTime(x.starts_at, x.timezone));
+  if (x.my_role === 'organizer') bits.push('我发起的');
+  return bits.join(' · ');
+}
+function hmCardLine(x) {
+  var c = x.my_card;
+  if (!c) return '尚未生成记分卡';
+  if (c.status === 'locked') return '成绩已锁定' + (c.gross_total != null ? ' · 总杆 ' + c.gross_total : '');
+  if (Number(c.thru || 0) > 0) return '已打 ' + c.thru + ' 洞' + (c.gross_total != null ? ' · 当前总杆 ' + c.gross_total : '');
+  return '记分卡已就绪 · 未开始记分';
+}
+function hmRoundsHtml(d) {
+  var active = d.active || [], upcoming = d.upcoming || [], finished = d.finished || [], cancelled = d.cancelled || [];
+  var out = '';
+  if (active.length === 1) {
+    var x = active[0];
+    out += '<div class="card"><h2>⛳ 进行中的球局</h2>' +
+      '<p class="meta"><b>' + esc(x.title) + '</b>' + (hmRoundMeta(x) ? '<br>' + hmRoundMeta(x) : '') + '<br>' + esc(hmCardLine(x)) + '</p>' +
+      '<div class="btnrow"><a class="btn" href="' + location.pathname + '?e=' + encodeURIComponent(x.id) + '">计分卡</a></div></div>';
+  } else if (active.length > 1) {
+    out += '<div class="card"><h2>⛳ 进行中的球局</h2>' + active.map(function (x) {
+      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + (hmRoundMeta(x) ? ' · ' : '') + esc(hmCardLine(x)) + '</small></div>';
+    }).join('') + '</div>';
+  }
+  if (upcoming.length) {
+    out += '<div class="card"><h2>即将开始</h2>' + upcoming.map(function (x) {
+      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + '</small></div>';
+    }).join('') + '</div>';
+  }
+  var hist = finished.map(function (x) { return { x: x, tag: '已结束' }; }).concat(cancelled.map(function (x) { return { x: x, tag: '已取消' }; }));
+  if (hist.length) {
+    out += '<div class="card"><h2>历史球局</h2>' + hist.map(function (h) {
+      var x = h.x;
+      return '<div class="csr" data-round="' + esc(x.id) + '"' + (h.tag === '已取消' ? ' style="opacity:.55"' : '') + '><b>' + esc(x.title) + '</b><small>' + h.tag + (hmRoundMeta(x) ? ' · ' + hmRoundMeta(x) : '') + ' · ' + esc(hmCardLine(x)) + '</small></div>';
+    }).join('') + '</div>';
+  }
+  return out;
 }
 function hmNeedLogin(panel) {
   if (S.session) return false;
@@ -2199,6 +2424,7 @@ async function hmCreate() {
   var link = r.link;
   share.innerHTML = '<div class="sharebox">球局已创建！把这个链接发给好友，大家打开登录后即可加入同一组记分：<br><b>' + esc(link) + '</b>' +
     (r.code ? '<br>球局码：<b>' + esc(r.code) + '</b>' : '') +
+    (r.event_id ? '<br>自己回来记分：从本页上方「进行中的球局」直接进入，不用保存链接。' : '') +
     '<div id="hmInvMsg"></div>' +
     '<div class="btnrow"><button class="btn" id="hmCopy" type="button">复制邀请链接</button><a class="btn plain" href="' + esc(link) + '">进入球局记分</a></div></div>';
   if (hmPicks.length) {
@@ -2236,6 +2462,7 @@ function hmShowJoin() {
     if (!r || !r.ok) {
       var st = r && r.status;
       errEl.textContent = st === 404 ? '这个球局码不存在或已失效，请核对后再试。'
+        : st === 403 ? '组织者已关闭这场球局的加入。'
         : st === 409 ? '这场球局已经结束了。'
         : st === 400 ? '这场球局已取消，或球局码不完整。'
         : '加入未成功，请稍后再试。';
