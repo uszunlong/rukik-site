@@ -79,6 +79,7 @@
             <div id="fCourseInfo" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
           </div>
           <div><label>日期 *</label><input id="fDate" type="date">
+            <label style="margin-top:8px">开球时间 *（具体到分钟）</label><input id="fTime" type="time" value="09:00">
             <label style="margin-top:8px">默认发球台</label><select id="fTee"></select>
           </div>
         </div>
@@ -1203,7 +1204,7 @@ document.getElementById('createBtn').onclick = function () {
   call('event_create', {
     title: document.getElementById('fTitle').value, course_id: document.getElementById('fCourse').value,
     default_tee_id: document.getElementById('fTee').value || undefined,
-    starts_at: document.getElementById('fDate').value + 'T09:00:00', play_dates: [document.getElementById('fDate').value],
+    starts_at: document.getElementById('fDate').value + 'T' + (document.getElementById('fTime').value || '09:00') + ':00', play_dates: [document.getElementById('fDate').value],
     format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40),
     fee_mode: document.getElementById('fFeeMode').value,
     fee_cents: Math.round(Number(document.getElementById('fFeeAmt').value || 0) * 100)
