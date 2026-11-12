@@ -85,6 +85,39 @@
   .carDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);display:block}
   .carDots i.on{background:#fff}
 
+  /* ---- 五区改版（最终改版指令 2026-11-11）：Hero 元信息／双卡／合作伙伴带／排行榜 ---- */
+  .herometa{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:#33463a;margin-top:2px}
+  .signup{display:block;margin-top:12px;background:#16a34a;color:#fff;text-align:center;border-radius:14px;padding:14px;font-size:16px;font-weight:700;text-decoration:none}
+  .signup.alt{background:#fff;color:#14532d;border:1.5px solid #14532d}
+  .dual{display:flex;gap:10px;margin-top:14px}
+  .dualcard{flex:1;display:block;background:#14532d;color:#fff;border-radius:16px;padding:16px 14px;text-decoration:none;box-shadow:0 1px 4px rgba(20,60,35,.12)}
+  .dualcard.caddie{background:#fff;color:#14532d;border:1.5px solid #cfe0d2}
+  .dc-ic{font-size:24px;line-height:1}
+  .dc-t{font-size:18px;font-weight:700;margin-top:6px}
+  .dc-s{font-size:12.5px;opacity:.85;margin-top:3px;line-height:1.5}
+  .partners .pwrap{display:flex;gap:10px;align-items:stretch}
+  .ppin{display:flex;gap:10px;flex:none}
+  .pstrip{overflow-x:auto;flex:1;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .pstrip::-webkit-scrollbar{display:none}
+  .ptrack{display:flex;gap:10px;width:max-content}
+  .pcard{position:relative;flex:none;width:104px;height:64px;background:#f7faf7;border:1px solid #eef2ee;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:10px 8px 8px;box-sizing:border-box;text-decoration:none;color:#1c2a1e}
+  .pcard img{max-width:84px;max-height:32px;object-fit:contain}
+  .pcname{font-size:13.5px;font-weight:600;text-align:center;line-height:1.35}
+  .pctag{position:absolute;top:4px;left:6px;font-size:10px;color:#16a34a;font-weight:700}
+  .bhead{display:flex;align-items:center;gap:8px}
+  .bhead h2{margin:0}
+  .btag{font-size:11px;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 8px;font-weight:600;white-space:nowrap}
+  .btag.final{background:#dcfce7;color:#14532d}
+  .bupd{margin-left:auto;font-size:12px;color:#888;white-space:nowrap}
+  .btabs{display:flex;gap:8px;margin:12px 0 4px}
+  .btabs button{flex:1;border:1px solid #cfe0d2;background:#fff;color:#14532d;border-radius:999px;padding:8px 0;font-size:14.5px;font-weight:600;cursor:pointer;min-height:40px}
+  .btabs button.on{background:#14532d;color:#fff;border-color:#14532d}
+  .boardfoot{margin-top:12px;text-align:right}
+  .boardfoot a{font-size:13.5px;color:#14532d;text-decoration:none;font-weight:600}
+  .awards{margin-top:14px;border-top:1px solid #eef2ee;padding-top:10px}
+  .awt{font-size:14.5px;font-weight:700;color:#14532d;margin-bottom:6px}
+  .staffbtn{display:block;margin-top:18px;background:#fff;color:#14532d;border:1.5px solid #cfe0d2;text-align:center;border-radius:14px;padding:12px;font-size:15px;font-weight:600;text-decoration:none}
+
   /* ---- RUKIK Golf AI球童 · 赛事页内嵌面板（线 T，2026-11-11）---- */
   #cdSheet{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;justify-content:flex-end}
   /* [线X 热修 2026-11-11] #cdSheet 是 ID 选择器（特异性 100），会压过 .hidden 的 display:none（特异性 10），
@@ -139,15 +172,12 @@
 <div class="wrap">
   <div class="topbar"><span>RUKIK GOLF · LIVE</span><span class="pill pre" id="statePill">加载中</span></div>
   <div id="heroSec"><div class="skl"></div></div>
-  <div id="orgSec"></div>
+  <div id="dualSec"></div>
   <div id="mapSec"></div>
-  <div id="careSec"></div>
-  <div id="funcSec"></div>
-  <div id="awardSec"></div>
-  <div id="liveSec"></div>
-  <p class="src" style="margin-top:18px">成绩由确定性规则引擎计算；未最终确认的成绩会明确标注。照片仅在赛事开通 Golf Live 相册后展示。</p>
+  <div id="partnerSec"></div>
+  <div id="boardSec"></div>
+  <div id="staffSec"></div>
 </div>
-<div class="cta hidden" id="ctaBar"><a id="ctaBtn" href="play.html">打开 RUKIK App</a><a id="orgBtn" class="orglink hidden" href="console/">管理本场（主办方台）</a></div>
 <script>
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
@@ -238,63 +268,124 @@ function stateOf() {
   var st = EV && EV.event && EV.event.status;
   return st === 'completed' ? 'post' : st === 'in_progress' ? 'live' : 'pre';
 }
+function heroPosterHtml() {
+  var e = EV.event;
+  var poster = e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || null;
+  return poster ? '<img class="poster" src="' + esc(poster) + '" alt="赛事海报">' : '<div class="ph">' + esc(e.title) + '</div>';
+}
+function renderHeroMedia() { // Hero 媒体区默认海报形态；照片墙就绪后 renderLive 把 #heroMedia 换成轮播
+  var box = document.getElementById('heroMedia');
+  if (box) box.innerHTML = heroPosterHtml();
+}
 function renderHero() {
   var e = EV.event, c = EV.course || {};
-  var poster = e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || null;
   var pill = document.getElementById('statePill');
   var st = stateOf();
   pill.className = 'pill ' + st;
   pill.textContent = st === 'live' ? '比赛进行中' : st === 'post' ? '赛事回忆馆' : '即将开赛';
-  var regLine = st === 'pre' ? '报名进行中' : st === 'live' ? '赛事进行中' : '赛事已结束';
-  document.getElementById('heroSec').innerHTML =
-    '<div class="hero">' + (poster ? '<img class="poster" src="' + esc(poster) + '" alt="赛事海报">' : '<div class="ph">' + esc(e.title) + '</div>') + '</div>' +
-    '<h1>' + esc(e.title) + '</h1>' +
-    '<div class="sub">赛事互动 · 精彩瞬间 · 实时成绩</div>' +
-    '<div class="card"><div class="meta">' +
-    (e.starts_at ? '🗓 ' + fmtTime(e.starts_at, e.timezone) + ' 开赛<br>' : '') +
-    (c.name ? '📍 ' + esc(c.name) + (c.address ? '，' + esc(c.address) : '') + (c.city ? '，' + esc(c.city) : '') + '<br>' : '') +
-    '🏌️ 状态：' + regLine + (EV.my_role ? ' · 您是本场' + esc(EV.my_role) : '') +
-    (e.description ? '<div class="desc" style="margin-top:8px">' + esc(e.description) + '</div>' : '') +
-    '</div></div>';
-  var cta = document.getElementById('ctaBar'), btn = document.getElementById('ctaBtn');
-  cta.classList.remove('hidden');
-  btn.className = st;
-  btn.textContent = st === 'pre' ? '立即报名' : st === 'live' ? '进入我的比赛' : '查看赛事结果';
-  btn.setAttribute('href', 'play.html?e=' + encodeURIComponent(eventId));
-  /* [线P] 已报名用户按报名状态显示 CTA，不再一律「立即报名」；审核流 pending/rejected 如实区分 */
+  var statusLine = st === 'pre' ? '报名进行中' : st === 'live' ? '赛事进行中' : '赛事已结束';
+  /* 第一区下方仅时间/地点/状态；赛前报名按钮只给未报名者，已报名不重复显示（线P/Z1 口径收进双卡状态行） */
+  var act = '';
   var myReg = EV.my_registration;
-  if (myReg && st !== 'post') {
-    if (myReg.status === 'pending') btn.textContent = '报名审核中 · 查看进度';
-    else if (myReg.status === 'checked_in') btn.textContent = '已签到 · 进入我的比赛';
-    else if (myReg.status === 'registered') btn.textContent = '已报名 · 进入我的比赛';
-    else if (myReg.status === 'waitlisted') btn.textContent = '候补中 · 查看进度';
-    else if (myReg.status === 'rejected') btn.textContent = '报名未通过 · 查看详情';
-    /* [线Z1] 线下收款未确认时如实标注（不暗示已在线支付）；已确认不额外打扰 */
-    var feeModeEv = EV.event && (EV.event.fee_mode || (Number(EV.event.fee_cents) > 0 ? 'offline' : 'free'));
-    if (feeModeEv === 'offline' && myReg.payment_status === 'pending' && (myReg.status === 'registered' || myReg.status === 'checked_in')) btn.textContent += '（费用待主办方确认）';
+  var playUrl = 'play.html?e=' + encodeURIComponent(eventId);
+  if (st === 'pre') {
+    if (!myReg) act = '<a class="signup" href="' + playUrl + '">立即报名</a>';
+    else if (myReg.status === 'pending') act = '<a class="signup alt" href="' + playUrl + '">报名审核中 · 查看进度</a>';
+    else if (myReg.status === 'waitlisted') act = '<a class="signup alt" href="' + playUrl + '">候补中 · 查看进度</a>';
+    else if (myReg.status === 'rejected') act = '<a class="signup alt" href="' + playUrl + '">报名未通过 · 查看详情</a>';
   }
-  /* [线P] 主办方入口：my_role=organizer 时在 CTA 区给出主办方台直达（此前 App/网页均无入口，用户找不到） */
-  var orgBtn = document.getElementById('orgBtn');
-  if (EV.my_role === 'organizer') { orgBtn.classList.remove('hidden'); orgBtn.setAttribute('href', 'console/?e=' + encodeURIComponent(eventId)); }
-  else orgBtn.classList.add('hidden');
+  document.getElementById('heroSec').innerHTML =
+    '<div class="hero" id="heroMedia">' + heroPosterHtml() + '</div>' +
+    '<h1>' + esc(e.title) + '</h1>' +
+    '<div class="herometa">' +
+    (e.starts_at ? '<span>🗓 ' + fmtTime(e.starts_at, e.timezone) + ' 开赛</span>' : '') +
+    (c.name ? '<span>📍 ' + esc(c.name) + (c.city ? '，' + esc(c.city) : '') + '</span>' : '') +
+    '<span>🏌️ ' + statusLine + '</span></div>' +
+    act;
+  renderDual();
+  renderStaff();
 }
-function renderOrgs() {
-  var el = document.getElementById('orgSec');
+/* 第二区：记分卡 + 问RUKIK Golf 并排双卡；状态短说明只进记分卡一行，不另堆文字卡 */
+function renderDual() {
+  var el = document.getElementById('dualSec');
+  if (!el || !EV || !EV.event) return;
+  var st = stateOf();
+  var myReg = EV.my_registration;
+  var t, s;
+  if (st === 'post') { t = '我的成绩'; s = myReg ? '查看成绩与赛事回忆' : '查看赛事结果'; }
+  else if (st === 'live') {
+    t = '记分卡';
+    if (myReg && myReg.status === 'pending') s = '报名待主办方审核';
+    else if (myReg && myReg.status === 'rejected') s = '报名未通过';
+    else if (myReg) s = '记录我的成绩 · 同组记分';
+    else s = '登录后记录我的成绩';
+  } else {
+    t = '查看记分卡';
+    if (myReg && myReg.status === 'pending') s = '报名待主办方审核';
+    else if (myReg && myReg.status === 'rejected') s = '报名未通过';
+    else if (myReg && myReg.status === 'waitlisted') s = '候补中 · 查看进度';
+    else if (myReg) {
+      var feeModeEv = EV.event.fee_mode || (Number(EV.event.fee_cents) > 0 ? 'offline' : 'free');
+      if (feeModeEv === 'offline' && myReg.payment_status === 'pending') s = '已报名 · 费用待主办方确认';
+      else if ((EV.pairings || []).length) s = '已报名 · 查看分组';
+      else s = '已报名 · 等待分组';
+    }
+    else s = '查看分组与开赛安排';
+  }
+  el.innerHTML = '<div class="dual">' +
+    '<a class="dualcard score" href="play.html?e=' + encodeURIComponent(eventId) + '"><div class="dc-ic">⛳</div><div class="dc-t">' + t + '</div><div class="dc-s">' + s + '</div></a>' +
+    '<a class="dualcard caddie" href="#" id="cdOpen"><div class="dc-ic">🤖</div><div class="dc-t">问RUKIK Golf</div><div class="dc-s">赛事助手 · 球场攻略 · 规则解读</div></a></div>';
+}
+/* 主办方入口：页面最底部低调单按钮（管理动作仍在主办方台，不塞进球员页） */
+function renderStaff() {
+  var el = document.getElementById('staffSec');
+  if (!el) return;
+  if (EV && EV.my_role === 'organizer') el.innerHTML = '<a class="staffbtn" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场（主办方台）</a>';
+  else el.innerHTML = '';
+}
+/* 第四区：赛事合作伙伴——Logo 横向带，主办方固定最前；其余超出可见数才 2 秒自动滚动（循环衔接） */
+var ORG_ORDER = { '主办': 0, '联合主办': 1, '承办': 2, '协办': 3, '冠名赞助': 4, '赞助商': 5, '合作伙伴': 6 };
+var ORG_PINNED = { '主办': 1, '联合主办': 1 };
+var PMQ = { timer: null, pausedUntil: 0 };
+function orgCardHtml(o) {
+  var inner = (o.logo_url ? '<img src="' + esc(o.logo_url) + '" alt="' + esc(o.name) + '">' : '<div class="pcname">' + esc(o.name) + '</div>') +
+    '<div class="pctag">' + esc(o.type || '合作伙伴') + '</div>';
+  if (o.website) return '<a class="pcard" href="' + esc(o.website) + '" target="_blank" rel="noopener">' + inner + '</a>';
+  return '<div class="pcard">' + inner + '</div>';
+}
+function renderPartners() {
+  var el = document.getElementById('partnerSec');
   var orgs = (EV.organizations || []).filter(function (o) { return o && o.name; });
   if (!orgs.length) { el.innerHTML = ''; return; }
-  var order = { '主办': 0, '联合主办': 1, '承办': 2, '协办': 3, '冠名赞助': 4, '赞助商': 5, '合作伙伴': 6 };
-  orgs.sort(function (a, b) { return (order[a.type] != null ? order[a.type] : 9) - (order[b.type] != null ? order[b.type] : 9); });
-  el.innerHTML = '<div class="card"><h2>主办 · 协办 · 赞助</h2>' + orgs.map(function (o) {
-    var name = o.website ? '<a href="' + esc(o.website) + '" target="_blank" rel="noopener">' + esc(o.name) + ' ↗</a>' : esc(o.name);
-    return '<div class="org">' + (o.logo_url ? '<img src="' + esc(o.logo_url) + '" alt="">' : '') + '<div><div class="t">' + esc(o.type || '合作伙伴') + '</div><div class="n">' + name + '</div>' + (o.intro ? '<div class="i">' + esc(o.intro) + '</div>' : '') + '</div></div>';
-  }).join('') + '</div>';
+  orgs.sort(function (a, b) { return (ORG_ORDER[a.type] != null ? ORG_ORDER[a.type] : 9) - (ORG_ORDER[b.type] != null ? ORG_ORDER[b.type] : 9); });
+  var pinned = orgs.filter(function (o) { return ORG_PINNED[o.type]; });
+  var rest = orgs.filter(function (o) { return !ORG_PINNED[o.type]; });
+  el.innerHTML = '<div class="card partners"><h2>赛事合作伙伴</h2><div class="pwrap">' +
+    (pinned.length ? '<div class="ppin">' + pinned.map(orgCardHtml).join('') + '</div>' : '') +
+    (rest.length ? '<div class="pstrip" id="pstrip"><div class="ptrack" id="ptrack">' + rest.map(orgCardHtml).join('') + '</div></div>' : '') +
+    '</div></div>';
+  setupPartnerScroll();
 }
-function renderCare() {
-  var el = document.getElementById('careSec');
-  var tips = EV.care_tips || { public: [], personal: null };
-  var all = (tips.public || []).concat(tips.personal || []);
-  if (!all.length) { el.innerHTML = ''; return; }
-  el.innerHTML = '<div class="card"><h2>RUKIK 替您想到的</h2><ul class="tips">' + all.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+function setupPartnerScroll() {
+  if (PMQ.timer) { clearInterval(PMQ.timer); PMQ.timer = null; }
+  var strip = document.getElementById('pstrip'), track = document.getElementById('ptrack');
+  if (!strip || !track) return;
+  strip.addEventListener('pointerdown', function () { PMQ.pausedUntil = Date.now() + 8000; });
+  strip.addEventListener('touchstart', function () { PMQ.pausedUntil = Date.now() + 8000; }, { passive: true });
+  requestAnimationFrame(function () {
+    if (!document.getElementById('pstrip')) return;
+    var origW = track.scrollWidth;
+    if (origW <= strip.clientWidth + 4) return; // 完整可见：静态排满，不启动无意义滚动
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // 不自动滚，仍可手滑
+    var first = track.children[0];
+    var step = first ? first.offsetWidth + 10 : 114;
+    track.innerHTML += track.innerHTML; // 复制一份实现无缝循环衔接
+    PMQ.timer = setInterval(function () {
+      if (document.hidden || Date.now() < PMQ.pausedUntil) return;
+      if (strip.scrollLeft >= origW - 1) strip.scrollLeft = strip.scrollLeft - origW;
+      strip.scrollTo({ left: strip.scrollLeft + step, behavior: 'smooth' });
+    }, 2000);
+  });
 }
 function teeFamily(name) {
   var n = String(name || '').toLowerCase();
@@ -375,14 +466,13 @@ function renderMap() {
   var teeOpts = (PREVIEW.tees || []).map(function (t) { return '<option value="' + t.id + '"' + (t.id === curTee ? ' selected' : '') + '>' + esc(t.name) + (t.course_rating ? '（' + t.course_rating + '/' + t.slope + '）' : '') + '</option>'; }).join('');
   var dots = '';
   for (var i = 1; i <= 18; i++) dots += '<button type="button" data-hole="' + i + '"' + (i === curHole ? ' class="on"' : '') + '>' + i + '</button>';
-  el.innerHTML = '<div class="card"><h2>球场地图 · 18 洞预览</h2>' +
+  el.innerHTML = '<div class="card"><h2>球场地图 · ' + esc(PREVIEW.name) + '</h2>' +
     '<div id="lmapBox"></div>' +
     '<div class="holebar"><button type="button" id="allHoles" class="all on">全场</button><button type="button" id="prevHole">← 上一洞</button><strong>第 ' + curHole + ' 洞</strong><button type="button" id="nextHole">下一洞 →</button>' +
     (teeOpts ? '<select id="teeSel">' + teeOpts + '</select>' : '') + '</div>' +
     '<div class="dots">' + dots + '</div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
-    '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div>' +
-    '<div class="src">资料来源：记分卡 OpenGolfAPI（署名 © OpenStreetMap contributors (ODbL 1.0) via OpenGolfAPI）；球洞几何 © OpenStreetMap contributors（ODbL）。' + esc(comp.note || '') + (PREVIEW.data_quality && PREVIEW.data_quality.trust ? '<br>' + esc(PREVIEW.data_quality.trust) + '。' : '') + '</div></div>';
+    '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div></div>';
   el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
   el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
   el.querySelector('#allHoles').addEventListener('click', function () { resetBigMap(); });
@@ -489,45 +579,52 @@ function loadHoleSvg() {
     b2.querySelector('button.retry').addEventListener('click', loadHoleSvg);
   });
 }
-function renderFunc(board) {
-  var el = document.getElementById('funcSec');
-  var st = stateOf();
-  var rows = '';
-  if (board && board.entries && board.entries.length) {
-    rows = '<table class="board"><tr><th>名次</th><th>' + (board.scope === 'team_stroke' || board.scope === 'team_points' ? '队伍' : '球员') + '</th><th>成绩</th></tr>' +
-      board.entries.slice(0, 8).map(function (en) {
-        var val = en.total != null ? en.total : (en.totalGross != null ? en.totalGross : (en.totalPoints != null ? en.totalPoints : ''));
-        var note = en.counted ? '（计入 ' + en.counted.length + ' 人汇总）' : '';
-        return '<tr><td>' + (en.rank != null ? en.rank : '') + '</td><td>' + esc(en.name || en.team_name || '') + note + '</td><td>' + esc(val) + (board.is_final ? '' : ' · 未最终确认') + '</td></tr>';
-      }).join('') + '</table>';
-  }
-  // [线X 热修] 无队伍球员个人榜：team 类赛制下未组队球员由服务端以 individuals 单列，不混入队伍名次
-  var indHtml = '';
-  var inds = (board && board.individuals) || [];
-  if (inds.length) {
-    indHtml = '<div style="margin-top:12px;font-size:14px"><strong>个人成绩（未组队）</strong></div>' +
-      '<table class="board"><tr><th>名次</th><th>球员</th><th>成绩</th></tr>' +
-      inds.map(function (en) {
-        var val = en.total != null ? en.total : (en.grossTotal != null ? en.grossTotal : '');
-        var thru = en.thru != null ? ' · 已打 ' + en.thru + ' 洞' : '';
-        return '<tr><td>' + (en.rank != null ? en.rank : '') + '</td><td>' + esc(en.name || '') + '</td><td>' + esc(val) + thru + (board.is_final ? '' : ' · 未最终确认') + '</td></tr>';
-      }).join('') + '</table>';
-  }
-  if (!rows && !indHtml) {
-    rows = '<div class="empty">暂无排名数据（尚未开始记分或成绩未提交）。</div>';
-  }
-  var pairHtml = '';
-  var pairs = (EV && EV.pairings) || [];
-  if (pairs.length) {
-    pairHtml = '<div style="margin-top:10px;font-size:14px;line-height:1.9"><strong>分组</strong>：' + pairs.map(function (p) { return '第 ' + p.group_no + ' 组（' + ((p.golf_pairing_players || []).length) + ' 人）'; }).join(' · ') + '</div>';
-  }
-  el.innerHTML = '<div class="card"><h2>' + (st === 'post' ? '赛事结果' : '排行榜') + (board && board.is_final ? '（正式）' : '') + '</h2>' + rows + indHtml + pairHtml +
-    '<div class="funcrow" style="margin-top:12px"><a href="play.html?e=' + encodeURIComponent(eventId) + '">📝 网页记分</a><a href="#" id="cdOpen">问RUKIK｜本场赛事AI球童</a>' +
-    (eventId ? '<a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜</a>' : '') + '</div></div>';
+/* 第五区：实时排行榜——团队榜/个人榜切换（团体赛默认团队榜，个人榜与大屏/服务端同口径：
+   team 类赛制下 individuals 为未组队球员单列榜）；每行仅名次/名称/已打洞数/成绩；
+   未锁定标「实时成绩」，审核锁定达正式条件才标「正式排名」。奖项收进本区底部。 */
+var boardTab = null; // 'team' | 'ind'；null 时按赛制默认
+var LASTBOARD_AT = null;
+function boardIsTeam(b) { return !!b && (b.scope === 'team_stroke' || b.scope === 'team_points' || b.scope === 'team_net' || b.scope === 'team_gross'); }
+function boardScore(en, scope) {
+  var v = en.total != null ? en.total : (en.totalGross != null ? en.totalGross : (en.totalPoints != null ? en.totalPoints : (en.points != null ? en.points : '')));
+  if (v === '') return '';
+  return esc(v) + (scope === 'team_points' || scope === 'stableford' ? ' 分' : ' 杆');
 }
-// ---- Golf Live · 精彩瞬间（极简改版 2026-11-11）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
-// 点击任意照片或「查看全部照片」进入完整照片池（photos.html?e=）。坏图自动剔除不占位；手动滑动暂停；
-// 页面不可见或 prefers-reduced-motion 时不自动播放。相册未开通整区不渲染（口径不变）。
+function boardThru(en) { return en.completedHoles != null ? en.completedHoles : (en.thru != null ? en.thru : '—'); }
+function boardRowsHtml(list, scope) {
+  if (!list || !list.length) return '';
+  return '<table class="board"><tr><th>名次</th><th>名称</th><th>已打</th><th>成绩</th></tr>' + list.map(function (en, i) {
+    return '<tr><td>' + (en.rank != null ? en.rank : i + 1) + '</td><td>' + esc(en.name || en.team_name || '') + '</td><td>' + boardThru(en) + '</td><td>' + boardScore(en, scope) + '</td></tr>';
+  }).join('') + '</table>';
+}
+function renderBoard() {
+  var el = document.getElementById('boardSec');
+  if (!el) return;
+  var b = LASTBOARD;
+  var upd = LASTBOARD_AT ? '<span class="bupd">更新于 ' + ('0' + LASTBOARD_AT.getHours()).slice(-2) + ':' + ('0' + LASTBOARD_AT.getMinutes()).slice(-2) + '</span>' : '';
+  var head = '<div class="bhead"><h2>🏆 ' + (b && b.is_final ? '正式排行榜' : '实时排行榜') + '</h2>' +
+    (b ? '<span class="btag' + (b.is_final ? ' final' : '') + '">' + (b.is_final ? '正式排名' : '实时成绩') + '</span>' : '') + upd + '</div>';
+  var body = '';
+  if (!b) body = '<div class="skl" style="margin-top:10px"></div>';
+  else if (boardIsTeam(b)) {
+    var tab = boardTab || 'team';
+    body = '<div class="btabs"><button type="button" data-btab="team"' + (tab === 'team' ? ' class="on"' : '') + '>团队榜</button><button type="button" data-btab="ind"' + (tab === 'ind' ? ' class="on"' : '') + '>个人榜</button></div>' +
+      (tab === 'team'
+        ? (boardRowsHtml(b.entries, b.scope) || '<div class="empty">暂无团队成绩（尚未开始记分）。</div>')
+        : (boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无未组队球员成绩。</div>'));
+  } else {
+    body = boardRowsHtml(b.entries, b.scope) || boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无排名数据（尚未开始记分）。</div>';
+  }
+  el.innerHTML = '<div class="card">' + head + body +
+    '<div id="awardZone"></div>' +
+    '<div class="boardfoot"><a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜 · 查看完整榜单</a></div></div>';
+  el.querySelectorAll('[data-btab]').forEach(function (btn) {
+    btn.addEventListener('click', function () { boardTab = btn.getAttribute('data-btab'); renderBoard(); loadAwards(); });
+  });
+}
+// ---- Golf Live 照片墙（第一区 Hero 媒体）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
+// 点击任意照片进入完整照片池（photos.html?e=）。坏图自动剔除不占位；手动滑动暂停；
+// 页面不可见或 prefers-reduced-motion 时不自动播放。赛前/无照片/相册未开通时 Hero 回退海报（口径不变）。
 var CAR = { list: [], idx: 0, timer: null, resumeTo: null, manualPause: false };
 var CARDEAD = {}; // 已实测加载失败的照片 id：重渲染（含新照片轮询）时继续排除，避免坏图复活
 function poolUrl() { return 'https://rukik.com/golf/photos.html?e=' + encodeURIComponent(eventId); }
@@ -577,27 +674,24 @@ function carRemoveAt(i) {
   carStart();
 }
 function renderLive() {
-  var el = document.getElementById('liveSec');
+  var media = document.getElementById('heroMedia');
   carStop();
-  if (!WALL || !WALL.album_enabled) { el.innerHTML = ''; return; }
+  if (!media) return;
+  // 第一区 Hero 按状态自动切换：赛前恒海报；赛中/赛后有真实照片才换照片墙；无照片回退海报、不显空墙
+  if (!WALL || !WALL.album_enabled || stateOf() === 'pre') { renderHeroMedia(); return; }
   var feed = (WALL.feed || []).filter(function (f) { return f && f.type === 'photo' && f.url && (f.status == null || f.status === 'visible') && !CARDEAD[f.id]; });
+  if (!feed.length) { renderHeroMedia(); return; }
   var keepId = CAR.list[CAR.idx] && CAR.list[CAR.idx].id;
   CAR.list = feed;
   CAR.idx = 0;
   if (keepId) for (var ki = 0; ki < feed.length; ki++) if (feed[ki].id === keepId) { CAR.idx = ki; break; }
-  var head = '<div class="card"><h2>Golf Live · 精彩瞬间</h2><div class="sub" style="margin-bottom:10px">赛事照片自动汇聚，记录每个精彩时刻</div>';
-  if (!feed.length) {
-    el.innerHTML = head + '<div class="empty">暂无现场照片。</div></div>';
-    return;
-  }
-  el.innerHTML = head +
+  media.innerHTML =
     '<div class="car" id="carBox"><div class="carTrack" id="carTrack">' +
     feed.map(function (f, i) {
       var src = esc(f.thumb_url || f.url);
       return '<figure class="carSlide"><img data-ci="' + i + '" data-src="' + src + '"' + (i < 3 ? ' src="' + src + '"' : '') + ' alt=""></figure>';
     }).join('') +
-    '</div><div class="carDots" id="carDots">' + feed.map(function (f, i) { return '<i' + (i === CAR.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div>' +
-    '<div class="funcrow" style="margin-top:12px"><a href="' + poolUrl() + '">📷 查看全部照片</a></div></div>';
+    '</div><div class="carDots" id="carDots">' + feed.map(function (f, i) { return '<i' + (i === CAR.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div>';
   var box = document.getElementById('carBox');
   Array.prototype.forEach.call(box.querySelectorAll('img'), function (img) {
     img.addEventListener('error', function () {
@@ -624,11 +718,13 @@ var LASTBOARD = null;
 // [线Z2 P0-7] 奖项呈现：只展示主办方已确认（verified）或已颁发（presented）的奖项，与球童上下文/回忆生成同口径；
 // pending（待确认）不对外展示。获奖人取 awards_list 的球员名；团队奖以排行榜 entries 的 teamId→队名映射，未命中如实只显示奖项名、不编造。
 function loadAwards() {
-  var sec = document.getElementById('awardSec');
+  var sec = document.getElementById('awardZone');
   if (!sec || !eventId) return;
   dyn('awards_list', {}).then(function (j) {
+    var zone = document.getElementById('awardZone');
+    if (!zone) return;
     var list = ((j && j.awards) || []).filter(function (a) { return a.status === 'verified' || a.status === 'presented'; });
-    if (!list.length) { sec.innerHTML = ''; return; }
+    if (!list.length) { zone.innerHTML = ''; return; }
     var teamNames = {};
     ((LASTBOARD && LASTBOARD.entries) || []).forEach(function (en) { if (en.teamId && en.name) teamNames[en.teamId] = en.name; });
     var rows = list.map(function (a) {
@@ -636,31 +732,26 @@ function loadAwards() {
       if (!winner && a.winner_team_id) winner = teamNames[a.winner_team_id] || '';
       return '<tr><td>' + esc(a.name || '') + '</td><td>' + esc(winner) + (a.status === 'presented' ? ' · 已颁奖' : '') + '</td></tr>';
     }).join('');
-    sec.innerHTML = '<div class="card"><h2>🏆 本场奖项</h2><table class="board"><tr><th>奖项</th><th>获奖者</th></tr>' + rows + '</table></div>';
+    zone.innerHTML = '<div class="awards"><div class="awt">🏆 本场奖项</div><table class="board"><tr><th>奖项</th><th>获奖者</th></tr>' + rows + '</table></div>';
   }).catch(function () { /* 奖项加载失败不阻塞页面其他区块 */ });
 }
 function loadBoardIntoFunc() {
-  loadAwards();
   dyn('leaderboard_get', {}).then(function (j) {
     LASTBOARD = j;
-    renderFunc(j);
-    var el = document.getElementById('funcSec');
-    var h = el.querySelector('h2');
-    if (h) { var t = new Date(); h.innerHTML += ' <span style="font-size:12px;color:#888;font-weight:normal">更新于 ' + ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + '</span>'; }
+    LASTBOARD_AT = new Date();
+    renderBoard();
+    loadAwards();
   }).catch(function () {
-    if (LASTBOARD) return; // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错
-    errBox(document.getElementById('funcSec'), '排行榜加载失败，请重试。', loadBoardIntoFunc);
+    if (LASTBOARD) { renderBoard(); return; } // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错
+    errBox(document.getElementById('boardSec'), '排行榜加载失败，请重试。', loadBoardIntoFunc);
   });
 }
 function loadWall() {
   dyn('wall_get', {}).then(function (j) {
     WALL = j.wall || null;
-    if (EV) { renderHero(); renderLive(); }
+    if (EV) renderLive(); // Hero 照片墙只换媒体区，不重排整页
     startWallPoll();
-  }).catch(function () {
-    var el = document.getElementById('liveSec');
-    if (el && ((EV && EV.album_enabled) || (SNAP && SNAP.album_enabled))) errBox(el, '精彩瞬间加载失败，请重试。', loadWall);
-  });
+  }).catch(function () { /* 照片墙加载失败：Hero 保持海报，不阻塞其他区块 */ });
 }
 // 比赛进行中（state=live）每 60 秒静默刷新一次照片墙：新照片自动进轮播，无需刷新整页；
 // 页面不可见时跳过，dyn() 已做在飞去重＋重试上限，不会形成请求风暴。
@@ -690,7 +781,7 @@ function applySnapshot(j) {
     organizations: j.organizations || [], sessions: j.sessions || [],
     album_enabled: !!j.album_enabled, care_tips: { public: [], personal: null }, course_preview: null, pairings: [],
   };
-  renderHero(); renderOrgs();
+  renderHero(); renderPartners();
   applyShare(j);
 }
 function maybeWall() {
@@ -705,9 +796,9 @@ function loadDynamic() {
     EV = j; PREVIEW = j.course_preview || null;
     applyShare(j.event);
     curTee = PREVIEW && PREVIEW.main_tee_id;
-    renderHero(); renderOrgs(); renderMap();
+    renderHero(); renderPartners(); renderMap();
     if (LASTBOARD) loadBoardIntoFunc();
-    setTimeout(renderCare, 900); // L4 关怀层：基础与排名之后最后渲染，失败静默（renderCare 无数据即隐藏）
+    if (WALL) renderLive(); // wall 先于动态层到达时在此补渲染 Hero 照片墙
     maybeWall();
   }).catch(function (e) {
     var msg = String(e && e.message || e);
@@ -969,7 +1060,7 @@ document.getElementById('cdClose').addEventListener('click', cdClose);
 document.getElementById('cdBackdrop').addEventListener('click', cdClose);
 // [线X 热修] Esc 关闭（与 ✕／点遮罩并列的第三条关闭路径）；弹层只许由下方 #cdOpen 委托点击打开，无任何自动打开路径
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !cdSheet.classList.contains('hidden')) cdClose(); });
-// funcrow 由 renderFunc 反复重渲染，入口用事件委托绑定（避免重复绑定）
+// 双卡由 renderDual 渲染，入口用事件委托绑定（避免重复绑定）
 document.addEventListener('click', function (e) {
   var t = e.target && e.target.closest ? e.target.closest('#cdOpen') : null;
   if (t) { e.preventDefault(); cdOpen(); }
