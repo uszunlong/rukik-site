@@ -508,6 +508,8 @@ function renderHero() {
     (c.name ? '<span>📍 ' + esc(c.name) + (c.city ? '，' + esc(c.city) : '') + '</span>' : '') +
     '</div>' +
     act +
+    /* [线Z61 2026-11-12] 分享入口紧邻主行动按钮：系统分享优先、不支持时复制链接（bindZ61Share 绑定） */
+    '<button type="button" class="signup alt" id="z61ShareBtn" style="cursor:pointer;font:inherit;width:100%;margin-top:8px">分享</button><div id="z61ShareNote" style="text-align:center;font-size:13px;margin-top:6px"></div>' +
     /* 减法重构第 1 项：赛制/介绍/日程默认收进「赛事详情」，点开才看 */
     '<button type="button" class="dtoggle" id="dToggle">赛事详情 ▾</button>' +
     '<div class="details hidden" id="detailsBox">' +
@@ -524,6 +526,7 @@ function renderHero() {
   renderDual();
   renderStaff();
   bindZ60Join();
+  bindZ61Share();
 }
 /* [线Z60 2026-11-12] 「报名参加」一键加入：令牌现读 localStorage（与
    photos.html 同口径，不依赖页面加载快照）；未登录先在原地挂载登录区，
@@ -562,6 +565,51 @@ function bindZ60Join() {
       var m = String(err && err.message || err);
       if (note) note.textContent = m.indexOf('joins closed') >= 0 ? '本场球局已关闭加入。' : m.indexOf('invalid invite code') >= 0 ? '邀请链接已失效，请向组织者索取最新分享链接。' : m.indexOf('round already finished') >= 0 ? '本场球局已结束。' : '报名未成功，请稍后重试。';
     });
+  });
+}
+/* [线Z61 2026-11-12] 活动页「分享」：优先 navigator.share（标题＝活动名），
+   不支持/失败时降级复制链接并提示。链接口径与 Z60 定版一致——正式赛事
+   event.html?e=<id>；快速球局仅当查看者本就有权看到邀请码（组织者或已报名
+   成员，且服务端已在本页数据中下发 invite_code）时才拼 &c=<邀请码>，
+   未登录访客与未受邀者一律拼不带码链接，禁止把邀请码泄漏给无权者。 */
+function z61ShareUrl() {
+  var url = location.origin + location.pathname + '?e=' + encodeURIComponent(eventId);
+  var e = (EV && EV.event) || {};
+  if (e.kind === 'casual' && e.invite_code) {
+    var myReg = EV.my_registration;
+    var joined = myReg && (myReg.status === 'registered' || myReg.status === 'checked_in');
+    if (EV.my_role === 'organizer' || joined) url += '&c=' + encodeURIComponent(e.invite_code);
+  }
+  return url;
+}
+function bindZ61Share() {
+  var btn = document.getElementById('z61ShareBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var note = document.getElementById('z61ShareNote');
+    var url = z61ShareUrl();
+    var title = (EV && EV.event && EV.event.title) || document.title;
+    function copied() { if (note) note.textContent = '链接已复制，去粘贴分享吧。'; }
+    function legacyCopy() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) copied(); else if (note) note.textContent = url;
+      } catch (e) { if (note) note.textContent = url; }
+    }
+    function copyFallback() {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(copied, legacyCopy);
+      else legacyCopy();
+    }
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(function (err) {
+        if (err && err.name === 'AbortError') return; /* 用户取消系统分享，不打扰、不改走复制 */
+        copyFallback();
+      });
+    } else copyFallback();
   });
 }
 /* 第二区：记分卡 + 问RUKIK Golf 并排双卡；状态短说明只进记分卡一行，不另堆文字卡 */
