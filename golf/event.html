@@ -66,8 +66,11 @@
   .src{font-size:12px;color:#7a8a7d;line-height:1.7;margin-top:8px}
   .tips{font-size:14px;line-height:1.9}
   .tips li{margin:2px 0}
-  table.board{width:100%;border-collapse:collapse;font-size:15px}
+  table.board{width:100%;border-collapse:collapse;font-size:15px;color:#1a2b22}
   table.board td,table.board th{padding:7px 4px;border-bottom:1px solid #eef2ee;text-align:left}
+  table.board th{color:#40584a;font-weight:700}
+  #boardSec .card{color:#1a2b22}
+  #boardSec .empty{color:#52665a}
   .feed{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .feed figure{margin:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(20,60,35,.06)}
   .feed img{width:100%;height:150px;object-fit:cover;display:block}
@@ -137,7 +140,7 @@
   .bhead h2{margin:0}
   .btag{font-size:11px;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 8px;font-weight:600;white-space:nowrap}
   .btag.final{background:#dcfce7;color:#14532d}
-  .bupd{margin-left:auto;font-size:12px;color:#888;white-space:nowrap}
+  .bupd{margin-left:auto;font-size:12px;color:#52665a;white-space:nowrap}
   .btabs{display:flex;gap:8px;margin:12px 0 4px}
   .btabs button{flex:1;border:1px solid #cfe0d2;background:#fff;color:#14532d;border-radius:999px;padding:8px 0;font-size:14.5px;font-weight:600;cursor:pointer;min-height:40px}
   .btabs button.on{background:#14532d;color:#fff;border-color:#14532d}
@@ -1784,6 +1787,54 @@ function renderLive() {
   carStart();
 }
 var LASTBOARD = null;
+/* [Z81 追加 2026-11-12] 排行榜自动刷新：进行中每 5 秒静默轮询、回前台立即
+   补刷；数据签名无变化不重渲染；请求序号＋服务端版本（若响应带回）双重防旧，
+   旧响应不得覆盖已展示的新榜。失败沿用现行口径：保留上次榜单与原更新时间。 */
+var BOARD_REQ_SEQ = 0, BOARD_APPLIED_SEQ = 0, LASTBOARD_SIG = null, LASTBOARD_VERSION = null;
+var BOARD_POLL_STARTED = false, BOARD_POLL_TIMER = null;
+function boardSigRows(list, scope) {
+  return (list || []).map(function (en, i) {
+    return [en.id || en.playerId || en.teamId || '', en.rank != null ? en.rank : i + 1, en.name || en.team_name || '', boardThru(en), boardScore(en, scope), en.status || '', en.toPar != null ? en.toPar : ''].join(':');
+  }).join('|');
+}
+function boardSignature(b) {
+  if (!b) return '';
+  return [b.scope || '', b.is_final ? 'final' : 'live', boardSigRows(b.entries, b.scope), boardSigRows(b.individuals, b.scope)].join('#');
+}
+function boardResponseVersion(j) {
+  if (!j) return null;
+  var v = j.updated_at != null ? j.updated_at : (j.updatedAt != null ? j.updatedAt : (j.generated_at != null ? j.generated_at : (j.version != null ? j.version : (j.revision != null ? j.revision : null))));
+  if (v == null) return null;
+  if (typeof v === 'number') return v;
+  var t = Date.parse(v);
+  return isNaN(t) ? String(v) : t;
+}
+function boardPollLive() {
+  if (LASTBOARD && LASTBOARD.is_final) return false;
+  var st = EV && EV.event && EV.event.status;
+  if (st) return st === 'in_progress';
+  return stateOf() === 'live' || (WALL && WALL.state === 'live');
+}
+function boardVisibilityRefresh() {
+  if (document.hidden) return;
+  if (boardPollLive()) loadBoardIntoFunc({ poll: true });
+}
+function stopBoardPoll() {
+  if (BOARD_POLL_TIMER) { clearInterval(BOARD_POLL_TIMER); BOARD_POLL_TIMER = null; }
+  if (BOARD_POLL_STARTED) document.removeEventListener('visibilitychange', boardVisibilityRefresh);
+  BOARD_POLL_STARTED = false;
+}
+function startBoardPoll() {
+  if (BOARD_POLL_STARTED) return;
+  if (!boardPollLive()) return;
+  BOARD_POLL_STARTED = true;
+  document.addEventListener('visibilitychange', boardVisibilityRefresh);
+  BOARD_POLL_TIMER = setInterval(function () {
+    if (document.hidden) return;
+    if (!boardPollLive()) { stopBoardPoll(); return; }
+    loadBoardIntoFunc({ poll: true });
+  }, 5000);
+}
 // [线Z2 P0-7] 奖项呈现：只展示主办方已确认（verified）或已颁发（presented）的奖项，与球童上下文/回忆生成同口径；
 // pending（待确认）不对外展示。获奖人取 awards_list 的球员名；团队奖以排行榜 entries 的 teamId→队名映射，未命中如实只显示奖项名、不编造。
 function loadAwards() {
@@ -1804,14 +1855,28 @@ function loadAwards() {
     zone.innerHTML = '<div class="awards"><div class="awt">🏆 本场奖项</div><table class="board"><tr><th>奖项</th><th>获奖者</th></tr>' + rows + '</table></div>';
   }).catch(function () { /* 奖项加载失败不阻塞页面其他区块 */ });
 }
-function loadBoardIntoFunc() {
+function loadBoardIntoFunc(opts) {
+  var seq = ++BOARD_REQ_SEQ;
   dyn('leaderboard_get', {}).then(function (j) {
+    if (seq < BOARD_APPLIED_SEQ) return; // [Z81] 更晚发出的请求已先落屏，本响应是旧的，丢弃
+    var ver = boardResponseVersion(j);
+    if (ver != null && LASTBOARD_VERSION != null && ver <= LASTBOARD_VERSION) { BOARD_APPLIED_SEQ = seq; return; } // [Z81] 服务端版本不新于已展示版本，丢弃不渲染
+    var sig = boardSignature(j);
+    var same = !!LASTBOARD && sig === LASTBOARD_SIG;
+    BOARD_APPLIED_SEQ = seq;
+    if (ver != null) LASTBOARD_VERSION = ver;
     LASTBOARD = j;
+    LASTBOARD_SIG = sig;
     LASTBOARD_AT = new Date();
-    renderBoard();
-    loadAwards();
+    if (!same) { renderBoard(); loadAwards(); }
+    else { // [Z81] 数据无变化不重渲染：只更新「更新于」时间文本，原更新时间口径不变
+      var bu = document.querySelector('#boardSec .bupd');
+      if (bu) bu.textContent = '更新于 ' + ('0' + LASTBOARD_AT.getHours()).slice(-2) + ':' + ('0' + LASTBOARD_AT.getMinutes()).slice(-2);
+    }
+    if (j && j.is_final) stopBoardPoll(); else startBoardPoll();
   }).catch(function (e) {
-    if (LASTBOARD) { renderBoard(); return; } // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错
+    if (seq < BOARD_APPLIED_SEQ) return;
+    if (LASTBOARD) { if (!(opts && opts.poll)) renderBoard(); return; } // 已有上次数据：保留展示（带原更新时间），不清空、不整页报错；轮询失败静默不重排
     /* [Z64] 未登录态：登录引导（取代「加入后可见」文案），不报「加载失败」误导访客。 */
     if (isAuthErr(e)) {
       var bs = document.getElementById('boardSec');
