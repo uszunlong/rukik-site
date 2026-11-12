@@ -390,8 +390,16 @@ function makeProjector(geoms, frame) {
  * 要素（球道/果岭/发球台/沙坑/水体/洞线/旗杆），环境要素照常绘制但不决定
  * 取景；②走廊长轴旋转为水平（发球台左、果岭右，与记分推进同向），把长轴
  * 对齐画布长边；③取景框在画布内居中，边距约 4%（[地图取景二修20261112]
- * 起由 PAD 统一承担，跨度不再二次外扩，见 computeFit 内注）。 */
-const FIT_TYPES = { fairway: 1, green: 1, tee: 1, bunker: 1, water_hazard: 1, hole: 1, pin: 1 };
+ * 起由 PAD 统一承担，跨度不再二次外扩，见 computeFit 内注）。
+ * [地图取景三修20261112] 取景集再收窄为打球面本体（发球台/球道/果岭）：
+ * 沙坑/水体常向带外单侧伸出（WH5 果岭右下池塘、FH1 湖岸与散布沙坑），
+ * 纳入取景会把整带顶偏（像素实测 WH5 纵向中心偏移 −19%、FH1 −16%）；
+ * 障碍照常绘制、只是不进框。另：舞台高＝画布高＋发球台码数条高（同在
+ * 一幅 SVG 内），纵向居中须以舞台总高为口径（frame.stageH，见
+ * makeFitProjector 与 buildHoleArt 内注）；二修量测以空 teeRows 构建、
+ * 漏计条高，且量的是取景集自身的投影外接框（按构造恒约 91.6%、与像素
+ * 无关），是其「量测达标而真机像素不达标」的两处主因。 */
+const FIT_TYPES = { fairway: 1, green: 1, tee: 1 };
 /* [地图取景二修20261112] 走廊旋转跨度独立成 computeFit：buildHoleArt 先据其
  * 纵横比定画布高、再建投影器，同一份跨度两处共用、口径不漂移。
  * 返回 null 的条件与旧版 makeFitProjector 相同（可取景的点不足 2 个）。 */
@@ -441,7 +449,14 @@ function makeFitProjector(feats, frame, fit) {
   if (!F) return null;
   const kx = F.kx, cos = F.cos, sin = F.sin, rx0 = F.rx0, rx1 = F.rx1, ry0 = F.ry0, ry1 = F.ry1;
   const sc = Math.min((FW - 2 * PAD) / Math.max(1e-12, rx1 - rx0), (FH - 2 * PAD) / Math.max(1e-12, ry1 - ry0));
-  const ox = (FW - (rx1 - rx0) * sc) / 2, oy = (FH - (ry1 - ry0) * sc) / 2;
+  const ox = (FW - (rx1 - rx0) * sc) / 2;
+  /* [地图取景三修20261112] 纵向居中以舞台总高（frame.stageH＝画布高＋
+   * 码数条高）为口径：oy 是带底距画布底的边距，须再扣去条高份额，带的
+   * 纵向中心才落在舞台正中。无 stageH（旧调用/回退路径）时退化为画布内
+   * 居中、行为与二修一致。 */
+  const stageH = frame && frame.stageH ? frame.stageH : FH;
+  let oy = (stageH - (ry1 - ry0) * sc) / 2 - (stageH - FH);
+  if (oy < 6) oy = 6;
   return function (p) {
     const mx = p[0] * kx, my = p[1];
     const rx = mx * cos - my * sin, ry = mx * sin + my * cos;
@@ -696,12 +711,40 @@ function treeItems(f, pr, items, seedBase) {
 
 /* ---------- 果岭放大插图（真实果岭多边形重投影＋周边要素＋纵深码数） ---------- */
 const INSET = { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
-function insetModel(feats, pin, frame) {
+function insetModel(feats, pin, frame, pr) {
   /* [地图取景二修20261112] 果岭特写随画框高缩放并贴右下角：半径＝框高 24%
    * 夹在 [30, 64]，620 高框时恰为旧值 64、圆心与旧版仅差 10px；矮画框下
    * 不再以 128 直径圆压住走廊主体。无 frame（旧调用）保持原常量。 */
   const IR = frame ? Math.max(30, Math.min(64, Math.round(frame.h * 0.24))) : 64;
-  const INSET = frame ? { cx: frame.w - IR - 14, cy: frame.h - IR - 14, r: IR } : { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
+  let INSET = frame ? { cx: frame.w - IR - 14, cy: frame.h - IR - 14, r: IR } : { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
+  /* [地图取景三修20261112] 特写圆避让果岭本体：旋转取景后果岭恒在右侧，
+   * 旧版恒定右下角与果岭大面积重叠（四洞像素实测全部重叠）。有主投影时
+   * 先算果岭在主视图的外接框（外扩 5 容光晕），四角逐一评分——与果岭框
+   * 重叠面积最小者优先、并列取离果岭中心最远者；无主投影保持旧落位。 */
+  if (frame && pr) {
+    let gx0 = 1 / 0, gx1 = -1 / 0, gy0 = 1 / 0, gy1 = -1 / 0;
+    feats.filter(f => f.type === 'green').forEach(f => {
+      const g = featGeom(f); if (!g) return;
+      outerRings(g).forEach(r => r.forEach(p => {
+        const q = pr(p);
+        if (q[0] < gx0) gx0 = q[0]; if (q[0] > gx1) gx1 = q[0];
+        if (q[1] < gy0) gy0 = q[1]; if (q[1] > gy1) gy1 = q[1];
+      }));
+    });
+    if (gx0 <= gx1) {
+      gx0 -= 5; gx1 += 5; gy0 -= 5; gy1 += 5;
+      const gcx = (gx0 + gx1) / 2, gcy = (gy0 + gy1) / 2;
+      const cands = [[frame.w - IR - 14, frame.h - IR - 14], [IR + 14, frame.h - IR - 14], [frame.w - IR - 14, IR + 14], [IR + 14, IR + 14]];
+      let best = null, bestOv = null, bestDist = -1;
+      cands.forEach(c => {
+        const ovx = Math.max(0, Math.min(c[0] + IR, gx1) - Math.max(c[0] - IR, gx0));
+        const ovy = Math.max(0, Math.min(c[1] + IR, gy1) - Math.max(c[1] - IR, gy0));
+        const ov = ovx * ovy, dist = Math.hypot(c[0] - gcx, c[1] - gcy);
+        if (bestOv === null || ov < bestOv || (ov === bestOv && dist > bestDist)) { bestOv = ov; bestDist = dist; best = c; }
+      });
+      if (best) INSET = { cx: best[0], cy: best[1], r: IR };
+    }
+  }
   const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
   if (!greens.length) return null;
   let ring = null, bestArea = -1;
@@ -835,7 +878,7 @@ function buildArtWithProjector(feats, boundaryGeom, pr, opts) {
     }
   }
 
-  const inset = opts.inset === false ? null : insetModel(feats, pin, opts.frame);
+  const inset = opts.inset === false ? null : insetModel(feats, pin, opts.frame, pr);
   if (inset) inset.items.forEach(it => items.push(it));
 
   const markers = opts.markers === false ? [] : distanceMarkers(feats, pr, inset, opts.frame);
@@ -921,14 +964,21 @@ function buildHoleArt(data, opts) {
    * 画布宽恒 620（页面以 width:100% 显示＝舞台宽 100%）；画布高取「走廊在
    * 两轴 4% 边距＋PAD 下同时吃满宽高」的高度，再夹入 [FIT_FRAME_H_MIN,
    * FIT_FRAME_H_MAX] 保手机可读。fit 为空（无可取景跨度）时回退旧方框，
-   * 后续 makeProjector 旧路径不变。 */
+   * 后续 makeProjector 旧路径不变。（[地图取景三修20261112] 画布高另把
+   * 码数条高计入预算、取景集收窄为打球面本体，详见 FIT_TYPES 与下方
+   * stripPre 两处注。） */
   const fit = computeFit(feats);
+  /* [地图取景三修20261112] 先算发球台码数条高：码数条与地图同处一幅
+   * SVG、同属舞台，画布高预算须把条高计入（frameH 表达式末项），并经
+   * frame.stageH 令投影器以舞台总高做纵向居中——否则条越高、带被顶得
+   * 越偏上（FH 九台三行条时二修版纵向中心偏移像素实测 −16%）。 */
+  const stripPre = teeStrip(opts.teeRows || [], { w: 620, h: 0 });
   let frameH = 620;
   if (fit) {
     const spanX = Math.max(1e-12, fit.rx1 - fit.rx0), spanY = Math.max(1e-12, fit.ry1 - fit.ry0);
-    frameH = Math.round(Math.min(FIT_FRAME_H_MAX, Math.max(FIT_FRAME_H_MIN, 2 * PAD + (620 - 2 * PAD) * spanY / spanX)));
+    frameH = Math.round(Math.min(FIT_FRAME_H_MAX, Math.max(FIT_FRAME_H_MIN, 2 * PAD + (620 - 2 * PAD) * spanY / spanX + stripPre.stripH)));
   }
-  const frame = { w: 620, h: frameH };
+  const frame = { w: 620, h: frameH, stageH: frameH + stripPre.stripH };
   const pr = makeFitProjector(feats, frame, fit) || makeProjector(geoms, frame);
   if (!pr) return null;
   const drawBoundary = boundaryGeom && bboxDiag([boundaryGeom]) <= 1.8 * Math.max(1e-12, bboxDiag(geoms)) ? boundaryGeom : null;
