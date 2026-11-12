@@ -406,49 +406,573 @@ function suspectNote(hole) {
   }
   return '';
 }
-function project(feats) {
-  var pts = [];
-  function walk(g) {
-    if (!g) return;
-    if (g.type === 'Point') pts.push(g.coordinates);
-    else if (g.type === 'LineString' || g.type === 'MultiPoint') g.coordinates.forEach(function (p) { pts.push(p); });
-    else if (g.type === 'Polygon' || g.type === 'MultiLineString') g.coordinates.forEach(function (r) { r.forEach(function (p) { pts.push(p); }); });
-    else if (g.type === 'MultiPolygon') g.coordinates.forEach(function (pl) { pl.forEach(function (r) { r.forEach(function (p) { pts.push(p); }); }); });
-  }
-  feats.forEach(function (f) { walk(f.geojson && f.geojson.geometry); });
-  var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
-  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-  var kx = Math.cos(((y0 + y1) / 2) * Math.PI / 180);
-  var W = 720, H = 520, pad = 26;
-  var sx = (W - 2 * pad) / Math.max(1e-9, (x1 - x0) * kx), sy = (H - 2 * pad) / Math.max(1e-9, y1 - y0);
-  var sc = Math.min(sx, sy);
-  return function (p) { return [pad + (p[0] - x0) * kx * sc, H - pad - (p[1] - y0) * sc]; };
+/* ═══ 逐洞地图「插画级」渲染（线 Z28）：与 App holeMapGeom.ts 同一算法/配色。
+ * 全部图形由 course_geometry 真实几何派生：球道修剪条纹（clipPath 裁剪不越界）、
+ * 距离标识按中心线大地线实算、果岭放大插图为真实果岭重投影＋纵深码数；
+ * 取景按单洞要素（全场 boundary 只在总览呈现）；无数据要素不画、不编造。 ═══ */
+/* 逐洞地图「插画级」渲染核心（线 Z28 规范实现）。
+ * 网页 event.html 的 renderHoleSvg 与 App holeMapGeom.ts 均按本文件同一套
+ * 数学/配色/层序实现。全部图形由 golf-api course_geometry 的真实 OSM 几何
+ * 派生：条纹裁剪在球道多边形内、距离点按中心线大地线实算、果岭放大图为
+ * 果岭多边形的真实重投影；无数据的要素一律不画，绝不生成假形状。 */
+
+const MAP_W = 720, MAP_H = 520, PAD = 26;
+
+const PAL = {
+  backdrop: '#e9f2e9', backdropEdge: '#d7e2cf',
+  boundary: '#9db8a2',
+  rough: '#cfe0b8',
+  fairwayBase: '#a9d69a', stripeA: '#b9e2ac', stripeB: '#9ccb8c', fairwayEdge: '#8fbf82',
+  greenHalo: '#79c47e', green: '#45a34b', greenEdge: '#35823b', greenInner: 'rgba(255,255,255,0.10)',
+  bunker: '#eed9a4', bunkerEdge: '#d3b26e', bunkerInner: '#f7ecd2',
+  waterEdge: '#4b93c4', waterFrom: '#8ecdf2', waterTo: '#5ea9dd',
+  pathUnder: '#b7bcb0', pathOver: '#eaeae3',
+  tee: '#f2ecd9', teeEdge: '#bfb183',
+  centerline: '#14532d',
+  markerRing: '#14532d', markerText: '#14532d',
+  flag: '#e11d48', pole: '#374151',
+  treeDark: '#57934a', treeLight: '#6fae5f',
+  insetBg: '#fdfdf8', insetRing: '#d8d2c0',
+  chipBg: '#ffffff', chipEdge: '#ddd6c2', chipYards: '#20301f', chipName: '#75806e',
+};
+const ORDER = { rough: 1, fairway: 1, water_hazard: 2, cartpath: 3, bunker: 4, green: 5, tee: 6 };
+
+/* ---------- 基础几何 ---------- */
+function featGeom(f) {
+  const gj = f && (f.geojson || f);
+  if (!gj) return null;
+  if (gj.geometry) return gj.geometry;
+  if (gj.coordinates) return gj;
+  return null;
 }
-function pathOf(geom, pr, close) {
-  function line(coords) { return coords.map(function (p, i) { var q = pr(p); return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' '); }
-  if (geom.type === 'LineString') return line(geom.coordinates);
-  if (geom.type === 'Polygon') return geom.coordinates.map(function (r) { return line(r) + ' Z'; }).join(' ');
-  if (geom.type === 'MultiPolygon') return geom.coordinates.map(function (pl) { return pl.map(function (r) { return line(r) + ' Z'; }).join(' '); }).join(' ');
-  if (geom.type === 'MultiLineString') return geom.coordinates.map(function (r) { return line(r); }).join(' ');
+function collectPts(g, pts) {
+  if (!g) return;
+  if (g.type === 'Point') pts.push(g.coordinates);
+  else if (g.type === 'LineString' || g.type === 'MultiPoint') (g.coordinates || []).forEach(p => pts.push(p));
+  else if (g.type === 'Polygon' || g.type === 'MultiLineString') (g.coordinates || []).forEach(r => (r || []).forEach(p => pts.push(p)));
+  else if (g.type === 'MultiPolygon') (g.coordinates || []).forEach(pl => (pl || []).forEach(r => (r || []).forEach(p => pts.push(p))));
+}
+function makeProjector(geoms) {
+  const pts = [];
+  geoms.forEach(g => collectPts(g, pts));
+  if (!pts.length) return null;
+  let x0 = 1 / 0, x1 = -1 / 0, y0 = 1 / 0, y1 = -1 / 0;
+  pts.forEach(p => { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; });
+  const kx = Math.cos(((y0 + y1) / 2) * Math.PI / 180);
+  const sx = (MAP_W - 2 * PAD) / Math.max(1e-9, (x1 - x0) * kx);
+  const sy = (MAP_H - 2 * PAD) / Math.max(1e-9, y1 - y0);
+  const sc = Math.min(sx, sy);
+  return p => [PAD + (p[0] - x0) * kx * sc, MAP_H - PAD - (p[1] - y0) * sc];
+}
+function pathOf(geom, pr) {
+  const line = coords => coords.map((p, i) => { const q = pr(p); return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' ');
+  if (!geom) return '';
+  if (geom.type === 'LineString') return line(geom.coordinates || []);
+  if (geom.type === 'Polygon') return (geom.coordinates || []).map(r => line(r) + ' Z').join(' ');
+  if (geom.type === 'MultiPolygon') return (geom.coordinates || []).map(pl => (pl || []).map(r => line(r) + ' Z').join(' ')).join(' ');
+  if (geom.type === 'MultiLineString') return (geom.coordinates || []).map(r => line(r)).join(' ');
   return '';
 }
-var FILLS = { fairway: '#bfe3c0', green: '#43a047', bunker: '#ecd9a0', water_hazard: '#a8d4f0', rough: '#d8e6c3', tee: '#ffffff', boundary: 'none' };
-function renderHoleSvg(data) {
-  var feats = data.features || [];
-  var all = feats.slice(); if (data.boundary) all.push({ type: 'boundary', geojson: data.boundary });
-  var pr = project(all);
-  var parts = [];
-  if (data.boundary) parts.push('<path d="' + pathOf(data.boundary.geometry, pr) + '" fill="none" stroke="#9db8a2" stroke-width="1.5" stroke-dasharray="5 4"/>');
-  var order = { fairway: 1, rough: 1, water_hazard: 2, cartpath: 3, bunker: 4, green: 5, tee: 6, hole: 7, pin: 8 };
-  feats.sort(function (a, b) { return (order[a.type] || 5) - (order[b.type] || 5); });
-  feats.forEach(function (f) {
-    var g = f.geojson.geometry;
-    if (f.type === 'pin' || g.type === 'Point') { var q = pr(g.coordinates); parts.push('<circle cx="' + q[0] + '" cy="' + q[1] + '" r="6" fill="#dc2626" stroke="#fff" stroke-width="2"/>'); return; }
-    if (f.type === 'hole') { parts.push('<path d="' + pathOf(g, pr) + '" fill="none" stroke="#14532d" stroke-width="3.5" stroke-linecap="round"/>'); return; }
-    if (f.type === 'cartpath') { parts.push('<path d="' + pathOf(g, pr) + '" fill="none" stroke="#c9cfc9" stroke-width="2"/>'); return; }
-    parts.push('<path d="' + pathOf(g, pr) + '" fill="' + (FILLS[f.type] || '#dfe9df') + '" stroke="#ffffff" stroke-width="1" fill-opacity="0.92"/>');
+function outerRings(geom) {
+  if (!geom) return [];
+  if (geom.type === 'Polygon') return geom.coordinates && geom.coordinates[0] ? [geom.coordinates[0]] : [];
+  if (geom.type === 'MultiPolygon') return (geom.coordinates || []).map(pl => pl && pl[0]).filter(Boolean);
+  return [];
+}
+function ringCentroid(ring) {
+  let x = 0, y = 0, n = 0;
+  (ring || []).forEach(p => { x += p[0]; y += p[1]; n++; });
+  return n ? [x / n, y / n] : [0, 0];
+}
+function ringAreaPx(ringPx) {
+  let a = 0;
+  for (let i = 0; i < ringPx.length; i++) {
+    const p = ringPx[i], q = ringPx[(i + 1) % ringPx.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return a / 2;
+}
+function pointInRing(pt, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function haversineM(a, b) {
+  const R = 6371000, t = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * t, dLng = (b[0] - a[0]) * t;
+  const s = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[1] * t) * Math.cos(b[1] * t) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- 中心线：距离标识实算 ---------- */
+function centerlineCoords(feats) {
+  const f = feats.find(f => f.type === 'hole');
+  if (!f) return null;
+  const g = featGeom(f);
+  if (!g) return null;
+  if (g.type === 'LineString') return g.coordinates;
+  if (g.type === 'MultiLineString') {
+    let best = null, bl = -1;
+    (g.coordinates || []).forEach(l => { if (l.length > bl) { bl = l.length; best = l; } });
+    return best;
+  }
+  return null;
+}
+function pinPoint(feats) {
+  const f = feats.find(f => f.type === 'pin');
+  const g = f && featGeom(f);
+  return g && g.type === 'Point' ? g.coordinates : null;
+}
+function lineCum(line) {
+  const cum = [0];
+  for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversineM(line[i - 1], line[i]));
+  return cum;
+}
+function pointAtArc(line, cum, s) {
+  const total = cum[cum.length - 1];
+  s = Math.max(0, Math.min(total, s));
+  let i = 1;
+  while (i < cum.length - 1 && cum[i] < s) i++;
+  const seg = cum[i] - cum[i - 1] || 1;
+  const f = (s - cum[i - 1]) / seg;
+  return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * f, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * f];
+}
+/* 距果岭 100/150/200 码标识：沿中心线大地线实算位置，返回投影坐标＋法向。 */
+function distanceMarkers(feats, pr, inset) {
+  const raw = centerlineCoords(feats);
+  if (!raw || raw.length < 2) return [];
+  const pin = pinPoint(feats);
+  let line = raw.slice();
+  if (pin) {
+    const dFirst = haversineM(pin, line[0]), dLast = haversineM(pin, line[line.length - 1]);
+    if (dFirst < dLast) line.reverse();
+  }
+  const cum = lineCum(line);
+  const totalM = cum[cum.length - 1];
+  const totalY = totalM / 0.9144;
+  const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
+  let greenC = null;
+  if (greens.length) {
+    const ring = outerRings(greens[0])[0];
+    if (ring) { const c = ringCentroid(ring); greenC = pr(c); }
+  }
+  const out = [];
+  [200, 150, 100].forEach(R => {
+    if (totalY - R < 35) return; // 离发球台太近的标准点不标（短洞）
+    const sM = totalM - R * 0.9144;
+    const pt = pointAtArc(line, cum, sM);
+    const xy = pr(pt);
+    const pa = pr(pointAtArc(line, cum, Math.max(0, sM - 9)));
+    const pb = pr(pointAtArc(line, cum, Math.min(totalM, sM + 9)));
+    let tx = pb[0] - pa[0], ty = pb[1] - pa[1];
+    const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+    const nx = -ty, ny = tx;
+    const cands = [[xy[0] + nx * 23, xy[1] + ny * 23], [xy[0] - nx * 23, xy[1] - ny * 23], [xy[0], xy[1]]];
+    let chosen = null;
+    for (const c of cands) {
+      if (c[0] < 15 || c[0] > MAP_W - 15 || c[1] < 15 || c[1] > MAP_H - 15) continue;
+      if (inset && Math.hypot(c[0] - inset.cx, c[1] - inset.cy) < inset.r + 16) continue;
+      if (!chosen) { chosen = c; continue; }
+      if (greenC) {
+        const dNew = Math.hypot(c[0] - greenC[0], c[1] - greenC[1]);
+        const dOld = Math.hypot(chosen[0] - greenC[0], chosen[1] - greenC[1]);
+        if (dNew > dOld) chosen = c;
+      }
+    }
+    if (!chosen) chosen = [xy[0], xy[1]];
+    out.push({ x: xy[0], y: xy[1], nx, ny, bx: chosen[0], by: chosen[1], label: R, totalYds: Math.round(totalY) });
   });
-  return '<svg class="map" viewBox="0 0 720 520" role="img" aria-label="第 ' + curHole + ' 洞地图">' + parts.join('') + '</svg>';
+  return out;
+}
+
+/* ---------- 球道修剪条纹（缎带多边形＋clipPath 裁剪，绝不越界） ---------- */
+function resamplePx(pts, step) {
+  const out = [];
+  let acc = 0, nextMark = 0;
+  for (let i = 0; i < pts.length; i++) {
+    if (i === 0) { out.push({ x: pts[0][0], y: pts[0][1], s: 0 }); continue; }
+    const a = pts[i - 1], b = pts[i];
+    const seg = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    let d = step - (acc - nextMark + (nextMark - acc));
+    // 沿段每 step 取一点
+    let walked = 0;
+    let since = (i === 1) ? step : (acc - Math.floor(acc / step) * step);
+    let toNext = step - ((acc % step + step) % step);
+    if (toNext === 0) toNext = step;
+    while (walked + toNext <= seg) {
+      walked += toNext;
+      const f = walked / (seg || 1);
+      out.push({ x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f, s: acc + walked });
+      toNext = step;
+    }
+    acc += seg;
+    out.push({ x: b[0], y: b[1], s: acc });
+    void d; void since;
+  }
+  // 补法向
+  for (let i = 0; i < out.length; i++) {
+    const p0 = out[Math.max(0, i - 1)], p1 = out[Math.min(out.length - 1, i + 1)];
+    let tx = p1.x - p0.x, ty = p1.y - p0.y;
+    const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+    out[i].nx = -ty; out[i].ny = tx;
+  }
+  return out;
+}
+function interpRs(rs, s) {
+  if (s <= 0) return rs[0];
+  if (s >= rs[rs.length - 1].s) return rs[rs.length - 1];
+  let i = 1;
+  while (i < rs.length - 1 && rs[i].s < s) i++;
+  const a = rs[i - 1], b = rs[i];
+  const f = (s - a.s) / ((b.s - a.s) || 1);
+  let nx = a.nx + (b.nx - a.nx) * f, ny = a.ny + (b.ny - a.ny) * f;
+  const l = Math.hypot(nx, ny) || 1;
+  return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, s, nx: nx / l, ny: ny / l };
+}
+function stripeRibbons(lineGeo, pr) {
+  if (!lineGeo || lineGeo.length < 2) return [];
+  const pts = lineGeo.map(p => pr(p));
+  const rs = resamplePx(pts, 4);
+  if (rs.length < 2) return [];
+  const total = rs[rs.length - 1].s;
+  if (total < 40) return [];
+  const bandCount = Math.max(4, Math.min(14, Math.round(total / 34)));
+  const bandLen = total / bandCount, HW = 380;
+  const ribbons = [];
+  for (let k = 0; k < bandCount; k++) {
+    const s0 = k * bandLen, s1 = Math.min(total, (k + 1) * bandLen);
+    const chunk = [interpRs(rs, s0)];
+    rs.forEach(p => { if (p.s > s0 && p.s < s1) chunk.push(p); });
+    chunk.push(interpRs(rs, s1));
+    if (chunk.length < 2) continue;
+    const left = chunk.map(c => [c.x + c.nx * HW, c.y + c.ny * HW]);
+    const right = chunk.map(c => [c.x - c.nx * HW, c.y - c.ny * HW]).reverse();
+    ribbons.push({ band: k, pts: left.concat(right) });
+  }
+  return ribbons;
+}
+function ptsToPath(pts) {
+  return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z';
+}
+
+/* ---------- 植被（仅当 OSM 真有 wood/tree/scrub 要素时；无数据不画） ---------- */
+const VEG_TYPES = { wood: 1, woods: 1, forest: 1, tree: 1, trees: 1, tree_row: 1, scrub: 1, vegetation: 1 };
+function treeItems(f, pr, items, seedBase) {
+  const g = featGeom(f);
+  if (!g) return;
+  if (g.type === 'Point') {
+    const q = pr(g.coordinates);
+    items.push({ k: 'circle', cx: q[0], cy: q[1], r: 7, fill: PAL.treeDark });
+    items.push({ k: 'circle', cx: q[0] - 1.6, cy: q[1] - 1.6, r: 4.4, fill: PAL.treeLight });
+    return;
+  }
+  if (g.type === 'LineString') {
+    const pts = (g.coordinates || []).map(p => pr(p));
+    const rs = resamplePx(pts, 15);
+    rs.forEach(p => {
+      items.push({ k: 'circle', cx: p.x, cy: p.y, r: 5.6, fill: PAL.treeDark });
+      items.push({ k: 'circle', cx: p.x - 1.2, cy: p.y - 1.2, r: 3.5, fill: PAL.treeLight });
+    });
+    return;
+  }
+  const rings = outerRings(g);
+  rings.forEach(ring => {
+    const ringPx = ring.map(p => pr(p));
+    const area = Math.abs(ringAreaPx(ringPx));
+    const n = Math.max(3, Math.min(46, Math.round(area / 800)));
+    const xs = ringPx.map(p => p[0]), ys = ringPx.map(p => p[1]);
+    const bx0 = Math.min.apply(null, xs), bx1 = Math.max.apply(null, xs), by0 = Math.min.apply(null, ys), by1 = Math.max.apply(null, ys);
+    const seed = Math.round((ring[0][0] + ring[0][1]) * 1e5) + seedBase;
+    const rnd = mulberry32(seed);
+    let placed = 0, guard = 0;
+    while (placed < n && guard < n * 30) {
+      guard++;
+      const x = bx0 + rnd() * (bx1 - bx0), y = by0 + rnd() * (by1 - by0);
+      if (!pointInRing([x, y], ringPx)) continue;
+      const r = 4.6 + rnd() * 4.2;
+      items.push({ k: 'circle', cx: x, cy: y, r, fill: PAL.treeDark });
+      items.push({ k: 'circle', cx: x - r * 0.22, cy: y - r * 0.22, r: r * 0.62, fill: PAL.treeLight });
+      placed++;
+    }
+  });
+}
+
+/* ---------- 果岭放大插图（真实果岭多边形重投影＋周边要素＋纵深码数） ---------- */
+const INSET = { cx: MAP_W - 88, cy: MAP_H - 88, r: 64 };
+function insetModel(feats, pin) {
+  const greens = feats.filter(f => f.type === 'green').map(f => featGeom(f)).filter(Boolean);
+  if (!greens.length) return null;
+  let ring = null, bestArea = -1;
+  greens.forEach(g => outerRings(g).forEach(r => {
+    let a = 0;
+    for (let i = 1; i < r.length; i++) a += haversineM(r[i - 1], r[i]);
+    if (a > bestArea) { bestArea = a; ring = r; }
+  }));
+  if (!ring || ring.length < 3) return null;
+  const c = ringCentroid(ring);
+  const kx = Math.cos(c[1] * Math.PI / 180), M = 111320;
+  const toM = p => [(p[0] - c[0]) * kx * M, (p[1] - c[1]) * M];
+  let half = 0;
+  ring.forEach(p => { const m = toM(p); half = Math.max(half, Math.abs(m[0]), Math.abs(m[1])); });
+  half = Math.max(15, half * 2.05);
+  const scale = (INSET.r - 5) / half;
+  const ip = p => { const m = toM(p); return [INSET.cx + m[0] * scale, INSET.cy - m[1] * scale]; };
+  let depthM = 0;
+  for (let i = 0; i < ring.length; i++) for (let j = i + 1; j < ring.length; j++) depthM = Math.max(depthM, haversineM(ring[i], ring[j]));
+  const items = [];
+  items.push({ k: 'circle', cx: INSET.cx + 2, cy: INSET.cy + 3, r: INSET.r, fill: 'rgba(20,60,30,0.16)', clip: null });
+  items.push({ k: 'circle', cx: INSET.cx, cy: INSET.cy, r: INSET.r, fill: PAL.insetBg, stroke: PAL.insetRing, sw: 1.2 });
+  const clipId = 'insetClip';
+  const near = feats.filter(f => ['bunker', 'water_hazard', 'cartpath', 'rough', 'fairway'].indexOf(f.type) >= 0);
+  near.forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    const pts = [];
+    collectPts(g, pts);
+    const cen = ringCentroid(pts);
+    const cm = toM(cen);
+    if (Math.abs(cm[0]) > half * 1.25 || Math.abs(cm[1]) > half * 1.25) return;
+    if (f.type === 'cartpath') { items.push({ k: 'path', d: pathOf(g, ip), fill: 'none', stroke: PAL.pathOver, sw: 2, clip: clipId }); return; }
+    const fill = f.type === 'bunker' ? PAL.bunker : f.type === 'water_hazard' ? 'url(#waterGrad)' : f.type === 'fairway' ? PAL.fairwayBase : PAL.rough;
+    items.push({ k: 'path', d: pathOf(g, ip), fill, stroke: f.type === 'bunker' ? PAL.bunkerEdge : 'none', sw: 0.8, clip: clipId });
+  });
+  greens.forEach(g => {
+    items.push({ k: 'path', d: pathOf(g, ip), fill: PAL.greenHalo, stroke: PAL.greenHalo, sw: 3, clip: clipId });
+    items.push({ k: 'path', d: pathOf(g, ip), fill: PAL.green, stroke: PAL.greenEdge, sw: 0.8, clip: clipId });
+  });
+  const flagAt = pin ? ip(pin) : [INSET.cx, INSET.cy];
+  if (flagAt[0] > INSET.cx - INSET.r && flagAt[0] < INSET.cx + INSET.r && flagAt[1] > INSET.cy - INSET.r && flagAt[1] < INSET.cy + INSET.r) {
+    items.push({ k: 'line', x1: flagAt[0], y1: flagAt[1] + 1, x2: flagAt[0], y2: flagAt[1] - 12, stroke: PAL.pole, sw: 1.6, clip: clipId });
+    items.push({ k: 'poly', pts: flagAt[0] + ',' + (flagAt[1] - 12) + ' ' + flagAt[0] + ',' + (flagAt[1] - 7) + ' ' + (flagAt[0] + 8.5) + ',' + (flagAt[1] - 9.5), fill: PAL.flag, clip: clipId });
+    items.push({ k: 'circle', cx: flagAt[0], cy: flagAt[1], r: 2.2, fill: '#1f2937', stroke: '#ffffff', sw: 1, clip: clipId });
+  }
+  const label = '纵深 ' + Math.round(depthM / 0.9144) + ' 码';
+  const pillW = label.length * 6.4 + 16;
+  items.push({ k: 'rect', x: INSET.cx - pillW / 2, y: INSET.cy + INSET.r - 21, w: pillW, h: 15, rx: 7.5, fill: 'rgba(255,255,255,0.92)' });
+  items.push({ k: 'text', x: INSET.cx, y: INSET.cy + INSET.r - 10, text: label, size: 9.5, weight: 600, fill: PAL.markerText, anchor: 'middle' });
+  return { items, cx: INSET.cx, cy: INSET.cy, r: INSET.r, depthYds: Math.round(depthM / 0.9144), clipId };
+}
+
+/* ---------- 主构建：以给定投影器渲染一洞地形层 ---------- */
+function buildArtWithProjector(feats, boundaryGeom, pr, opts) {
+  opts = opts || {};
+  const items = [];
+  const sorted = feats.slice().sort((a, b) => (ORDER[a.type] || 5) - (ORDER[b.type] || 5));
+  const byType = t => sorted.filter(f => f.type === t);
+  const hasFairway = byType('fairway').some(f => { const g = featGeom(f); return g && (g.type === 'Polygon' || g.type === 'MultiPolygon'); });
+  const pin = pinPoint(feats);
+
+  if (boundaryGeom) items.push({ k: 'path', d: pathOf(boundaryGeom, pr), fill: 'none', stroke: PAL.boundary, sw: 1.5, dash: '5 4' });
+
+  byType('rough').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.rough }); });
+
+  feats.forEach((f, i) => { if (VEG_TYPES[f.type]) treeItems(f, pr, items, i * 7919); });
+
+  byType('water_hazard').forEach(f => {
+    const g = featGeom(f);
+    if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'url(#waterGrad)', stroke: PAL.waterEdge, sw: 1 });
+  });
+
+  if (hasFairway) {
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.fairwayBase }); });
+    const line = centerlineCoords(feats);
+    const ribbons = line ? stripeRibbons(line, pr) : [];
+    let dA = '', dB = '';
+    ribbons.forEach(r => { if (r.band % 2 === 0) dA += ptsToPath(r.pts); else dB += ptsToPath(r.pts); });
+    if (dA) items.push({ k: 'path', d: dA, fill: PAL.stripeA, clip: 'fwClip' });
+    if (dB) items.push({ k: 'path', d: dB, fill: PAL.stripeB, clip: 'fwClip' });
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.fairwayEdge, sw: 1 }); });
+  } else {
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.fairwayBase }); });
+  }
+
+  byType('cartpath').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.pathUnder, sw: 4.5, opacity: 0.9 }); });
+  byType('cartpath').forEach(f => { const g = featGeom(f); if (g) items.push({ k: 'path', d: pathOf(g, pr), fill: 'none', stroke: PAL.pathOver, sw: 2.6 }); });
+
+  byType('bunker').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.bunker, stroke: PAL.bunkerEdge, sw: 1.1 });
+    const rings = outerRings(g);
+    if (rings.length) {
+      const c = ringCentroid(rings[0]);
+      const cp = pr(c);
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.bunkerInner, opacity: 0.85, transform: 'translate(' + cp[0].toFixed(1) + ' ' + cp[1].toFixed(1) + ') scale(0.8) translate(' + (-cp[0]).toFixed(1) + ' ' + (-cp[1]).toFixed(1) + ')' });
+    }
+  });
+
+  byType('green').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.greenHalo, stroke: PAL.greenHalo, sw: 7 });
+    items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.green, stroke: PAL.greenEdge, sw: 1 });
+    const rings = outerRings(g);
+    if (rings.length) {
+      const c = ringCentroid(rings[0]);
+      const cp = pr(c);
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.greenInner, transform: 'translate(' + cp[0].toFixed(1) + ' ' + cp[1].toFixed(1) + ') scale(0.78) translate(' + (-cp[0]).toFixed(1) + ' ' + (-cp[1]).toFixed(1) + ')' });
+    }
+  });
+
+  byType('tee').forEach(f => {
+    const g = featGeom(f);
+    if (!g) return;
+    if (g.type === 'Point') {
+      const q = pr(g.coordinates);
+      items.push({ k: 'rect', x: q[0] - 6, y: q[1] - 4.5, w: 12, h: 9, rx: 2, fill: PAL.tee, stroke: PAL.teeEdge, sw: 1 });
+    } else {
+      items.push({ k: 'path', d: pathOf(g, pr), fill: PAL.tee, stroke: PAL.teeEdge, sw: 1.1 });
+    }
+  });
+
+  if (!hasFairway) {
+    const line = centerlineCoords(feats);
+    if (line) {
+      const lg = { type: 'LineString', coordinates: line };
+      items.push({ k: 'path', d: pathOf(lg, pr), fill: 'none', stroke: PAL.centerline, sw: 3.5, linecap: 1 });
+    }
+  }
+
+  const inset = opts.inset === false ? null : insetModel(feats, pin);
+  if (inset) inset.items.forEach(it => items.push(it));
+
+  const markers = opts.markers === false ? [] : distanceMarkers(feats, pr, inset);
+  markers.forEach(m => {
+    items.push({ k: 'line', x1: m.x - m.nx * 10, y1: m.y - m.ny * 10, x2: m.x + m.nx * 10, y2: m.y + m.ny * 10, stroke: 'rgba(20,83,45,0.35)', sw: 5, linecap: 1 });
+    items.push({ k: 'line', x1: m.x - m.nx * 10, y1: m.y - m.ny * 10, x2: m.x + m.nx * 10, y2: m.y + m.ny * 10, stroke: '#ffffff', sw: 2.6, linecap: 1 });
+    items.push({ k: 'circle', cx: m.bx, cy: m.by, r: 12, fill: '#ffffff', stroke: PAL.markerRing, sw: 1.6 });
+    items.push({ k: 'text', x: m.bx, y: m.by + 0.5, text: String(m.label), size: 11.5, weight: 700, fill: PAL.markerText, anchor: 'middle', dyEm: 0.36 });
+  });
+
+  // 旗杆（pin 在放大插图内时由插图内的旗代替）
+  let flagPt = pin ? pr(pin) : null;
+  if (!flagPt) {
+    const greens = byType('green').map(f => featGeom(f)).filter(Boolean);
+    if (greens.length) { const r = outerRings(greens[0])[0]; if (r) flagPt = pr(ringCentroid(r)); }
+  }
+  if (flagPt && !(inset && Math.hypot(flagPt[0] - inset.cx, flagPt[1] - inset.cy) < inset.r + 6)) {
+    items.push({ k: 'line', x1: flagPt[0], y1: flagPt[1] + 1, x2: flagPt[0], y2: flagPt[1] - 16, stroke: PAL.pole, sw: 2 });
+    items.push({ k: 'poly', pts: flagPt[0] + ',' + (flagPt[1] - 16) + ' ' + flagPt[0] + ',' + (flagPt[1] - 9.5) + ' ' + (flagPt[0] + 11.5) + ',' + (flagPt[1] - 12.75), fill: PAL.flag });
+    items.push({ k: 'circle', cx: flagPt[0], cy: flagPt[1], r: 3, fill: '#1f2937', stroke: '#ffffff', sw: 1.3 });
+  }
+
+  const clips = [];
+  if (hasFairway) {
+    let fwD = '';
+    byType('fairway').forEach(f => { const g = featGeom(f); if (g) fwD += pathOf(g, pr); });
+    if (fwD) clips.push({ id: 'fwClip', d: fwD });
+  }
+  if (inset) clips.push({ id: inset.clipId, shape: { cx: inset.cx, cy: inset.cy, r: inset.r - 3 } });
+  return { items, clips, inset, markers, hasFairway };
+}
+
+/* ---------- 发球台码数条 ---------- */
+function teeStrip(teeRows) {
+  const rows = [];
+  (teeRows || []).forEach((t, i) => {
+    const r = Math.floor(i / 5);
+    if (!rows[r]) rows[r] = [];
+    rows[r].push(t);
+  });
+  const items = [];
+  rows.forEach((row, ri) => {
+    row.forEach((t, ci) => {
+      const x = 14 + ci * (132 + 10), y = MAP_H + 12 + ri * (25 + 7);
+      items.push({ k: 'rect', x, y, w: 132, h: 25, rx: 6, fill: PAL.chipBg, stroke: PAL.chipEdge, sw: 1, opacity: 0.94 });
+      items.push({ k: 'rect', x: x + 7, y: y + 6.5, w: 12, h: 12, rx: 3, fill: t.color });
+      items.push({ k: 'text', x: x + 25, y: y + 12.5, text: String(t.yards), size: 13, weight: 700, fill: PAL.chipYards, anchor: 'start', dyEm: 0.36 });
+      items.push({ k: 'text', x: x + 58, y: y + 12.5, text: t.label, size: 9.5, weight: 400, fill: PAL.chipName, anchor: 'start', dyEm: 0.36 });
+    });
+  });
+  const stripH = rows.length ? 12 + rows.length * 25 + (rows.length - 1) * 7 + 8 : 0;
+  return { items, stripH };
+}
+
+/* ---------- 整洞构建 ---------- */
+function bboxDiag(geoms) {
+  const pts = [];
+  geoms.forEach(g => collectPts(g, pts));
+  if (!pts.length) return 0;
+  let x0 = 1 / 0, x1 = -1 / 0, y0 = 1 / 0, y1 = -1 / 0;
+  pts.forEach(p => { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; });
+  const kx = Math.cos(((y0 + y1) / 2) * Math.PI / 180);
+  return Math.hypot((x1 - x0) * kx, y1 - y0);
+}
+function buildHoleArt(data, opts) {
+  opts = opts || {};
+  const feats = Array.isArray(data && data.features) ? data.features : [];
+  const boundaryGeom = featGeom(data && data.boundary);
+  // 取景按单洞要素：course_geometry 的 boundary 是全场轮廓，纳入取景会把
+  // 单洞压成画面中央一小块（旧渲染即如此）；新渲染单洞取景、全场轮廓只在
+  // 总览呈现。仅当 boundary 与单洞同尺度（个别数据源的洞级边界）时才画。
+  const geoms = [];
+  feats.forEach(f => { const g = featGeom(f); if (g) geoms.push(g); });
+  const pr = makeProjector(geoms);
+  if (!pr) return null;
+  const drawBoundary = boundaryGeom && bboxDiag([boundaryGeom]) <= 1.8 * Math.max(1e-12, bboxDiag(geoms)) ? boundaryGeom : null;
+  const art = buildArtWithProjector(feats, drawBoundary, pr, opts);
+  const strip = teeStrip(opts.teeRows || []);
+  const height = MAP_H + strip.stripH;
+  const items = [{ k: 'rect', x: 0, y: 0, w: MAP_W, h: height, rx: 14, fill: PAL.backdrop, stroke: PAL.backdropEdge, sw: 1 }].concat(art.items, strip.items);
+  return { items, clips: art.clips, height, markers: art.markers, inset: art.inset, hasFairway: art.hasFairway };
+}
+
+/* ---------- SVG 序列化（网页/harness 用；App 端按同一 items 模型原生渲染） ---------- */
+function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function itemToSvg(it) {
+  const clip = it.clip ? ' clip-path="url(#' + it.clip + ')"' : '';
+  const op = it.opacity != null ? ' opacity="' + it.opacity + '"' : '';
+  const tr = it.transform ? ' transform="' + it.transform + '"' : '';
+  if (it.k === 'path') return '<path d="' + it.d + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + (it.dash ? ' stroke-dasharray="' + it.dash + '"' : '') + (it.linecap ? ' stroke-linecap="round"' : '') + clip + op + tr + '/>';
+  if (it.k === 'circle') return '<circle cx="' + it.cx.toFixed(1) + '" cy="' + it.cy.toFixed(1) + '" r="' + it.r + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + clip + op + '/>';
+  if (it.k === 'line') return '<line x1="' + it.x1.toFixed(1) + '" y1="' + it.y1.toFixed(1) + '" x2="' + it.x2.toFixed(1) + '" y2="' + it.y2.toFixed(1) + '" stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' + (it.linecap ? ' stroke-linecap="round"' : '') + clip + op + '/>';
+  if (it.k === 'poly') return '<polygon points="' + it.pts + '" fill="' + it.fill + '"' + clip + op + '/>';
+  if (it.k === 'rect') return '<rect x="' + it.x + '" y="' + it.y + '" width="' + it.w + '" height="' + it.h + '" rx="' + (it.rx || 0) + '" fill="' + it.fill + '"' + (it.stroke ? ' stroke="' + it.stroke + '" stroke-width="' + (it.sw || 1) + '"' : '') + clip + op + '/>';
+  if (it.k === 'text') return '<text x="' + it.x.toFixed(1) + '" y="' + it.y.toFixed(1) + '" font-size="' + it.size + '" font-weight="' + (it.weight || 400) + '" fill="' + it.fill + '" text-anchor="' + (it.anchor || 'start') + '"' + (it.dyEm ? ' dy="' + it.dyEm + 'em"' : '') + ' font-family="Arial, Helvetica, sans-serif">' + escXml(it.text) + '</text>';
+  return '';
+}
+function artToSvg(art, label) {
+  let defs = '<defs><linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + PAL.waterFrom + '"/><stop offset="1" stop-color="' + PAL.waterTo + '"/></linearGradient>';
+  (art.clips || []).forEach(c => {
+    if (c.d) defs += '<clipPath id="' + c.id + '"><path d="' + c.d + '"/></clipPath>';
+    else if (c.shape) defs += '<clipPath id="' + c.id + '"><circle cx="' + c.shape.cx + '" cy="' + c.shape.cy + '" r="' + c.shape.r + '"/></clipPath>';
+  });
+  defs += '</defs>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + MAP_W + ' ' + art.height + '" role="img" aria-label="' + escXml(label || '') + '">' + defs + art.items.map(itemToSvg).join('') + '</svg>';
+}
+function renderHoleArtSvg(data, opts) {
+  const art = buildHoleArt(data, opts || {});
+  if (!art) return '';
+  return artToSvg(art, (opts && opts.label) || '');
+}
+var TEE_FAMILY_COLORS = [["championship", "#2f353b"], ["unicorn", "#7c5cd6"], ["gold", "#c9a227"], ["fairway", "#4d9f57"], ["silver", "#9aa5b1"]];
+function teeColorOf(name) { var n = String(name || "").toLowerCase(); for (var i = 0; i < TEE_FAMILY_COLORS.length; i++) if (n.indexOf(TEE_FAMILY_COLORS[i][0]) >= 0) return TEE_FAMILY_COLORS[i][1]; return "#6b7280"; }
+function artToSvgWeb(art, label) { return artToSvg(art, label).replace("<svg ", "<svg class=\"map\" "); }
+function renderHoleSvg(data) {
+  var teeRows = [];
+  try {
+    var byTee = (typeof PREVIEW !== "undefined" && PREVIEW && PREVIEW.holes_by_tee) || {};
+    ((typeof PREVIEW !== "undefined" && PREVIEW && PREVIEW.tees) || []).forEach(function (t) {
+      var hd = (byTee[t.id] || []).find(function (h) { return h.hole === curHole; });
+      if (hd && hd.yards != null) teeRows.push({ label: String(t.name).replace("（", " ").replace("）", ""), color: teeColorOf(t.name), yards: hd.yards });
+    });
+    teeRows.sort(function (a, b) { return b.yards - a.yards; });
+  } catch (e) { teeRows = []; }
+  var art = buildHoleArt(data, { teeRows: teeRows });
+  if (!art) return '<div class="empty">本洞暂无地形图</div>';
+  return artToSvgWeb(art, "第 " + curHole + " 洞地图");
 }
 function holeData() {
   if (!PREVIEW) return null;
