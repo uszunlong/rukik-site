@@ -269,6 +269,10 @@
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
 var eventId = new URLSearchParams(location.search).get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
+/* [线Z60 2026-11-12] 活动分享链接主流程：event.html?e=<活动ID> 为稳定入口；
+   &c=<邀请码> 仅作 invite_only 球局的访问凭据随链携带（用户无感），
+   手输邀请码与 play.html?join= 保留为备用加入方式。 */
+var inviteCodeParam = new URLSearchParams(location.search).get('c') || '';
 var token = null;
 try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); if (raw) token = JSON.parse(raw).access_token || null; } catch (e) {}
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -481,6 +485,21 @@ function renderHero() {
     else if (myReg.status === 'waitlisted') act = '<a class="signup alt" href="' + playUrl + '">候补中 · 查看进度</a>';
     else if (myReg.status === 'rejected') act = '<a class="signup alt" href="' + playUrl + '">报名未通过 · 查看详情</a>';
   }
+  /* [线Z60 2026-11-12] 快速球局（kind=casual）分享落地主流程，覆盖上方正式
+     赛事口径：成员→「计分卡」直达记分；非成员→醒目「报名参加」，登录后一键
+     加入同一 round（casual_join 按 event_id＋邀请码校验，与手输码同一语义、
+     同一幂等）；组织者关闭加入/球局结束时如实呈现状态、不伪造可报名。 */
+  if (e.kind === 'casual' && e.status !== 'completed' && e.status !== 'cancelled') {
+    var joined = myReg && (myReg.status === 'registered' || myReg.status === 'checked_in');
+    if (joined) {
+      act = '<a class="signup" href="' + playUrl + '">计分卡</a>';
+    } else if (!myReg) {
+      var joinsClosed = !!((e.competition_config || {}).joins_closed);
+      if (joinsClosed) act = '<div class="signup alt">本场球局已关闭加入</div>';
+      else if (token) act = '<button type="button" class="signup" id="z60JoinBtn" style="border:none;cursor:pointer;font:inherit;width:100%">报名参加</button><div id="z60JoinNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
+      else act = '<button type="button" class="signup" id="z60JoinBtn" style="border:none;cursor:pointer;font:inherit;width:100%">登录后报名参加</button><div id="z60LoginMount"></div><div id="z60JoinNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
+    }
+  }
   document.getElementById('heroSec').innerHTML =
     '<div class="hero" id="heroMedia"></div>' +
     '<h1>' + esc(e.title) + '</h1>' +
@@ -504,6 +523,46 @@ function renderHero() {
   renderHeroMedia();
   renderDual();
   renderStaff();
+  bindZ60Join();
+}
+/* [线Z60 2026-11-12] 「报名参加」一键加入：令牌现读 localStorage（与
+   photos.html 同口径，不依赖页面加载快照）；未登录先在原地挂载登录区，
+   登录成功后刷新赛事态（成员态/报名钮由服务端事实决定，不前端伪造）。 */
+function bindZ60Join() {
+  var btn = document.getElementById('z60JoinBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var note = document.getElementById('z60JoinNote');
+    try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = raw ? (JSON.parse(raw).access_token || null) : null; } catch (e) {}
+    if (!token) {
+      var mount = document.getElementById('z60LoginMount');
+      if (mount && !mount.dataset.mounted) {
+        mount.dataset.mounted = '1';
+        import('./auth.js?v=20261112b').then(function (auth) {
+          auth.mountLogin(mount, { onDone: function () {
+            try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
+            if (note) note.textContent = '已登录，正在为您刷新报名状态…';
+            loadDynamic();
+          } });
+        }).catch(function () { if (note) note.textContent = '登录组件加载失败，请稍后重试。'; });
+      }
+      if (note) note.textContent = '请先登录（与 RUKIK App 同一账号），登录后即可报名。';
+      return;
+    }
+    btn.disabled = true;
+    if (note) note.textContent = '正在为您报名…';
+    var body = {};
+    var code = inviteCodeParam || (EV && EV.event && EV.event.invite_code) || '';
+    if (code) body.invite_code = code;
+    call('casual_join', body).then(function (j) {
+      if (note) note.textContent = j.already_member ? '您已在这场球局中。' : '报名成功！已为您加入本场球局，也已同步到您的「我的计划」。';
+      loadDynamic();
+    }).catch(function (err) {
+      btn.disabled = false;
+      var m = String(err && err.message || err);
+      if (note) note.textContent = m.indexOf('joins closed') >= 0 ? '本场球局已关闭加入。' : m.indexOf('invalid invite code') >= 0 ? '邀请链接已失效，请向组织者索取最新分享链接。' : m.indexOf('round already finished') >= 0 ? '本场球局已结束。' : '报名未成功，请稍后重试。';
+    });
+  });
 }
 /* 第二区：记分卡 + 问RUKIK Golf 并排双卡；状态短说明只进记分卡一行，不另堆文字卡 */
 function renderDual() {
@@ -1633,7 +1692,7 @@ function maybeWall() {
   WALL_STARTED = true; loadWall();
 }
 function loadDynamic() {
-  dyn('event_get', {}).then(function (j) {
+  dyn('event_get', inviteCodeParam ? { invite_code: inviteCodeParam } : {}).then(function (j) {
     EV = j; PREVIEW = j.course_preview || null;
     applyShare(j.event);
     /* 发球台默认优先级（Z33）：赛事官方指定台（rounds.default_tee_id 且能在预览台列表中
