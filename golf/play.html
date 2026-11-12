@@ -613,7 +613,7 @@ async function flushQueue() {
         sentAny = true;
         delete S.conflicts[item.hole]; delete S.failed[item.hole];
         if (r.data && r.data.next_hole_preview) S.preview = previewText(r.data.next_hole_preview);
-        if (S.justSaved && item.scorecard_id === S.justSaved.scorecard_id && item.hole === S.justSaved.hole && Date.now() - S.justSaved.at < 30000) confirmedJS = S.justSaved;
+        if (S.justSaved && item.scorecard_id === S.justSaved.scorecard_id && item.hole === S.justSaved.hole && Date.now() - S.justSaved.at < 30000) { confirmedJS = S.justSaved; if (r.data && r.data.celebration) confirmedJS.cel = r.data.celebration; }
       } else if (r.status === 409) {
         S.conflicts[item.hole] = { item: item, current_strokes: r.data.current_strokes != null ? r.data.current_strokes : null };
         remain.push(item);
@@ -649,6 +649,18 @@ async function flushQueue() {
         var seen = null; try { seen = localStorage.getItem(flagKey); } catch (e) {}
         if (!seen) {
           try { localStorage.setItem(flagKey, new Date().toISOString()); } catch (e) {}
+          var celR = confirmedJS.cel;
+          if (celR && celR.round_complete && celR.round) {
+            /* [线Z37] 完赛数据优先服务端真实汇总（总杆/亮点洞/确认状态） */
+            var rd = celR.round;
+            var relS = rd.to_par;
+            var hlHoles = (rd.highlight_holes || []).map(function (x) { return x.hole; });
+            var linesR = ['完成球洞 ' + celR.holes_completed + ' / ' + celR.holes_total + ' · 本场总杆 ' + rd.gross_total + ' 杆（相对标准杆 ' + (relS === 0 ? '±0' : relS > 0 ? '+' + relS : '' + relS) + '）'];
+            if (rd.birdie_plus_count > 0) linesR.push('今天打出 ' + rd.birdie_plus_count + ' 次 Birdie 及更好' + (hlHoles.length ? '，亮点洞：第 ' + hlHoles.join('、') + ' 洞' : '') + '——都已记入你的赛事回忆。');
+            linesR.push('今天的每一杆，都值得被记住。');
+            linesR.push(rd.status_line);
+            showCelebration({ title: hs.length + ' 洞，精彩完赛！', lines: linesR, round: true, level: 'round' });
+          } else {
           var gross = 0, parT = 0, birdies = 0, best = null, bestRel = Infinity;
           hs.forEach(function (h) { var sc = effStrokes(card.id, h); gross += sc; parT += (h.par || 0); if (sc < (h.par || 0)) birdies++; var rl = sc - (h.par || 0); if (rl < bestRel) { bestRel = rl; best = h; } });
           var relT = gross - parT;
@@ -658,30 +670,52 @@ async function flushQueue() {
           lines.push('今天的每一杆，都值得被记住。');
           lines.push(cd2.scorecard.status === 'locked' ? '成绩已锁定（正式成绩）' : '实时成绩，待赛事最终确认');
           showCelebration({ title: hs.length + ' 洞，精彩完赛！', lines: lines, round: true });
+          }
         }
       } else {
         var rel = confirmedJS.strokes - confirmedJS.par;
         var label = rel <= -3 ? 'Albatross' : rel === -2 ? 'Eagle' : rel === -1 ? 'Birdie' : rel === 0 ? 'Par' : rel === 1 ? 'Bogey' : rel === 2 ? 'Double Bogey' : '+' + rel;
         var fb = rel <= -1 ? '带着这份好状态，迎接下一洞。' : rel === 0 ? '稳稳完成这一洞。下一洞，继续享受挥杆。' : rel === 1 ? '这一洞已经过去，下一洞又是新的开始。' : '这一洞已经过去，下一洞按自己的节奏来。';
-        showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞，已记录！', lines: [confirmedJS.strokes + ' 杆 · ' + label, fb], round: rel <= -1 });
+        var cel = confirmedJS.cel;
+        if (cel) {
+          /* [线Z37] 服务端上下文优先：分级/事实句/鼓励均来自真实成绩；
+             first_confirm=false（编辑改分/同值重提）不播首次庆祝。 */
+          if (cel.first_confirm) {
+            var linesH = [cel.strokes + ' 杆 · ' + cel.label].concat((cel.fact_lines || []).slice(0, 2));
+            linesH.push(cel.cheer || fb);
+            showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞 · 成绩已保存', lines: linesH, round: false, level: cel.level });
+          }
+        } else {
+          var levelL = rel <= -3 ? 'albatross' : rel === -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double_plus';
+          showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞 · 成绩已保存', lines: [confirmedJS.strokes + ' 杆 · ' + label, fb], round: false, level: levelL });
+        }
       }
     }
   }
 }
 
 /* [线W2] 仪式呈现层：轻量浮层，点按任意处关闭；减动效偏好时静态短呈现 */
+/* [线Z37] 分级视觉：Eagle 及更好/完赛金边＋🏆、Birdie ⭐、Par 绿边、
+   Bogey 暖绿边；完赛浮层带「查看我的成绩」入口且可点击（仅完赛层
+   pointer-events:auto——中途逐洞层保持 Z3 的不拦截纪律防漏录）。 */
 function showCelebration(o) {
   var old = document.getElementById('w2Celeb'); if (old) old.remove();
   var reduced = false; try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var el = document.createElement('div');
   el.id = 'w2Celeb';
   /* [线Z3] 浮层只呈现、不拦截点击：快速连点记分时曾遮挡洞位按钮导致漏录；pointer-events:none 后点按直接落到页面，浮层仍按原时长自动关闭（保存/同步逻辑未动） */
-  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s;pointer-events:none');
-  var cardCss = 'background:#F7F3EC;border-radius:16px;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)' + (o.round ? ';border:1.5px solid #B58A58' : '');
-  var inner = '<div style="' + cardCss + '"><div style="font-size:12px;letter-spacing:2px;color:#8B857D">' + (o.round ? '🏆 RUKIK GOLF' : '⛳ RUKIK GOLF') + '</div>' +
+  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s;pointer-events:' + (o.round ? 'auto' : 'none'));
+  var lv = o.level || '';
+  var accent = o.round || lv === 'eagle' || lv === 'albatross' || lv === 'hole_in_one' ? ';border:1.5px solid #B58A58'
+    : lv === 'par' ? ';border:1.5px solid #4A7C59'
+    : lv === 'bogey' ? ';border:1.5px solid #9DBEA8' : '';
+  var cardCss = 'background:#F7F3EC;border-radius:16px;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)' + accent;
+  var kicker = o.round || lv === 'eagle' || lv === 'albatross' || lv === 'hole_in_one' ? '🏆 RUKIK GOLF' : lv === 'birdie' ? '⭐ RUKIK GOLF' : '⛳ RUKIK GOLF';
+  var inner = '<div style="' + cardCss + '"><div style="font-size:12px;letter-spacing:2px;color:#8B857D">' + kicker + '</div>' +
     '<div style="font-size:' + (o.round ? '26px' : '22px') + ';font-weight:700;color:#14304A;margin:8px 0">' + esc(o.title) + '</div>';
   (o.lines || []).forEach(function (ln, i) { inner += '<div style="font-size:' + (i === 0 ? '16px' : '14px') + ';color:#2B2B28;margin-top:4px;line-height:1.55">' + esc(ln) + '</div>'; });
-  inner += '<div style="font-size:12px;color:#8B857D;margin-top:10px">轻点任意处继续</div></div>';
+  if (o.round) inner += '<div style="margin-top:14px"><a href="event.html?e=' + encodeURIComponent(eventId) + '" style="display:inline-block;background:#14532D;color:#fff;font-size:15px;font-weight:600;padding:10px 26px;border-radius:10px;text-decoration:none">查看我的成绩</a></div>';
+  inner += '<div style="font-size:12px;color:#8B857D;margin-top:10px">' + (o.round ? '轻点空白处关闭' : '轻点任意处继续') + '</div></div>';
   el.innerHTML = inner;
   document.body.appendChild(el);
   requestAnimationFrame(function () { el.style.opacity = '1'; });
