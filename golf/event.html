@@ -15,11 +15,11 @@
 <meta property="og:title" content="RUKIK Golf · 赛事">
 <meta property="og:description" content="赛事互动 · 精彩瞬间 · 实时成绩">
 <meta property="og:url" content="https://rukik.com/golf/event.html">
-<meta property="og:image" content="https://rukik.com/assets/og-share.png">
+<meta property="og:image" content="https://rukik.com/golf/golf-share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="RUKIK Golf · 赛事">
 <meta name="twitter:description" content="赛事互动 · 精彩瞬间 · 实时成绩">
-<meta name="twitter:image" content="https://rukik.com/assets/og-share.png">
+<meta name="twitter:image" content="https://rukik.com/golf/golf-share.jpg">
 <script src="/assets/wxshare.js?v=20261111a"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -303,9 +303,9 @@ function pushWxShare(data) {
 }
 function applyShare(e) {
   if (!e || !e.title) return;
-  /* 无自有封面回退品牌图，禁落空值：setMeta 对空值跳过、wx 空 imgUrl 会回退抓静态 og，
+  /* 无自有封面回退高尔夫主题图，禁落空值：setMeta 对空值跳过、wx 空 imgUrl 会回退抓静态 og，
      任一都会让分享图停在静态值上（串图根因之二）。 */
-  var data = { title: e.title, desc: shareDescOf(e.description), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || 'https://rukik.com/assets/og-share.png' };
+  var data = { title: e.title, desc: shareDescOf(e.description), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || 'https://rukik.com/golf/golf-share.jpg' };
   document.title = e.title + ' · RUKIK Golf';
   setMeta('meta[property="og:title"]', data.title);
   setMeta('meta[property="og:description"]', data.desc);
