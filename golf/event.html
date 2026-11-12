@@ -1168,8 +1168,16 @@ function resetBigMap() {
   fitOverview();
   syncAllBtn();
 }
+/* 要素填充色：与 App holeMapGeom.ts 的 FILLS 同值。Z28 换渲染器时 var FILLS 定义被一并删除、
+   只剩下方 style 回调里的引用悬空，浏览器运行时 ReferenceError 被 loadHoleSvg 的 catch 误报成
+   「本洞地图加载失败」并抹掉已渲染好的逐洞 SVG——Z34 恢复定义。 */
+var FILLS = { fairway: '#bfe3c0', green: '#43a047', bunker: '#ecd9a0', water_hazard: '#a8d4f0', rough: '#d8e6c3', tee: '#ffffff' };
 function applyHoleFocus(data) {
   if (!lmap || !holeLayer) return;
+  /* 聚焦层故障只丢高亮，绝不外抛：不许再被上层误报为逐洞图加载失败（Z34） */
+  try { applyHoleFocusInner(data); } catch (e) { try { holeLayer.clearLayers(); } catch (e2) {} mapFocused = false; syncAllBtn(); }
+}
+function applyHoleFocusInner(data) {
   holeLayer.clearLayers();
   mapFocused = false;
   if (!data || !data.available || !(data.features || []).length) { syncAllBtn(); return; } // 无几何：清掉旧高亮即可，不画假图、相机保持原位

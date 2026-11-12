@@ -383,7 +383,7 @@ function paintNoCard() {
     '<div class="card"><h2>比赛进行中</h2>' +
     (grouped
       ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
-      : '<p class="muted">您已报名，但尚未分组，暂时无法记分。请等待主办方完成分组与记分卡设置。</p>') +
+      : '<p class="muted">已开赛 · 您尚未分组，暂时无法记分。请联系主办方安排分组。</p>') +
     organizerHint() + myStatusHtml() +
     '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
   document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
