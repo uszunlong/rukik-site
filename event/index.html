@@ -214,5 +214,15 @@ if(qf && ['golf','biz','etc'].indexOf(qf) >= 0){
 }
 load();
 </script>
+<script>
+/* [线Z22] 导航登录态感知：已登录时把导航「登录」换成用户称呼/头像并指向其落点（专家→/studio/ 工作台，普通用户→/build/ 账号页）；未登录保持「登录」→/build/。会话只读本机 Supabase 会话存储，专家判定与 /build/ 页同口径（professionals_resolved 按 user_id 查行）。 */
+var AUTH22={uid:null,name:null,avatar:null,href:"/build/",ready:false};
+var SB22_BASE="https://yzgzgtrqrmarfjftgbwt.supabase.co";
+var SB22_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
+function readSession22(){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&/^sb-.+-auth-token$/.test(k)){var v=JSON.parse(localStorage.getItem(k)||"null");if(v&&v.access_token&&v.user&&(!v.expires_at||v.expires_at*1000>Date.now()))return v;}}}catch(e){}return null;}
+function applyAuth22(){if(!AUTH22.ready||!AUTH22.uid)return;var nav=document.querySelector(".main-nav");if(!nav)return;var a=nav.querySelector("a[data-auth-link]")||nav.querySelector('a[href="/build/"]');if(!a)return;a.setAttribute("data-auth-link","1");if(a.getAttribute("href")!==AUTH22.href)a.setAttribute("href",AUTH22.href);var label=AUTH22.name||"我的账号";var sig=AUTH22.uid+"|"+label+"|"+(AUTH22.avatar||"");if(a.getAttribute("data-auth-sig")!==sig){a.setAttribute("data-auth-sig",sig);a.textContent="";if(AUTH22.avatar){var im=document.createElement("img");im.src=AUTH22.avatar;im.alt="";im.style.cssText="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:-6px;margin-right:6px";a.appendChild(im);}a.appendChild(document.createTextNode(label));}}
+function loadAuth22(){var s=readSession22();if(!s){AUTH22.ready=true;return;}AUTH22.uid=s.user.id;var md=s.user.user_metadata||{};AUTH22.name=md.name||md.full_name||md.display_name||null;var em=s.user.email||"";var attempt22=0;function lookup22(){attempt22++;fetch(SB22_BASE+"/rest/v1/professionals_resolved?select=name,resolved_avatar_url&user_id=eq."+encodeURIComponent(s.user.id),{headers:{"apikey":SB22_ANON,"Authorization":"Bearer "+s.access_token}}).then(function(r){if(!r.ok)throw new Error("http");return r.json();}).then(function(rows){if(rows&&rows.length){AUTH22.href="/studio/";if(rows[0].name)AUTH22.name=rows[0].name;if(rows[0].resolved_avatar_url)AUTH22.avatar=rows[0].resolved_avatar_url;}if(!AUTH22.name&&em)AUTH22.name=em.split("@")[0];AUTH22.ready=true;applyAuth22();}).catch(function(){if(attempt22<3){setTimeout(lookup22,1500);}else{if(!AUTH22.name&&em)AUTH22.name=em.split("@")[0];AUTH22.ready=true;applyAuth22();}});}lookup22();}
+loadAuth22();var n22=0;var t22=setInterval(function(){applyAuth22();if(++n22>=60)clearInterval(t22);},500);document.addEventListener("DOMContentLoaded",applyAuth22);
+</script>
 </body>
 </html>
