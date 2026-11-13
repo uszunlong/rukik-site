@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUKIK Golf AI球童 · RUKIK Golf</title>
-<!-- build-marker: z55-20261112c + caddie-login-visual-20261112 -->
+<!-- build-marker: z55-20261112c + caddie-login-visual-20261112 + caddie-chat-visual-v1-20261112 -->
 <meta name="description" content="RUKIK 平台官方 AI 球童：高尔夫专业知识 · 赛事陪伴 · 个人成长">
 <style>
   *{box-sizing:border-box}
@@ -95,6 +95,96 @@
   #sendBtn:disabled{background:#a7c4ac}
   .hint{max-width:760px;margin:6px auto 0;font-size:11.5px;color:#8a9a8e;text-align:center}
   .hidden{display:none!important}
+  /* [球童聊天视觉升级 V1.0 2026-11-12] 已登录对话态专属皮肤：深翡翠绿 × 球场实景 ×
+   * 玻璃质感 × 香槟金细节，与登录页共用色板与背景图（assets/caddie-login-bg*.webp）。
+   * 作用域仅限 body:has(#composer:not(.hidden))（已登录对话态）；未登录登录态沿用
+   * 登录改版皮肤、两者互斥。纯 CSS 套皮：全部 JS、markup、记忆协议零改动。
+   * 对话开始（#msgs 出现 .msg.u）后：蒙层加深、欢迎卡收为细条、快捷问题收起，
+   * 让消息内容成为视觉中心；会话清空后按 :has 状态自动恢复。 */
+  body:has(#composer:not(.hidden)){background:#063B29;color:#EAF6EE}
+  body:has(#composer:not(.hidden))::before{content:'';position:fixed;inset:0;z-index:-2;background:url('assets/caddie-login-bg.webp') center 30%/cover no-repeat #063B29}
+  body:has(#composer:not(.hidden))::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,59,41,.72),rgba(6,59,41,.44) 30%,rgba(6,59,41,.52) 60%,rgba(4,38,25,.9)),radial-gradient(120% 34% at 50% -6%,rgba(214,184,120,.13),transparent 60%),radial-gradient(130% 40% at 50% 112%,rgba(20,92,59,.5),transparent 65%)}
+  body:has(#composer:not(.hidden)):has(#msgs .msg.u)::after{background:linear-gradient(180deg,rgba(5,45,30,.86),rgba(5,45,30,.68) 30%,rgba(5,45,30,.74) 60%,rgba(3,30,20,.95)),radial-gradient(130% 40% at 50% 112%,rgba(20,92,59,.35),transparent 65%)}
+  body:has(#composer:not(.hidden)) header{background:linear-gradient(180deg,rgba(6,59,41,.92),rgba(6,59,41,.78));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid rgba(214,184,120,.35);box-shadow:0 6px 24px rgba(0,20,10,.35)}
+  body:has(#composer:not(.hidden)) header a.back{background:rgba(255,255,255,.08);border-color:rgba(141,219,161,.5)}
+  body:has(#composer:not(.hidden)) header a.back:hover{background:rgba(141,219,161,.18)}
+  body:has(#composer:not(.hidden)) header .ttl .name::before{content:'R';display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-right:8px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#ffffff,#dfe9df 55%,#b9cfbc);color:#145C3B;font-size:14px;font-weight:800;vertical-align:-6px;box-shadow:inset 0 -2px 4px rgba(6,59,41,.25),0 2px 6px rgba(0,20,10,.35)}
+  body:has(#composer:not(.hidden)) .badge{background:rgba(141,219,161,.18);color:#B9E7C6;border:1px solid rgba(141,219,161,.45)}
+  body:has(#composer:not(.hidden)) #authBar{background:rgba(6,59,41,.55);color:#D8E9DF;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid rgba(141,219,161,.16)}
+  body:has(#composer:not(.hidden)) #authBar:empty{display:none}
+  body:has(#composer:not(.hidden)) #authBar button{border-color:rgba(141,219,161,.5);color:#B9E7C6;background:rgba(255,255,255,.05)}
+  body:has(#composer:not(.hidden)) #authBar button:hover{background:rgba(141,219,161,.16)}
+  body:has(#composer:not(.hidden)) #authBar .rk-who{display:inline-flex;align-items:center;gap:7px}
+  body:has(#composer:not(.hidden)) #authBar .rk-who::before{content:'';width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#ffffff,#dfe9df 55%,#b9cfbc);box-shadow:inset 0 -2px 3px rgba(6,59,41,.3)}
+  body:has(#composer:not(.hidden)) #authBar .rk-who-name{color:#fff;font-weight:700}
+  body:has(#composer:not(.hidden)) #authBar .rk-rename-input{background:rgba(255,255,255,.1);border:1px solid rgba(141,219,161,.4);border-radius:999px;color:#fff;padding:3px 10px;font-size:12.5px;outline:none}
+  body:has(#composer:not(.hidden)) main{max-width:1120px;padding:18px 16px 10px;gap:12px}
+  body:has(#composer:not(.hidden)) .evname{align-self:center;color:#D8E9DF;font-size:12.5px;background:rgba(6,59,41,.5);border:1px solid rgba(141,219,161,.28);border-radius:999px;padding:4px 14px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  body:has(#composer:not(.hidden)) .evname:empty{display:none}
+  body:has(#composer:not(.hidden)) #msgs{display:flex;flex-direction:column;gap:10px}
+  body:has(#composer:not(.hidden)) .msg.a{position:relative;align-self:flex-start;background:linear-gradient(155deg,rgba(20,92,59,.62),rgba(6,59,41,.78));border:1px solid rgba(141,219,161,.32);color:#fff;border-radius:20px;border-bottom-left-radius:6px;margin-left:40px;padding:12px 16px;max-width:min(80%,880px);font-size:15px;box-shadow:0 10px 28px rgba(0,20,10,.35),inset 0 1px 0 rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2)}
+  body:has(#composer:not(.hidden)) .msg.a::before{content:'R';position:absolute;left:-40px;top:0;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#ffffff,#dfe9df 55%,#b9cfbc);color:#145C3B;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -2px 4px rgba(6,59,41,.25),0 3px 8px rgba(0,20,10,.4)}
+  body:has(#composer:not(.hidden)) .msg.a .h{color:#fff}
+  body:has(#composer:not(.hidden)) .msg.a strong{color:#F5E7C3}
+  body:has(#composer:not(.hidden)) .msg.a a{color:#8DDBA1}
+  body:has(#composer:not(.hidden)) .tag{background:rgba(141,219,161,.16);color:#B9E7C6;border:1px solid rgba(141,219,161,.35)}
+  body:has(#composer:not(.hidden)) .msg.u{align-self:flex-end;background:linear-gradient(135deg,#2fae64,#249653);border:1px solid rgba(141,219,161,.4);color:#fff;border-radius:20px;border-bottom-right-radius:6px;max-width:min(80%,880px);padding:12px 16px;font-size:15px;box-shadow:0 10px 24px rgba(0,20,10,.3)}
+  body:has(#composer:not(.hidden)) .sys{color:rgba(216,233,223,.85)}
+  body:has(#composer:not(.hidden)) #msgs>.msg.a:first-child{transition:padding .35s ease,margin .35s ease,opacity .35s ease,font-size .35s ease}
+  body:has(#composer:not(.hidden)) #msgs:not(:has(.msg.u))>.msg.a:first-child{margin-left:54px;padding:22px 24px;border-radius:24px;font-size:15.5px;line-height:1.75;border-color:rgba(214,184,120,.45);background:linear-gradient(155deg,rgba(20,92,59,.66),rgba(6,59,41,.84));box-shadow:0 24px 60px rgba(0,20,10,.45),inset 0 1px 0 rgba(255,255,255,.14)}
+  body:has(#composer:not(.hidden)) #msgs:not(:has(.msg.u))>.msg.a:first-child::before{left:-54px;width:42px;height:42px;font-size:20px}
+  body:has(#composer:not(.hidden)) #msgs:has(.msg.u)>.msg.a:first-child{align-self:center;margin-left:0;padding:6px 14px;font-size:12.5px;line-height:1.5;border-radius:999px;opacity:.82;max-width:100%}
+  body:has(#composer:not(.hidden)) #msgs:has(.msg.u)>.msg.a:first-child::before{display:none}
+  body:has(#composer:not(.hidden)) #msgs:has(.msg.u)>.msg.a:first-child .tag{display:none}
+  body:has(#composer:not(.hidden)) .chips{gap:9px}
+  body:has(#composer:not(.hidden)) .chips button{background:rgba(6,59,41,.55);border:1px solid rgba(141,219,161,.45);color:#fff;border-radius:999px;padding:9px 15px;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .2s ease,border-color .2s ease}
+  body:has(#composer:not(.hidden)) .chips button:hover{background:rgba(36,150,83,.45);border-color:rgba(141,219,161,.8)}
+  body:has(#composer:not(.hidden)) .chips button:active{background:rgba(36,150,83,.55)}
+  body:has(#composer:not(.hidden)) .chips button::before{content:'';width:15px;height:15px;flex:none;background:center/contain no-repeat}
+  body:has(#composer:not(.hidden)) .chips button:nth-child(1)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h16'/%3E%3Cpath d='M7 20v-5'/%3E%3Cpath d='M12 20V6'/%3E%3Cpath d='M17 20v-8'/%3E%3C/svg%3E")}
+  body:has(#composer:not(.hidden)) .chips button:nth-child(2)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 21V4'/%3E%3Cpath d='M6 5h11l-2.5 3.5L17 12H6'/%3E%3C/svg%3E")}
+  body:has(#composer:not(.hidden)) .chips button:nth-child(3)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Ccircle cx='9.5' cy='9.5' r='1' fill='%238DDBA1' stroke='none'/%3E%3Ccircle cx='14.5' cy='10.5' r='1' fill='%238DDBA1' stroke='none'/%3E%3Ccircle cx='10.5' cy='14.5' r='1' fill='%238DDBA1' stroke='none'/%3E%3Ccircle cx='15' cy='15' r='1' fill='%238DDBA1' stroke='none'/%3E%3C/svg%3E")}
+  body:has(#composer:not(.hidden)) .chips button:nth-child(4)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v13'/%3E%3Cpath d='M8 21h8'/%3E%3Cpath d='M12 6H6m6 0h6'/%3E%3Cpath d='M6 6l-2.2 5a3.1 3.1 0 0 0 4.4 0L6 6z'/%3E%3Cpath d='M18 6l-2.2 5a3.1 3.1 0 0 0 4.4 0L18 6z'/%3E%3C/svg%3E")}
+  body:has(#composer:not(.hidden)) .chips button:nth-child(5)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='11' width='16' height='9'/%3E%3Cpath d='M12 11v9'/%3E%3Cpath d='M3.5 7.5h17V11h-17z'/%3E%3Cpath d='M12 7.5c-1.8 0-4-.4-4-2 0-1.2 1.6-1.8 2.6-1C11.7 4.8 12 6 12 7.5z'/%3E%3Cpath d='M12 7.5c1.8 0 4-.4 4-2 0-1.2-1.6-1.8-2.6-1C12.3 4.8 12 6 12 7.5z'/%3E%3C/svg%3E")}
+  body:has(#composer:not(.hidden)):has(#msgs .msg.u) .chips{display:none}
+  body:has(#composer:not(.hidden)) footer{background:linear-gradient(180deg,transparent,rgba(4,38,25,.55) 45%);border-top:none;padding:14px 16px calc(12px + env(safe-area-inset-bottom))}
+  body:has(#composer:not(.hidden)) .inrow{max-width:1120px;background:linear-gradient(155deg,rgba(20,92,59,.6),rgba(6,59,41,.82));border:1px solid rgba(141,219,161,.4);border-radius:28px;padding:7px;gap:6px;box-shadow:0 18px 44px rgba(0,20,10,.45),inset 0 1px 0 rgba(255,255,255,.12);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2)}
+  body:has(#composer:not(.hidden)) .inrow:focus-within{border-color:rgba(141,219,161,.75);box-shadow:0 18px 44px rgba(0,20,10,.45),0 0 0 3px rgba(36,150,83,.3)}
+  body:has(#composer:not(.hidden)) textarea{background:transparent;border:none;color:#fff;padding:10px 14px;font-size:15.5px;outline:none}
+  body:has(#composer:not(.hidden)) textarea::placeholder{color:rgba(216,233,223,.55)}
+  body:has(#composer:not(.hidden)) #sendBtn{background:linear-gradient(135deg,#2fae64,#249653);border-radius:999px;padding:11px 20px;display:inline-flex;align-items:center;gap:7px;box-shadow:0 6px 18px rgba(36,150,83,.4);cursor:pointer}
+  body:has(#composer:not(.hidden)) #sendBtn::before{content:'';width:15px;height:15px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 2 11 13'/%3E%3Cpath d='M22 2 15 22l-4-9-9-4z'/%3E%3C/svg%3E") center/contain no-repeat}
+  body:has(#composer:not(.hidden)) #sendBtn:disabled{background:rgba(141,219,161,.25);color:rgba(255,255,255,.6);box-shadow:none;cursor:default}
+  body:has(#composer:not(.hidden)) .hint{max-width:1120px;color:rgba(216,233,223,.75);margin-top:8px;text-shadow:0 1px 6px rgba(0,20,10,.6)}
+  body:has(#composer:not(.hidden)) ::selection{background:rgba(36,150,83,.55)}
+  body:has(#composer:not(.hidden)) button:focus-visible,body:has(#composer:not(.hidden)) a:focus-visible,body:has(#composer:not(.hidden)) textarea:focus-visible{outline:2px solid #8DDBA1;outline-offset:2px}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    body:has(#composer:not(.hidden)) .msg.a{background:rgba(6,59,41,.94)}
+    body:has(#composer:not(.hidden)) .inrow{background:rgba(6,59,41,.96)}
+    body:has(#composer:not(.hidden)) .chips button{background:rgba(6,59,41,.9)}
+    body:has(#composer:not(.hidden)) #authBar{background:rgba(6,59,41,.92)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    body:has(#composer:not(.hidden)) *,body:has(#composer:not(.hidden)) *::before,body:has(#composer:not(.hidden)) *::after{transition:none!important;animation:none!important}
+  }
+  @media (max-width:640px){
+    body:has(#composer:not(.hidden))::before{background-image:url('assets/caddie-login-bg-m.webp');background-position:center top}
+    body:has(#composer:not(.hidden)) header{padding:8px 10px;gap:8px}
+    body:has(#composer:not(.hidden)) header .ttl .name{font-size:14.5px}
+    body:has(#composer:not(.hidden)) header .ttl .name::before{width:22px;height:22px;font-size:12px;margin-right:6px;vertical-align:-5px}
+    body:has(#composer:not(.hidden)) header .ttl .sub{white-space:normal;font-size:10.5px}
+    body:has(#composer:not(.hidden)) header a.back{font-size:13.5px;padding:5px 9px}
+    body:has(#composer:not(.hidden)) main{padding:12px 10px 8px}
+    body:has(#composer:not(.hidden)) .msg.a{max-width:88%;margin-left:34px;padding:11px 13px;font-size:14.5px}
+    body:has(#composer:not(.hidden)) .msg.a::before{left:-34px;width:26px;height:26px;font-size:13px}
+    body:has(#composer:not(.hidden)) .msg.u{max-width:88%;padding:11px 13px;font-size:14.5px}
+    body:has(#composer:not(.hidden)) #msgs:not(:has(.msg.u))>.msg.a:first-child{margin-left:46px;padding:18px 16px}
+    body:has(#composer:not(.hidden)) #msgs:not(:has(.msg.u))>.msg.a:first-child::before{left:-46px;width:36px;height:36px;font-size:17px}
+    body:has(#composer:not(.hidden)) .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+    body:has(#composer:not(.hidden)) .chips button{flex:none}
+    body:has(#composer:not(.hidden)) footer{padding:10px 10px calc(8px + env(safe-area-inset-bottom))}
+    body:has(#composer:not(.hidden)) #sendBtn{padding:11px 15px}
+  }
 </style>
 </head>
 <body>
