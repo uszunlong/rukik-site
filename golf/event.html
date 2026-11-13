@@ -779,6 +779,12 @@ function renderStaff() {
   /* [Z51 2026-11-12] 管理入口口径与服务端 isStaff 统一：organizer ∪ golf_event_roles 的 admin/referee 均可见；权限未确认（EV/my_role 缺失）默认不渲染 */
   if (EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')) el.innerHTML = '<a class="staffbtn" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场（主办方台）</a>';
   else el.innerHTML = '';
+  /* [0738 赛事删除入口 2026-11-12] 删除仅 organizer/admin（与服务端 event_delete 验权同口径，referee 不显示） */
+  if (EV && (EV.my_role === 'organizer' || EV.my_role === 'admin')) {
+    el.innerHTML += '<button type="button" class="staffbtn" id="evDelBtn" style="width:100%;cursor:pointer;color:#e8a09c;border-color:rgba(179,38,30,.55)">删除赛事</button>';
+    var dbtn = document.getElementById('evDelBtn');
+    if (dbtn) dbtn.addEventListener('click', function () { rkDeleteEventFlowHere(); });
+  }
 }
 /* [A2 2026-11-12 08:31 终裁] 底部球童宣传卡取消；陪伴模式改为紧凑控件
  * 收进球童弹层头部（#cdCareCtl）：只显当前模式、点击展开三选一；真源仍为
@@ -2945,6 +2951,47 @@ function flyEvToggle() {
   if (!FLYEV.on) { flyEvStart(); return; }
   if (FLYEV.playing) { FLYEV.playing = false; clearTimeout(FLYEV.timer); flyEvBtn(); }
   else { FLYEV.playing = true; flyEvShow(); }
+}
+</script>
+<style>
+.rk-del-ov{position:fixed;inset:0;z-index:300;background:rgba(20,34,53,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.rk-del-card{background:#fff;border-radius:16px;padding:24px 22px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25);color:#14304A}
+.rk-del-card h3{margin:0 0 10px;font-size:17px}
+.rk-del-card p{margin:6px 0;line-height:1.65;font-size:14px}
+.rk-del-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.rk-del-cancel{background:#fff;border:1px solid #cbd5cb;color:#14304A;border-radius:10px;padding:9px 18px;font-size:14px;cursor:pointer}
+.rk-del-ok{background:#b3261e;border:none;color:#fff;border-radius:10px;padding:9px 18px;font-size:14px;cursor:pointer}
+.rk-del-ok[disabled]{opacity:.5;cursor:default}
+.rk-del-err{color:#b3261e;min-height:20px}
+</style>
+<script>
+/* [0738 赛事删除入口 2026-11-12] 与 play.html 同口径的统一删除流程（本页 dyn 通道）：
+   preview 计数 → 页面内确认弹窗 → 确认落删 → 成功后回「我的球局」。 */
+function rkDeleteEventFlowHere() {
+  var old = document.getElementById('rkDelOv'); if (old) old.remove();
+  var ov = document.createElement('div'); ov.className = 'rk-del-ov'; ov.id = 'rkDelOv';
+  ov.innerHTML = '<div class="rk-del-card"><h3>删除赛事</h3>' +
+    '<p>《' + esc(EV && EV.title ? EV.title : '') + '》</p>' +
+    '<p id="rkDelCounts">正在读取影响范围…</p>' +
+    '<p>删除后赛事将从所有列表消失、分享链接失效，数据保留备查。</p>' +
+    '<p class="rk-del-err" id="rkDelErr"></p>' +
+    '<div class="rk-del-row"><button type="button" class="rk-del-cancel" id="rkDelNo">取消</button>' +
+    '<button type="button" class="rk-del-ok" id="rkDelYes" disabled>确认删除</button></div></div>';
+  document.body.appendChild(ov);
+  function close() { ov.remove(); }
+  ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  document.getElementById('rkDelNo').addEventListener('click', close);
+  dyn('event_delete', { preview: true }).then(function (j) {
+    var cEl = document.getElementById('rkDelCounts'); if (!cEl) return;
+    var im = j.impact || {};
+    cEl.textContent = (im.registrations || 0) + ' 人报名 · ' + (im.scorecards || 0) + ' 张记分卡' + (im.locked_scorecards ? '（含已锁定 ' + im.locked_scorecards + ' 张）' : '');
+    var yes = document.getElementById('rkDelYes'); if (yes) yes.disabled = false;
+  }).catch(function () { var cEl = document.getElementById('rkDelCounts'); if (cEl) cEl.textContent = '影响范围读取失败，请稍后重试。'; });
+  document.getElementById('rkDelYes').addEventListener('click', function () {
+    var yes = document.getElementById('rkDelYes'); yes.disabled = true; yes.textContent = '删除中…';
+    dyn('event_delete', {}).then(function () { close(); location.href = 'play.html'; })
+    .catch(function (e) { var eEl = document.getElementById('rkDelErr'); if (eEl) eEl.textContent = '删除失败：' + (e && e.message ? e.message : '未知错误'); yes.disabled = false; yes.textContent = '确认删除'; });
+  });
 }
 </script>
 </body>
