@@ -21,6 +21,8 @@
   .sponsors img { height:44px; background:#fff; border-radius:8px; padding:4px 10px; }
   .sponsors span { font-size:20px; color:#cfe6c8; }
   .empty { font-size:24px; color:#b9d3ae; padding:30px 0; }
+  .upd { font-size:16px; color:#9fd08a; margin-top:8px; }
+  .upd.stale { color:#ffb4a8; }
   footer { padding:0 40px 26px; color:#6f8f66; font-size:15px; }
 </style>
 </head>
@@ -30,7 +32,10 @@
     <div class="brand">RUKIK GOLF ｜ 懂比赛，更懂每一位球员</div>
     <h1 id="title">排行榜</h1>
   </div>
-  <div class="status" id="status">实时排名 · 未最终确认</div>
+  <div style="text-align:right">
+    <div class="status" id="status">实时排名 · 未最终确认</div>
+    <div class="upd" id="upd"></div>
+  </div>
 </header>
 <main>
   <table>
@@ -65,6 +70,21 @@ function scoreText(e, scope) {
   if (e.result) return e.result;
   return '—';
 }
+// [线Z85] 数据新鲜度可见化：成功刷新显示「更新于」（优先服务端 computed_at），
+// 失败保留旧榜但必须明示已过期，禁止静默冻结冒充实时（原 .catch(()=>{}) 吞错）。
+var lastOkAt = null;
+function fmtClock(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); }
+function markBoardOk(serverTs) {
+  var t = serverTs ? new Date(serverTs) : new Date();
+  if (isNaN(t.getTime())) t = new Date();
+  lastOkAt = t;
+  var el = document.getElementById('upd');
+  if (el) { el.textContent = '更新于 ' + fmtClock(t); el.classList.remove('stale'); }
+}
+function markBoardStale() {
+  var el = document.getElementById('upd');
+  if (el) { el.textContent = lastOkAt ? ('刷新失败 · 当前为 ' + fmtClock(lastOkAt) + ' 的数据，可能已过期') : '数据加载失败，正在重试…'; el.classList.add('stale'); }
+}
 function render() {
   if (!eventId) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">缺少赛事参数</td></tr>'; return; }
   call('event_get', { event_id: eventId }).then(function (d) {
@@ -75,6 +95,8 @@ function render() {
     }
   });
   call('leaderboard_get', { event_id: eventId }).then(function (d) {
+    if (!d || d.error) { markBoardStale(); return; }
+    markBoardOk(d.computed_at);
     var st = document.getElementById('status');
     if (d.is_final) { st.textContent = '正式排名'; st.classList.add('final'); } else { st.textContent = '实时排名 · 未最终确认'; st.classList.remove('final'); }
     var rows = (d.entries || []);
@@ -86,7 +108,9 @@ function render() {
       document.getElementById('indRows').innerHTML = inds.map(function (en, i) {
         var val = en.total != null ? en.total : (en.grossTotal != null ? en.grossTotal : null);
         var thru = en.thru != null ? en.thru : (en.completedHoles != null ? en.completedHoles : '—');
-        return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + (en.rank != null ? en.rank : (i + 1)) + '</td><td>' + escHtml(en.name || '') + '</td><td>' + (val != null ? val + ' 杆' : '—') + (d.is_final ? '' : ' · 未最终确认') + '</td><td>' + thru + '</td></tr>';
+        var rk = en.rank != null ? en.rank : (i + 1);
+        var tInd = en.rank != null && ((i > 0 && inds[i - 1].rank === en.rank) || (i < inds.length - 1 && inds[i + 1].rank === en.rank));
+        return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + (tInd ? 'T' : '') + rk + '</td><td>' + escHtml(en.name || '') + '</td><td>' + (val != null ? val + ' 杆' : '—') + (d.is_final ? '' : ' · 未最终确认') + '</td><td>' + thru + '</td></tr>';
       }).join('');
     } else {
       indWrap.style.display = 'none';
@@ -98,9 +122,11 @@ function render() {
     }
     document.getElementById('rows').innerHTML = rows.map(function (e, i) {
       var rank = e.rank != null ? e.rank : (i + 1);
-      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
+      // [线Z85] 并列名次加 T：名次只用服务端 rank，相邻条目同 rank 即并列。
+      var tied = e.rank != null && ((i > 0 && rows[i - 1].rank === e.rank) || (i < rows.length - 1 && rows[i + 1].rank === e.rank));
+      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + (tied ? 'T' : '') + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
     }).join('');
-  }).catch(function () {});
+  }).catch(function () { markBoardStale(); });
 }
 render();
 setInterval(render, 20000);

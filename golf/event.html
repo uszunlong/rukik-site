@@ -141,6 +141,7 @@
   .btag{font-size:11px;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 8px;font-weight:600;white-space:nowrap}
   .btag.final{background:#dcfce7;color:#14532d}
   .bupd{margin-left:auto;font-size:12px;color:#52665a;white-space:nowrap}
+  .btopar{color:#52665a;font-size:12.5px;white-space:nowrap}
   .btabs{display:flex;gap:8px;margin:12px 0 4px}
   .btabs button{flex:1;border:1px solid #cfe0d2;background:#fff;color:#14532d;border-radius:999px;padding:8px 0;font-size:14.5px;font-weight:600;cursor:pointer;min-height:40px}
   .btabs button.on{background:#14532d;color:#fff;border-color:#14532d}
@@ -1644,13 +1645,25 @@ function boardScore(en, scope) {
 }
 function boardThru(en) { return en.completedHoles != null ? en.completedHoles : (en.thru != null ? en.thru : '—'); }
 var boardOpen = false; // [Z53] 默认只显前三名，展开看全部
+function boardToPar(en, scope) {
+  // [线Z85] 相对标准杆随成绩同显（如「28 杆 (-11)」）：数据只读服务端条目
+  // 自带的 toPar（entries/individuals 均已由服务端算好），前端不另算；
+  // 积分制口径（stableford/team_points）的 toPar 语义不同，不展示。
+  if (scope === 'stableford' || scope === 'team_points') return '';
+  if (typeof en.toPar !== 'number') return '';
+  return ' <span class="btopar">(' + (en.toPar === 0 ? 'E' : (en.toPar > 0 ? '+' + en.toPar : String(en.toPar))) + ')</span>';
+}
 function boardRowsHtml(list, scope) {
   if (!list || !list.length) return '';
   var shown = boardOpen ? list : list.slice(0, 3);
   var html = '<table class="board"><tr><th>名次</th><th>名称</th><th>已打</th><th>成绩</th></tr>' + shown.map(function (en, i) {
     var rk = en.rank != null ? en.rank : i + 1;
-    var rkCell = rk >= 1 && rk <= 3 ? '<span class="medal m' + rk + '">' + rk + '</span>' : String(rk);
-    return '<tr><td>' + rkCell + '</td><td>' + esc(en.name || en.team_name || '') + '</td><td>' + boardThru(en) + '</td><td>' + boardScore(en, scope) + '</td></tr>';
+    // [线Z85] 并列 T 标记：服务端 rank 与相邻条目相同即并列（如 T2）；名次
+    // 只读服务端 rank，前端不重算。shown 是 list 的前缀切片，下标同位对齐。
+    var tied = en.rank != null && ((i > 0 && list[i - 1].rank === rk) || (i < list.length - 1 && list[i + 1].rank === rk));
+    var rkText = (tied ? 'T' : '') + rk;
+    var rkCell = rk >= 1 && rk <= 3 ? '<span class="medal m' + rk + '">' + rkText + '</span>' : rkText;
+    return '<tr><td>' + rkCell + '</td><td>' + esc(en.name || en.team_name || '') + '</td><td>' + boardThru(en) + '</td><td>' + boardScore(en, scope) + boardToPar(en, scope) + '</td></tr>';
   }).join('') + '</table>';
   if (list.length > 3) html += '<button type="button" class="boardmore" id="boardMore">' + (boardOpen ? '收起 ▴' : '展开全部（共 ' + list.length + ' 名）▾') + '</button>';
   return html;
