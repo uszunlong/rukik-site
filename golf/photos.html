@@ -178,18 +178,26 @@ function renderGrid(photos) {
   LAST_PHOTOS = photos || [];
   $('grid').innerHTML = (photos || []).map(function (p) {
     var tone = p.enhance_status === 'done' ? '<span class="badge tone">已自动调色</span>' : p.enhance_status === 'queued' || p.enhance_status === 'processing' ? '<span class="badge">调色中</span>' : p.enhance_status === 'failed' ? '<span class="badge err">调色失败（原图正常）</span>' : '';
-    var st = p.status !== 'visible' ? ' <span class="badge err">' + p.status + '</span>' : '';
-    var canDel = CLS === 'manager' || (session && p.uploader_id === session.user_id);
+    // [相册最终整改 2026-11-12] 状态呈现：官方海报如实标示；hidden 为平台合规
+    // 下架态标「已下架」；普通照片无状态徽标——不存在「待审核」概念与文案。
+    var st = p.is_official ? ' <span class="badge tone">' + (p.official_main ? '主海报' : '官方海报') + '</span>' : (p.status === 'hidden' ? ' <span class="badge err">已下架</span>' : '');
+    var canDel = p.can_delete === true;
     var batchChk = (typeof BATCH !== 'undefined' && BATCH.on && canDel) ? '<label class="note" style="display:block;margin-bottom:4px"><input type="checkbox" class="bchk" data-id="' + p.id + '"' + (BATCH.sel[p.id] ? ' checked' : '') + '> 选择删除</label>' : '';
     var ops = '';
-    if (CLS === 'manager') {
-      ops += '<button data-op="pin" data-id="' + p.id + '">' + (p.pinned ? '取消置顶' : '置顶') + '</button>';
-      ops += p.status === 'hidden' || p.status === 'pending_review' ? '<button data-op="approve" data-id="' + p.id + '">审核通过</button>' : '<button data-op="hide" data-id="' + p.id + '">隐藏</button>';
-      ops += '<button data-op="remove" data-id="' + p.id + '">删除</button>';
+    if (p.is_official) {
+      // 官方海报不在照片管理通道内增删改：更换/删除走赛事海报管理；此处仅下载
+      ops += '<button data-op="dlposter" data-id="' + p.id + '">下载原图</button>';
+    } else {
+      if (CLS === 'manager') {
+        ops += '<button data-op="pin" data-id="' + p.id + '">' + (p.pinned ? '取消置顶' : '置顶') + '</button>';
+        // 合规处置（非审核流程）：visible 可下架、已下架可恢复展示；无「审核通过」
+        ops += p.status === 'hidden' ? '<button data-op="unhide" data-id="' + p.id + '">恢复展示</button>' : '<button data-op="hide" data-id="' + p.id + '">下架</button>';
+        ops += '<button data-op="remove" data-id="' + p.id + '">删除</button>';
+      }
+      if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
+      ops += '<button data-op="download" data-id="' + p.id + '">下载原图</button>';
+      if (p.enhance_status === 'failed' || p.enhance_status === 'none') ops += '<button data-op="enhance" data-id="' + p.id + '">自动调色</button>';
     }
-    if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
-    ops += '<button data-op="download" data-id="' + p.id + '">下载原图</button>';
-    if (p.enhance_status === 'failed' || p.enhance_status === 'none') ops += '<button data-op="enhance" data-id="' + p.id + '">自动调色</button>';
     return '<div class="ph">' + batchChk + '<img loading="lazy" src="' + (p.thumb_url || p.display_url || p.enhance_url || p.url) + '">'
       + '<div class="cap">' + (p.pinned ? '📌 ' : '') + (p.caption || '现场照片') + '</div>'
       + '<div class="meta">' + tone + st + '</div><div class="ops">' + ops + '</div></div>';
@@ -199,6 +207,7 @@ function renderGrid(photos) {
       var id = btn.getAttribute('data-id'), op = btn.getAttribute('data-op');
       try {
         if (op === 'download') { await albDownload(id); return; }
+        if (op === 'dlposter') { var it = (LAST_PHOTOS || []).filter(function (x) { return x.id === id; })[0]; if (it) window.open(it.url, '_blank'); return; }
         if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
         else await lp({ action: 'photo_moderate', photo_id: id, op: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
@@ -213,7 +222,7 @@ function renderGrid(photos) {
 // 全场；无权限照片不渲染选择框。无任何可删照片时明示「暂无可删除的照片」。
 var BATCH = { on: false, sel: {} };
 var LAST_PHOTOS = [];
-function batchDeletable() { return LAST_PHOTOS.filter(function (p) { return CLS === 'manager' || (session && p.uploader_id === session.user_id); }); }
+function batchDeletable() { return LAST_PHOTOS.filter(function (p) { return p.can_delete === true; }); }
 function batchSync() {
   var n = Object.keys(BATCH.sel).length;
   $('batchInfo').textContent = BATCH.on ? (batchDeletable().length ? ('已选择 ' + n + ' 张') : '暂无可删除的照片') : '';

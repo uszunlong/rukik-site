@@ -1769,6 +1769,9 @@ function renderLive() {
   var media = document.getElementById('heroMedia');
   carStop(); palStop();
   if (!media) return;
+  // [相册最终整改 2026-11-12] 统一相册集合已就绪时 Hero 恒由其渲染（全状态
+  // 同形态、海报在集合内第一位）；旧照片墙形态仅作集合未就绪时的过渡兜底。
+  if (typeof window.__albHero === 'function' && window.__albHero()) return;
   // 第一区 Hero 按状态自动切换：赛前恒海报；赛中/赛后有真实照片才换照片墙；无照片回退海报、不显空墙
   if (!WALL || !WALL.album_enabled || stateOf() === 'pre') { renderHeroMedia(); return; }
   var feed = (WALL.feed || []).filter(function (f) { return f && f.type === 'photo' && f.url && (f.status == null || f.status === 'visible') && !CARDEAD[f.id]; });
@@ -2518,18 +2521,21 @@ document.addEventListener('click', function (e) {
       var uid = myUid();
       var isMgr = r.data.cls === 'manager';
       var photos = r.data.photos || [];
-      var deletable = photos.filter(function (p) { return isMgr || p.uploader_id === uid; });
+      var deletable = photos.filter(function (p) { return p.can_delete === true; });
       if (!deletable.length) { msg.textContent = '暂无可删除的照片'; list.innerHTML = ''; pmSyncBar(); return; }
       msg.textContent = isMgr
         ? '你是本赛事管理方，可删除全场照片。勾选后批量删除，删除立即全端同步、无法恢复。'
         : '只可删除你上传的照片（他人照片不可选）。勾选后批量删除，删除立即全端同步、无法恢复。';
       list.innerHTML = photos.map(function (p) {
-        var can = isMgr || p.uploader_id === uid;
-        var cap = p.caption ? esc(p.caption) : (p.status === 'visible' ? '已展示' : '待审核/未展示');
+        // [相册最终整改 2026-11-12] 可删性以服务端 can_delete 为准（官方海报
+        // 不经照片删除通道：can_delete=false 并注明去向）；无「待审核」状态文案。
+        var can = p.can_delete === true;
+        var cap = p.is_official ? '官方海报' : (p.caption ? esc(p.caption) : '赛事照片');
+        var note = can ? '' : (p.is_official ? '（官方海报，请在海报管理中处理）' : '（他人照片）');
         return '<label class="pm-row' + (can ? '' : ' off') + '" data-pid="' + esc(p.id) + '">' +
           '<input type="checkbox" class="pm-chk"' + (can ? '' : ' disabled') + '>' +
           '<img src="' + esc(p.thumb_url || p.url) + '" alt="">' +
-          '<span class="pm-cap">' + cap + (can ? '' : '（他人照片）') + '</span></label>';
+          '<span class="pm-cap">' + cap + note + '</span></label>';
       }).join('');
       Array.prototype.forEach.call(list.querySelectorAll('.pm-row'), function (row) {
         var chk = row.querySelector('.pm-chk');
@@ -2713,7 +2719,7 @@ document.addEventListener('click', function (e) {
   if (!window.eventId || typeof lp !== 'function') return;
   var SUPA_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
   var LP_URL = SUPA_URL + '/functions/v1/live-photo';
-  var ALB = { open: null, opensAt: null, cls: null, rtOk: false, pollT: null, lastIds: null, booted: false, suppressClick: false };
+  var ALB = { open: null, opensAt: null, cls: null, rtOk: false, pollT: null, lastIds: null, booted: false, suppressClick: false, items: null, count: 0, deadIds: {} };
   function sess() { try { return JSON.parse(localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token') || 'null'); } catch (e) { return null; } }
   function myUid() { var s = sess(); return (s && s.user && s.user.id) || null; }
   function mylp(body) {
@@ -2755,25 +2761,95 @@ document.addEventListener('click', function (e) {
       gatePm();
     }).catch(function () {});
   }
+  // ---- [相册最终整改 2026-11-12] 唯一相册 Hero：服务端统一集合驱动 ----
+  // 集合＝[主海报→其余官方海报→共享照片]，海报与照片同在一个轮播组件内
+  // （滑动/计数/圆点/灯箱都属本组件），不再有独立海报区＋第二照片区。
+  // 全部状态（赛前/赛中/赛后）同形态；计数＝服务端 album_count（唯一记录数）。
+  function albSlideSrc(it) { return it.kind === 'poster' ? it.url : (it.thumb_url || it.display_url || it.url); }
+  function albFullSrc(it) { return it.kind === 'poster' ? it.url : (it.display_url || it.url); }
+  function renderAlbumHero() {
+    var box = document.getElementById('heroMedia');
+    if (!box || !ALB.items || !ALB.items.length) return false;
+    if (typeof palStop === 'function') palStop();
+    if (typeof carStop === 'function') carStop();
+    PALB.list = ALB.items.map(albFullSrc);
+    if (PALB.idx >= ALB.items.length) PALB.idx = 0;
+    var canManage = !!(window.EV && (EV.my_registration || EV.my_player || EV.my_role));
+    box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
+      ALB.items.map(function (it, i) {
+        return '<figure class="palSlide" data-ai="' + i + '"><img src="' + esc(albSlideSrc(it)) + '" alt="' + (it.is_official ? '赛事海报' : '赛事照片') + '"></figure>';
+      }).join('') + '</div>' +
+      (ALB.items.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + ALB.items.length + '</div><div class="palDots" id="palDots">' + ALB.items.map(function (it, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
+      '<div class="wallbar">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') +
+      '<span class="wb-t">🔴 Golf Live · ' + ALB.count + ' 张照片</span></div></div>';
+    var palBox = document.getElementById('palBox');
+    Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
+      var it = ALB.items[Number(fig.getAttribute('data-ai'))];
+      if (it) fig.style.setProperty('--pal-bg', 'url("' + albSlideSrc(it) + '")');
+    });
+    Array.prototype.forEach.call(palBox.querySelectorAll('img'), function (img) {
+      img.addEventListener('error', function () {
+        var fig = img.parentNode;
+        var it = ALB.items[Number(fig && fig.getAttribute('data-ai'))];
+        if (it && !ALB.deadIds[it.id]) {
+          ALB.deadIds[it.id] = 1;
+          ALB.items = ALB.items.filter(function (x) { return x.id !== it.id; });
+          ALB.count = ALB.items.length;
+          if (ALB.items.length) renderAlbumHero();
+          else if (typeof renderHeroMedia === 'function') renderHeroMedia();
+        }
+      });
+      img.addEventListener('click', function () { openPal(Number(img.parentNode.getAttribute('data-ai')) || 0); });
+    });
+    var downX = null;
+    palBox.addEventListener('pointerdown', function (e) { downX = e.clientX; });
+    palBox.addEventListener('pointerup', function (e) {
+      if (downX == null) return;
+      var dx = e.clientX - downX; downX = null;
+      if (Math.abs(dx) > 40) { palNoteManual(); palGo(PALB.idx + (dx < 0 ? 1 : -1)); }
+    });
+    palBox.addEventListener('touchstart', function () { palNoteManual(); }, { passive: true });
+    var pmB = document.getElementById('pmOpenBtn');
+    if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
+    palGo(PALB.idx);
+    palStart();
+    return true;
+  }
+  window.__albHero = function () { return renderAlbumHero(); };
+  window.__albCur = function () { return (ALB.items && ALB.items.length) ? ALB.items[PALB.idx] || null : null; };
+
   // ---- 照片增量对账（推送/轮询/补刷共用同一条路） ----
   function refreshPhotos(announce) {
-    if (!window.WALL) return Promise.resolve();
     return mylp({ action: 'photo_list', event_kind: 'golf', event_id: window.eventId, limit: 100 }).then(function (d) {
       if (!d || !d.ok || !Array.isArray(d.photos)) return;
       if (typeof d.upload_open === 'boolean') { ALB.open = d.upload_open; ALB.opensAt = d.opens_at || ALB.opensAt; gatePm(); }
-      var me = myUid(), oldById = {}, hasNew = false;
-      (WALL.feed || []).forEach(function (f) { if (f && f.type === 'photo') oldById[f.id] = f; });
-      var photos = d.photos.filter(function (p) { return p.status === 'visible'; }).map(function (p) {
-        var o = oldById[p.id] || {};
-        if (ALB.lastIds && !ALB.lastIds[p.id] && p.uploader_id !== me) hasNew = true;
-        return { id: p.id, type: 'photo', url: p.enhance_url || p.display_url || p.url, thumb_url: p.thumb_url || p.display_url || p.url, original_url: p.url, pinned: !!p.pinned, status: 'visible', created_at: p.created_at, author_name: p.uploader_name || o.author_name || '', caption: p.caption || '', mine: !!p.mine, likes: o.likes, comments: o.comments, like_count: o.like_count, comment_count: o.comment_count };
+      // [相册最终整改 2026-11-12] 统一集合直接落位：服务端已按 [主海报→官方
+      // 海报→共享照片] 排序并去重，客户端不再二次过滤/合并（旧口径在此过滤
+      // status==='visible' 并把计数写成可见照片数，与服务端、海报数三方跳动）。
+      var me = myUid(), hasNew = false;
+      var newIds = {};
+      d.photos.forEach(function (p) {
+        newIds[p.id] = 1;
+        if (ALB.lastIds && !ALB.lastIds[p.id] && p.kind === 'photo' && p.uploader_id !== me) hasNew = true;
       });
-      ALB.lastIds = {}; photos.forEach(function (p) { ALB.lastIds[p.id] = 1; });
-      var posts = (WALL.feed || []).filter(function (f) { return f && f.type !== 'photo'; });
-      WALL.feed = photos.concat(posts).sort(function (a, b) { return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
-      WALL.stats = WALL.stats || {}; WALL.stats.photos = photos.length;
+      ALB.lastIds = newIds;
+      ALB.items = d.photos.filter(function (p) { return !ALB.deadIds[p.id]; });
+      ALB.count = (typeof d.album_count === 'number') ? d.album_count : ALB.items.length;
+      if (d.cls) ALB.cls = d.cls;
+      renderAlbumHero();
+      if (window.WALL) {
+        // 动态流（帖文/互动）仍走 WALL.feed 维护，照片计数与统一集合对齐
+        var oldById = {};
+        (WALL.feed || []).forEach(function (f) { if (f && f.type === 'photo') oldById[f.id] = f; });
+        var photos = d.photos.filter(function (p) { return p.kind === 'photo'; }).map(function (p) {
+          var o = oldById[p.id] || {};
+          return { id: p.id, type: 'photo', url: p.enhance_url || p.display_url || p.url, thumb_url: p.thumb_url || p.display_url || p.url, original_url: p.url, pinned: !!p.pinned, status: p.status, created_at: p.created_at, author_name: p.uploader_name || o.author_name || '', caption: p.caption || '', mine: !!p.mine, likes: o.likes, comments: o.comments, like_count: o.like_count, comment_count: o.comment_count };
+        });
+        var posts = (WALL.feed || []).filter(function (f) { return f && f.type !== 'photo'; });
+        WALL.feed = photos.concat(posts).sort(function (a, b) { return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+        WALL.stats = WALL.stats || {}; WALL.stats.photos = ALB.count;
+      }
       if (hasNew && announce && !document.hidden) toast('📷 相册有新照片');
-      if (typeof stateOf === 'function' && stateOf() !== 'pre' && typeof renderLive === 'function') renderLive();
     }).catch(function () {});
   }
   // ---- 推送订阅 + 兜底轮询 ----
@@ -2829,26 +2905,33 @@ document.addEventListener('click', function (e) {
   if (hero) {
     var lpTimer = null, lpX = 0, lpY = 0;
     hero.addEventListener('pointerdown', function (e) {
-      if (!e.target || e.target.tagName !== 'IMG' || !window.CAR || !CAR.list || !CAR.list.length) return;
+      // [相册最终整改] 长按作用于统一相册当前项：照片→下载菜单；海报→打开灯箱看原图
+      if (!e.target || e.target.tagName !== 'IMG' || typeof window.__albCur !== 'function' || !window.__albCur()) return;
       lpX = e.clientX; lpY = e.clientY;
-      lpTimer = setTimeout(function () { ALB.suppressClick = true; var p = CAR.list[CAR.idx]; if (p) openMenu(p); }, 550);
+      lpTimer = setTimeout(function () {
+        ALB.suppressClick = true;
+        var it = window.__albCur();
+        if (!it) return;
+        if (it.kind === 'photo') openMenu(it);
+        else if (typeof openPal === 'function') openPal(PALB.idx);
+      }, 550);
     });
     ['pointermove', 'pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
       hero.addEventListener(ev, function (e) { if (ev === 'pointermove' && lpTimer && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)) { clearTimeout(lpTimer); lpTimer = null; } else if (ev !== 'pointermove' && lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }, { passive: true });
     });
     hero.addEventListener('click', function (e) { if (ALB.suppressClick) { ALB.suppressClick = false; e.preventDefault(); e.stopPropagation(); } }, true);
-    hero.addEventListener('contextmenu', function (e) { if (e.target && e.target.tagName === 'IMG' && window.CAR && CAR.list && CAR.list.length) { e.preventDefault(); var p = CAR.list[CAR.idx]; if (p) openMenu(p); } });
+    hero.addEventListener('contextmenu', function (e) { if (e.target && e.target.tagName === 'IMG' && typeof window.__albCur === 'function') { var it = window.__albCur(); if (it && it.kind === 'photo') { e.preventDefault(); openMenu(it); } } });
   }
   // ---- 启动：等照片墙首屏数据到位后再挂（未开通相册的赛事零打扰） ----
   var tries = 0;
   var bootT = setInterval(function () {
     tries++;
-    if (window.WALL) {
+    if (window.WALL || tries > 12) {
       clearInterval(bootT);
-      if (WALL.album_enabled === false) return;
+      if (window.WALL && WALL.album_enabled === false) return;
       ALB.booted = true;
       refreshState(); refreshPhotos(false); initRT(); pollCtl();
-    } else if (tries > 45) clearInterval(bootT);
+    }
   }, 700);
 })();
 </script>
