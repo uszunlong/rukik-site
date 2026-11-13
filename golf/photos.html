@@ -85,13 +85,19 @@
       <input type="file" id="dirInput" accept="image/*" multiple webkitdirectory class="hidden">
       <div class="note" style="margin-top:8px">支持一次拖入几十至上百张；每张自动压缩生成展示图与缩略图并归属当前赛事。关闭页面将中断尚未完成的上传（第一版不支持关页续传），失败项可单独重试。</div>
       <label class="note"><input type="checkbox" id="enhanceChk" checked> 上传后自动调色（曝光/白平衡/对比度/色彩，保留原图）</label>
-      <label class="note" style="margin-left:14px"><input type="checkbox" id="consentChk"> 授权公开展示（公开赛事的访客可见）</label>
+      <!-- [权限 V2 2026-11-12] 单张可见范围取消：上传即共享至本赛事相册，对有权访问者可见，无「授权公开展示」选项 -->
     </div>
     <div class="q" id="queue"></div>
     <h3 style="margin:18px 0 10px">当前赛事相册 <span class="note" id="albumCount"></span></h3>
+    <div id="batchBar" style="margin:0 0 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button type="button" id="batchModeBtn" class="ghost">🗑 批量删除</button>
+      <span class="note" id="batchInfo"></span>
+      <button type="button" id="batchDelBtn" style="display:none">删除所选</button>
+      <button type="button" id="batchCancelBtn" class="ghost" style="display:none">取消</button>
+    </div>
     <div class="grid" id="grid"></div>
   </div>
-  <p class="note">权限：球员可上传与查看；摄影师另可网页批量上传、管理本人照片；管理方另可审核、隐藏、置顶与删除。照片仅用于本赛事展示与回忆，不用于人脸识别或模型训练。</p>
+  <p class="note">权限：球员可上传与查看；摄影师另可网页批量上传、管理本人照片；管理方另可审核、隐藏、置顶与删除。上传即共享：照片默认立即在本赛事相册中对有权访问者可见，不设单张可见范围；删除为谁上传谁可删（管理方除外）。照片仅用于本赛事展示与回忆，不用于人脸识别或模型训练。</p>
 </div>
 <script>
 var SUPA = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
@@ -169,9 +175,12 @@ async function loadAlbum() {
   albSubscribe();
 }
 function renderGrid(photos) {
-  $('grid').innerHTML = photos.map(function (p) {
+  LAST_PHOTOS = photos || [];
+  $('grid').innerHTML = (photos || []).map(function (p) {
     var tone = p.enhance_status === 'done' ? '<span class="badge tone">已自动调色</span>' : p.enhance_status === 'queued' || p.enhance_status === 'processing' ? '<span class="badge">调色中</span>' : p.enhance_status === 'failed' ? '<span class="badge err">调色失败（原图正常）</span>' : '';
     var st = p.status !== 'visible' ? ' <span class="badge err">' + p.status + '</span>' : '';
+    var canDel = CLS === 'manager' || (session && p.uploader_id === session.user_id);
+    var batchChk = (typeof BATCH !== 'undefined' && BATCH.on && canDel) ? '<label class="note" style="display:block;margin-bottom:4px"><input type="checkbox" class="bchk" data-id="' + p.id + '"' + (BATCH.sel[p.id] ? ' checked' : '') + '> 选择删除</label>' : '';
     var ops = '';
     if (CLS === 'manager') {
       ops += '<button data-op="pin" data-id="' + p.id + '">' + (p.pinned ? '取消置顶' : '置顶') + '</button>';
@@ -181,7 +190,7 @@ function renderGrid(photos) {
     if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
     ops += '<button data-op="download" data-id="' + p.id + '">下载原图</button>';
     if (p.enhance_status === 'failed' || p.enhance_status === 'none') ops += '<button data-op="enhance" data-id="' + p.id + '">自动调色</button>';
-    return '<div class="ph"><img loading="lazy" src="' + (p.thumb_url || p.display_url || p.enhance_url || p.url) + '">'
+    return '<div class="ph">' + batchChk + '<img loading="lazy" src="' + (p.thumb_url || p.display_url || p.enhance_url || p.url) + '">'
       + '<div class="cap">' + (p.pinned ? '📌 ' : '') + (p.caption || '现场照片') + '</div>'
       + '<div class="meta">' + tone + st + '</div><div class="ops">' + ops + '</div></div>';
   }).join('') || '<p class="note">暂无照片</p>';
@@ -198,6 +207,45 @@ function renderGrid(photos) {
     };
   });
 }
+
+// ---------- [权限 V2 2026-11-12] 批量删除模式：多选 + 已选计数 + 二次确认 ----------
+// 可删范围与服务端 photo_delete 同口径：本人上传的，或管理方（cls=manager）
+// 全场；无权限照片不渲染选择框。无任何可删照片时明示「暂无可删除的照片」。
+var BATCH = { on: false, sel: {} };
+var LAST_PHOTOS = [];
+function batchDeletable() { return LAST_PHOTOS.filter(function (p) { return CLS === 'manager' || (session && p.uploader_id === session.user_id); }); }
+function batchSync() {
+  var n = Object.keys(BATCH.sel).length;
+  $('batchInfo').textContent = BATCH.on ? (batchDeletable().length ? ('已选择 ' + n + ' 张') : '暂无可删除的照片') : '';
+  $('batchDelBtn').style.display = BATCH.on && n > 0 ? '' : 'none';
+  $('batchDelBtn').textContent = '删除所选';
+  $('batchCancelBtn').style.display = BATCH.on ? '' : 'none';
+  $('batchModeBtn').style.display = BATCH.on ? 'none' : '';
+}
+$('batchModeBtn').onclick = function () { BATCH.on = true; BATCH.sel = {}; renderGrid(LAST_PHOTOS); batchSync(); };
+$('batchCancelBtn').onclick = function () { BATCH.on = false; BATCH.sel = {}; renderGrid(LAST_PHOTOS); batchSync(); };
+$('grid').addEventListener('change', function (e) {
+  var t = e.target;
+  if (!t || !t.classList || !t.classList.contains('bchk')) return;
+  if (t.checked) BATCH.sel[t.getAttribute('data-id')] = true; else delete BATCH.sel[t.getAttribute('data-id')];
+  batchSync();
+});
+$('batchDelBtn').onclick = async function () {
+  var ids = Object.keys(BATCH.sel);
+  if (!ids.length) return;
+  var btn = $('batchDelBtn');
+  if (btn.textContent !== '确认删除 ' + ids.length + ' 张？') { btn.textContent = '确认删除 ' + ids.length + ' 张？'; return; }
+  btn.disabled = true; btn.textContent = '删除中…';
+  var done = 0, failed = 0;
+  for (var i = 0; i < ids.length; i++) {
+    try { var r = await lp({ action: 'photo_delete', photo_id: ids[i] }); if (r && r.ok) done++; else failed++; }
+    catch (e) { failed++; }
+  }
+  BATCH.on = false; BATCH.sel = {};
+  btn.disabled = false;
+  $('batchInfo').textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败请重试。') : ('已删除 ' + done + ' 张。');
+  loadAlbum();
+};
 
 // ---------- 批量上传：签名 URL 直传存储 + 客户端生成展示图/缩略图 + register（幂等） ----------
 function renderQueue() {
@@ -253,7 +301,7 @@ async function processItem(it) {
     var dispUrl = disp ? await uploadOne(null, disp, 'jpg') : null;
     var thumbUrl = thumb ? await uploadOne(null, thumb, 'jpg') : null;
     it.status = '登记入册'; renderQueue();
-    await lp({ action: 'photo_register', event_kind: 'golf', event_id: eventId(), url: orig, display_url: dispUrl, thumb_url: thumbUrl, caption: it.file.name.replace(/\.[a-z0-9]+$/i, ''), consent_public: $('consentChk').checked, enhance: $('enhanceChk').checked, client_op_id: it.opId });
+    await lp({ action: 'photo_register', event_kind: 'golf', event_id: eventId(), url: orig, display_url: dispUrl, thumb_url: thumbUrl, caption: it.file.name.replace(/\.[a-z0-9]+$/i, ''), consent_public: true, enhance: $('enhanceChk').checked, client_op_id: it.opId });
     it.status = '完成'; renderQueue();
     loadAlbum();
   } catch (e) {

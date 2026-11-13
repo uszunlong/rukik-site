@@ -114,6 +114,12 @@
   .pm-del.confirm{background:#d33;color:#fff;border-color:#d33}
   .pm-cancel{border:0;background:none;color:#6b7d6f;font-size:13px;cursor:pointer;flex:none}
   .pm-msg{font-size:13px;color:#6b7d6f;padding:8px 0}
+  .pm-row input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:#1d7a3d;margin:0}
+  .pm-row.off{opacity:.55}
+  .pm-delbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px}
+  .pm-delsel{border:1px solid #d33;color:#fff;background:#d33;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none}
+  .pm-delsel[disabled]{opacity:.45;cursor:default}
+  .pm-delsel.confirm{background:#a00;border-color:#a00}
 
   /* ---- 五区改版（最终改版指令 2026-11-11）：Hero 元信息／双卡／合作伙伴带／排行榜 ---- */
   .herometa{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:rgba(232,228,216,.75);margin-top:2px}
@@ -2074,7 +2080,7 @@ if (!eventId) {
   </div>
 </div>
 
-<!-- 照片管理弹层（线 Z27，2026-11-11）：上传照片＝前往照片池（现行上传流不变）；删除照片＝只列本人上传、逐张删、页面内确认 -->
+<!-- 照片管理弹层（线 Z27，2026-11-11；权限 V2 2026-11-12 升级）：上传照片＝前往照片池（现行上传流不变）；删除照片＝多选批量模式——普通参赛者只能选自己上传的、主办方/管理员可选全场，无权限照片不可选，二次确认显示已选张数 -->
 <div id="pmSheet" class="hidden" role="dialog" aria-label="管理照片">
   <div class="pm-backdrop" id="pmBackdrop"></div>
   <div class="pm-panel">
@@ -2084,12 +2090,16 @@ if (!eventId) {
     </div>
     <div class="pm-opts" id="pmOpts">
       <button type="button" class="pm-opt" id="pmGoUpload">📷 上传照片<small>前往赛事照片池上传（现有上传方式不变）</small></button>
-      <button type="button" class="pm-opt" id="pmGoDelete">🗑 删除照片<small>只显示并删除你自己上传的照片</small></button>
+      <button type="button" class="pm-opt" id="pmGoDelete">🗑 删除照片<small>可多选批量删除（自己的照片；主办方/管理员可删全场）</small></button>
     </div>
     <div id="pmDelView" class="hidden">
       <div class="pm-msg" id="pmMsg"></div>
       <div id="pmLoginMount"></div>
       <div class="pm-list" id="pmList"></div>
+      <div class="pm-delbar hidden" id="pmDelBar">
+        <span class="pm-msg" id="pmSelCount" style="padding:0">已选择 0 张</span>
+        <button type="button" class="pm-delsel" id="pmDelSel" disabled>删除所选</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2465,54 +2475,79 @@ document.addEventListener('click', function (e) {
       } });
     }).catch(function () { msg.textContent = '登录组件加载失败，请刷新后重试。'; });
   }
+  // [权限 V2 2026-11-12] 删除管理模式：多选批量——普通参赛者只能选自己
+  // 上传的（他人照片列出但不可选），主办方/管理员（photo_list cls=manager）
+  // 可选全场；删除前二次确认并显示已选择张数；无可删照片显示「暂无可删除
+  // 的照片」。服务端 photo_delete 按 UID/管理权再验，前端不可选只是呈现。
+  var pmSel = {};
+  function pmSyncBar() {
+    var n = Object.keys(pmSel).length;
+    var bar = document.getElementById('pmDelBar');
+    var cnt = document.getElementById('pmSelCount');
+    var btn = document.getElementById('pmDelSel');
+    if (!bar || !cnt || !btn) return;
+    bar.classList.toggle('hidden', !list.querySelector('.pm-row'));
+    cnt.textContent = '已选择 ' + n + ' 张';
+    btn.disabled = n === 0;
+    btn.classList.remove('confirm'); btn.textContent = '删除所选';
+  }
   function loadMine() {
     msg.textContent = '正在加载…';
+    pmSel = {};
     lp({ action: 'photo_list', event_kind: 'golf', event_id: window.eventId, limit: 100 }).then(function (r) {
       if (r.status !== 200 || !r.data || r.data.error) { msg.textContent = '加载失败，请稍后重试。'; return; }
       var uid = myUid();
-      var mine = (r.data.photos || []).filter(function (p) { return p.uploader_id === uid; });
-      if (!mine.length) { msg.textContent = '你还没有上传过照片。'; list.innerHTML = ''; return; }
-      msg.textContent = '只显示你上传的照片。删除后立即生效、无法恢复。';
-      list.innerHTML = mine.map(function (p) {
-        var cap = p.caption ? esc(p.caption) : (p.status === 'visible' ? '已展示' : '未公开展示');
-        return '<div class="pm-row" data-pid="' + esc(p.id) + '"><img src="' + esc(p.thumb_url || p.url) + '" alt="">' +
-          '<span class="pm-cap">' + cap + '</span>' +
-          '<button type="button" class="pm-del">删除</button></div>';
+      var isMgr = r.data.cls === 'manager';
+      var photos = r.data.photos || [];
+      var deletable = photos.filter(function (p) { return isMgr || p.uploader_id === uid; });
+      if (!deletable.length) { msg.textContent = '暂无可删除的照片'; list.innerHTML = ''; pmSyncBar(); return; }
+      msg.textContent = isMgr
+        ? '你是本赛事管理方，可删除全场照片。勾选后批量删除，删除立即全端同步、无法恢复。'
+        : '只可删除你上传的照片（他人照片不可选）。勾选后批量删除，删除立即全端同步、无法恢复。';
+      list.innerHTML = photos.map(function (p) {
+        var can = isMgr || p.uploader_id === uid;
+        var cap = p.caption ? esc(p.caption) : (p.status === 'visible' ? '已展示' : '待审核/未展示');
+        return '<label class="pm-row' + (can ? '' : ' off') + '" data-pid="' + esc(p.id) + '">' +
+          '<input type="checkbox" class="pm-chk"' + (can ? '' : ' disabled') + '>' +
+          '<img src="' + esc(p.thumb_url || p.url) + '" alt="">' +
+          '<span class="pm-cap">' + cap + (can ? '' : '（他人照片）') + '</span></label>';
       }).join('');
       Array.prototype.forEach.call(list.querySelectorAll('.pm-row'), function (row) {
-        var btn = row.querySelector('.pm-del');
-        btn.addEventListener('click', function () {
-          if (!btn.classList.contains('confirm')) {
-            btn.classList.add('confirm'); btn.textContent = '确认删除？';
-            var cancel = document.createElement('button');
-            cancel.type = 'button'; cancel.className = 'pm-cancel'; cancel.textContent = '取消';
-            cancel.addEventListener('click', function () {
-              btn.classList.remove('confirm'); btn.textContent = '删除'; cancel.remove();
-            });
-            btn.after(cancel);
-            return;
-          }
-          btn.disabled = true; btn.textContent = '删除中…';
-          lp({ action: 'photo_delete', photo_id: row.getAttribute('data-pid') }).then(function (r2) {
-            if (r2.status === 200 && r2.data && r2.data.ok) {
-              row.remove();
-              if (typeof window.loadWall === 'function') window.loadWall();
-              if (!list.querySelector('.pm-row')) msg.textContent = '你上传的照片已全部删除。';
-            } else if (r2.status === 403) {
-              msg.textContent = '只能删除自己上传的照片。';
-              btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
-            } else {
-              msg.textContent = '删除失败，请稍后重试。';
-              btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
-            }
-          }).catch(function () {
-            msg.textContent = '删除失败，请稍后重试。';
-            btn.disabled = false; btn.classList.remove('confirm'); btn.textContent = '删除';
-          });
+        var chk = row.querySelector('.pm-chk');
+        if (!chk) return;
+        chk.addEventListener('change', function () {
+          var pid = row.getAttribute('data-pid');
+          if (chk.checked) pmSel[pid] = true; else delete pmSel[pid];
+          pmSyncBar();
         });
       });
+      pmSyncBar();
     }).catch(function () { msg.textContent = '加载失败，请稍后重试。'; });
   }
+  document.getElementById('pmDelSel').addEventListener('click', function () {
+    var btn = this;
+    var ids = Object.keys(pmSel);
+    if (!ids.length || btn.disabled) return;
+    if (!btn.classList.contains('confirm')) {
+      btn.classList.add('confirm'); btn.textContent = '确认删除 ' + ids.length + ' 张？';
+      return;
+    }
+    btn.disabled = true; btn.textContent = '删除中…';
+    var done = 0, failed = 0;
+    (function next() {
+      if (!ids.length) {
+        msg.textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败请重试。') : ('已删除 ' + done + ' 张。');
+        if (typeof window.loadWall === 'function') window.loadWall();
+        loadMine();
+        return;
+      }
+      var pid = ids.shift();
+      lp({ action: 'photo_delete', photo_id: pid }).then(function (r2) {
+        if (r2.status === 200 && r2.data && r2.data.ok) done++; else failed++;
+        next();
+      }).catch(function () { failed++; next(); });
+    })();
+  });
 })();
 </script>
 <script>
