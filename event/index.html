@@ -80,7 +80,7 @@ a{text-decoration:none;color:inherit}
 </div></section>
 
 <div class="tabs"><div class="tabs-in" id="tabs">
-  <button class="tab on" data-f="all" type="button">全部</button>
+  <button class="tab" data-f="all" type="button">全部</button>
   <button class="tab" data-f="golf" type="button">高尔夫</button>
   <button class="tab" data-f="biz" type="button">商务</button>
   <button class="tab" data-f="etc" type="button">其他</button>
@@ -198,7 +198,7 @@ function load(){
       if(a.date && b.date) return String(a.date).localeCompare(String(b.date));
       if(a.date) return -1; if(b.date) return 1; return 0;
     });
-    PAGE = 0; paint();
+    PAGE = 0; applyUrlFilter(false); paint();
     if(!ALL.length) grid.innerHTML = '<div class="state"><span class="big">🎫</span>近期活动筹备中，敬请期待。</div>';
   }).catch(function(){
     grid.innerHTML = '<div class="state"><span class="big">🎫</span>活动加载遇到一点问题。<br/><button onclick="load()">重新加载</button></div>';
@@ -206,17 +206,32 @@ function load(){
 }
 document.getElementById('tabs').addEventListener('click', function(ev){
   var b = ev.target.closest ? ev.target.closest('.tab') : null; if(!b) return;
-  FILTER = b.getAttribute('data-f'); PAGE = 0;
+  FILTER = b.getAttribute('data-f'); PAGE = 0; TAB_TOUCHED = true;
   var tabs = document.querySelectorAll('.tab');
   for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i]===b);
   if(ALL.length) paint();
 });
-var qf = new URLSearchParams(location.search).get('f');
-if(qf && ['golf','biz','etc'].indexOf(qf) >= 0){
-  FILTER = qf;
-  var tabs = document.querySelectorAll('.tab');
-  for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-f')===qf);
+/* [fix2 2026-11-12] 入口 ?f= 权威化：显式主题参数在进页时权威。初始化、数据落地
+   （load 内 paint 前）、pageshow（含 bfcache 恢复）三处都以当前 URL 参数为准重申 FILTER
+   与 tab 选中态，不被页面实例的任何既存状态盖过；无参数时不干预（默认/点选行为不变）；
+   用户在本页手动点选过 tab（TAB_TOUCHED）后不再重申，点选优先。 */
+var TAB_TOUCHED = false;
+function urlFilter(){
+  var q = new URLSearchParams(location.search).get('f');
+  return (q && ['golf','biz','etc'].indexOf(q) >= 0) ? q : null;
 }
+function syncTabs(){
+  var tabs = document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-f')===FILTER);
+}
+function applyUrlFilter(repaint){
+  var q = urlFilter();
+  if(!q || TAB_TOUCHED) return;
+  FILTER = q; PAGE = 0; syncTabs();
+  if(repaint && ALL.length) paint();
+}
+applyUrlFilter(false); syncTabs();
+window.addEventListener('pageshow', function(){ applyUrlFilter(true); });
 load();
 </script>
 <script>

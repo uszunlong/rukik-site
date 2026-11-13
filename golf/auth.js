@@ -351,7 +351,9 @@ export function renderAuthBar(el, opts) {
        * public.users.display_name，回退元数据 name/full_name），邮箱/手机号
        * 不再出现在顶栏；姓名异步取到后回填，取不到只显示「已登录」。
        * 登录/改名/退出行为逻辑不变。 */
-      el.innerHTML = '<span class="rk-who">已登录</span>'
+      /* [fix2 2026-11-12] who 拆 label/name 两段：渲染文本与原先一致（已登录：姓名），
+       * 仅供各页按需呈现（如首页移动端只显姓名 chip、隐藏 label）；行为逻辑不变。 */
+      el.innerHTML = '<span class="rk-who"><span class="rk-who-label">已登录</span><span class="rk-who-name"></span></span>'
         + '<button type="button" class="rk-rename">改名</button>'
         + '<button type="button" class="rk-logout">退出</button>'
         + '<span class="rk-rename-box" hidden>'
@@ -363,7 +365,12 @@ export function renderAuthBar(el, opts) {
       var whoEl = el.querySelector('.rk-who');
       if (whoEl) {
         fetchMyAccountName().then(function (nm) {
-          if (nm && whoEl.isConnected) whoEl.textContent = '已登录：' + nm;
+          if (nm && whoEl.isConnected) {
+            var lb = whoEl.querySelector('.rk-who-label');
+            var ne = whoEl.querySelector('.rk-who-name');
+            if (lb && ne) { lb.textContent = '已登录：'; ne.textContent = nm; whoEl.classList.add('rk-has-name'); }
+            else whoEl.textContent = '已登录：' + nm;
+          }
         }).catch(function () {});
       }
       var b = el.querySelector('.rk-logout');

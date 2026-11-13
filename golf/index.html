@@ -108,12 +108,20 @@
     .sub { font-size: 15px; margin-bottom: 22px; }
     .hero-img img { max-height: 190px; }
     .grid3 { grid-template-columns: 1fr; }
-    /* [完善批次 2026-11-12] 顶栏防挤压：整行可换行、品牌/导航链接/登录条不折行，「退出」不再被切出屏外 */
-    .topbar-in { flex-wrap: wrap; row-gap: 6px; }
+    /* [完善批次 2026-11-12] 顶栏防挤压：整行可换行、品牌/导航链接/登录条不折行，「退出」不再被切出屏外
+       [fix2 2026-11-12] 两段式透气重构：导航整行落第二行（见下），行距/间距/热区加大；退出改第一行右侧（见 fix2 规则） */
+    .topbar-in { flex-wrap: wrap; row-gap: 10px; }
     .brand { white-space: nowrap; }
-    .topnav { flex-wrap: nowrap; }
-    .topnav a { white-space: nowrap; }
-    #authBar { margin-left: auto; }
+    .topnav { flex-wrap: nowrap; width: 100%; gap: 20px; }
+    .topnav a { white-space: nowrap; padding: 8px 2px; }
+    #authBar { margin-left: auto; gap: 10px; }
+    /* [fix2 2026-11-12] 身份区只显姓名 chip：auth.js 输出 label/name 两段，本页在有姓名时隐藏
+       「已登录：」label，姓名作 chip 与改名同组；无姓名时维持「已登录」原样。改名加大内距。 */
+    #authBar .rk-who.rk-has-name .rk-who-label { display: none; }
+    #authBar .rk-who.rk-has-name .rk-who-name { border: 1px solid rgba(160,220,185,.35); background: rgba(255,255,255,.04); border-radius: 999px; padding: 5px 12px; }
+    #authBar .rk-rename { padding: 6px 12px; }
+    /* [fix2 2026-11-12] 退出落第一行右侧（绝对定位锚定 .topbar；DOM 仍在 authBar 内，auth.js 接线与桌面形态不变） */
+    #authBar .rk-logout { position: absolute; top: 10px; right: 16px; padding: 8px 2px 8px 12px; font-size: 13px; }
     /* [完善批次 2026-11-12] 英文口号手机单行（文案逐字不变） */
     .eng { font-size: 10.5px; letter-spacing: .05em; white-space: nowrap; }
   }
