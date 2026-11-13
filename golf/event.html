@@ -350,6 +350,15 @@ function applyShare(e) {
     /* 分享页存在才升级链接：新活动分享页未生成前保持原链接，防分享落到 404。data 为引用传递，
        后续 wx.ready 回调与重试会读到升级后的 link。 */
     fetch(shareUrl, { method: 'HEAD' }).then(function (r) { if (r.ok) data.link = shareUrl; }).catch(function () {});
+    /* [分享最终根治 2026-11-12] 微信缩略图改走生成器派生图（JPEG 长边≤1200、≤200KB）：
+       原图 PNG 可达数 MB（BD Max 海报 2.38MB），微信抓取失败即回占位/通用图。
+       派生图与分享页同批生成；HEAD 确认存在才换，缺失保留原图不落空。 */
+    if (e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0])) {
+      var thumbUrl = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/share-thumbs/' + eventId + '.jpg';
+      fetch(thumbUrl, { method: 'HEAD' }).then(function (r) {
+        if (r.ok) { data.imgUrl = thumbUrl; setMeta('meta[property="og:image"]', thumbUrl); setMeta('meta[name="twitter:image"]', thumbUrl); }
+      }).catch(function () {});
+    }
   }
   document.title = e.title + ' · RUKIK Golf';
   setMeta('meta[property="og:title"]', data.title);
