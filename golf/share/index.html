@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RUKIK Golf · AI高尔夫大师</title>
+<meta name="description" content="一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RUKIK Golf">
+<meta property="og:title" content="RUKIK Golf · AI高尔夫大师">
+<meta property="og:description" content="一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。">
+<meta property="og:image" content="https://rukik.com/golf/golf-share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="rukik:share-shell" content="1">
+<script>
+(function () {
+  var m = location.search.match(/[?&]e=([0-9a-fA-F-]{36})/);
+  if (m) {
+    var url = "https://rukik.com/golf/event.html?e=" + m[1];
+    document.addEventListener("DOMContentLoaded", function () {
+      var a = document.getElementById("go");
+      if (a) { a.href = url; }
+    });
+    location.replace(url);
+  }
+})();
+</script>
+</head>
+<body>
+<p>正在打开活动页面… <a id="go" href="https://rukik.com/golf/">点此进入 RUKIK Golf</a></p>
+</body>
+</html>
