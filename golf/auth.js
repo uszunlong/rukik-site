@@ -122,6 +122,40 @@ export function mountLogin(el, opts) {
   function say(t) { msg.textContent = t || ''; }
   function done(s) { if (opts.onDone) opts.onDone(s); }
 
+  /* [微信WebView登录卡死根治 2026-11-12] supabase-js 的会话确立类调用全程无
+   * 超时：其内部请求助手对底层 fetch 不设超时/中断，成功后还要 await 全部
+   * onAuthStateChange 订阅回调才返回。微信内置浏览器里回程一旦不 settle，
+   * handler 的 await 永不返回——服务端会话其实已建行，页面却永久停在
+   * 「正在登录…」、按钮永久禁用。统一给这类调用套超时竞赛：原调用先 settle
+   * 按原结果走；超时则用 getSession 独立探活（会话在订阅通知之前已落盘，
+   * 探到即按成功收尾），探不到才报超时。迟到的原调用结果由 initAuth 的
+   * onAuthStateChange 正常传播，本处 settled 后忽略，不双跑收尾。 */
+  function probeSession(ms) {
+    return new Promise(function (resolve) {
+      var over = false;
+      var t = setTimeout(function () { if (!over) { over = true; resolve(null); } }, ms);
+      sb.auth.getSession().then(function (gs) {
+        if (over) return; over = true; clearTimeout(t);
+        resolve((gs && gs.data && gs.data.session) || null);
+      }).catch(function () { if (!over) { over = true; clearTimeout(t); resolve(null); } });
+    });
+  }
+  function authCallWithTimeout(p, ms) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return; settled = true;
+        probeSession(5000).then(function (s) { resolve(s ? { timeoutSession: s } : { timeout: true }); });
+      }, ms);
+      Promise.resolve(p).then(function (r) {
+        if (settled) return; settled = true; clearTimeout(timer); resolve({ result: r });
+      }).catch(function (e) {
+        if (settled) return; settled = true; clearTimeout(timer); resolve({ thrown: e });
+      });
+    });
+  }
+  var LOGIN_TIMEOUT_TIP = '登录超时：网络响应未完成（微信内置浏览器偶有此问题）。请再点一次登录；若仍失败，点右上角「…」选择在浏览器中打开本页，或改用邮箱验证码登录。';
+
   el.querySelectorAll('[data-tab]').forEach(function (b) {
     b.addEventListener('click', function () {
       el.querySelectorAll('[data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -148,9 +182,15 @@ export function mountLogin(el, opts) {
     if (!token) { say('请填写邮箱里收到的验证码。'); return; }
     var btn = this; btn.disabled = true; say('正在验证…');
     try {
-      var r = await sb.auth.verifyOtp({ email: email, token: token, type: 'email' });
-      if (r.error) say('验证失败：验证码不正确或已过期，请重新发送。');
-      else { session = (r.data && r.data.session) || null; emit(); done(session); }
+      var w = await authCallWithTimeout(sb.auth.verifyOtp({ email: email, token: token, type: 'email' }), 15000);
+      if (w.timeoutSession) { session = w.timeoutSession; say(''); emit(); done(session); }
+      else if (w.timeout) say('验证超时：网络响应未完成（微信内置浏览器偶有此问题）。请重试；若仍失败，点右上角「…」选择在浏览器中打开本页再试。');
+      else if (w.thrown) say('验证失败，请检查网络后重试。');
+      else {
+        var r = w.result;
+        if (r.error) say('验证失败：验证码不正确或已过期，请重新发送。');
+        else { session = (r.data && r.data.session) || null; say(''); emit(); done(session); }
+      }
     } catch (e) { say('验证失败，请检查网络后重试。'); } finally { btn.disabled = false; }
   });
 
@@ -161,7 +201,15 @@ export function mountLogin(el, opts) {
     if (!pass) { say('请填写密码。'); return; }
     var btn = this; btn.disabled = true; say('正在登录…');
     try {
-      var r = await sb.auth.signInWithPassword({ email: email, password: pass });
+      var w = await authCallWithTimeout(sb.auth.signInWithPassword({ email: email, password: pass }), 15000);
+      if (w.timeoutSession) {
+        q('[data-f="pwPass"]').value = '';
+        session = w.timeoutSession; say(''); emit(); done(session);
+        return;
+      }
+      if (w.timeout) { say(LOGIN_TIMEOUT_TIP); return; }
+      if (w.thrown) { say('登录失败，请检查网络后重试。'); return; }
+      var r = w.result;
       if (r.error) {
         var code = (r.error.code || '') + '';
         var em = (r.error.message || '') + '';
@@ -172,7 +220,7 @@ export function mountLogin(el, opts) {
         else say('登录失败，请重试。若持续失败，请改用邮箱验证码登录。');
       } else {
         q('[data-f="pwPass"]').value = '';
-        session = (r.data && r.data.session) || null; emit(); done(session);
+        session = (r.data && r.data.session) || null; say(''); emit(); done(session);
       }
     } catch (e) { say('登录失败，请检查网络后重试。'); } finally { btn.disabled = false; }
   });
