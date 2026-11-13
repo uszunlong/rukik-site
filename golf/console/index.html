@@ -700,10 +700,14 @@ function loadEvents() {
     var seen = {};
     var list = (d.organized || []).concat(d.joined || []).filter(function (e) { if (seen[e.id]) return false; seen[e.id] = 1; return true; });
     document.getElementById('eventList').innerHTML = list.length ? list.map(function (e) {
-      return '<div class="evt" data-id="' + e.id + '"><b>' + e.title + '</b><span>' + e.status + ' · ' + (e.starts_at ? String(e.starts_at).slice(0, 10) : '') + '</span></div>';
+      return '<div class="evt" data-id="' + e.id + '"><b>' + e.title + '</b><span>' + e.status + ' · ' + (e.starts_at ? String(e.starts_at).slice(0, 10) : '') + '</span>' + ((e.my_role === 'organizer' || e.my_role === 'admin') ? '<button type="button" class="ghost evt-del" data-del="' + e.id + '" data-title="' + escapeHtml(e.title || '') + '" style="float:right;color:#b3261e;border-color:rgba(179,38,30,.4)">删除</button>' : '') + '</div>';
     }).join('') : '<p style="color:#5c7260">暂无赛事，先创建一个。</p>';
     Array.prototype.forEach.call(document.querySelectorAll('.evt'), function (el) {
       el.onclick = function () { openEvent(el.getAttribute('data-id')); };
+    });
+    /* [0738 赛事删除入口 2026-11-12] 本人主办/管理赛事行内删除（服务端 event_delete 再验 organizer/admin） */
+    Array.prototype.forEach.call(document.querySelectorAll('.evt-del'), function (btn) {
+      btn.onclick = function (e2) { e2.stopPropagation(); consoleDeleteEvent(btn.getAttribute('data-del'), btn.getAttribute('data-title') || ''); };
     });
     /* [线P] ?e= 深链：赛事页/App 的「管理本场」入口直达对应赛事（仅限本人主办的赛事） */
     var want = new URLSearchParams(location.search).get('e');
@@ -3021,5 +3025,25 @@ window.__z49showView = z49ShowView;
 })();
 </script>
 
+<script>
+/* [0738 赛事删除入口 2026-11-12] console 删除流程：preview 计数 → uiConfirm 统一弹窗
+   （赛事名＋影响计数＋定版说明）→ 确认落删 → 刷新列表；删的正是当前打开赛事时收起管理台。 */
+function consoleDeleteEvent(id, title) {
+  call('event_delete', { event_id: id, preview: true }).then(function (pv) {
+    if (!pv || !pv.ok || !pv.impact) { uiConfirm('影响范围读取失败：' + ((pv && pv.error) || '未知错误')); return; }
+    var im = pv.impact;
+    var msg = '删除赛事《' + title + '》？共 ' + im.registrations + ' 人报名 · ' + im.scorecards + ' 张记分卡' + (im.locked_scorecards ? '（含已锁定 ' + im.locked_scorecards + ' 张）' : '') + '。删除后赛事将从所有列表消失、分享链接失效，数据保留备查。';
+    uiConfirm(msg).then(function (ok) {
+      if (!ok) return;
+      call('event_delete', { event_id: id }).then(function (r) {
+        if (r && r.ok) {
+          if (typeof currentEvent !== 'undefined' && currentEvent && currentEvent.id === id) { currentEvent = null; var d = document.getElementById('dash'); if (d) d.style.display = 'none'; }
+          loadEvents();
+        } else uiConfirm('删除失败：' + ((r && r.error) || '未知错误'));
+      });
+    });
+  });
+}
+</script>
 </body>
 </html>
