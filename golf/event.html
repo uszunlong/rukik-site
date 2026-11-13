@@ -277,6 +277,16 @@
   .pc-up{display:block;border:1px dashed #9db8a4;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;color:#14401f;background:#f4faf5;cursor:pointer}
   .pc-up small{display:block;font-weight:400;color:#6b7d6f;font-size:12px;margin-top:2px}
   .pal{position:relative;border-radius:16px;overflow:hidden;background:#0B2033;aspect-ratio:16/9;isolation:isolate}
+  /* [相册修正 2026-11-12] 查看全部照片：原地 3 列网格（与轮播同一集合） */
+  .albGridWrap{border-radius:16px;overflow:hidden;background:#0B2033}
+  .albGridBar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:linear-gradient(180deg,rgba(6,24,14,.92),rgba(6,24,14,.82))}
+  .albGridT{font-size:13px;font-weight:600;color:#e8f5ea}
+  .albGridActs{display:flex;gap:8px;align-items:center}
+  .albBack{background:#E9F5EC;color:#14532D;border:0;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+  .albGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px}
+  .albCell{margin:0;aspect-ratio:1/1;overflow:hidden;border-radius:6px;background:#12314d;cursor:pointer}
+  .albCell img{width:100%;height:100%;object-fit:cover;display:block}
+  .albMore{display:block;width:100%;background:transparent;color:#BFE3CC;border:0;padding:12px;font-size:13.5px;cursor:pointer}
   .palTrack{display:flex;transition:transform .45s ease;height:100%;align-items:stretch}
   .palSlide{flex:0 0 100%;margin:0;cursor:pointer;position:relative;height:100%;overflow:hidden;background:#0B2033}
   /* [Z88 修正版·用户 16:40 指令] 留白用同一张图的模糊背景填充（与舞台同尺寸 cover 裁满）；
@@ -522,10 +532,13 @@ function palLbShow() {
 function openPal(i) {
   if (!PALB.list.length) return;
   PALB.idx = ((i % PALB.list.length) + PALB.list.length) % PALB.list.length;
+  // [相册修正 2026-11-12] 看大图期间暂停自动轮播，关闭后恢复
+  PALB.paused = true;
+  if (PALB.resumeTo) { clearTimeout(PALB.resumeTo); PALB.resumeTo = null; }
   document.getElementById('palOverlay').classList.remove('hidden');
   palLbShow();
 }
-function closePal() { document.getElementById('palOverlay').classList.add('hidden'); }
+function closePal() { document.getElementById('palOverlay').classList.add('hidden'); PALB.paused = false; }
 /* [Z65] 顶部照片栏与正式赛事同模块：staff 口径与 renderStaff / 服务端
    requireStaff 统一（organizer ∪ 本场 admin/referee；my_role 缺失默认不渲染） */
 var DEFCOV_SVG = '<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="z65g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#052a1a"/><stop offset=".45" stop-color="#0d5c37"/><stop offset="1" stop-color="#03160d"/></linearGradient><radialGradient id="z65r" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd682" stop-opacity=".20"/><stop offset="1" stop-color="#ffd682" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="url(#z65g)"/><ellipse cx="980" cy="-60" rx="620" ry="340" fill="url(#z65r)"/><path d="M0 700 Q 800 640 1600 690 L1600 900 L0 900 Z" fill="#0a462a" opacity=".55"/><path d="M0 762 Q 800 700 1600 748 L1600 900 L0 900 Z" fill="#0e6038" opacity=".5"/><path d="M0 826 Q 800 766 1600 812 L1600 900 L0 900 Z" fill="#14804a" opacity=".45"/><circle cx="1215" cy="400" r="205" fill="none" stroke="#d8b25a" stroke-width="5"/><line x1="1225" y1="282" x2="1225" y2="518" stroke="#f5f5f0" stroke-width="7"/><polygon points="1225,282 1353,318 1225,354" fill="#2ecc71"/><ellipse cx="1225" cy="508" rx="32" ry="9" fill="#02120a"/><circle cx="1157" cy="509" r="13" fill="#fafaf6"/><line x1="90" y1="618" x2="330" y2="618" stroke="#d8b25a" stroke-width="4"/></svg>';
@@ -1938,7 +1951,8 @@ function renderLive() {
   carStop(); palStop();
   if (!media) return;
   // [相册最终整改 2026-11-12] 统一相册集合已就绪时 Hero 恒由其渲染（全状态
-  // 同形态、海报在集合内第一位）；旧照片墙形态仅作集合未就绪时的过渡兜底。
+  // 同形态；[相册修正 2026-11-12] 海报与照片平等同序、轮播/网格按当前模式
+  // 渲染）；旧照片墙形态仅作集合未就绪时的过渡兜底。
   if (typeof window.__albHero === 'function' && window.__albHero()) return;
   // 第一区 Hero 按状态自动切换：赛前恒海报；赛中/赛后有真实照片才换照片墙；无照片回退海报、不显空墙
   if (!WALL || !WALL.album_enabled || stateOf() === 'pre') { renderHeroMedia(); return; }
@@ -2281,6 +2295,8 @@ if (!eventId) {
     <div class="pm-opts" id="pmOpts">
       <button type="button" class="pm-opt" id="pmGoUpload">📷 上传照片<small>前往赛事照片池上传（现有上传方式不变）</small></button>
       <button type="button" class="pm-opt" id="pmGoDelete">🗑 删除照片<small>可多选批量删除（自己的照片；主办方/管理员可删全场）</small></button>
+      <button type="button" class="pm-opt" id="pmGoGrid">🖼 查看全部照片<small>在赛事页顶部以网格查看全部照片（与轮播是同一个相册）</small></button>
+      <button type="button" class="pm-opt" id="pmGoCancel">取消<small>关闭本菜单</small></button>
     </div>
     <div id="pmDelView" class="hidden">
       <div class="pm-msg" id="pmMsg"></div>
@@ -2646,6 +2662,10 @@ document.addEventListener('click', function (e) {
   document.getElementById('pmBackdrop').addEventListener('click', close);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) close(); });
   document.getElementById('pmGoUpload').addEventListener('click', function () { location.href = poolUrl(); });
+  // [相册修正 2026-11-12] 四选项口径补齐：查看全部照片（原地切网格，由相册
+  // 模块 window.albShowGrid 承接）／取消（只关菜单）
+  document.getElementById('pmGoGrid').addEventListener('click', function () { close(); if (window.albShowGrid) window.albShowGrid(); });
+  document.getElementById('pmGoCancel').addEventListener('click', close);
   document.getElementById('pmGoDelete').addEventListener('click', function () {
     opts.classList.add('hidden');
     delView.classList.remove('hidden');
@@ -2887,7 +2907,7 @@ document.addEventListener('click', function (e) {
   if (!window.eventId || typeof lp !== 'function') return;
   var SUPA_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
   var LP_URL = SUPA_URL + '/functions/v1/live-photo';
-  var ALB = { open: null, opensAt: null, cls: null, rtOk: false, pollT: null, lastIds: null, booted: false, suppressClick: false, items: null, count: 0, deadIds: {} };
+  var ALB = { open: null, opensAt: null, cls: null, rtOk: false, pollT: null, lastIds: null, booted: false, suppressClick: false, items: null, count: 0, deadIds: {}, mode: 'carousel', gridShown: 9 };
   function sess() { try { return JSON.parse(localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token') || 'null'); } catch (e) { return null; } }
   function myUid() { var s = sess(); return (s && s.user && s.user.id) || null; }
   function mylp(body) {
@@ -2930,9 +2950,11 @@ document.addEventListener('click', function (e) {
     }).catch(function () {});
   }
   // ---- [相册最终整改 2026-11-12] 唯一相册 Hero：服务端统一集合驱动 ----
-  // 集合＝[主海报→其余官方海报→共享照片]，海报与照片同在一个轮播组件内
-  // （滑动/计数/圆点/灯箱都属本组件），不再有独立海报区＋第二照片区。
-  // 全部状态（赛前/赛中/赛后）同形态；计数＝服务端 album_count（唯一记录数）。
+  // 海报与照片同在一个相册组件内（滑动/计数/圆点/灯箱都属本组件），不再有
+  // 独立海报区＋第二照片区。全部状态（赛前/赛中/赛后）同形态；计数＝服务端
+  // album_count（唯一记录数）。
+  // [相册修正 2026-11-12] 排序为服务端平等稳定序（登记时间序，official_main
+  // 无置顶特权）；展示双模式：轮播（默认）／查看全部照片网格（ALB.mode）。
   function albSlideSrc(it) { return it.kind === 'poster' ? it.url : (it.thumb_url || it.display_url || it.url); }
   function albFullSrc(it) { return it.kind === 'poster' ? it.url : (it.display_url || it.url); }
   function renderAlbumHero() {
@@ -2941,7 +2963,8 @@ document.addEventListener('click', function (e) {
     if (typeof palStop === 'function') palStop();
     if (typeof carStop === 'function') carStop();
     PALB.list = ALB.items.map(albFullSrc);
-    if (PALB.idx >= ALB.items.length) PALB.idx = 0;
+    // [相册修正 2026-11-12] 越界钳到相邻张（末张），不再跳回首张
+    if (PALB.idx >= ALB.items.length) PALB.idx = ALB.items.length - 1;
     var canManage = !!(window.EV && (EV.my_registration || EV.my_player || EV.my_role));
     box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
       ALB.items.map(function (it, i) {
@@ -2983,7 +3006,73 @@ document.addEventListener('click', function (e) {
     palStart();
     return true;
   }
-  window.__albHero = function () { return renderAlbumHero(); };
+  // ---- [相册修正 2026-11-12] 查看全部照片：顶部区域原地切 3 列网格 ----
+  // 与轮播共用 ALB.items 同一集合与 refreshPhotos 实时通道（不是第二个相册）；
+  // 方形裁切缩略图、首屏 9 张、其余点「加载更多」增量渲染；网格下自动轮播
+  // 停用（palStop 且不 palStart）；点图进同一灯箱（openPal），长按同轮播口径
+  // （照片→下载菜单、海报→看原图）；「返回轮播」按 PALB.idx 回到此前位置。
+  function renderAlbumGrid() {
+    var box = document.getElementById('heroMedia');
+    if (!box) return false;
+    if (!ALB.items || !ALB.items.length) { ALB.mode = 'carousel'; return renderAlbumHero(); }
+    if (typeof palStop === 'function') palStop();
+    if (typeof carStop === 'function') carStop();
+    PALB.list = ALB.items.map(albFullSrc);
+    if (PALB.idx >= ALB.items.length) PALB.idx = ALB.items.length - 1;
+    var canManage = !!(window.EV && (EV.my_registration || EV.my_player || EV.my_role));
+    if (!ALB.gridShown || ALB.gridShown < 9) ALB.gridShown = 9;
+    var shown = Math.min(ALB.gridShown, ALB.items.length);
+    var cells = '';
+    for (var gi = 0; gi < shown; gi++) {
+      var git = ALB.items[gi];
+      cells += '<figure class="albCell" data-gi="' + gi + '"><img loading="lazy" src="' + esc(albSlideSrc(git)) + '" alt="' + (git.is_official ? '赛事海报' : '赛事照片') + '"></figure>';
+    }
+    box.innerHTML = '<div class="albGridWrap">' +
+      '<div class="albGridBar"><span class="albGridT">🔴 Golf Live · ' + ALB.count + ' 张照片</span>' +
+      '<span class="albGridActs">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') +
+      '<button type="button" class="albBack" id="albBackBtn">‹ 返回轮播</button></span></div>' +
+      '<div class="albGrid">' + cells + '</div>' +
+      (shown < ALB.items.length ? '<button type="button" class="albMore" id="albMoreBtn">加载更多照片（已显示 ' + shown + ' / ' + ALB.items.length + '）</button>' : '') +
+      '</div>';
+    var back = document.getElementById('albBackBtn');
+    if (back) back.addEventListener('click', function () { ALB.mode = 'carousel'; renderAlbumHero(); });
+    var more = document.getElementById('albMoreBtn');
+    if (more) more.addEventListener('click', function () { ALB.gridShown += 9; renderAlbumGrid(); });
+    var pmB = document.getElementById('pmOpenBtn');
+    if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
+    Array.prototype.forEach.call(box.querySelectorAll('.albCell'), function (fig) {
+      var i = Number(fig.getAttribute('data-gi'));
+      var it = ALB.items[i];
+      var img = fig.querySelector('img');
+      if (!img || !it) return;
+      img.addEventListener('click', function () { if (typeof openPal === 'function') openPal(i); });
+      img.addEventListener('error', function () {
+        if (!ALB.deadIds[it.id]) {
+          ALB.deadIds[it.id] = 1;
+          ALB.items = ALB.items.filter(function (x) { return x.id !== it.id; });
+          ALB.count = ALB.items.length;
+          if (PALB.idx >= ALB.items.length) PALB.idx = Math.max(0, ALB.items.length - 1);
+          if (ALB.items.length) renderAlbumGrid(); else if (typeof renderHeroMedia === 'function') renderHeroMedia();
+        }
+      });
+      var gTimer = null, gx = 0, gy = 0;
+      fig.addEventListener('pointerdown', function (e) {
+        gx = e.clientX; gy = e.clientY;
+        gTimer = setTimeout(function () {
+          ALB.suppressClick = true;
+          if (it.kind === 'photo') openMenu(it);
+          else if (typeof openPal === 'function') openPal(i);
+        }, 550);
+      });
+      ['pointermove', 'pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+        fig.addEventListener(ev, function (e) { if (gTimer && (ev !== 'pointermove' || Math.abs(e.clientX - gx) > 10 || Math.abs(e.clientY - gy) > 10)) { clearTimeout(gTimer); gTimer = null; } }, { passive: true });
+      });
+    });
+    return true;
+  }
+  function albRender() { return ALB.mode === 'grid' ? renderAlbumGrid() : renderAlbumHero(); }
+  window.albShowGrid = function () { ALB.mode = 'grid'; ALB.gridShown = 9; renderAlbumGrid(); };
+  window.__albHero = function () { return albRender(); };
   window.__albCur = function () { return (ALB.items && ALB.items.length) ? ALB.items[PALB.idx] || null : null; };
 
   // ---- 照片增量对账（推送/轮询/补刷共用同一条路） ----
@@ -2991,10 +3080,15 @@ document.addEventListener('click', function (e) {
     return mylp({ action: 'photo_list', event_kind: 'golf', event_id: window.eventId, limit: 100 }).then(function (d) {
       if (!d || !d.ok || !Array.isArray(d.photos)) return;
       if (typeof d.upload_open === 'boolean') { ALB.open = d.upload_open; ALB.opensAt = d.opens_at || ALB.opensAt; gatePm(); }
-      // [相册最终整改 2026-11-12] 统一集合直接落位：服务端已按 [主海报→官方
-      // 海报→共享照片] 排序并去重，客户端不再二次过滤/合并（旧口径在此过滤
-      // status==='visible' 并把计数写成可见照片数，与服务端、海报数三方跳动）。
+      // [相册最终整改 2026-11-12] 统一集合直接落位：服务端已排序并去重，
+      // 客户端不再二次过滤/合并（旧口径在此过滤 status==='visible' 并把计数
+      // 写成可见照片数，与服务端、海报数三方跳动）。
+      // [相册修正 2026-11-12] 服务端排序＝平等稳定序（登记时间序）；刷新
+      // 保位：先记当前照片 id，落位后按 id 回到同一张；当前张被删则钳到
+      // 相邻张（min(旧idx, 末张)），绝不跳回首张。
       var me = myUid(), hasNew = false;
+      var curId = (ALB.items && ALB.items.length) ? (ALB.items[PALB.idx] || {}).id : null;
+      var oldIdx = PALB.idx;
       var newIds = {};
       d.photos.forEach(function (p) {
         newIds[p.id] = 1;
@@ -3004,7 +3098,12 @@ document.addEventListener('click', function (e) {
       ALB.items = d.photos.filter(function (p) { return !ALB.deadIds[p.id]; });
       ALB.count = (typeof d.album_count === 'number') ? d.album_count : ALB.items.length;
       if (d.cls) ALB.cls = d.cls;
-      renderAlbumHero();
+      if (ALB.items.length) {
+        var ni = -1;
+        if (curId) { for (var ix = 0; ix < ALB.items.length; ix++) { if (ALB.items[ix].id === curId) { ni = ix; break; } } }
+        PALB.idx = ni >= 0 ? ni : Math.min(oldIdx, ALB.items.length - 1);
+      } else PALB.idx = 0;
+      albRender();
       if (window.WALL) {
         // 动态流（帖文/互动）仍走 WALL.feed 维护，照片计数与统一集合对齐
         var oldById = {};
@@ -3074,6 +3173,9 @@ document.addEventListener('click', function (e) {
     var lpTimer = null, lpX = 0, lpY = 0;
     hero.addEventListener('pointerdown', function (e) {
       // [相册最终整改] 长按作用于统一相册当前项：照片→下载菜单；海报→打开灯箱看原图
+      // [相册修正 2026-11-12] 网格模式下长按由网格单元格自身处理（按所按的
+      // 那一张），此处轮播口径让行，避免对轮播当前张误开菜单。
+      if (ALB.mode === 'grid') return;
       if (!e.target || e.target.tagName !== 'IMG' || typeof window.__albCur !== 'function' || !window.__albCur()) return;
       lpX = e.clientX; lpY = e.clientY;
       lpTimer = setTimeout(function () {
