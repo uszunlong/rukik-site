@@ -1838,7 +1838,7 @@ function paintScoring(card) {
 
   if (sel && !locked) {
     var st2 = holeState(card.id, sel.hole, sel.strokes);
-    var tag = st2 === 'saved' ? '<span style="color:#15803d">● 已同步</span>' : st2 === 'syncing' ? '<span style="color:#2563eb">● 同步中…</span>' : st2 === 'pending' ? '<span style="color:#d97706">● 已保存到本机，等待同步</span>' : st2 === 'conflict' ? '<span style="color:#dc2626">● 同步失败 / 待确认</span>' : '<span style="color:#8B857D">尚未录入</span>';
+    var tag = st2 === 'saved' ? '<span style="color:#15803d">● 已同步</span>' : st2 === 'syncing' ? '<span style="color:#2563eb">● 同步中…</span>' : st2 === 'pending' ? '<span style="color:#d97706">● 已保存到本机，等待同步</span>' : st2 === 'conflict' ? (S.conflicts[sel.hole] ? '<span style="color:#dc2626">● 有冲突，等待您确认</span>' : '<span style="color:#d97706">● 已保存到本机，等待同步</span>') : '<span style="color:#8B857D">尚未录入</span>';
     html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + (sel.yards ? ' · ' + sel.yards + ' 码' : '') + (sel.strokes_received ? ' · 本洞让 ' + sel.strokes_received + ' 杆' : '') + '</div>' +
       '<div class="stepper"><button type="button" id="stMinus" aria-label="减一杆">−</button><div class="val" id="stVal">' + (S.edStrokes == null ? sel.par : S.edStrokes) + '</div><button type="button" id="stPlus" aria-label="加一杆">＋</button></div>' +
       '<div class="edlabel">杆数</div>' +
