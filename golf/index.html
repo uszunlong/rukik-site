@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <!-- [线Z66 2026-11-12] RUKIK Golf 落地页：快速球局双入口（发起/加入）。此前 /golf/ 无 index.html 落主站 404，用户找不到快速球局入口。本页只做入口与我的球局恢复，建局/加入/记分全部复用 play.html 现行流程，不另建一套。 -->
+<!-- [线Z92 2026-11-12] 统一公开入口「RUKIK Golf」定版：本页按四块呈现——快速高尔夫／高尔夫赛事／我的高尔夫／问 RUKIK Golf；title 与 description 按定版更新。只补结构与链接，视觉语言与 my_rounds 逻辑不动。 -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RUKIK Golf 快速球局 · 免下载发起高尔夫球局</title>
-<meta name="description" content="RUKIK Golf 快速球局：不用下载 App，打开网页就能发起一场高尔夫球局——选球场、生成邀请链接，好友点开登录即可加入同一组共同记分。也可以输入邀请码加入球局、回到进行中的球局，或进入正式赛事。">
+<title>RUKIK Golf｜免费发起高尔夫球局、赛事报名与智能记分</title>
+<meta name="description" content="RUKIK Golf 是 RUKIK 的高尔夫统一入口：免费发起高尔夫球局、输入邀请码加入好友球局；浏览正式赛事并在线报名；逐洞智能记分与实时排行榜；AI 球童陪你打球。不用下载 App，打开网页即可使用。">
 <link rel="canonical" href="https://rukik.com/golf/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Rukik">
-<meta property="og:title" content="RUKIK Golf 快速球局 · 免下载发起高尔夫球局">
-<meta property="og:description" content="选球场、发链接，好友打开就能一起记分。不用下载 App。">
+<meta property="og:title" content="RUKIK Golf｜免费发起高尔夫球局、赛事报名与智能记分">
+<meta property="og:description" content="发起球局、赛事报名、智能记分与 AI 球童，都在 RUKIK Golf。不用下载 App。">
 <meta property="og:url" content="https://rukik.com/golf/">
 <meta property="og:image" content="https://rukik.com/golf/golf-share.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="RUKIK Golf 快速球局 · 免下载发起高尔夫球局">
-<meta name="twitter:description" content="选球场、发链接，好友打开就能一起记分。不用下载 App。">
+<meta name="twitter:title" content="RUKIK Golf｜免费发起高尔夫球局、赛事报名与智能记分">
+<meta name="twitter:description" content="发起球局、赛事报名、智能记分与 AI 球童，都在 RUKIK Golf。不用下载 App。">
 <meta name="twitter:image" content="https://rukik.com/golf/golf-share.jpg">
 <link rel="icon" href="/assets/seal.png">
 <style>
@@ -74,9 +75,10 @@
 </div></header>
 <main>
   <section class="card hero">
-    <span class="pill">RUKIK GOLF · 快速球局</span>
+    <span class="pill">RUKIK GOLF · 统一入口</span>
     <h1>约上好友，<span class="gold">说打就打</span></h1>
-    <p class="muted">快速球局是 RUKIK Golf 的日常球局：一分钟发起一场，选个球场、生成邀请链接，好友打开链接登录就能加入同一组共同记分。全程在网页完成，不用下载 App。</p>
+    <p class="muted">这里是 RUKIK Golf 的统一入口：快速高尔夫、高尔夫赛事、我的高尔夫与 AI 球童都在这一页。快速球局一分钟发起一场，选个球场、生成邀请链接，好友打开链接登录就能加入同一组共同记分。全程在网页完成，不用下载 App。</p>
+    <h2 style="margin-top:16px">快速高尔夫</h2>
     <a class="entry main" href="play.html?create=1"><span class="etx">发起快速球局<small>选球场 · 邀请好友 · 共同记分</small></span><span class="arr">→</span></a>
     <button class="entry" id="joinToggle" type="button"><span class="etx">加入球局<small>输入好友给您的邀请码</small></span><span class="arr">→</span></button>
     <div id="joinPanel" style="display:none">
@@ -95,10 +97,23 @@
   </section>
 
   <section class="card">
-    <h2>正式赛事</h2>
-    <p class="muted">受邀参加正式比赛？从赛事页看海报、球场地图、排行榜并报名。</p>
+    <h2>🏆 高尔夫赛事</h2>
+    <p class="muted">浏览正式赛事活动，看海报、球场地图与排行榜，并在线报名。</p>
+    <a class="csr" href="https://rukik.com/event/"><b>浏览活动与赛事</b><small>查找活动 · 报名 · 查看赛事</small></a>
     <a class="csr" href="event.html?e=11564c2e-9c4f-40de-a54a-9803a0ae024c"><b>BD Max · 首届美国菁英高尔夫邀请赛</b><small>2026年11月23日 · Friendly Hills Country Club · 进入赛事页</small></a>
-    <a class="csr" href="memory/"><b>高光时刻</b><small>成绩 · 球场 · 球友 · 精彩瞬间</small></a>
+  </section>
+
+  <section class="card">
+    <h2>🎒 我的高尔夫</h2>
+    <a class="csr" href="#myRoundsCard"><b>进行中的球局</b><small>见上方「我的球局」，点开直接继续记分</small></a>
+    <a class="csr" href="https://rukik.com/event/"><b>已报名赛事</b><small>查看我报名参加的赛事活动</small></a>
+    <a class="csr" href="memory/"><b>历史成绩 · 高光时刻</b><small>成绩 · 球场 · 球友 · 精彩瞬间</small></a>
+  </section>
+
+  <section class="card">
+    <h2>🤖 问 RUKIK Golf</h2>
+    <p class="muted">AI 球童陪你打球：球场信息、高尔夫规则、你的成绩，都可以直接问。</p>
+    <a class="csr" href="caddie.html"><b>打开 AI 球童</b><small>问 RUKIK Golf · 随身高尔夫球童</small></a>
   </section>
 
   <p class="foot muted">RUKIK Golf ｜ 记得你的每一场比赛，懂得你的每一次进步，预见你的下一洞。<br><a href="https://rukik.com/">Rukik 首页</a> · <a href="play.html">一页球局</a> · <a href="console/">主办方工作台</a></p>
