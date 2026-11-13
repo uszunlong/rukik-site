@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUKIK Golf AI球童 · RUKIK Golf</title>
-<!-- build-marker: z55-20261112c -->
+<!-- build-marker: z55-20261112c + caddie-login-visual-20261112 -->
 <meta name="description" content="RUKIK 平台官方 AI 球童：高尔夫专业知识 · 赛事陪伴 · 个人成长">
 <style>
   *{box-sizing:border-box}
@@ -32,9 +32,62 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chips button{background:#fff;border:1px solid #cfe0d2;color:#14532d;border-radius:999px;padding:7px 12px;font-size:13px}
   .chips button:active{background:#eef4ef}
-  #loginBox{background:#fff;border:1px solid #dde7dd;border-radius:14px;padding:14px}
-  #loginBox .lt{font-weight:700;margin-bottom:6px}
-  #loginBox .ld{font-size:13px;color:#5b7263;margin-bottom:10px;line-height:1.6}
+  /* [球童登录视觉改版 2026-11-12] 未登录态专属皮肤：深翡翠绿 + 玻璃登录卡。
+   * 作用域仅限 #loginBox 内部与未登录页态 body:has(#loginBox:not(.hidden))；
+   * 已登录对话态沿用原样式。auth.js 标记零改动，纯 CSS 套皮。 */
+  #loginBox{--ink2:#D8E9DF;--gold:#D6B878;--acc:#8DDBA1;--btn:#249653;background:linear-gradient(155deg,rgba(20,92,59,.66),rgba(6,59,41,.84));-webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);border:1px solid rgba(141,219,161,.38);border-radius:26px;padding:34px 36px 26px;box-shadow:0 24px 60px rgba(0,20,10,.45),inset 0 1px 0 rgba(255,255,255,.14);color:#fff}
+  #loginBox .lt{font-weight:800;font-size:28px;letter-spacing:.5px;text-align:center;color:#fff;margin:0;line-height:1.3}
+  #loginBox .lt::after{content:'';display:block;width:72px;height:2px;margin:14px auto 0;border-radius:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  #loginBox .ld{font-size:14px;color:var(--ink2);text-align:center;margin:14px 0 0;line-height:1.75}
+  #loginBox .ld .sub{display:block;margin-top:6px;font-size:12.5px;color:rgba(216,233,223,.75)}
+  #loginBox .lfoot{margin-top:18px;text-align:center;font-size:13.5px;color:var(--ink2);line-height:2.1}
+  #loginBox .lfoot button{background:none;border:none;padding:0;font:inherit;color:var(--acc);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  #loginBox .ldiv{display:flex;align-items:center;gap:12px;margin:20px 2px 0;color:rgba(216,233,223,.65);font-size:12.5px}
+  #loginBox .ldiv::before,#loginBox .ldiv::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(214,184,120,.55),transparent)}
+  #appleBtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:14px;padding:14px 18px;min-height:52px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:rgba(0,0,0,.38);color:#fff;font-size:15.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  #appleBtn:active{background:rgba(0,0,0,.55)}
+  #appleBtn:disabled{opacity:.6}
+  #loginBox .rk-auth{margin-top:18px}
+  #loginBox [hidden]{display:none!important}
+  #loginBox .rk-auth-title,#loginBox .rk-auth>.rk-auth-hint{display:none}
+  #loginBox .rk-tabs{display:flex;gap:4px;background:rgba(255,255,255,.08);border:1px solid rgba(141,219,161,.22);border-radius:999px;padding:4px;margin:0 0 6px}
+  #loginBox .rk-tabs button{flex:1;background:transparent;border:none;border-radius:999px;padding:11px 0;min-height:48px;font-size:15px;color:var(--ink2);cursor:pointer;font-family:inherit}
+  #loginBox .rk-tabs button.on{background:linear-gradient(135deg,#2fae64,var(--btn));color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(36,150,83,.4)}
+  #loginBox .rk-row{display:flex;gap:10px;margin-top:12px;position:relative}
+  #loginBox .rk-row input,#loginBox .rk-row select{flex:1;min-width:0;height:52px;border:1px solid rgba(216,233,223,.35);border-radius:999px;padding:0 18px;font-size:16px;outline:none;background-color:rgba(255,255,255,.07);color:#fff;font-family:inherit}
+  #loginBox .rk-row select{flex:0 0 96px;padding:0 10px;appearance:none;-webkit-appearance:none}
+  #loginBox .rk-row select option{color:#123524}
+  #loginBox .rk-row input::placeholder{color:rgba(216,233,223,.55)}
+  #loginBox .rk-row input:focus,#loginBox .rk-row select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(36,150,83,.35)}
+  #loginBox .rk-row input[data-f="email"],#loginBox .rk-row input[data-f="pwEmail"]{padding-left:46px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:15px center;background-size:20px}
+  #loginBox .rk-row input[data-f="phone"]{padding-left:46px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8'%3E%3Crect x='7' y='2' width='10' height='20' rx='2'/%3E%3Cpath d='M11 18h2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:15px center;background-size:20px}
+  #loginBox .rk-row input[data-f="pwPass"]{padding-left:46px;padding-right:52px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8'%3E%3Crect x='4' y='11' width='16' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:15px center;background-size:20px}
+  #loginBox .rk-row input[data-f="emailCode"],#loginBox .rk-row input[data-f="smsCode"]{padding-left:46px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238DDBA1' stroke-width='1.8'%3E%3Crect x='3' y='8' width='18' height='12' rx='2'/%3E%3Cpath d='M7 8V6a5 5 0 0 1 10 0v2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:15px center;background-size:20px}
+  #loginBox .rk-row button{flex:1;background:linear-gradient(135deg,#2fae64,var(--btn));color:#fff;border:none;border-radius:999px;padding:13px 20px;min-height:52px;font-size:16px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;box-shadow:0 6px 18px rgba(36,150,83,.35)}
+  #loginBox .rk-row button.plain{background:rgba(255,255,255,.06);color:var(--ink2);border:1px solid rgba(141,219,161,.3);box-shadow:none;font-weight:600}
+  #loginBox [data-row="emailCode"] button,#loginBox [data-row="smsCode"] button{flex:0 0 auto;font-size:15px}
+  #loginBox .rk-row button:disabled{opacity:.55}
+  #loginBox .rk-auth-hint{font-size:13px;line-height:1.7;color:var(--ink2);margin:10px 0 0}
+  #loginBox [data-pane="password"] .rk-auth-hint{display:none}
+  #loginBox .rk-msg{margin-top:12px;font-size:13.5px;line-height:1.65;color:#B9E7C6;text-align:center;min-height:20px}
+  #loginBox .pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:42px;height:42px;min-height:42px!important;flex:none!important;padding:0!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;font-size:17px}
+  body:has(#loginBox:not(.hidden)){background:#063B29}
+  body:has(#loginBox:not(.hidden))::before{content:'';position:fixed;inset:0;z-index:-2;background:url('assets/caddie-login-bg.webp') center 30%/cover no-repeat #063B29}
+  body:has(#loginBox:not(.hidden))::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,59,41,.78),rgba(6,59,41,.42) 34%,rgba(6,59,41,.5) 62%,rgba(4,38,25,.92)),radial-gradient(120% 34% at 50% -6%,rgba(214,184,120,.14),transparent 60%),radial-gradient(130% 40% at 50% 112%,rgba(20,92,59,.55),transparent 65%)}
+  body:has(#loginBox:not(.hidden)) header{background:linear-gradient(180deg,rgba(6,59,41,.85),rgba(6,59,41,.35) 80%,transparent);box-shadow:none}
+  body:has(#loginBox:not(.hidden)) header a.back{background:rgba(6,59,41,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  body:has(#loginBox:not(.hidden)) .badge{background:rgba(141,219,161,.18);color:#B9E7C6;border:1px solid rgba(141,219,161,.45)}
+  body:has(#loginBox:not(.hidden)) main{max-width:640px;padding-top:26px}
+  body:has(#loginBox:not(.hidden)) .evname{color:rgba(216,233,223,.9);text-align:center;font-size:13.5px;text-shadow:0 1px 8px rgba(0,20,10,.6)}
+  body:has(#loginBox:not(.hidden)) #msgs .msg.a{background:rgba(6,59,41,.55);border:1px solid rgba(141,219,161,.3);color:#EAF6EE;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);max-width:100%}
+  body:has(#loginBox:not(.hidden)) #msgs .tag{background:rgba(141,219,161,.16);color:#B9E7C6}
+  @media (max-width:640px){
+    body:has(#loginBox:not(.hidden))::before{background-image:url('assets/caddie-login-bg-m.webp');background-position:center top}
+    body:has(#loginBox:not(.hidden)) main{padding:16px 12px 8px}
+    body:has(#loginBox:not(.hidden)) header .ttl .sub{white-space:normal}
+    #loginBox{padding:26px 20px 20px;border-radius:22px}
+    #loginBox .lt{font-size:24px}
+  }
   footer{position:sticky;bottom:0;background:#f6f7f5;border-top:1px solid #e2eae2;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
   .inrow{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
   textarea{flex:1;resize:none;border:1px solid #cfe0d2;border-radius:12px;padding:10px 12px;font-size:15px;font-family:inherit;max-height:110px;background:#fff}
@@ -57,8 +110,14 @@
   <div class="evname" id="evName"></div>
   <div id="loginBox" class="hidden">
     <div class="lt">登录后即可问 AI 球童</div>
-    <div class="ld">AI 球童需要读取您在本场赛事的真实成绩与分组信息，因此需要登录。与 RUKIK App 同一账号（手机号或邮箱），同一 UID。</div>
+    <div class="ld">登录RUKIK账号，AI球童即可结合您的赛事、分组与成绩，提供更懂您的高尔夫陪伴。<span class="sub">与RUKIK App使用同一账号 · 同一UID</span></div>
     <div id="loginMount"></div>
+    <div class="ldiv">或</div>
+    <button type="button" id="appleBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff" aria-hidden="true"><path d="M16.36 12.94c.02 2.06 1.8 2.75 1.83 2.76-.02.05-.28.95-.92 1.88-.55.8-1.13 1.6-2.03 1.62-.89.02-1.17-.53-2.19-.53-1.01 0-1.32.51-2.15.55-.86.04-1.52-.86-2.07-1.66C3.9 16.6 2.6 12.27 4.1 9.9c.74-1.17 2.06-1.91 3.5-1.94.79-.01 1.54.53 2.02.53.49 0 1.4-.66 2.36-.56.4.02 1.56.16 2.3 1.22-.06.04-1.37.81-1.36 2.41M14.16 6.06c.4-.48.66-1.15.59-1.82-.57.02-1.27.38-1.68.86-.37.43-.69 1.11-.61 1.77.64.05 1.3-.32 1.7-.81"/></svg><span>使用 Apple 登录</span></button>
+    <div class="lfoot">
+      <div>没有密码，或忘记密码？<button type="button" id="toEmailOtp">使用邮箱验证码登录 ›</button></div>
+      <div>新用户？<button type="button" id="toRegister">立即注册 ›</button></div>
+    </div>
   </div>
   <div id="msgs"></div>
   <div class="chips" id="chips"></div>
@@ -82,7 +141,7 @@
   })();
 </script>
 <script type="module">
-import { initAuth, mountLogin, renderAuthBar, getAccessToken, getSessionSync } from './auth.js?v=20261112c';
+import { initAuth, mountLogin, renderAuthBar, getAccessToken, getSessionSync, signInWithApple } from './auth.js?v=20261112d';
 
 var CFG = window.__caddieCfg;
 var PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
@@ -328,6 +387,41 @@ initAuth(function (s) {
   if (!s) mountLogin(document.getElementById('loginMount'), { onDone: function () { setLoggedIn(true); } });
 });
 renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setLoggedIn(false); } });
+</script>
+<script>
+/* [球童登录视觉改版 2026-11-12 · 纯增呈现层] 密码可见切换、卡底快捷入口、Apple 登录发起。
+ * 不改任何既有认证流程：快捷入口只触发既有邮箱页签；Apple 走 auth.js 新增的
+ * signInWithApple（平台已接通的同一 OAuth 通道），返回后仍由既有会话机制恢复。 */
+(function () {
+  function $(s) { return document.querySelector(s); }
+  function enhance() {
+    var pw = $('#loginMount input[data-f="pwPass"]');
+    if (pw && !pw.dataset.eye) {
+      pw.dataset.eye = '1';
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'pw-eye'; b.textContent = '\u{1F441}'; b.setAttribute('aria-label', '显示或隐藏密码');
+      b.addEventListener('click', function () { pw.type = pw.type === 'password' ? 'text' : 'password'; pw.focus(); });
+      pw.parentNode.appendChild(b);
+    }
+  }
+  var lm = document.getElementById('loginMount');
+  if (lm) new MutationObserver(enhance).observe(lm, { childList: true, subtree: true });
+  enhance();
+  function goEmail() { var t = $('#loginMount [data-tab="email"]'); if (t) t.click(); var e = $('#loginMount input[data-f="email"]'); if (e) e.focus(); }
+  var f1 = document.getElementById('toEmailOtp'); if (f1) f1.addEventListener('click', goEmail);
+  var f2 = document.getElementById('toRegister'); if (f2) f2.addEventListener('click', goEmail);
+  var ab = document.getElementById('appleBtn');
+  if (ab) ab.addEventListener('click', function () {
+    ab.disabled = true;
+    var label = ab.querySelector('span'); if (label) label.textContent = '正在跳转到 Apple 登录…';
+    import('./auth.js?v=20261112d').then(function (m) { return m.signInWithApple(location.href); }).then(function (r) {
+      if (!r || !r.ok) {
+        ab.disabled = false; if (label) label.textContent = '使用 Apple 登录';
+        var msg = $('#loginMount [data-f="msg"]'); if (msg) msg.textContent = 'Apple 登录暂时不可用，请改用邮箱或手机号登录。';
+      }
+    });
+  });
+})();
 </script>
 </body>
 </html>

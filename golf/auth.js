@@ -408,3 +408,17 @@ export function renderAuthBar(el, opts) {
   paint();
   return { paint: paint };
 }
+
+/* [球童登录视觉改版 2026-11-12 · 纯增] Web Apple 登录：平台已接通
+ * （Supabase Auth apple provider 启用、Services ID com.rukik.web、
+ * redirect allowlist 含 https://rukik.com/**；站内 /build/ 页已在用同一通道）。
+ * 本函数仅新增一个登录入口：发起 OAuth 跳转，redirectTo 回到调用页现址
+ * （含赛事参数），返回后由本文件既有 supabase-js 客户端按原机制恢复会话、
+ * 同一 UID。既有邮箱/手机号/密码三通道与会话逻辑零改动。 */
+export async function signInWithApple(redirectTo) {
+  try {
+    var r = await sb.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: redirectTo || location.href } });
+    if (r && r.error) return { ok: false, error: 'oauth_error' };
+    return { ok: true };
+  } catch (e) { return { ok: false, error: 'oauth_error' }; }
+}
