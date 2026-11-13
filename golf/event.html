@@ -467,6 +467,12 @@ function wireLoginGuide(box) {
       auth.mountLogin(mount, { onDone: function () {
         try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
         loadDynamic();
+        /* [登录收尾补刀 2026-11-13] 本引导若挂在排行榜区（boardSec），登录成功后
+           必须主动重拉排行榜：loadDynamic 只在已有榜单数据（LASTBOARD）时才刷新
+           榜单，未登录访客恰无 LASTBOARD——原逻辑下登录全程成功、榜单区却永不
+           刷新，登录表单永久停留（微信内赛事页密码登录卡死案的页面侧根因）。
+           地图区的引导收尾由 loadDynamic 内的 renderMap 覆盖，不在此列。 */
+        try { if (box && (box.id === 'boardSec' || (box.closest && box.closest('#boardSec')))) loadBoardIntoFunc(); } catch (e) {}
       } });
     }).catch(function () { btn.style.display = ''; });
   });
@@ -2175,6 +2181,9 @@ function renderForbiddenGuideEv() {
       auth.mountLogin(mount, { onDone: function () {
         try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
         loadDynamic();
+        /* [登录收尾补刀 2026-11-13] 同 wireLoginGuide：私密球局引导登录成功后
+           排行榜区同样不在 loadDynamic 的刷新条件内（LASTBOARD 为空），补主动重拉。 */
+        try { loadBoardIntoFunc(); } catch (e) {}
       } });
     }).catch(function () {});
   }
