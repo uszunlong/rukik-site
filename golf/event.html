@@ -1478,7 +1478,7 @@ function openHdOverlay() {
 function closeHdOverlay() { document.getElementById('hdOverlay').classList.add('hidden'); }
 function renderMap() {
   var el = document.getElementById('mapSec');
-  if (!PREVIEW || !PREVIEW.name) { el.innerHTML = ''; return; }
+  if (!PREVIEW || !PREVIEW.name) { el.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">本场活动尚未关联球场；选定球场后，球场地图（全局图＋逐洞洞图）将自动生成，无需另行配置。</div></div>'; return; }
   var comp = PREVIEW.completeness || {};
   var h = holeData();
   var suspect = h ? suspectNote(h.hole) : '';
@@ -1500,12 +1500,16 @@ function renderMap() {
      发球台选择移入球洞信息区（与 Par/码数同区，见 holeinfo 上方 teeBar） */
   el.innerHTML = '<div class="card"><h2>球场地图</h2>' +
     '<div id="lmapBox"></div>' +
+    '<div id="flyEvCap" style="display:none;margin-top:8px;font-size:13px;color:#5c7260"></div>' +
     '<div class="mapsum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span></div>' +
-    '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><button type="button" id="nextHole">下一洞 →</button><button type="button" class="hdlink" id="hdOpen">⛶ 全屏</button></div>' +
+    '<div class="holebar"><button type="button" id="flyEvBtn">🎬 全局动图</button><button type="button" id="prevHole">← 上一洞</button><button type="button" id="nextHole">下一洞 →</button><button type="button" class="hdlink" id="hdOpen">⛶ 全屏</button></div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
+    '<div id="mapAssetsBox"></div>' +
     teeBar +
     '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div></div>';
   el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
+  var flyBtn = el.querySelector('#flyEvBtn');
+  if (flyBtn) flyBtn.addEventListener('click', flyEvToggle);
   el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
   var hdBtn = el.querySelector('#hdOpen');
   if (hdBtn) hdBtn.addEventListener('click', openHdOverlay);
@@ -2832,6 +2836,107 @@ document.addEventListener('click', function (e) {
     } else if (tries > 45) clearInterval(bootT);
   }, 700);
 })();
+</script>
+
+<script>
+/* [地图标准化20261112] 主办方补充图（人工确认层）呈现：与系统测绘几何分开标注，
+ * 不冒充系统核实洞形图；随 renderMap 重建后同步填充。 */
+var __mapAssets = null;
+function __renderMapAssets() {
+  var box = document.getElementById('mapAssetsBox'); if (!box) return;
+  if (!__mapAssets) { box.innerHTML = ''; return; }
+  var html = '';
+  var g = __mapAssets.filter(function (a) { return a.kind === 'global_map'; })[0];
+  var h = __mapAssets.filter(function (a) { return a.kind === 'hole_layout' && a.hole_number === curHole; })[0];
+  if (g) html += '<div style="margin-top:10px"><div style="font-size:13px;color:#5c7260;margin-bottom:6px">球场全局图 · 主办方提供（人工确认）</div><a href="' + g.image_url + '" target="_blank" rel="noopener"><img src="' + esc(g.image_url) + '" style="width:100%;border-radius:12px;display:block" alt="球场全局图（主办方提供）"></a></div>';
+  if (h) html += '<div style="margin-top:10px"><div style="font-size:13px;color:#5c7260;margin-bottom:6px">第 ' + curHole + ' 洞洞形图 · 主办方提供（人工确认）</div><a href="' + h.image_url + '" target="_blank" rel="noopener"><img src="' + esc(h.image_url) + '" style="width:100%;border-radius:12px;display:block" alt="洞形图（主办方提供）"></a></div>';
+  box.innerHTML = html;
+}
+(function () {
+  if (typeof window.renderMap === 'function') {
+    var __origRenderMap = window.renderMap;
+    window.renderMap = function () { var r = __origRenderMap.apply(this, arguments); __renderMapAssets(); return r; };
+  }
+  try {
+    call('course_map_coverage', {}).then(function (d) { __mapAssets = (d && d.assets) || []; __renderMapAssets(); }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
+
+<script>
+/* [跨端一致20261112] 赛事页全局动图：与球局页 play.html 同能力口径（卫星底图＋
+ * 逐洞自动导览）。导览按洞号顺序调用本页既有 setHole 导航——同一
+ * course_geometry 数据、同一渲染路径，不另造数据面；缺图洞如实标注
+ * 「暂无逐洞图」不冒充；用户手动切洞即中断导览。 */
+var FLYEV = { on: false, playing: false, step: 0, order: [], timer: null, sat: null };
+function flyEvHoles() {
+  var list = [];
+  try { var by = (PREVIEW && PREVIEW.holes_by_tee) || {}; list = by[curTee] || (PREVIEW && PREVIEW.holes) || []; } catch (e) {}
+  var hs = list.map(function (h) { return h.hole; }).filter(function (n) { return n >= 1 && n <= 18; });
+  if (!hs.length) { for (var i = 1; i <= 18; i++) hs.push(i); }
+  return hs.sort(function (a, b) { return a - b; });
+}
+function flyEvMeta(n) {
+  try { var by = (PREVIEW && PREVIEW.holes_by_tee) || {}; var list = by[curTee] || PREVIEW.holes || []; for (var i = 0; i < list.length; i++) if (list[i].hole === n) return ' · Par ' + list[i].par + (list[i].yards != null ? ' · ' + list[i].yards + ' 码' : ''); } catch (e) {}
+  return '';
+}
+function flyEvCap(txt) { var c = document.getElementById('flyEvCap'); if (c) { c.style.display = txt ? 'block' : 'none'; c.textContent = txt || ''; } }
+function flyEvBtn() { var b = document.getElementById('flyEvBtn'); if (b) b.textContent = FLYEV.playing ? '⏸ 暂停动图' : (FLYEV.on ? '▶ 继续动图' : '🎬 全局动图'); }
+function flyEvBase() {
+  if (!window.L || !lmap) return;
+  try {
+    if (FLYEV.on) {
+      var found = null;
+      lmap.eachLayer(function (ly) { if (ly instanceof L.TileLayer) found = ly; });
+      if (found && String(found._url || '').indexOf('arcgisonline') < 0) { lmap.removeLayer(found); FLYEV.sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '卫星影像 © Esri, Maxar, Earthstar Geographics' }).addTo(lmap); }
+    } else if (FLYEV.sat) {
+      try { lmap.removeLayer(FLYEV.sat); } catch (e) {}
+      FLYEV.sat = null;
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(lmap);
+    }
+  } catch (e) {}
+}
+function flyEvShow() {
+  if (!FLYEV.on) return;
+  var n = FLYEV.order[FLYEV.step];
+  if (curHole !== n) setHole(n);
+  flyEvBase();
+  var avail = geomCache[n] ? !!geomCache[n].available : null;
+  flyEvCap('🎬 全局动图 ' + (FLYEV.step + 1) + '/' + FLYEV.order.length + ' · 第 ' + n + ' 洞' + flyEvMeta(n) + (avail === false ? ' · 暂无逐洞图' : ''));
+  flyEvBtn();
+  if (!FLYEV.playing) return;
+  clearTimeout(FLYEV.timer);
+  FLYEV.timer = setTimeout(function () {
+    if (!FLYEV.on || !FLYEV.playing) return;
+    if (curHole !== FLYEV.order[FLYEV.step]) { flyEvStop(); return; }
+    if (FLYEV.step >= FLYEV.order.length - 1) { flyEvFinish(); return; }
+    FLYEV.step++; flyEvShow();
+  }, 3000);
+}
+function flyEvStart() {
+  FLYEV.order = flyEvHoles();
+  var i = FLYEV.order.indexOf(curHole); FLYEV.step = i >= 0 ? i : 0;
+  FLYEV.on = true; FLYEV.playing = true;
+  flyEvShow();
+}
+function flyEvFinish() {
+  clearTimeout(FLYEV.timer);
+  FLYEV.playing = false; FLYEV.on = false;
+  flyEvBase();
+  try { resetBigMap(); } catch (e) {}
+  flyEvCap('🎬 全局动图 · 导览结束（全场总览）· 点「🎬 全局动图」可重播');
+  flyEvBtn();
+}
+function flyEvStop() {
+  clearTimeout(FLYEV.timer);
+  FLYEV.on = false; FLYEV.playing = false;
+  flyEvBase(); flyEvCap(''); flyEvBtn();
+}
+function flyEvToggle() {
+  if (!FLYEV.on) { flyEvStart(); return; }
+  if (FLYEV.playing) { FLYEV.playing = false; clearTimeout(FLYEV.timer); flyEvBtn(); }
+  else { FLYEV.playing = true; flyEvShow(); }
+}
 </script>
 </body>
 </html>

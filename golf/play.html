@@ -245,6 +245,7 @@
         <button type="button" class="mapfs" id="mapFsBtn" title="全屏查看" aria-label="全屏查看" hidden>⛶</button>
       </div>
       <div class="mapov-note" id="mapOvNote" hidden></div>
+      <div id="mapAssetsBox" hidden></div>
       <div class="mapov-note" id="mapFlyBar" hidden><span id="mapFlyCap"></span><button class="btn plain" type="button" id="mapFlyToggle" style="margin-left:8px">⏸ 暂停</button><button class="btn plain" type="button" id="mapFlyStop" style="margin-left:8px">结束动图</button></div>
       <div class="holeinfo" id="mapInfo"></div>
     </div>
@@ -2553,6 +2554,35 @@ function markHoleMissing() {
   renderMapStage();
   scheduleOverviewWarm();
 }
+
+/* [地图标准化20261112] 主办方补充图（人工确认层）：与系统测绘几何分开标注，
+ * 总览视图示全局图、单洞视图示当前洞图；无补充图时整块隐藏。 */
+var mapAssets = null;
+function loadMapAssets() {
+  golfApi('course_map_coverage', { event_id: eventId }, false).then(function (r) {
+    mapAssets = (r && r.data && r.data.assets) || [];
+    renderMapAssets();
+  }).catch(function () {});
+}
+function renderMapAssets() {
+  var box = document.getElementById('mapAssetsBox'); if (!box) return;
+  if (!mapAssets || !mapAssets.length) { box.hidden = true; box.innerHTML = ''; return; }
+  var showOv = mapView === 'all' || mapGeomMissing;
+  var pick = null, label = '';
+  if (showOv) {
+    pick = mapAssets.filter(function (a) { return a.kind === 'global_map'; })[0] || null;
+    if (pick) label = '球场全局图 · 主办方提供（人工确认）';
+  } else {
+    var h = mapHoleShown || curHole;
+    pick = mapAssets.filter(function (a) { return a.kind === 'hole_layout' && a.hole_number === h; })[0] || null;
+    if (pick) label = '第 ' + h + ' 洞洞形图 · 主办方提供（人工确认）';
+  }
+  if (!pick) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = '<div style="margin-top:10px"><div style="font-size:13px;color:#5c7260;margin-bottom:6px">' + label + '</div><a href="' + pick.image_url + '" target="_blank" rel="noopener"><img src="' + esc(pick.image_url) + '" alt="' + label + '" style="width:100%;border-radius:12px;display:block"></a></div>';
+}
+loadMapAssets();
+
 function renderMapStage() {
   var svgBox = document.getElementById('mapSvgBox'), ovBox = document.getElementById('mapOvBox');
   var note = document.getElementById('mapOvNote'), fs = document.getElementById('mapFsBtn');
@@ -2570,6 +2600,7 @@ function renderMapStage() {
   if (!showOv && typeof FLY !== 'undefined' && FLY.on) flyStop(true);
   if (showOv) ensureOverview();
   bindMapVisibilityGuard();
+  renderMapAssets();
 }
 /* [地图打磨20261112] 可见性重绘守护（缺陷：滚动后当前洞图变空白）：
  * 地图模块每次「离屏→回屏」时，若舞台里已有 SVG，强制其子树重解析一次

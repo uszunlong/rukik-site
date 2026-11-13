@@ -463,7 +463,22 @@
         </p>
       </div><div style="margin-top:18px"><label>报表与导出</label><p style="margin:6px 0"><button class="ghost" id="reportBtn">运营报表</button>
           <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
-          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="aiCard" style="display:none;margin-top:18px">
+          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="mapCard" style="margin-top:18px">
+      <h3 style="margin-top:0">球场地图配置</h3>
+      <p style="color:#5c7260;font-size:13px;margin-top:0">球场地图是球场基础数据：系统按球场自动关联全局图与逐洞洞形图，同一球场的所有赛事共用，不按赛事重复配置。缺失时系统会自动查找合法数据源补全（自动制图）；您也可以在下方上传有权使用的球场图补充，保存后对本球场的全部赛事生效，且不会被系统自动数据覆盖。</p>
+      <div id="mapCovBox" style="font-size:14px;color:#17301c">打开赛事后加载本场球场的地图覆盖情况…</div>
+      <div id="mapAssetsBox" style="margin-top:8px"></div>
+      <div style="margin-top:10px;border-top:1px solid #e5eee1;padding-top:10px">
+        <label>补充球场图（主办方上传）</label>
+        <div class="row">
+          <div><label>类型</label><select id="mapUpKind"><option value="global">球场全局图</option><option value="hole">单洞洞形图</option></select></div>
+          <div><label>洞号（单洞时填）</label><input id="mapUpHole" type="number" min="1" max="18" placeholder="如 7"></div>
+        </div>
+        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="mapUpRights" style="width:auto;margin-right:6px">我确认有权使用这张图片（球场官方授权／自有拍摄或制作／已获授权）</label>
+        <p><label class="ghost" style="cursor:pointer;padding:6px 10px">选择图片并上传<input type="file" id="mapUpFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+        <span id="mapUpMsg" style="font-size:13px;color:#5c7260"></span></p>
+      </div>
+    </div><div id="aiCard" style="display:none;margin-top:18px">
       <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
 
@@ -561,6 +576,77 @@ var token = sessionStorage.getItem('golf_token') || '';
   } catch (e) {}
 })();
 var currentEvent = null, currentRound = null;
+
+/* [地图标准化20261112] 球场地图配置：覆盖状态展示＋主办方上传补充（人工确认层，
+ * 资产按球场绑定跨赛事复用；自动制图状态随覆盖接口一并读出） */
+function loadCourseMap() {
+  var box = document.getElementById('mapCovBox');
+  if (!box || !currentEvent) return;
+  box.textContent = '正在读取本场球场地图覆盖…';
+  call('course_map_coverage', { event_id: currentEvent.id }).then(function (d) { renderCourseMap(d); })
+    .catch(function () { box.textContent = '地图覆盖读取失败，请稍后重试。'; });
+}
+function renderCourseMap(d) {
+  var box = document.getElementById('mapCovBox'); if (!box) return;
+  if (!d || !d.ok || !d.available || !d.course) { box.innerHTML = '本场活动尚未关联球场。'; return; }
+  var c = d.course, g = d.geometry || {}, sc = d.scorecard || {}, t = d.map_task;
+  var assets = d.assets || [];
+  var hasGlobalAsset = assets.some(function (a) { return a.kind === 'global_map'; });
+  var holesTotal = sc.holes || c.holes_count || 0;
+  var statusTxt = (holesTotal > 0 && (g.layout_holes || 0) >= holesTotal) ? '逐洞洞图完整（已校验：每洞球道＋果岭齐全）' : ((g.holes || 0) > 0 ? '部分覆盖（已生成 ' + (g.holes || 0) + ' 洞、已校验 ' + (g.layout_holes || 0) + '/' + holesTotal + ' 洞，未校验洞待核验）' : '暂无逐洞几何');
+  var taskMap = { queued: '已入队，等待自动制图', running: '自动制图中', partial: '部分完成（缺失洞将继续补全）', complete: '自动制图已完成', awaiting_survey: '影像可得，待影像测绘补全', unavailable: '合法数据源暂不可得，请用下方上传补充', failed: '制图失败，待自动重试' };
+  var taskTxt = t ? ('自动制图：' + (taskMap[t.status] || t.status)) : ((holesTotal > 0 && (g.layout_holes || 0) >= holesTotal) ? '自动制图：已完整，无需制图' : '自动制图：待触发');
+  box.innerHTML = '<div><b>' + escapeHtml(c.name || '') + '</b>' + (c.city ? ' · ' + escapeHtml(c.city) + (c.state ? ', ' + escapeHtml(c.state) : '') : '') + '</div>' +
+    '<div style="margin-top:4px">球场全局图：' + (g.has_boundary ? '有（系统几何总览）' : '无独立全局图') + (hasGlobalAsset ? '＋主办方图' : '') + '</div>' +
+    '<div>逐洞洞形图：球道＋果岭几何 ' + (g.layout_holes || 0) + '/' + holesTotal + ' 洞（' + statusTxt + '）；发球台/果岭/球道/沙坑核心要素全齐 ' + (g.core_complete_holes || 0) + ' 洞</div>' +
+    '<div>记分卡资料：' + (sc.holes || 0) + ' 洞 Par、' + (sc.holes_with_yards || 0) + ' 洞有发球台码数、' + (sc.tees || 0) + ' 个发球台</div>' +
+    '<div>几何来源：' + escapeHtml((g.sources || []).join('、') || '无') + ((g.trust || []).length ? '（核实状态：' + escapeHtml(g.trust.join('、')) + '）' : '') + '</div>' +
+    '<div>' + taskTxt + '</div>';
+  var ab = document.getElementById('mapAssetsBox');
+  ab.innerHTML = assets.length ? '<label>已补充的球场图（主办方提供 · 人工确认，不会被自动数据覆盖）</label>' + assets.map(function (a) {
+    return '<div style="display:flex;gap:8px;align-items:center;margin:4px 0"><img src="' + escapeHtml(a.image_url) + '" style="height:44px;width:64px;object-fit:cover;border-radius:6px;border:1px solid #e5eee1"><span style="font-size:13px">' + (a.kind === 'global_map' ? '球场全局图' : ('第 ' + a.hole_number + ' 洞洞形图')) + ' · v' + a.version + '</span><button type="button" class="ghost map-asset-del" data-id="' + a.id + '">删除</button></div>';
+  }).join('') : '';
+  Array.prototype.forEach.call(ab.querySelectorAll('.map-asset-del'), function (btn) {
+    btn.addEventListener('click', function () {
+      uiConfirm('确定删除这张主办方补充图吗？删除后球员端立即不再显示。').then(function (ok) {
+        if (!ok) return;
+        call('course_map_asset_remove', { event_id: currentEvent.id, asset_id: btn.getAttribute('data-id') }).then(function (r) {
+          var msg = document.getElementById('mapUpMsg');
+          if (r && r.ok) { if (msg) msg.textContent = '已删除。'; loadCourseMap(); }
+          else if (msg) msg.textContent = '删除失败：' + ((r && r.error) || '未知错误');
+        });
+      });
+    });
+  });
+}
+(function wireMapUpload() {
+  var f = document.getElementById('mapUpFile'); if (!f) return;
+  f.addEventListener('change', function () {
+    var file = f.files && f.files[0]; if (!file) return;
+    var msg = document.getElementById('mapUpMsg');
+    function fail(t) { if (msg) msg.textContent = t; f.value = ''; }
+    if (!currentEvent) return fail('请先打开一场赛事。');
+    if (!document.getElementById('mapUpRights').checked) return fail('请先勾选确认有权使用这张图片。');
+    var kind = document.getElementById('mapUpKind').value;
+    var hole = null;
+    if (kind === 'hole') {
+      hole = parseInt(document.getElementById('mapUpHole').value, 10);
+      if (!(hole >= 1 && hole <= 18)) return fail('请填写 1–18 的洞号。');
+    }
+    if (msg) msg.textContent = '上传中…';
+    var rd = new FileReader();
+    rd.onload = function () {
+      var b64 = String(rd.result || '').split(',')[1] || '';
+      call('course_map_upload', { event_id: currentEvent.id, hole_number: hole, data_base64: b64, content_type: file.type || 'image/png', rights_confirmed: true }).then(function (d) {
+        if (d && d.ok) { if (msg) msg.textContent = '已保存，球员端刷新即可见。'; loadCourseMap(); }
+        else fail('上传失败：' + ((d && (d.message || d.error)) || '未知错误'));
+        f.value = '';
+      }).catch(function () { fail('上传失败：网络异常。'); });
+    };
+    rd.readAsDataURL(file);
+  });
+})();
+
 function headers() { return { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + (token || ANON) }; }
 function call(action, body) {
   return fetch(API, { method: 'POST', headers: headers(), body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
@@ -629,7 +715,7 @@ function openEvent(id) {
     document.getElementById('dash').style.display = 'block';
     if (window.__z49showView) window.__z49showView('home'); /* [线Z49] 打开赛事默认回管理首页 */
     document.getElementById('dashTitle').textContent = d.event.title; /* [线Z49] 状态见首页状态行 */
-    refreshDash(); if (window.__rmOnOpen) window.__rmOnOpen(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors(); pstRender();
+    refreshDash(); if (window.__rmOnOpen) window.__rmOnOpen(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors(); pstRender(); loadCourseMap();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
