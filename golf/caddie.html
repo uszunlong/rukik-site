@@ -115,7 +115,8 @@
   body:has(#composer:not(.hidden)) #authBar button{border-color:rgba(141,219,161,.5);color:#B9E7C6;background:rgba(255,255,255,.05)}
   body:has(#composer:not(.hidden)) #authBar button:hover{background:rgba(141,219,161,.16)}
   body:has(#composer:not(.hidden)) #authBar .rk-who{display:inline-flex;align-items:center;gap:7px}
-  body:has(#composer:not(.hidden)) #authBar .rk-who::before{content:'';width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#ffffff,#dfe9df 55%,#b9cfbc);box-shadow:inset 0 -2px 3px rgba(6,59,41,.3)}
+  body:has(#composer:not(.hidden)) #authBar .rk-who::before{content:attr(data-initial);display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:50%;color:#145C3B;font-size:11px;font-weight:800;background-image:var(--rk-av,none),radial-gradient(circle at 32% 30%,#ffffff,#dfe9df 55%,#b9cfbc);background-size:cover,cover;background-position:center,center;box-shadow:inset 0 -2px 3px rgba(6,59,41,.3)}
+  body:has(#composer:not(.hidden)) #authBar .rk-who.rk-has-av::before{content:''}
   body:has(#composer:not(.hidden)) #authBar .rk-who-name{color:#fff;font-weight:700}
   body:has(#composer:not(.hidden)) #authBar .rk-rename-input{background:rgba(255,255,255,.1);border:1px solid rgba(141,219,161,.4);border-radius:999px;color:#fff;padding:3px 10px;font-size:12.5px;outline:none}
   body:has(#composer:not(.hidden)) main{max-width:1120px;padding:18px 16px 10px;gap:12px}
@@ -511,6 +512,45 @@ renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setL
       }
     });
   });
+})();
+</script>
+
+<script>
+/* [网页小账批次 2026-11-13 · 纯增呈现层] 顶栏用户头像圈补齐：原皮肤 ::before 为
+ * 空内容装饰、恒显空白圆。按站内既有口径补齐——会话元数据有头像图则显图，
+ * 否则显显示名首字。只读 authBar 既有 DOM 与本地会话记录，不改认证、登录链
+ * 与 V2 记忆协议（不读写 caddie 本地历史存储键）。 */
+(function () {
+  var bar = document.getElementById('authBar');
+  if (!bar) return;
+  function sessionUser() {
+    try {
+      var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token');
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (s && s.currentSession) s = s.currentSession;
+      return (s && s.user) || null;
+    } catch (e) { return null; }
+  }
+  function paint() {
+    var who = bar.querySelector('.rk-who');
+    if (!who) return;
+    var u = sessionUser();
+    var meta = (u && u.user_metadata) || {};
+    var av = meta.avatar_url || meta.picture || '';
+    if (av && !who.classList.contains('rk-has-av')) {
+      who.style.setProperty('--rk-av', 'url("' + String(av).replace(/"/g, '%22') + '")');
+      who.classList.add('rk-has-av');
+    }
+    var nameEl = who.querySelector('.rk-who-name');
+    var nm = nameEl ? (nameEl.textContent || '').trim() : '';
+    if (nm) {
+      var ch = nm.charAt(0);
+      if (who.getAttribute('data-initial') !== ch) who.setAttribute('data-initial', ch);
+    }
+  }
+  new MutationObserver(paint).observe(bar, { childList: true, subtree: true, characterData: true });
+  paint();
 })();
 </script>
 </body>
