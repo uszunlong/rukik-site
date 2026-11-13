@@ -261,6 +261,12 @@
             <option value="paid">须付款确认</option>
             <option value="custom">须其他要求</option>
           </select></div>
+          <!-- [PAY-DISP 2026-11-12] 付款显示模式切换（赛事级 payment_display） -->
+          <div><label>付款显示</label><select id="rmPayDispSel">
+            <option value="unpaid_only">仅未付款显示 Pending</option>
+            <option value="all">全部显示付款状态</option>
+            <option value="hidden">全部隐藏付款状态</option>
+          </select></div>
           <div><label>名单筛选</label><select id="rmFilterSel">
             <option value="">全部球员</option>
             <option value="no_show_pending">未到场（已报名未签到）</option>
@@ -275,6 +281,7 @@
           <button type="button" class="ghost" id="rmUncheckinBtn">批量取消签到</button>
           <button type="button" class="ghost" id="rmNotifyAllBtn">通知全部已发布名单</button>
           <button type="button" class="ghost" id="rmReloadBtn">刷新名单</button>
+          <button type="button" class="ghost" id="rmPayAllBtn">全部标记已付款</button>
         </p>
         <p id="rmMsg" style="font-size:13px;color:#5c7260"></p>
         <div id="rmWizard" style="display:none;border:1px solid #cfdccf;border-radius:10px;padding:12px 14px;margin:10px 0">
@@ -2732,7 +2739,7 @@ window.__z49showView = z49ShowView;
   };
   /* 认领三态定版文案：bound→已关联 / pending→待认领 / conflict→存在冲突 */
   var CLAIM_TXT = { bound: '已关联', pending: '待认领', conflict: '存在冲突', candidate: '待认领', none: '待认领' };
-  var state = { rows: [], rawRows: [], headers: [], mapping: [], preview: null, manage: null, claimRegId: null, subRegId: null, xlsxReady: false, xlsxFailed: false };
+  var state = { rows: [], rawRows: [], headers: [], mapping: [], preview: null, manage: null, claimRegId: null, subRegId: null, xlsxReady: false, xlsxFailed: false, payDisplay: 'unpaid_only' };
   function el(id) { return document.getElementById(id); }
   function msg(t, isErr) { var m = el('rmMsg'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b91c1c' : '#5c7260'; } }
   function maskPhone(v) { if (!v) return ''; var s = String(v); if (s.indexOf('*') >= 0) return s; var d = s.replace(/\D/g, ''); if (d.length < 4) return '•••'; return '•••' + d.slice(-4); }
@@ -2763,6 +2770,20 @@ window.__z49showView = z49ShowView;
       checkinSrc: r.checkin_source || ''
     };
   }
+  /* [PAY-DISP 2026-11-12] 名单行付款徽章：不再直出原始 payment_status。
+     文案基准走 PAY_STATUS_TXT 语义，unpaid 按用户口径用「Pending」、confirmed 用「已付款」短文案；
+     呈现由赛事级 payment_display 模式决定：unpaid_only（默认）已付款/无需付款不显示、仅未付款
+     显示 Pending；all 全部显示；hidden 全部不显示。（仅主办方名单，公开面/球员端不在此列） */
+  function paySegHtml(r) {
+    var mode = state.payDisplay || 'unpaid_only';
+    if (mode === 'hidden' || !r.payment) return '';
+    var unpaid = r.payment === 'pending';
+    if (mode === 'unpaid_only' && !unpaid) return '';
+    var txt = unpaid ? 'Pending' : r.payment === 'confirmed' ? '已付款' : ((typeof PAY_STATUS_TXT !== 'undefined' && PAY_STATUS_TXT[r.payment]) || r.payment);
+    var col = unpaid ? '#a16207' : '#1d7a3a';
+    var bg = unpaid ? 'background:#fdf6e0;border:1px solid #e5cf8a;border-radius:6px;padding:0 6px;' : '';
+    return ' · 付款：<span style="color:' + col + ';' + bg + '">' + escapeHtml(txt) + '</span>';
+  }
   /* ---------- roster_manage: counts + table + reconfirm ---------- */
   function rmRefresh() {
     if (!currentEvent) return Promise.resolve();
@@ -2781,12 +2802,15 @@ window.__z49showView = z49ShowView;
       });
       var gate = (currentEvent.competition_config || {}).grouping_gate || d.grouping_gate;
       if (gate && el('rmGateSel')) el('rmGateSel').value = gate;
+      var pd = d.payment_display || (currentEvent.competition_config || {}).payment_display || 'unpaid_only';
+      state.payDisplay = pd;
+      if (el('rmPayDispSel')) el('rmPayDispSel').value = pd;
       renderTable(d.players || d.registrations || d.rows || []); /* [ROSTER-FIX] 服务端定版键为 players */
       fillRulePlayers();
     }).catch(function () { msg('名单加载失败，请稍后重试。', true); });
   }
   window.__rmRefresh = rmRefresh;
-  window.__rmOnOpen = function () { rmRefresh(); var g = (currentEvent && currentEvent.competition_config || {}).grouping_gate; if (g && el('rmGateSel')) el('rmGateSel').value = g; };
+  window.__rmOnOpen = function () { rmRefresh(); var g = (currentEvent && currentEvent.competition_config || {}).grouping_gate; if (g && el('rmGateSel')) el('rmGateSel').value = g; var pd0 = (currentEvent && currentEvent.competition_config || {}).payment_display; if (pd0) { state.payDisplay = pd0; if (el('rmPayDispSel')) el('rmPayDispSel').value = pd0; } };
   function renderTable(rows) {
     var box = el('rmTable'); if (!box) return;
     var f = el('rmFilterSel') ? el('rmFilterSel').value : '';
@@ -2811,7 +2835,7 @@ window.__z49showView = z49ShowView;
         '<span style="color:#5c7260"> · 档案：' + escapeHtml(r.archive) + ' · 通知：' + escapeHtml(r.notifyTxt) +
         (r.team ? ' · 球队：' + escapeHtml(r.team) : '') +
         ' · 分组：' + (r.group ? '第 ' + r.group + ' 组' : '未分组') +
-        (r.payment ? ' · 付款：' + escapeHtml(r.payment) : '') +
+        paySegHtml(r) +
         (r.contact ? ' · 联系：' + escapeHtml(r.contact) : '') + '</span> ' +
         '<button type="button" class="ghost rm-claim" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">认领链接</button> ' +
         '<button type="button" class="ghost rm-notify" data-id="' + r.id + '">通知</button> ' +
@@ -2964,6 +2988,19 @@ window.__z49showView = z49ShowView;
     el('rmReloadBtn').onclick = function () { rmRefresh(); };
     el('rmFilterSel').onchange = function () { if (state.manage) renderTable(state.manage.players || state.manage.registrations || state.manage.rows || []); };
     el('rmGateSel').onchange = function () { call('grouping_gate_set', { event_id: currentEvent.id, gate: this.value }).then(function (d) { msg(d && d.ok ? '分组门槛已更新。' : '门槛更新失败：' + ((d && d.error) || ''), !(d && d.ok)); }); };
+    /* [PAY-DISP 2026-11-12] 付款显示切换：落赛事配置后立即按新模式重渲染名单 */
+    el('rmPayDispSel').onchange = function () { var mode = this.value; call('payment_display_set', { event_id: currentEvent.id, mode: mode }).then(function (d) { if (d && d.ok) { state.payDisplay = mode; if (currentEvent.competition_config) currentEvent.competition_config.payment_display = mode; msg('付款显示已切换为：' + (mode === 'all' ? '全部显示' : mode === 'hidden' ? '全部隐藏' : '仅未付款显示 Pending') + '。'); if (state.manage) renderTable(state.manage.players || state.manage.registrations || state.manage.rows || []); } else msg('付款显示切换失败：' + ((d && d.error) || ''), true); }); };
+    /* [PAY-DISP 2026-11-12] 一键全部标记已付款：二次确认显示将影响人数（当前未付款人数），服务端批量落账留痕 */
+    el('rmPayAllBtn').onclick = function () {
+      var rows = (state.manage && (state.manage.players || state.manage.registrations || state.manage.rows)) || [];
+      var n = (state.manage && state.manage.counts && state.manage.counts.unpaid != null) ? state.manage.counts.unpaid : rows.filter(function (x) { return x.payment_status === 'pending' && ['registered', 'checked_in', 'pending', 'waitlisted'].indexOf(x.status) >= 0; }).length;
+      if (!n) { msg('当前没有未付款球员，无需操作。'); return; }
+      if (!window.confirm('将把本场 ' + n + ' 位未付款球员全部标记为已付款（线下收款确认），确定？')) return;
+      call('payment_bulk_confirm', { event_id: currentEvent.id }).then(function (d) {
+        if (d && d.ok) { msg('已批量标记已付款 ' + (d.changed || 0) + ' 人。'); rmRefresh(); if (window.refreshDash) refreshDash(); }
+        else msg('批量标记失败：' + ((d && d.error) || ''), true);
+      }).catch(function () { msg('批量标记失败，请稍后重试。', true); });
+    };
     el('rmCheckinBtn').onclick = function () { var ids = checkedIds(); if (!ids.length) { msg('先勾选要签到的球员。', true); return; } call('roster_checkin', { event_id: currentEvent.id, registration_ids: ids, mark: 'checkin' }).then(function (d) { msg(d && d.ok !== false ? '已批量签到 ' + ids.length + ' 人。' : '签到失败：' + ((d && d.error) || '')); rmRefresh(); }); };
     el('rmUncheckinBtn').onclick = function () { var ids = checkedIds(); if (!ids.length) { msg('先勾选要取消签到的球员。', true); return; } call('roster_checkin', { event_id: currentEvent.id, registration_ids: ids, mark: 'undo' }).then(function (d) { msg(d && d.ok !== false ? '已取消签到 ' + ids.length + ' 人。' : '操作失败：' + ((d && d.error) || '')); rmRefresh(); }); };
     el('rmNotifyAllBtn').onclick = function () { notify(null); };
