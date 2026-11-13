@@ -2861,7 +2861,11 @@ function applyPlayShare() {
   };
   /* [分享引擎 2026-11-12] 公开活动分享链接改走服务端分享页（og 按本场真实数据写死）；
      非公开球局保持原链接（邀请码凭据不写入公开分享页）。 */
-  if (e.visibility === 'public' && e.id) data.link = 'https://rukik.com/golf/share/' + e.id + '.html';
+  if (e.visibility === 'public' && e.id) {
+    var shareUrlP = 'https://rukik.com/golf/share/' + e.id + '.html';
+    /* 分享页存在才升级链接：未生成前保持原链接，防新活动分享落到 404。 */
+    fetch(shareUrlP, { method: 'HEAD' }).then(function (r) { if (r.ok) data.link = shareUrlP; }).catch(function () {});
+  }
   setMeta('meta[property="og:title"]', data.title);
   setMeta('meta[property="og:description"]', data.desc);
   setMeta('meta[property="og:image"]', data.imgUrl);
