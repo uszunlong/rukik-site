@@ -1591,8 +1591,8 @@ function paintGroupScoring(card) {
   var syncHtml;
   if (lockedG) syncHtml = '<div class="syncbar good">成绩已锁定（正式成绩），不可再修改。</div>';
   else if (Object.keys(S.gConflicts).length) syncHtml = '<div class="syncbar bad">有成绩冲突等待确认（见下方球员行），不会被静默覆盖。</div>';
-  else if (qAll.length) syncHtml = '<div class="syncbar">有 ' + qAll.length + ' 条记分待同步（已保存在本机，联网后自动同步、全组可见）。</div>';
-  else syncHtml = '<div class="syncbar good">全组记分已保存到服务端。</div>';
+  else if (qAll.length) syncHtml = '<div class="syncbar">有 ' + qAll.length + ' 条记分已保存到本机，等待同步（联网后自动同步、全组可见）。</div>';
+  else syncHtml = '<div class="syncbar good">全组记分已同步。</div>';
 
   var rows = (g.players || []).map(function (p) {
     var cell = (g.cells[p.player_id] || {})[curH.hole];
@@ -1601,10 +1601,10 @@ function paintGroupScoring(card) {
     var cf = S.gConflicts[p.player_id];
     var sub;
     if (cf) sub = '<span style="color:#dc2626">冲突：服务端现为 ' + (cf.current == null ? '—' : cf.current) + ' 杆，你记的是 ' + cf.mine + ' 杆</span>';
-    else if (flash) sub = '<span style="color:#15803d">✓ 已保存 · ' + esc(flash.text) + '</span>';
+    else if (flash) sub = '<span style="color:#15803d">✓ 已同步 · ' + esc(flash.text) + '</span>';
     else if (v == null && !cell) sub = '待记录';
     else if (S.gDirty[p.player_id]) sub = '<span style="color:#d97706">待保存（已修改，未提交）</span>';
-    else sub = '<span style="color:#15803d">已保存' + gRelTxt(cell ? cell.strokes - par : null) + (cell && cell.updated_by_name ? ' · ' + esc(cell.updated_by_name) + ' 记录' : '') + '</span>';
+    else sub = '<span style="color:#15803d">已同步' + gRelTxt(cell ? cell.strokes - par : null) + (cell && cell.updated_by_name ? ' · ' + esc(cell.updated_by_name) + ' 记录' : '') + '</span>';
     return '<div class="grow' + (p.is_me ? ' me' : '') + (flash ? ' flash' : '') + '">' +
       '<div class="ginfo"><div class="gname">' + esc(p.display_name) + (p.is_me ? '（我）' : '') + '</div><div class="gsub">' + sub + '</div>' +
       (cf ? '<div class="btnrow"><button class="btn plain" data-gcf="server" data-pid="' + p.player_id + '">用服务端的</button><button class="btn gold" data-gcf="mine" data-pid="' + p.player_id + '">以我的为准</button></div>' : '') +
@@ -1765,7 +1765,7 @@ async function gSave() {
     S.gInitFor = hole;
     S.gSaving = false;
     paint(); flushQueue();
-    alert('网络暂时不可用，本洞成绩已保存在本机，联网后会自动同步、全组可见。');
+    alert('网络暂时不可用，本洞成绩已保存到本机，等待同步；联网后会自动同步、全组可见。');
   }
 }
 
@@ -1819,8 +1819,8 @@ function paintScoring(card) {
   var syncHtml;
   if (locked) syncHtml = '<div class="syncbar good">成绩已锁定（正式成绩），不可再修改。</div>';
   else if (conflictHoles.length) syncHtml = '<div class="syncbar bad">有 ' + conflictHoles.length + ' 洞与服务端记录不一致，等待您确认（见下方编辑区）。成绩不会被静默覆盖。</div>';
-  else if (queued.length) syncHtml = '<div class="syncbar">' + (S.flushing ? '正在同步 ' + queued.length + ' 条记分…' : '有 ' + queued.length + ' 条记分待同步（已保存在本机，联网后自动同步，不会丢分）。') + '</div>';
-  else syncHtml = '<div class="syncbar good">全部记分已保存到服务端。</div>';
+  else if (queued.length) syncHtml = '<div class="syncbar">' + (S.flushing ? '正在同步 ' + queued.length + ' 条记分…' : '有 ' + queued.length + ' 条记分已保存到本机，等待同步（联网后自动同步，不会丢分）。') + '</div>';
+  else syncHtml = '<div class="syncbar good">全部记分已同步。</div>';
 
   var grid = holes.map(function (h) {
     var v = effStrokes(card.id, h);
@@ -1838,7 +1838,7 @@ function paintScoring(card) {
 
   if (sel && !locked) {
     var st2 = holeState(card.id, sel.hole, sel.strokes);
-    var tag = st2 === 'saved' ? '<span style="color:#15803d">● 已保存</span>' : st2 === 'syncing' ? '<span style="color:#2563eb">● 同步中…</span>' : st2 === 'pending' ? '<span style="color:#d97706">● 待同步（已存本机）</span>' : st2 === 'conflict' ? '<span style="color:#dc2626">● 同步失败 / 待确认</span>' : '<span style="color:#8B857D">尚未录入</span>';
+    var tag = st2 === 'saved' ? '<span style="color:#15803d">● 已同步</span>' : st2 === 'syncing' ? '<span style="color:#2563eb">● 同步中…</span>' : st2 === 'pending' ? '<span style="color:#d97706">● 已保存到本机，等待同步</span>' : st2 === 'conflict' ? '<span style="color:#dc2626">● 同步失败 / 待确认</span>' : '<span style="color:#8B857D">尚未录入</span>';
     html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + (sel.yards ? ' · ' + sel.yards + ' 码' : '') + (sel.strokes_received ? ' · 本洞让 ' + sel.strokes_received + ' 杆' : '') + '</div>' +
       '<div class="stepper"><button type="button" id="stMinus" aria-label="减一杆">−</button><div class="val" id="stVal">' + (S.edStrokes == null ? sel.par : S.edStrokes) + '</div><button type="button" id="stPlus" aria-label="加一杆">＋</button></div>' +
       '<div class="edlabel">杆数</div>' +
