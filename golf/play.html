@@ -2163,9 +2163,80 @@ var cdSending = false;
 var cdExpanded = false;
 var cdInited = false;
 
-function cdStoreKey() { return 'golf_caddie_msgs_' + (eventId || 'none'); }
-function cdPersist() { try { sessionStorage.setItem(cdStoreKey(), JSON.stringify(cdHistory.slice(-20))); } catch (e) {} }
-function cdLoadHistory() { try { var s = sessionStorage.getItem(cdStoreKey()); cdHistory = s ? (JSON.parse(s) || []) : []; } catch (e) { cdHistory = []; } }
+/* [V2.0 统一记忆根治 2026-11-12] 本地历史只是显示缓存，服务端为唯一权威：
+ * 1) 存储键绑定 UID（未登录不落盘、不回放无主副本）；旧版无主 legacy 键一律清除，
+ *    本人历史由下方服务端同步重建；2) 面板加载与每轮发送前与服务端对齐——服务端
+ *    已删除的会话/消息本地立即清除且不再回传 pro-chat；3) 退出/切换账号即清上一
+ *    账号全部本地副本；4) 每轮带稳定 client_msg_id（新消息生成新 ID、禁复用已删
+ *    ID），供服务端墓碑按 ID 拦截复活。同步失败按 ERROR 态处理：保留本地、绝不
+ *    据失败断言已删；只有查询成功才允许按服务端结果清改本地。 */
+var cdUidCache = '';
+function cdUid() {
+  var s = S.session || null;
+  if (!s) { try { s = getSessionSync(); } catch (e) {} }
+  return (s && s.user && s.user.id) || '';
+}
+function cdStoreKey() { var u = cdUid(); return u ? 'golf_caddie_msgs_u_' + u + '_' + (eventId || 'none') : ''; }
+function cdPurgeKeys(all) {
+  try {
+    var ks = [];
+    for (var i = 0; i < sessionStorage.length; i++) { var k = sessionStorage.key(i); if (k && k.indexOf('golf_caddie_msgs_') === 0 && (all || k.indexOf('golf_caddie_msgs_u_') !== 0)) ks.push(k); }
+    ks.forEach(function (k) { sessionStorage.removeItem(k); });
+  } catch (e) {}
+}
+function cdPurgeAllLocal() { cdPurgeKeys(true); cdHistory = []; }
+function cdPersist() { var k = cdStoreKey(); if (!k) return; try { sessionStorage.setItem(k, JSON.stringify(cdHistory.slice(-20))); } catch (e) {} }
+function cdLoadHistory() {
+  cdPurgeKeys(false);
+  cdUidCache = cdUid();
+  cdHistory = [];
+  if (!cdUidCache) return;
+  try { var s = sessionStorage.getItem(cdStoreKey()); var a = s ? JSON.parse(s) : null; if (Array.isArray(a)) cdHistory = a.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }); } catch (e) { cdHistory = []; }
+}
+function cdNewCid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+var cdSyncBusy = false;
+async function cdSyncWithServer() {
+  if (cdSyncBusy || cdSending) return false;
+  var u = cdUid(); if (!u || !eventId) return false;
+  cdSyncBusy = true;
+  try {
+    var tk = await getAccessToken(); if (!tk) return false;
+    var root = CD_CHAT_API.replace(/\/functions\/v1\/pro-chat$/, '');
+    var h = { 'apikey': ANON, 'Authorization': 'Bearer ' + tk };
+    var cr = await fetch(root + '/rest/v1/conversations?select=id,event_context&user_id=eq.' + encodeURIComponent(u) + '&order=updated_at.desc&limit=25', { headers: h });
+    if (!cr.ok) return false;
+    var convs = await cr.json();
+    var ids = (convs || []).filter(function (c) { var ec = (c && c.event_context) || {}; return ec.kind === 'golf_caddie' && String(ec.event_id || '') === String(eventId); }).map(function (c) { return c.id; });
+    if (!ids.length) {
+      if (cdHistory.length) { cdHistory = []; cdPersist(); cdPaintThread(); }
+      return true;
+    }
+    var msgs = [];
+    for (var i = 0; i < ids.length; i++) {
+      var mr = await fetch(root + '/rest/v1/chat_messages?select=role,content,client_msg_id,created_at&conversation_id=eq.' + encodeURIComponent(ids[i]) + '&order=created_at.asc&limit=200', { headers: h });
+      if (!mr.ok) return false;
+      msgs = msgs.concat(await mr.json());
+    }
+    var rebuilt = msgs.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }).map(function (m) { var o = { role: m.role, content: m.content }; if (m.client_msg_id) o.cid = m.client_msg_id; return o; }).slice(-20);
+    var before = JSON.stringify(cdHistory);
+    cdHistory = rebuilt;
+    if (JSON.stringify(cdHistory) !== before) { cdPersist(); cdPaintThread(); }
+    return true;
+  } catch (e) { return false; } finally { cdSyncBusy = false; }
+}
+function cdOnAuthGuard(s) {
+  var u = (s && s.user && s.user.id) || '';
+  if (!u) {
+    if (cdUidCache) { cdPurgeAllLocal(); cdUidCache = ''; cdPaintThread(); try { cdCareSync(); } catch (e) {} }
+    return;
+  }
+  if (u === cdUidCache) return;
+  if (cdUidCache) cdPurgeAllLocal();
+  cdUidCache = u;
+  cdLoadHistory();
+  cdPaintThread();
+  cdSyncWithServer();
+}
 function cdMsgsEl() { return document.getElementById('cdMsgs'); }
 function cdScrollBottom() { var b = cdMsgsEl(); if (b) b.scrollTop = b.scrollHeight; }
 /* 轻量结构渲染（与 event.html cdRenderRich 同口径：先转义再套格式，用户文本永不注入 HTML） */
@@ -2276,18 +2347,20 @@ async function cdSend() {
   var inp = document.getElementById('cdInput');
   var text = (inp && inp.value || '').trim();
   if (!text || cdSending) return;
+  await cdSyncWithServer(); /* 发送前对齐删除状态：已删内容不得再作上下文回传 */
   cdSending = true;
   var btn = document.getElementById('cdSend'); if (btn) btn.disabled = true;
   inp.value = '';
   cdExpand(true);
-  cdHistory.push({ role: 'user', content: text });
+  var turnCid = cdNewCid();
+  cdHistory.push({ role: 'user', content: text, cid: turnCid });
   cdAddMsg('user', text, false); cdPersist();
   var bubble = cdAddMsg('assistant', '正在思考…', false);
   var acc = '';
   try {
     var tk = await getAccessToken();
     if (!tk) { if (bubble) bubble.textContent = '登录状态已过期，请重新登录后再问我。'; cdHistory.pop(); cdPersist(); return; }
-    var payload = { professional_id: CD_PRO_ID, mode: 'web', stream: true, messages: cdHistory.slice(-10), golf_event_id: eventId };
+    var payload = { professional_id: CD_PRO_ID, mode: 'web', stream: true, client_msg_id: turnCid, messages: cdHistory.slice(-10).map(function (m) { return { role: m.role, content: m.content }; }), golf_event_id: eventId };
     var res = await fetch(CD_CHAT_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + tk },
@@ -2327,7 +2400,7 @@ async function cdSend() {
     }
     if (!acc) { if (bubble) bubble.textContent = '这次没有拿到回答，请再问一次。'; cdHistory.pop(); cdPersist(); return; }
     if (bubble) bubble.innerHTML = cdRenderRich(acc);
-    cdHistory.push({ role: 'assistant', content: acc });
+    cdHistory.push({ role: 'assistant', content: acc, cid: turnCid });
     cdPersist();
   } catch (e) {
     if (bubble) bubble.textContent = '网络好像不太顺，请稍后再试一次。';
@@ -2342,6 +2415,8 @@ function cdInit() {
   cdInited = true;
   cdLoadHistory();
   cdPaintThread();
+  try { initAuth(cdOnAuthGuard); } catch (e) {}
+  cdSyncWithServer();
   var btn = document.getElementById('cdSend');
   if (btn) btn.addEventListener('click', cdSend);
   var inp = document.getElementById('cdInput');
