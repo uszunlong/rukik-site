@@ -329,6 +329,15 @@
           <button type="button" class="ghost" id="rmSubCancelBtn">取消</button>
           <span id="rmSubMsg" style="font-size:13px;color:#5c7260"></span></p>
         </div>
+        <div id="rmMergeBox" style="display:none;border:1px solid #f0caca;background:#fdf6f6;border-radius:10px;padding:10px 12px;margin:8px 0">
+          <label>合并档案：把 <b id="rmMergeFor"></b> 这份档案并入目标档案（同一人被两套联系方式导入时使用）。报名、记分卡与逐洞成绩、分组席位、签到与付款状态按「目标为准、来源补缺」并入，来源档案停用；双方已绑定不同账号时服务端会拒绝合并。</label>
+          <div class="row">
+            <div><label>目标档案（保留）</label><select id="rmMergeTarget"></select></div>
+          </div>
+          <p><button type="button" id="rmMergeGoBtn">确认合并</button>
+          <button type="button" class="ghost" id="rmMergeCancelBtn">取消</button>
+          <span id="rmMergeMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </div>
       </div><div id="regSection" style="margin-top:16px">
         <h4 style="margin:6px 0">报名名单</h4>
         <div id="regList"></div>
@@ -2767,7 +2776,7 @@ window.__z49showView = z49ShowView;
       notifyTxt: notifyTxt, contact: contactMask(r),
       team: r.team_name || r.team || '', group: r.group_no || r.flight_group || null,
       payment: r.payment_status || r.payment || '', checked: r.status === 'checked_in',
-      checkinSrc: r.checkin_source || ''
+      checkinSrc: r.checkin_source || '', dup: !!r.dup_hint
     };
   }
   /* [PAY-DISP 2026-11-12] 名单行付款徽章：不再直出原始 payment_status。
@@ -2839,11 +2848,14 @@ window.__z49showView = z49ShowView;
         (r.contact ? ' · 联系：' + escapeHtml(r.contact) : '') + '</span> ' +
         '<button type="button" class="ghost rm-claim" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">认领链接</button> ' +
         '<button type="button" class="ghost rm-notify" data-id="' + r.id + '">通知</button> ' +
-        '<button type="button" class="ghost rm-sub" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">临时替换</button></div>';
+        '<button type="button" class="ghost rm-sub" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">临时替换</button>' +
+        ((conflict || r.dup) ? '<button type="button" class="ghost rm-merge" data-pid="' + r.player_id + '" data-name="' + escapeHtml(r.name) + '">合并档案</button>' : '') +
+        (r.dup ? '<span style="color:#b45309;font-weight:bold">疑似同人双档案</span>' : '') + '</div>';
     }).join('');
     Array.prototype.forEach.call(box.querySelectorAll('.rm-claim'), function (b) { b.onclick = function () { claimCreate(b.getAttribute('data-id'), b.getAttribute('data-name')); }; });
     Array.prototype.forEach.call(box.querySelectorAll('.rm-notify'), function (b) { b.onclick = function () { notify([b.getAttribute('data-id')]); }; });
     Array.prototype.forEach.call(box.querySelectorAll('.rm-sub'), function (b) { b.onclick = function () { openSub(b.getAttribute('data-id'), b.getAttribute('data-name')); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('.rm-merge'), function (b) { b.onclick = function () { openMerge(b.getAttribute('data-pid'), b.getAttribute('data-name')); }; });
   }
   function checkedIds() { return Array.prototype.map.call(document.querySelectorAll('.rm-check:checked'), function (c) { return c.getAttribute('data-id'); }); }
   /* ---------- claim links ---------- */
@@ -2869,6 +2881,15 @@ window.__z49showView = z49ShowView;
   }
   /* ---------- substitute ---------- */
   function openSub(regId, name) { state.subRegId = regId; el('rmSubFor').textContent = name; el('rmSubBox').style.display = 'block'; el('rmSubMsg').textContent = ''; }
+  /* ---------- [ROSTER-MERGE 2026-11-13] player merge ---------- */
+  function openMerge(playerId, name) {
+    state.mergeSrcPid = playerId; state.mergeSrcName = name;
+    el('rmMergeFor').textContent = name;
+    var others = (state.rows || []).map(normRow).filter(function (r) { return r.player_id && r.player_id !== playerId && ['registered', 'checked_in', 'pending', 'waitlisted'].indexOf(r.status) >= 0; });
+    el('rmMergeTarget').innerHTML = others.map(function (r) { return '<option value="' + r.player_id + '">' + escapeHtml(r.name) + '（' + (CLAIM_TXT[r.claim] || r.claim) + (r.group ? ' · 第 ' + r.group + ' 组' : ' · 未分组') + '）</option>'; }).join('');
+    el('rmMergeMsg').textContent = others.length ? '' : '没有可用的目标档案（需另一份仍有效的报名）。';
+    el('rmMergeBox').style.display = 'block';
+  }
   /* ---------- grouping rules ---------- */
   function fillRulePlayers() {
     var list = (window.pmState && pmState.eligibleList) || [];
@@ -3013,6 +3034,27 @@ window.__z49showView = z49ShowView;
       call('roster_substitute', { event_id: currentEvent.id, registration_id: state.subRegId, substitute: { name: name, phone: el('rmSubPhone').value.trim() || undefined, email: el('rmSubEmail').value.trim() || undefined } }).then(function (d) {
         el('rmSubMsg').textContent = d && d.ok !== false ? '替换完成：替补已占用原分组席位，原球员记为未到场。' : '替换失败：' + ((d && d.error) || '');
         if (d && d.ok !== false) { el('rmSubBox').style.display = 'none'; rmRefresh(); }
+      });
+    };
+    el('rmMergeCancelBtn').onclick = function () { el('rmMergeBox').style.display = 'none'; };
+    el('rmMergeGoBtn').onclick = function () {
+      var tgt = el('rmMergeTarget').value;
+      if (!state.mergeSrcPid || !tgt) { el('rmMergeMsg').textContent = '请选择目标档案。'; return; }
+      var tgtRow = (state.rows || []).map(normRow).filter(function (r) { return r.player_id === tgt; })[0];
+      var summary = '确认把「' + (state.mergeSrcName || '') + '」并入「' + (tgtRow ? tgtRow.name : '') + '」？源档案的报名、成绩、分组、签到与付款将并入目标档案，源档案随即停用，此操作不可撤销。';
+      uiConfirm(summary).then(function (ok) {
+        if (!ok) return;
+        el('rmMergeMsg').textContent = '合并中…';
+        call('roster_player_merge', { event_id: currentEvent.id, source_player_id: state.mergeSrcPid, target_player_id: tgt }).then(function (d) {
+          if (d && d.already_merged) { el('rmMergeMsg').textContent = '该档案此前已合并到此目标，无需重复操作。'; }
+          else if (d && d.ok !== false) {
+            var c = d.counts || {};
+            el('rmMergeMsg').textContent = '合并完成：记分卡并入 ' + ((c.scorecards_merged || 0) + (c.scorecards_moved || 0)) + ' 张、补入成绩 ' + (c.holes_copied || 0) + ' 洞、席位处理 ' + ((c.seats_moved || 0) + (c.seats_deduped || 0)) + ' 个；源档案已停用，审计已记录。' + ((d.warnings && d.warnings.length) ? ' 注意：' + d.warnings.join('；') : '');
+            el('rmMergeBox').style.display = 'none'; msg('档案合并完成。'); rmRefresh();
+          } else {
+            el('rmMergeMsg').textContent = '合并失败：' + ((d && (d.message || d.error)) || '未知错误');
+          }
+        }).catch(function () { el('rmMergeMsg').textContent = '合并失败，请稍后重试。'; });
       });
     };
     el('rmRuleAddBtn').onclick = function () {
