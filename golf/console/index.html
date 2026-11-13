@@ -399,6 +399,43 @@ var SB = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
 var API = SB + '/functions/v1/golf-api';
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
 var token = sessionStorage.getItem('golf_token') || '';
+/* [完善批次 2026-11-12] 复用 Golf 首页同一份会话。根因：首页 auth.js 用 supabase-js
+ * 默认持久化把会话存 localStorage（键 sb-yzgzgtrqrmarfjftgbwt-auth-token、同站跨页跨
+ * 标签共享）；本页原先只读 sessionStorage 的 golf_token（本页密码登录自存的裸
+ * access_token、按标签隔离），两套存储互不相通，故首页已登录进本页仍被要求重登。
+ * 修复（仅会话读取）：启动时若本页无 token，则读首页同一份 localStorage 会话——
+ * access_token 未过期直接采用；已过期则用其 refresh_token 向 GoTrue 换新、把新会话
+ * 回写同一 localStorage 记录（与首页同口径）后采用。无有效会话时不做任何事，
+ * 页面维持显示登录卡，安全边界不变；所有接口仍由 golf-api 按 Bearer 服务端验权。 */
+(function adoptSiteSession() {
+  if (token) return;
+  var KEY = 'sb-yzgzgtrqrmarfjftgbwt-auth-token';
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    var s = JSON.parse(raw);
+    if (s && s.currentSession) s = s.currentSession;
+    if (!s || !s.access_token) return;
+    var now = Math.floor(Date.now() / 1000);
+    if (s.expires_at && s.expires_at > now + 30) {
+      token = s.access_token;
+      sessionStorage.setItem('golf_token', token);
+      return;
+    }
+    if (s.refresh_token) {
+      fetch(SB + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON }, body: JSON.stringify({ refresh_token: s.refresh_token }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.access_token) {
+            token = d.access_token;
+            sessionStorage.setItem('golf_token', token);
+            try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {}
+            init();
+          }
+        }).catch(function () {});
+    }
+  } catch (e) {}
+})();
 var currentEvent = null, currentRound = null;
 function headers() { return { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + (token || ANON) }; }
 function call(action, body) {

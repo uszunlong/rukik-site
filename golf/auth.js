@@ -347,8 +347,11 @@ export function renderAuthBar(el, opts) {
   function paint() {
     if (!el) return;
     if (session && session.user) {
-      var who = session.user.email || session.user.phone || 'RUKIK 用户';
-      el.innerHTML = '<span>已登录：' + String(who).replace(/[<>&"]/g, '') + '</span>'
+      /* [完善批次 2026-11-12] 顶栏只显示姓名（Z79 口径：fetchMyAccountName 取
+       * public.users.display_name，回退元数据 name/full_name），邮箱/手机号
+       * 不再出现在顶栏；姓名异步取到后回填，取不到只显示「已登录」。
+       * 登录/改名/退出行为逻辑不变。 */
+      el.innerHTML = '<span class="rk-who">已登录</span>'
         + '<button type="button" class="rk-rename">改名</button>'
         + '<button type="button" class="rk-logout">退出</button>'
         + '<span class="rk-rename-box" hidden>'
@@ -357,6 +360,12 @@ export function renderAuthBar(el, opts) {
         + '<button type="button" class="rk-rename-cancel">取消</button>'
         + '<span class="rk-rename-msg"></span>'
         + '</span>';
+      var whoEl = el.querySelector('.rk-who');
+      if (whoEl) {
+        fetchMyAccountName().then(function (nm) {
+          if (nm && whoEl.isConnected) whoEl.textContent = '已登录：' + nm;
+        }).catch(function () {});
+      }
       var b = el.querySelector('.rk-logout');
       if (b) b.addEventListener('click', async function () { await signOut(); if (opts.onLogout) opts.onLogout(); });
       var rb = el.querySelector('.rk-rename');
