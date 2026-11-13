@@ -92,7 +92,7 @@
             <option value="team_stroke">团队比杆赛（取最佳 N 人汇总）</option><option value="alternate_shot">交替击球赛（双人轮流击球）</option>
             <option value="skins">Skins 逐洞奖金赛</option><option value="six_six_six">Sixes 六六六组合赛</option>
           </select></div>
-          <div><label>人数上限 *</label><input id="fCap" type="number" value="40"></div>
+          <div><label>人数上限（留空＝不限）</label><input id="fCap" type="number" min="1" placeholder="不限"></div>
         </div>
         <div class="row">
           <div><label>报名费模式</label><select id="fFeeMode">
@@ -167,7 +167,7 @@
           <div><label>开球时间 *<span class="srctag" id="tag-wzTime"></span></label><input id="wzTime" type="time" value="09:00"></div>
         </div>
         <div class="row">
-          <div><label>人数上限 *</label><input id="wzCap" type="number" value="40"></div>
+          <div><label>人数上限（留空＝不限）</label><input id="wzCap" type="number" min="1" placeholder="不限"></div>
           <div><label>报名截止（可选）<span class="srctag" id="tag-wzDeadline"></span></label><input id="wzDeadline" type="date"></div>
         </div>
         <div class="row">
@@ -1481,7 +1481,7 @@ document.getElementById('createBtn').onclick = function () {
     title: document.getElementById('fTitle').value, course_id: document.getElementById('fCourse').value,
     default_tee_id: document.getElementById('fTee').value || undefined,
     starts_at: document.getElementById('fDate').value + 'T' + (document.getElementById('fTime').value || '09:00') + ':00', play_dates: [document.getElementById('fDate').value],
-    format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40),
+    format: document.getElementById('fFormat').value, capacity: document.getElementById('fCap').value === '' ? null : Number(document.getElementById('fCap').value),
     fee_mode: document.getElementById('fFeeMode').value,
     fee_cents: Math.round(Number(document.getElementById('fFeeAmt').value || 0) * 100)
   }).then(function (d) {
@@ -1552,7 +1552,7 @@ function wzPrefillStep2() {
   if (WZ.template === 'clone' && WZ.srcRow) {
     var s = WZ.srcRow;
     wzEl('wzTitle').value = s.title || ''; wzTag('wzTitle', '来自模板');
-    wzEl('wzCap').value = s.capacity || 40;
+    wzEl('wzCap').value = s.capacity == null ? '' : s.capacity;
     wzEl('wzFeeMode').value = s.fee_mode || 'free';
     wzEl('wzFeeAmt').value = s.fee_cents ? Math.round(s.fee_cents / 100) : '';
     wzEl('wzDesc').value = s.description || ''; if (s.description) wzTag('wzDesc', '来自模板');
@@ -1737,7 +1737,7 @@ wzEl('wzCreateBtn').onclick = function () {
     title: wzEl('wzTitle').value.trim(), course_id: wzEl('wzCourse').value,
     default_tee_id: wzEl('wzTee').value || undefined,
     starts_at: wzStartsAt(), play_dates: [wzEl('wzDate').value],
-    capacity: Number(wzEl('wzCap').value || 40),
+    capacity: wzEl('wzCap').value === '' ? null : Number(wzEl('wzCap').value),
     fee_mode: wzEl('wzFeeMode').value, fee_cents: Math.round(Number(wzEl('wzFeeAmt').value || 0) * 100),
     registration_deadline: wzEl('wzDeadline').value ? wzEl('wzDeadline').value + 'T23:59:00' : undefined,
     description: wzEl('wzDesc').value.trim() || undefined
