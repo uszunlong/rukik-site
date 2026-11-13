@@ -102,6 +102,15 @@
           </select></div>
           <div><label>报名费金额（美元，线下收款时填）</label><input id="fFeeAmt" type="number" min="0" step="1" placeholder="如 180"></div>
         </div>
+        <details id="qcBrandBox" style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:10px 0">
+          <summary style="cursor:pointer;color:#14532d;font-size:15px">主办方 · 协办方 · 赞助商（可选）</summary>
+          <p style="font-size:12px;color:#5c7260;margin:6px 0">品牌资料保存后建档可跨赛事复用；Logo 用于品牌展示、与海报分开。</p>
+          <label>搜索已有品牌档案</label>
+          <input id="qcOrgQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="qcOrgResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="qcOrgRows"></div>
+          <p style="margin:8px 0 2px"><button class="ghost" id="qcOrgAdd" type="button">＋ 添加品牌或机构</button> <span id="qcOrgMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </details>
         <button id="createBtn">创建草稿</button>
         <p class="ok" id="createMsg"></p>
       </details>
@@ -172,6 +181,15 @@
         <label>地点补充 / 赛事介绍<span class="srctag" id="tag-wzDesc"></span></label>
         <textarea id="wzDesc" rows="4" placeholder="可写举办地点补充、主办方与联系人、赛程安排等；海报识别到的主办方/联系人会先出现在这里供您确认"></textarea>
         <div id="wzContactLine" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+        <details id="wzBrandBox" style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:10px 0">
+          <summary style="cursor:pointer;color:#14532d;font-size:15px">主办方 · 协办方 · 赞助商（可选）</summary>
+          <p style="font-size:12px;color:#5c7260;margin:6px 0">品牌资料保存后建档可跨赛事复用；Logo 用于品牌展示、与海报分开。</p>
+          <label>搜索已有品牌档案</label>
+          <input id="wzOrgQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="wzOrgResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="wzOrgRows"></div>
+          <p style="margin:8px 0 2px"><button class="ghost" id="wzOrgAdd" type="button">＋ 添加品牌或机构</button> <span id="wzOrgMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </details>
         <p id="wzStep2Err" class="err"></p>
         <p style="margin-top:12px"><button class="ghost" id="wzBack1" type="button">上一步</button>
         <button id="wzTo3" type="button">下一步：预览</button></p>
@@ -759,6 +777,227 @@ document.getElementById('orgSave').onclick = function () {
   }).catch(function () { msg.textContent = '保存中出现异常，请刷新后核对。'; });
 };
 
+/* [品牌区·创建流] 向导/快速创建共用品牌行（类名 brow，与赛事管理面 orgrow 完全独立）。
+   只调既有动作 organization_search / organization_create / organization_get /
+   organization_update / organization_logo_upload / organization_link / orgs_update；
+   海报识别 brands 仅为待确认草稿，用户保存后才落档与关联。 */
+function brandEl(x) { return typeof x === 'string' ? document.getElementById(x) : x; }
+function brandSetMsg(msgEl, text) { var m = brandEl(msgEl); if (m) m.textContent = text || ''; }
+function brandRowHtml(o) {
+  o = o || {};
+  var opts = ORG_TYPES.map(function (t) { return '<option' + (t === (o.type || '合作伙伴') ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+  var cand = o.candidateDataUrl || '';
+  return '<div class="brow" data-orgid="' + (o.organization_id || '') + '" style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">' +
+    (o.fromPoster ? '<div style="margin-bottom:4px"><span style="font-size:11px;color:#8a6d00;background:#fff3cd;border:1px solid #ecd27a;border-radius:8px;padding:1px 6px">海报识别 · 待确认</span></div>' : '') +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+    '<select class="b-type">' + opts + '</select>' +
+    '<input class="b-name" placeholder="品牌/机构完整名称" value="' + escapeHtml(o.name || '') + '" style="flex:2;min-width:150px">' +
+    '<label style="font-size:13px;color:#17301c"><input type="checkbox" class="b-public" style="width:auto;margin-right:4px"' + (o.is_public === false ? '' : ' checked') + '>公开展示</label>' +
+    '<button class="ghost b-up" type="button">↑</button><button class="ghost b-down" type="button">↓</button>' +
+    '<button class="ghost b-del" type="button">删除</button></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
+    '<img class="b-logoprev" src="' + escapeHtml(o.logo_url || '') + '" style="' + (o.logo_url ? '' : 'display:none;') + 'height:34px;max-width:110px;object-fit:contain;background:#f7faf7;border:1px solid #eef2ee;border-radius:6px">' +
+    '<input class="b-logo" placeholder="Logo 地址（可粘贴，或用右侧上传）" value="' + escapeHtml(o.logo_url || '') + '" style="flex:2;min-width:150px">' +
+    '<label class="ghost" style="cursor:pointer;padding:6px 10px">上传 Logo<input type="file" class="b-logofile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none"></label>' +
+    '<input class="b-web" placeholder="官方网站（如 example.com，保存时校验）" value="' + escapeHtml(o.website || '') + '" style="flex:2;min-width:150px"></div>' +
+    '<input class="b-intro" placeholder="品牌简介（一句话，进赛事页与球童介绍）" value="' + escapeHtml(o.intro || '') + '" style="width:100%;margin-top:6px;box-sizing:border-box">' +
+    '<div class="b-cand" style="' + (cand ? 'display:flex;' : 'display:none;') + 'gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;border:1px dashed #ecd27a;border-radius:8px;padding:6px 8px;background:#fffdf0">' +
+    '<img class="b-candimg" src="' + escapeHtml(cand) + '" style="height:34px;max-width:110px;object-fit:contain;background:#fff;border:1px solid #eef2ee;border-radius:6px">' +
+    '<span style="font-size:13px;color:#5c7260">海报裁切 Logo 候选（待确认）</span>' +
+    '<button class="ghost b-canduse" type="button">使用此 Logo</button>' +
+    '<button class="ghost b-canddrop" type="button">丢弃</button></div>' +
+    '</div>';
+}
+function ensureBrandOrgId(rowEl) {
+  var oid = rowEl.getAttribute('data-orgid');
+  if (oid) return Promise.resolve(oid);
+  var name = rowEl.querySelector('.b-name').value.trim();
+  if (!name) return Promise.resolve(null);
+  return call('organization_search', { q: name, limit: 5 }).then(function (s) {
+    var list = (s && s.organizations) || [];
+    var hit = list.filter(function (x) { return x.name === name; })[0] || list[0];
+    if (hit) { rowEl.setAttribute('data-orgid', hit.organization_id); return hit.organization_id; }
+    return call('organization_create', { name: name, logo_url: rowEl.querySelector('.b-logo').value.trim() || null, website: orgValidUrl(rowEl.querySelector('.b-web').value.trim()), intro: rowEl.querySelector('.b-intro').value.trim() || null }).then(function (c) {
+      var id = c && c.organization ? c.organization.organization_id : null;
+      if (id) { rowEl.setAttribute('data-orgid', id); rowEl.setAttribute('data-neworg', '1'); rowEl.dataset.neworg = '1'; }
+      return id;
+    });
+  });
+}
+function bindBrandRows(box, msgEl) {
+  var boxEl = brandEl(box); if (!boxEl) return;
+  Array.prototype.forEach.call(boxEl.querySelectorAll('.brow'), function (r) {
+    if (r._brandBound) return; r._brandBound = true;
+    r.querySelector('.b-del').onclick = function () { r.remove(); };
+    r.querySelector('.b-up').onclick = function () { var p = r.previousElementSibling; if (p && p.classList.contains('brow')) r.parentNode.insertBefore(r, p); };
+    r.querySelector('.b-down').onclick = function () { var n = r.nextElementSibling; if (n && n.classList.contains('brow')) r.parentNode.insertBefore(n, r); };
+    r.querySelector('.b-logofile').addEventListener('change', function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      if (!r.querySelector('.b-name').value.trim()) { brandSetMsg(msgEl, '先填品牌名称，再上传 Logo。'); return; }
+      brandSetMsg(msgEl, 'Logo 上传中…');
+      ensureBrandOrgId(r).then(function (oid) {
+        if (!oid) { brandSetMsg(msgEl, '建档失败，Logo 未上传。'); return; }
+        var rd = new FileReader();
+        rd.onload = function () {
+          var b64 = String(rd.result).split(',')[1];
+          call('organization_logo_upload', { organization_id: oid, data_base64: b64, content_type: f.type || 'image/png' }).then(function (d) {
+            if (d && d.ok) { r.querySelector('.b-logo').value = d.logo_url; var im = r.querySelector('.b-logoprev'); im.src = d.logo_url; im.style.display = ''; brandSetMsg(msgEl, 'Logo 已上传并写入品牌档案。'); }
+            else brandSetMsg(msgEl, 'Logo 上传失败：' + ((d && (d.message || d.error)) || '未知错误'));
+          });
+        };
+        rd.readAsDataURL(f);
+      });
+    });
+    var candUse = r.querySelector('.b-canduse');
+    if (candUse) candUse.onclick = function () {
+      var cimg = r.querySelector('.b-candimg');
+      var url = r._logoCandidate || (cimg ? cimg.getAttribute('src') : '');
+      if (!url) return;
+      r._logoDataUrl = url;
+      var im = r.querySelector('.b-logoprev'); if (im) { im.src = url; im.style.display = ''; }
+      brandSetMsg(msgEl, '已选用海报裁切 Logo，保存品牌资料时将上传到品牌档案。');
+    };
+    var candDrop = r.querySelector('.b-canddrop');
+    if (candDrop) candDrop.onclick = function () {
+      var cimg = r.querySelector('.b-candimg'); var cand = r.querySelector('.b-cand');
+      var url = r._logoCandidate || (cimg ? cimg.getAttribute('src') : '');
+      if (r._logoDataUrl && url && r._logoDataUrl === url) { delete r._logoDataUrl; var im = r.querySelector('.b-logoprev'); if (im && !r.querySelector('.b-logo').value.trim()) { im.src = ''; im.style.display = 'none'; } }
+      delete r._logoCandidate;
+      if (cimg) cimg.src = '';
+      if (cand) cand.style.display = 'none';
+    };
+  });
+}
+function attachBrandSearch(qEl, resEl, rowsBox, msgEl) {
+  var q = brandEl(qEl), res = brandEl(resEl), rows = brandEl(rowsBox);
+  if (!q || !res || !rows) return;
+  q.addEventListener('input', function () {
+    var v = q.value.trim();
+    clearTimeout(q._brandSearchTimer);
+    if (v.length < 1) { res.style.display = 'none'; res.innerHTML = ''; return; }
+    q._brandSearchTimer = setTimeout(function () {
+      call('organization_search', { q: v, limit: 8 }).then(function (d) {
+        var list = (d && d.organizations) || [];
+        if (!list.length) { res.innerHTML = '<div style="padding:8px;color:#5c7260;font-size:13px">未找到同名档案，保存时将自动建档</div>'; res.style.display = 'block'; return; }
+        res.innerHTML = list.map(function (o) {
+          return '<div class="b-hit" data-oid="' + o.organization_id + '" style="display:flex;gap:8px;align-items:center;padding:7px 9px;cursor:pointer;border-bottom:1px solid #f0f4f0">' +
+            (o.logo_url ? '<img src="' + escapeHtml(o.logo_url) + '" style="height:24px;max-width:70px;object-fit:contain">' : '') +
+            '<span style="flex:1;font-size:14px">' + escapeHtml(o.name) + ' <span style="color:#5c7260;font-size:12px">已参与 ' + (o.event_count || 0) + ' 场活动</span></span><span style="font-size:12px;color:#14532d">带入本场</span></div>';
+        }).join('');
+        res.style.display = 'block';
+        Array.prototype.forEach.call(res.querySelectorAll('.b-hit'), function (h, hi) {
+          h.onclick = function () {
+            var o = list[hi]; if (!o) return;
+            res.style.display = 'none';
+            rows.insertAdjacentHTML('beforeend', brandRowHtml({ organization_id: o.organization_id, type: '合作伙伴', name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro }));
+            bindBrandRows(rows, msgEl);
+            brandSetMsg(msgEl, '已带入「' + o.name + '」，请选择本场身份后随赛事一并保存品牌资料。');
+          };
+        });
+      });
+    }, 300);
+  });
+}
+function saveBrandsForEvent(eventId, rowsBox, msgEl) {
+  var boxEl = brandEl(rowsBox);
+  if (!boxEl) return Promise.resolve({ saved: 0, errors: ['品牌区不存在'] });
+  var rowEls = Array.prototype.slice.call(boxEl.querySelectorAll('.brow'));
+  var rows = rowEls.map(function (r, idx) {
+    return { el: r, idx: idx, type: r.querySelector('.b-type').value, name: r.querySelector('.b-name').value.trim(),
+      logo_url: r.querySelector('.b-logo').value.trim() || null, websiteRaw: r.querySelector('.b-web').value.trim(),
+      intro: r.querySelector('.b-intro').value.trim() || null, is_public: r.querySelector('.b-public').checked };
+  }).filter(function (o) { return o.name; });
+  if (!rows.length) return Promise.resolve({ saved: 0, errors: [] });
+  for (var i = 0; i < rows.length; i++) {
+    var v = orgValidUrl(rows[i].websiteRaw);
+    if (v === false) { var em = '官网格式不对：' + rows[i].websiteRaw + '（请填完整网址，如 example.com）'; brandSetMsg(msgEl, em); return Promise.resolve({ saved: 0, aborted: true, errors: [em] }); }
+    rows[i].website = v;
+  }
+  if (!rows.some(function (o) { return o.type === '主办'; })) { var m2 = '请至少指定一家主办（也可到赛事管理页再补）'; brandSetMsg(msgEl, '品牌未保存：' + m2); return Promise.resolve({ saved: 0, aborted: true, errors: [m2] }); }
+  brandSetMsg(msgEl, '正在保存品牌资料…');
+  var errors = []; var saved = 0;
+  var snap = rows.map(function (o) { return { type: o.type, name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro }; });
+  var chain = call('orgs_update', { event_id: eventId, organizations: snap }).then(function (d) {
+    if (d && d.error === 'event_not_linked') return;
+    if (!d || !d.ok) errors.push('品牌快照保存失败：' + ((d && (d.message || d.error)) || '未知错误'));
+  }).catch(function () { errors.push('品牌快照保存请求失败'); });
+  rows.forEach(function (o) {
+    chain = chain.then(function () {
+      brandSetMsg(msgEl, '正在保存品牌资料…（' + o.name + '）');
+      return ensureBrandOrgId(o.el).then(function (oid) {
+        if (!oid) { errors.push('「' + o.name + '」建档失败'); return null; }
+        var seq = Promise.resolve(null);
+        var doUpdate = function () {
+          return call('organization_update', { organization_id: oid, logo_url: o.logo_url, website: o.website, intro: o.intro }).then(function (u) {
+            if (u && u.ok === false) errors.push('「' + o.name + '」档案同步失败：' + (u.message || u.error || '未知错误'));
+          }).catch(function () { errors.push('「' + o.name + '」档案同步请求失败'); });
+        };
+        if (o.el.getAttribute('data-neworg') || o.el.dataset.neworg) { seq = seq.then(doUpdate); }
+        else {
+          seq = seq.then(function () {
+            return call('organization_get', { organization_id: oid }).then(function (g) {
+              if (g && g.ok && g.can_manage) return doUpdate();
+              return null;
+            }).catch(function () { return null; });
+          });
+        }
+        seq = seq.then(function () {
+          if (o.el._logoDataUrl && !o.logo_url) {
+            var mm = /^data:([^;]+);base64,(.+)$/.exec(o.el._logoDataUrl);
+            var ct = mm ? mm[1] : 'image/png'; var b64 = mm ? mm[2] : String(o.el._logoDataUrl).split(',')[1];
+            if (!b64) { errors.push('「' + o.name + '」海报裁切 Logo 数据无效'); return null; }
+            return call('organization_logo_upload', { organization_id: oid, data_base64: b64, content_type: ct }).then(function (u) {
+              if (u && u.ok && u.logo_url) { o.logo_url = u.logo_url; var li = o.el.querySelector('.b-logo'); if (li) li.value = u.logo_url; var im = o.el.querySelector('.b-logoprev'); if (im) { im.src = u.logo_url; im.style.display = ''; } }
+              else errors.push('「' + o.name + '」Logo 上传失败：' + ((u && (u.message || u.error)) || '未知错误'));
+            }).catch(function () { errors.push('「' + o.name + '」Logo 上传请求失败'); });
+          }
+          return null;
+        });
+        seq = seq.then(function () {
+          return call('organization_link', { event_id: eventId, organization_id: oid, role: orgRoleOfType(o.type), role_label: o.type, display_order: o.idx, is_public: o.is_public }).then(function (l) {
+            if (l && l.ok === false) errors.push('「' + o.name + '」关联失败：' + (l.message || l.error || '未知错误'));
+            else saved++;
+          }).catch(function () { errors.push('「' + o.name + '」关联请求失败'); });
+        });
+        return seq;
+      }).catch(function () { errors.push('「' + o.name + '」保存异常'); });
+    });
+  });
+  return chain.then(function () {
+    if (errors.length) brandSetMsg(msgEl, '品牌资料已保存（' + saved + ' 家），部分失败：' + errors.join('；'));
+    else brandSetMsg(msgEl, '品牌资料已保存（' + saved + ' 家）');
+    return { saved: saved, errors: errors };
+  });
+}
+function wzCropPosterLogo(logoBox, cb) {
+  if (!logoBox || typeof WZ === 'undefined' || !WZ.posterDataUrl) { cb(null); return; }
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+      var sx = Math.max(0, Math.round(Number(logoBox.x || 0) / 1000 * sw));
+      var sy = Math.max(0, Math.round(Number(logoBox.y || 0) / 1000 * sh));
+      var cw = Math.round(Number(logoBox.w || 0) / 1000 * sw);
+      var ch = Math.round(Number(logoBox.h || 0) / 1000 * sh);
+      cw = Math.min(cw, sw - sx); ch = Math.min(ch, sh - sy);
+      if (!(cw > 0) || !(ch > 0)) { cb(null); return; }
+      var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      cv.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+      cb(cv.toDataURL('image/png'));
+    } catch (e) { cb(null); }
+  };
+  img.onerror = function () { cb(null); };
+  img.src = WZ.posterDataUrl;
+}
+(function initBrandBoxes() {
+  var wzAdd = document.getElementById('wzOrgAdd');
+  if (wzAdd) wzAdd.onclick = function () { var box = document.getElementById('wzOrgRows'); if (!box) return; box.insertAdjacentHTML('beforeend', brandRowHtml({ type: '合作伙伴' })); bindBrandRows(box, document.getElementById('wzOrgMsg')); };
+  var qcAdd = document.getElementById('qcOrgAdd');
+  if (qcAdd) qcAdd.onclick = function () { var box = document.getElementById('qcOrgRows'); if (!box) return; box.insertAdjacentHTML('beforeend', brandRowHtml({ type: '合作伙伴' })); bindBrandRows(box, document.getElementById('qcOrgMsg')); };
+  attachBrandSearch(document.getElementById('wzOrgQ'), document.getElementById('wzOrgResults'), document.getElementById('wzOrgRows'), document.getElementById('wzOrgMsg'));
+  attachBrandSearch(document.getElementById('qcOrgQ'), document.getElementById('qcOrgResults'), document.getElementById('qcOrgRows'), document.getElementById('qcOrgMsg'));
+})();
+
 var knowEditingId = null, knowSource = { type: 'text', name: null };
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function knowKindName(k) { return { rules: '比赛规则', banquet: '晚宴安排', awards: '奖项说明', sponsor: '赞助商介绍', notice: '特殊通知', other: '其他' }[k] || '其他'; }
@@ -1246,14 +1485,24 @@ document.getElementById('createBtn').onclick = function () {
     fee_mode: document.getElementById('fFeeMode').value,
     fee_cents: Math.round(Number(document.getElementById('fFeeAmt').value || 0) * 100)
   }).then(function (d) {
-    if (d.event) { document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents(); }
+    if (d.event) {
+      document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents();
+      var qcRowsEl = document.getElementById('qcOrgRows');
+      var qcHasBrand = qcRowsEl && Array.prototype.some.call(qcRowsEl.querySelectorAll('.brow'), function (r) { var n = r.querySelector('.b-name'); return n && n.value.trim(); });
+      if (qcHasBrand) {
+        document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title + '，正在保存品牌资料…';
+        saveBrandsForEvent(d.event.id, qcRowsEl, document.getElementById('createMsg')).catch(function () {
+          document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title + '（品牌资料保存失败，请到赛事管理页补录）';
+        });
+      }
+    }
     else show(d);
   });
 };
 /* [线Z67] 发布新赛事向导：三步（选样板 → 差异项＋海报识别 → 预览发布）。
    克隆走服务端 event_clone_template（严格白名单）；海报识别走 poster_extract
    只回草稿、本页确认后才随创建提交，识别结果不静默落库。 */
-var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, createdId: null, busy: false };
+var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, posterDataUrl: null, createdId: null, busy: false };
 function wzEl(id) { return document.getElementById(id); }
 function wzTag(id, text) { var t = wzEl('tag-' + id); if (t) { t.textContent = text; t.style.display = text ? 'inline-block' : 'none'; } }
 function wzSteps(n) {
@@ -1393,7 +1642,8 @@ function wzDownscale(f) {
       var cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
       URL.revokeObjectURL(url);
-      resolve(cv.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      var wzDu = cv.toDataURL('image/jpeg', 0.85); WZ.posterDataUrl = wzDu;
+      resolve(wzDu.split(',')[1]);
     };
     img.onerror = reject; img.src = url;
   });
@@ -1429,6 +1679,27 @@ function wzFillFromDraft(dr) {
         wzRenderCourseResults(list);
       }
     });
+  }
+  if (dr.brands && Object.prototype.toString.call(dr.brands) === '[object Array]') {
+    var wzRowsBox = wzEl('wzOrgRows');
+    if (wzRowsBox) {
+      dr.brands.forEach(function (b) {
+        if (!b || !b.name) return;
+        var bt = ORG_TYPES.indexOf(b.role) >= 0 ? b.role : '合作伙伴';
+        wzRowsBox.insertAdjacentHTML('beforeend', brandRowHtml({ type: bt, name: b.name, fromPoster: true }));
+        bindBrandRows(wzRowsBox, wzEl('wzOrgMsg'));
+        var browEls = wzRowsBox.querySelectorAll('.brow');
+        var browEl = browEls[browEls.length - 1];
+        if (b.logo_box && WZ.posterDataUrl && browEl) {
+          wzCropPosterLogo(b.logo_box, function (dataUrl) {
+            if (!dataUrl) return;
+            browEl._logoCandidate = dataUrl;
+            var cimg = browEl.querySelector('.b-candimg'); if (cimg) cimg.src = dataUrl;
+            var cand = browEl.querySelector('.b-cand'); if (cand) cand.style.display = 'flex';
+          });
+        }
+      });
+    }
   }
 }
 function wzValidate() {
@@ -1491,6 +1762,19 @@ wzEl('wzCreateBtn').onclick = function () {
         (WZ.posterFile ? '<br>海报已设为首图与封面。' : '') +
         '<br>公开赛事页预览：<a href="../event.html?e=' + encodeURIComponent(WZ.createdId) + '" target="_blank">打开赛事页</a>（发布前仅您登录可见）';
       loadEvents();
+      var wzRowsEl = wzEl('wzOrgRows');
+      var wzHasBrand = wzRowsEl && Array.prototype.some.call(wzRowsEl.querySelectorAll('.brow'), function (r) { var n = r.querySelector('.b-name'); return n && n.value.trim(); });
+      if (wzHasBrand) {
+        wzEl('wzCreateMsg').textContent = '正在保存品牌资料…';
+        saveBrandsForEvent(WZ.createdId, wzRowsEl, wzEl('wzCreateMsg')).then(function (res) {
+          var line;
+          if (res && res.saved > 0) line = '品牌资料已保存（' + res.saved + ' 家）' + (res.errors && res.errors.length ? '，部分失败：' + res.errors.join('；') : '');
+          else line = '品牌资料保存失败：' + ((res && res.errors && res.errors.length ? res.errors.join('；') : '未知错误')) + '（赛事已创建，可到赛事管理页补录品牌）';
+          var div = document.createElement('div'); div.textContent = line; wzEl('wzCreatedInfo').appendChild(div);
+        }).catch(function () {
+          var div = document.createElement('div'); div.textContent = '品牌资料保存失败（赛事已创建，可到赛事管理页补录品牌）'; wzEl('wzCreatedInfo').appendChild(div);
+        });
+      }
     };
     if (WZ.posterFile) {
       wzEl('wzCreateMsg').textContent = '草稿已生成，正在保存海报…';
