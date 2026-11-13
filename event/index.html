@@ -34,6 +34,11 @@ a{text-decoration:none;color:inherit}
 .hero p{margin:0;color:#cfe0ee;font-size:15px}
 .hero .mgmt{margin-left:auto;font-size:13px;color:#bcd2e4;border:1px solid rgba(255,255,255,.35);padding:8px 14px;border-radius:999px;white-space:nowrap}
 .hero .mgmt:hover{background:rgba(255,255,255,.12);color:#fff}
+.hero-side{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.hero .golf-entry{background:#0a6e3c;color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;padding:10px 22px;border-radius:999px;white-space:nowrap;text-decoration:none}
+.hero .golf-entry:hover{background:#0d8a4a;color:#fff}
+.hero-side .mgmt{margin-left:0}
+@media (max-width:640px){.hero-side{margin-left:0;align-items:flex-start}}
 .tabs{position:sticky;top:53px;z-index:40;background:rgba(246,248,250,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .tabs-in{max-width:1080px;margin:0 auto;padding:14px 20px 4px;display:flex;gap:8px;flex-wrap:wrap}
 .tab{border:1px solid #cfdce8;background:#fff;color:#33506e;border-radius:999px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer}
@@ -72,11 +77,11 @@ a{text-decoration:none;color:inherit}
 </script>
 </head>
 <body>
-<header class="site-head"><div class="site-head-in"><a class="brand" href="/"><img src="/assets/seal.png" alt="Rukik"/><b>RUKIK</b></a><nav class="main-nav"><a href="/ask/">问 Rukik</a><a href="/experts/">专家 AI</a><a href="/event/" class="on">RUKIK Event</a><a href="https://rukik.com/golf/">RUKIK Golf</a><a href="/content/">内容中心</a><a href="/join/">专家入驻</a><a href="/download/">下载 App</a><a href="/contact/">联系我们</a><a href="/build/">登录</a></nav></div></header>
+<header class="site-head"><div class="site-head-in"><a class="brand" href="/"><img src="/assets/seal.png" alt="Rukik"/><b>RUKIK</b></a><nav class="main-nav"><a href="/ask/">问 Rukik</a><a href="/experts/">专家 AI</a><a href="/event/" class="on">RUKIK Event</a><a href="/content/">内容中心</a><a href="/join/">专家入驻</a><a href="/download/">下载 App</a><a href="/contact/">联系我们</a><a href="/build/">登录</a></nav></div></header>
 
 <section class="hero"><div class="hero-in">
   <div><h1>RUKIK Event</h1><p>高尔夫、商务与城市活动，都在这里。</p></div>
-  <a class="mgmt" href="/download/">我发布的活动 / 活动管理（App）</a>
+  <div class="hero-side"><a class="golf-entry" href="https://rukik.com/golf/">RUKIK GOLF</a><a class="mgmt" href="/download/">我发布的活动 / 活动管理（App）</a></div>
 </div></section>
 
 <div class="tabs"><div class="tabs-in" id="tabs">
