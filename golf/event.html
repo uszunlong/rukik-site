@@ -307,6 +307,8 @@
   .pal-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;width:40px;height:40px;font-size:20px;cursor:pointer}
   .pal-nav.prev{left:10px}.pal-nav.next{right:10px}
   .pal-count{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:rgba(244,241,234,.8);font-size:13px}
+  /* [相册修正 2026-11-12] 灯箱内常驻下载按钮（指令五.4：大图预览内常驻） */
+  .pal-dl{position:absolute;bottom:44px;left:50%;transform:translateX(-50%);background:#1d7a3d;color:#fff;border:0;border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer;z-index:2}
   .medal{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;color:#142235}
   .medal.m1{background:#C9A227}.medal.m2{background:#C7CDD4}.medal.m3{background:#C08A5A;color:#fff}
   .boardmore{display:block;width:100%;margin-top:10px;background:none;border:none;color:#14532d;font-size:14px;font-weight:600;cursor:pointer;padding:6px 0}
@@ -2252,6 +2254,7 @@ if (!eventId) {
   <button type="button" class="pal-nav prev" id="palPrev" aria-label="上一张">‹</button>
   <img id="palImg" alt="赛事海报">
   <button type="button" class="pal-nav next" id="palNext" aria-label="下一张">›</button>
+  <button type="button" class="pal-dl" id="palDl">⬇ 下载原图</button>
   <div class="pal-count" id="palCount"></div>
 </div>
 <div id="cdSheet" class="hidden" role="dialog" aria-label="RUKIK Golf AI球童">
@@ -3168,6 +3171,23 @@ document.addEventListener('click', function (e) {
       }).catch(function () { window.open(d.url, '_blank'); });
     }).catch(function () { toast('下载失败，请稍后重试'); });
   }
+  // [相册修正 2026-11-12] 灯箱常驻「下载原图」按钮接线：当前项为照片走
+  // photo_download 服务端复核（downloadPhoto）；为海报（公开原图）或海报
+  // 兜底模式时按公开 URL 直下。按钮在轮播/网格/海报三种打开路径下同口径。
+  function saveUrlAs(url, name) {
+    fetch(url).then(function (r) { return r.blob(); }).then(function (b) {
+      var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      toast('已下载原图');
+    }).catch(function () { window.open(url, '_blank'); });
+  }
+  var palDlBtn = document.getElementById('palDl');
+  if (palDlBtn) palDlBtn.addEventListener('click', function () {
+    var it = (ALB.items && ALB.items.length) ? ALB.items[PALB.idx] : null;
+    if (it && it.kind === 'photo') { downloadPhoto(it); return; }
+    var url = it ? it.url : (PALB.list && PALB.list[PALB.idx]);
+    if (url) saveUrlAs(url, 'rukik-poster-' + (PALB.idx + 1) + '.jpg');
+  });
   var hero = document.getElementById('heroMedia');
   if (hero) {
     var lpTimer = null, lpX = 0, lpY = 0;
