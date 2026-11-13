@@ -54,16 +54,36 @@ export async function signOut() {
   emit();
 }
 
-/* 三段分离服务调用；withSession 时带当前会话 JWT（bind 的 UID 只认它） */
-async function phoneOtp(op, payload, withSession) {
-  var headers = { 'Content-Type': 'application/json', 'apikey': ANON_KEY };
-  var tk = '';
-  if (withSession) tk = await getAccessToken();
-  headers['Authorization'] = 'Bearer ' + (tk || ANON_KEY);
-  var res = await fetch(OTP_API, { method: 'POST', headers: headers, body: JSON.stringify(Object.assign({ op: op }, payload || {})) });
-  var data = {};
-  try { data = await res.json(); } catch (e) {}
-  return { status: res.status, data: data };
+/* 三段分离服务调用；withSession 时带当前会话 JWT（bind 的 UID 只认它）。
+ * [手机号通道超时根治 2026-11-13] 此前裸 fetch 无任何超时：微信 WebView
+ * 回程不 settle 时，发码/验码/解析会连同 handler 一起永挂（与密码通道已修
+ * 的卡死同族）。与密码通道同口径套 15 秒超时：AbortController 到点真中断、
+ * Promise.race 兜底保证 settle；超时统一返回 { status: 0, timeout: true,
+ * data: {} }，由调用方呈现超时文案、恢复可重试，绝不无限等待。迟到的响应
+ * 一律忽略（验证码可重发、解析凭证可重新走验码获取）。 */
+async function phoneOtp(op, payload, withSession, timeoutMs) {
+  var ms = timeoutMs || 15000;
+  var work = (async function () {
+    var headers = { 'Content-Type': 'application/json', 'apikey': ANON_KEY };
+    var tk = '';
+    if (withSession) tk = await getAccessToken();
+    headers['Authorization'] = 'Bearer ' + (tk || ANON_KEY);
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var killer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, ms) : null;
+    try {
+      var res = await fetch(OTP_API, { method: 'POST', headers: headers, body: JSON.stringify(Object.assign({ op: op }, payload || {})), signal: ctrl ? ctrl.signal : undefined });
+      var data = {};
+      try { data = await res.json(); } catch (e) {}
+      return { status: res.status, data: data };
+    } finally { if (killer) clearTimeout(killer); }
+  })();
+  return Promise.race([
+    work,
+    new Promise(function (resolve) { setTimeout(function () { resolve({ status: 0, timeout: true, data: {} }); }, ms); })
+  ]).catch(function (e) {
+    if (e && e.name === 'AbortError') return { status: 0, timeout: true, data: {} };
+    throw e;
+  });
 }
 
 function adoptPhoneSession(d) {
@@ -155,6 +175,20 @@ export function mountLogin(el, opts) {
     });
   }
   var LOGIN_TIMEOUT_TIP = '登录超时：网络响应未完成（微信内置浏览器偶有此问题）。请再点一次登录；若仍失败，点右上角「…」选择在浏览器中打开本页，或改用邮箱验证码登录。';
+
+  /* [手机号通道超时根治 2026-11-13] adoptPhoneSession（sb.auth.setSession）
+   * 与密码登录同属会话确立调用，在微信 WebView 里同样可能不 settle：套同一
+   * 15 秒竞赛＋getSession 探活——探到会话即按成功收尾，探不到才算失败。
+   * 返回归一结果 { ok, session?, timeout?, error? }，文案由各调用点按语境给。 */
+  async function adoptPhoneWithTimeout(d) {
+    var w = await authCallWithTimeout(adoptPhoneSession(d), 15000);
+    if (w.timeoutSession) return { ok: true, session: w.timeoutSession };
+    if (w.timeout) return { ok: false, timeout: true };
+    if (w.thrown) return { ok: false, error: w.thrown };
+    var sr = w.result;
+    if (sr.error) return { ok: false, error: sr.error };
+    return { ok: true, session: (sr.data && sr.data.session) || null };
+  }
 
   el.querySelectorAll('[data-tab]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -280,6 +314,7 @@ export function mountLogin(el, opts) {
     var btn = this; btn.disabled = true; say('正在发送验证码…');
     try {
       var r = await phoneOtp('sendPhoneOtp', { phone: phone, context: 'login' });
+      if (r.timeout) { btn.disabled = false; say('发送超时：网络响应未完成。验证码可能已经发送，请先查看短信；若未收到，稍等片刻再点发送。'); return; }
       if (r.status !== 200) {
         btn.disabled = false;
         var ec = (r.data && r.data.error_code) || '';
@@ -305,8 +340,10 @@ export function mountLogin(el, opts) {
     var btn = this; btn.disabled = true; say('正在验证…');
     try {
       var v = await phoneOtp('verifyPhoneOtp', { phone: phone, code: token });
+      if (v.timeout) { say('验证超时：网络响应未完成（微信内置浏览器偶有此问题）。请再点一次「验证登录」；若提示验证码失效，请重新发送。'); return; }
       if (v.status !== 200 || !v.data.verification_token) { say('验证失败：验证码不正确或已过期，请重新发送。'); return; }
       var r = await phoneOtp('resolvePhoneIdentity', { verification_token: v.data.verification_token, action: 'auto' });
+      if (r.timeout) { say('验证已通过，但登录确认超时：网络响应未完成。请再点一次「验证登录」；若提示验证码失效，请重新发送。'); return; }
       if (r.data && r.data.status === 'needs_account_decision') {
         pendingVerifyToken = r.data.verification_token || '';
         q('[data-row="branch"]').hidden = false;
@@ -315,10 +352,10 @@ export function mountLogin(el, opts) {
         return;
       }
       if (!r.data || r.data.status !== 'session') { say('验证失败，请重新发送验证码后再试。'); return; }
-      var sr = await adoptPhoneSession(r.data);
-      if (sr.error) { say('登录未完成，请重试。'); return; }
-      session = (sr.data && sr.data.session) || null;
-      emit(); done(session);
+      var ad = await adoptPhoneWithTimeout(r.data);
+      if (!ad.ok) { say(ad.timeout ? '登录超时：网络响应未完成（微信内置浏览器偶有此问题）。请再点一次「验证登录」重试；若仍失败，点右上角「…」选择在浏览器中打开本页。' : '登录未完成，请重试。'); return; }
+      session = ad.session;
+      say(''); emit(); done(session);
     } catch (e) { say('验证失败，请检查网络后重试。'); } finally { btn.disabled = false; }
   });
 
@@ -341,12 +378,13 @@ export function mountLogin(el, opts) {
     var btn = this; btn.disabled = true; say('正在创建账号…');
     try {
       var r = await phoneOtp('resolvePhoneIdentity', { verification_token: pendingVerifyToken, action: 'register' });
+      if (r.timeout) { say('创建账号超时：网络响应未完成。请再点一次「确认创建并登录」重试。'); return; }
       if (r.data && r.data.status === 'session') {
         pendingVerifyToken = '';
-        var sr = await adoptPhoneSession(r.data);
-        if (sr.error) { say('账号已创建，但登录未完成，请重新获取验证码登录。'); return; }
-        session = (sr.data && sr.data.session) || null;
-        emit(); done(session);
+        var ad = await adoptPhoneWithTimeout(r.data);
+        if (!ad.ok) { say('账号已创建，但登录未完成，请重新获取验证码登录。'); return; }
+        session = ad.session;
+        say(''); emit(); done(session);
       } else if (r.data && r.data.status === 'registration_disabled') {
         q('[data-row="regConfirm"]').hidden = true;
         say('手机号注册即将开放。目前请先用邮箱注册 / 登录。');

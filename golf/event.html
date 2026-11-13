@@ -463,7 +463,7 @@ function wireLoginGuide(box) {
   btn.addEventListener('click', function () {
     var mount = box.querySelector('.logingate');
     btn.style.display = 'none';
-    import('./auth.js?v=20261112e').then(function (auth) {
+    import('./auth.js?v=20261113a').then(function (auth) {
       auth.mountLogin(mount, { onDone: function () {
         try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
         loadDynamic();
@@ -708,7 +708,7 @@ function bindZ60Join() {
       var mount = document.getElementById('z60LoginMount');
       if (mount && !mount.dataset.mounted) {
         mount.dataset.mounted = '1';
-        import('./auth.js?v=20261112e').then(function (auth) {
+        import('./auth.js?v=20261113a').then(function (auth) {
           auth.mountLogin(mount, { onDone: function () {
             try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
             if (note) note.textContent = '已登录，正在为您刷新报名状态…';
@@ -2177,7 +2177,7 @@ function renderForbiddenGuideEv() {
   });
   var mount = document.getElementById('fbLogin');
   if (mount) {
-    import('./auth.js?v=20261112e').then(function (auth) {
+    import('./auth.js?v=20261113a').then(function (auth) {
       auth.mountLogin(mount, { onDone: function () {
         try { var r2 = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); token = r2 ? (JSON.parse(r2).access_token || null) : null; } catch (e) {}
         loadDynamic();
@@ -2526,7 +2526,7 @@ function cdSetEvName() {
 }
 async function cdEnsureAuth() {
   if (cdAuth) return cdAuth;
-  cdAuth = await import('./auth.js?v=20261112e'); /* [线Z55] 共享模块必须带内容版本参数，auth.js 变更同步升版本（见 play-home-fix 终报口径） */
+  cdAuth = await import('./auth.js?v=20261113a'); /* [线Z55] 共享模块必须带内容版本参数，auth.js 变更同步升版本（见 play-home-fix 终报口径） */
   cdAuth.initAuth(function (s) { cdSetLoggedIn(!!s); cdOnAuthGuard(s); });
   return cdAuth;
 }
@@ -2690,7 +2690,7 @@ document.addEventListener('click', function (e) {
     loadMine();
   });
   function mountLogin() {
-    import('./auth.js?v=20261112e').then(function (m) { /* [线Z55] 内容版本参数，同上 */
+    import('./auth.js?v=20261113a').then(function (m) { /* [线Z55] 内容版本参数，同上 */
       m.mountLogin(document.getElementById('pmLoginMount'), { onDone: function () {
         document.getElementById('pmLoginMount').innerHTML = '';
         loadMine();

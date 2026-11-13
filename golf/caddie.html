@@ -231,7 +231,7 @@
   })();
 </script>
 <script type="module">
-import { initAuth, mountLogin, renderAuthBar, getAccessToken, getSessionSync, signInWithApple } from './auth.js?v=20261112e';
+import { initAuth, mountLogin, renderAuthBar, getAccessToken, getSessionSync, signInWithApple } from './auth.js?v=20261113a';
 
 var CFG = window.__caddieCfg;
 var PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
@@ -504,7 +504,7 @@ renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setL
   if (ab) ab.addEventListener('click', function () {
     ab.disabled = true;
     var label = ab.querySelector('span'); if (label) label.textContent = '正在跳转到 Apple 登录…';
-    import('./auth.js?v=20261112e').then(function (m) { return m.signInWithApple(location.href); }).then(function (r) {
+    import('./auth.js?v=20261113a').then(function (m) { return m.signInWithApple(location.href); }).then(function (r) {
       if (!r || !r.ok) {
         ab.disabled = false; if (label) label.textContent = '使用 Apple 登录';
         var msg = $('#loginMount [data-f="msg"]'); if (msg) msg.textContent = 'Apple 登录暂时不可用，请改用邮箱或手机号登录。';
