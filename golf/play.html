@@ -3282,6 +3282,9 @@ async function loadMyRounds() {
   box.querySelectorAll('[data-round]').forEach(function (el) {
     el.addEventListener('click', function () { location.href = location.pathname + '?e=' + encodeURIComponent(el.getAttribute('data-round')); });
   });
+  box.querySelectorAll('[data-del-round]').forEach(function (el) {
+    el.addEventListener('click', function (e2) { e2.stopPropagation(); rkDeleteEventFlow(el.getAttribute('data-del-round'), el.getAttribute('data-del-title') || '', function () { loadMyRounds(); }); });
+  });
 }
 function hmRoundMeta(x) {
   var bits = [];
@@ -3297,6 +3300,11 @@ function hmCardLine(x) {
   if (Number(c.thru || 0) > 0) return '已打 ' + c.thru + ' 洞' + (c.gross_total != null ? ' · 当前总杆 ' + c.gross_total : '');
   return '记分卡已就绪 · 未开始记分';
 }
+/* [0738 赛事删除入口 2026-11-12] 本人发起的球局行内「删除」（服务端 event_delete 再验 organizer/admin） */
+function hmDelBtn(x) {
+  if (!x || x.my_role !== 'organizer') return '';
+  return '<button type="button" class="csr-del" data-del-round="' + esc(x.id) + '" data-del-title="' + esc(x.title) + '">删除</button>';
+}
 function hmRoundsHtml(d) {
   var active = d.active || [], upcoming = d.upcoming || [], finished = d.finished || [], cancelled = d.cancelled || [];
   var out = '';
@@ -3304,22 +3312,22 @@ function hmRoundsHtml(d) {
     var x = active[0];
     out += '<div class="card"><h2>⛳ 进行中的球局</h2>' +
       '<p class="meta"><b>' + esc(x.title) + '</b>' + (hmRoundMeta(x) ? '<br>' + hmRoundMeta(x) : '') + '<br>' + esc(hmCardLine(x)) + '</p>' +
-      '<div class="btnrow"><a class="btn" href="' + location.pathname + '?e=' + encodeURIComponent(x.id) + '">计分卡</a></div></div>';
+      '<div class="btnrow"><a class="btn" href="' + location.pathname + '?e=' + encodeURIComponent(x.id) + '">计分卡</a>' + hmDelBtn(x) + '</div></div>';
   } else if (active.length > 1) {
     out += '<div class="card"><h2>⛳ 进行中的球局</h2>' + active.map(function (x) {
-      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + (hmRoundMeta(x) ? ' · ' : '') + esc(hmCardLine(x)) + '</small></div>';
+      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + (hmRoundMeta(x) ? ' · ' : '') + esc(hmCardLine(x)) + '</small>' + hmDelBtn(x) + '</div>';
     }).join('') + '</div>';
   }
   if (upcoming.length) {
     out += '<div class="card"><h2>即将开始</h2>' + upcoming.map(function (x) {
-      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + '</small></div>';
+      return '<div class="csr" data-round="' + esc(x.id) + '"><b>' + esc(x.title) + '</b><small>' + hmRoundMeta(x) + '</small>' + hmDelBtn(x) + '</div>';
     }).join('') + '</div>';
   }
   var hist = finished.map(function (x) { return { x: x, tag: '已结束' }; }).concat(cancelled.map(function (x) { return { x: x, tag: '已取消' }; }));
   if (hist.length) {
     out += '<div class="card"><h2>历史球局</h2>' + hist.map(function (h) {
       var x = h.x;
-      return '<div class="csr" data-round="' + esc(x.id) + '"' + (h.tag === '已取消' ? ' style="opacity:.55"' : '') + '><b>' + esc(x.title) + '</b><small>' + h.tag + (hmRoundMeta(x) ? ' · ' + hmRoundMeta(x) : '') + ' · ' + esc(hmCardLine(x)) + '</small></div>';
+      return '<div class="csr" data-round="' + esc(x.id) + '"' + (h.tag === '已取消' ? ' style="opacity:.55"' : '') + '><b>' + esc(x.title) + '</b><small>' + h.tag + (hmRoundMeta(x) ? ' · ' + hmRoundMeta(x) : '') + ' · ' + esc(hmCardLine(x)) + '</small>' + hmDelBtn(x) + '</div>';
     }).join('') + '</div>';
   }
   return out;
@@ -3865,6 +3873,51 @@ document.addEventListener('visibilitychange', function () {
     }).catch(function () { pollCtl(); });
   }).catch(function () { P.booted = true; pollCtl(); /* 首查遇网络失败不摘入口：30 秒轮询重试，refresh 会对未开通赛事自摘 */ });
 })();
+</script>
+<style>
+.csr-del{float:right;background:none;border:1px solid rgba(179,38,30,.45);color:#b3261e;border-radius:9px;padding:3px 12px;font-size:13px;cursor:pointer;margin-left:8px}
+.rk-del-ov{position:fixed;inset:0;z-index:300;background:rgba(20,34,53,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.rk-del-card{background:#fff;border-radius:16px;padding:24px 22px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25);color:#14304A}
+.rk-del-card h3{margin:0 0 10px;font-size:17px}
+.rk-del-card p{margin:6px 0;line-height:1.65;font-size:14px}
+.rk-del-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.rk-del-cancel{background:#fff;border:1px solid #cbd5cb;color:#14304A;border-radius:10px;padding:9px 18px;font-size:14px;cursor:pointer}
+.rk-del-ok{background:#b3261e;border:none;color:#fff;border-radius:10px;padding:9px 18px;font-size:14px;cursor:pointer}
+.rk-del-ok[disabled]{opacity:.5;cursor:default}
+.rk-del-err{color:#b3261e;min-height:20px}
+</style>
+<script>
+/* [0738 赛事删除入口 2026-11-12] 统一删除流程：先取影响计数（event_delete preview）
+   → 页面内确认弹窗（赛事名＋影响计数＋定版说明）→ 确认才落删 → 成功回调刷新列表。 */
+function rkDeleteEventFlow(eventId, title, onDone) {
+  var old = document.getElementById('rkDelOv'); if (old) old.remove();
+  var ov = document.createElement('div'); ov.className = 'rk-del-ov'; ov.id = 'rkDelOv';
+  ov.innerHTML = '<div class="rk-del-card"><h3>删除赛事</h3>' +
+    '<p>《' + esc(title) + '》</p>' +
+    '<p id="rkDelCounts">正在读取影响范围…</p>' +
+    '<p>删除后赛事将从所有列表消失、分享链接失效，数据保留备查。</p>' +
+    '<p class="rk-del-err" id="rkDelErr"></p>' +
+    '<div class="rk-del-row"><button type="button" class="rk-del-cancel" id="rkDelNo">取消</button>' +
+    '<button type="button" class="rk-del-ok" id="rkDelYes" disabled>确认删除</button></div></div>';
+  document.body.appendChild(ov);
+  function close() { ov.remove(); }
+  ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  document.getElementById('rkDelNo').addEventListener('click', close);
+  golfApi('event_delete', { event_id: eventId, preview: true }, true).then(function (r) {
+    var cEl = document.getElementById('rkDelCounts'); if (!cEl) return;
+    if (!r.ok || !r.data || !r.data.impact) { cEl.textContent = '影响范围读取失败，请稍后重试。'; return; }
+    var im = r.data.impact;
+    cEl.textContent = im.registrations + ' 人报名 · ' + im.scorecards + ' 张记分卡' + (im.locked_scorecards ? '（含已锁定 ' + im.locked_scorecards + ' 张）' : '');
+    var yes = document.getElementById('rkDelYes'); if (yes) yes.disabled = false;
+  });
+  document.getElementById('rkDelYes').addEventListener('click', function () {
+    var yes = document.getElementById('rkDelYes'); yes.disabled = true; yes.textContent = '删除中…';
+    golfApi('event_delete', { event_id: eventId }, true).then(function (r) {
+      if (r.ok && r.data && r.data.ok) { close(); if (onDone) onDone(); }
+      else { var eEl = document.getElementById('rkDelErr'); if (eEl) eEl.textContent = '删除失败：' + ((r.data && r.data.error) || r.error || '未知错误'); yes.disabled = false; yes.textContent = '确认删除'; }
+    });
+  });
+}
 </script>
 </body>
 </html>
