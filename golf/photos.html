@@ -108,6 +108,30 @@ async function lp(body) {
   if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
   return data;
 }
+
+// [相册线 2026-11-12] 下载原图：先经服务端 photo_download 复核权限/限制，
+// 拿到的一律是 url（上传原图），不用展示图/缩略图/调色版冒充。
+async function albDownload(photoId) {
+  try {
+    var d = await lp({ action: 'photo_download', photo_id: photoId });
+    var r = await fetch(d.url); var b = await r.blob();
+    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'rukik-photo-' + String(photoId).slice(0, 8) + '.jpg';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  } catch (e) {
+    alert(e.message === 'download_restricted' ? '该照片已设置不可下载' : e.message === 'forbidden' ? '无权下载这张照片' : '下载失败：' + e.message);
+  }
+}
+// [相册线] 管理台实时订阅：他人上传/删除/审核后自动刷新本页相册（防抖合并）。
+var albSubbedFor = null, albSubTimer = null;
+function albSubscribe() {
+  var eid = eventId(); if (!eid || albSubbedFor === eid) return; albSubbedFor = eid;
+  import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(function (m) {
+    var sb = m.createClient(SUPA, ANON, { realtime: { params: { eventsPerSecond: 5 } } });
+    sb.channel('album:golf:' + eid).on('broadcast', { event: 'album_change' }, function () {
+      clearTimeout(albSubTimer); albSubTimer = setTimeout(function () { loadAlbum(); }, 400);
+    }).subscribe();
+  }).catch(function () {});
+}
 $('loginBtn').onclick = async function () {
   $('loginMsg').textContent = '登录中…';
   var res = await fetch(SUPA + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON }, body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value }) });
@@ -133,7 +157,16 @@ async function loadAlbum() {
     return;
   }
   $('albumCount').textContent = '共 ' + d.album_count + ' 张（与手机端同一相册，计数一致）';
+  // [相册线 2026-11-12] 开放门控：未到 T−30 且非管理/摄影身份时，上传区禁用并明示
+  //（服务端 photo_upload_url/photo_register 同口径拦截，此处只是不让用户白忙）。
+  var gate = $('albGate');
+  if (!gate) { gate = document.createElement('p'); gate.id = 'albGate'; gate.className = 'msg'; $('drop').parentNode.insertBefore(gate, $('drop')); }
+  var closed = d.can_upload === false;
+  gate.textContent = closed ? ('🕙 共享相册尚未开放：开赛前 30 分钟开放' + (d.opens_at ? '（' + new Date(d.opens_at).toLocaleString('zh-CN') + '）' : '') + '，开放后将自动可用，无需刷新。') : '';
+  $('pickBtn').disabled = closed; $('pickDirBtn').disabled = closed;
+  $('drop').style.opacity = closed ? '.45' : ''; $('drop').style.pointerEvents = closed ? 'none' : '';
   renderGrid(d.photos || []);
+  albSubscribe();
 }
 function renderGrid(photos) {
   $('grid').innerHTML = photos.map(function (p) {
@@ -146,6 +179,7 @@ function renderGrid(photos) {
       ops += '<button data-op="remove" data-id="' + p.id + '">删除</button>';
     }
     if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
+    ops += '<button data-op="download" data-id="' + p.id + '">下载原图</button>';
     if (p.enhance_status === 'failed' || p.enhance_status === 'none') ops += '<button data-op="enhance" data-id="' + p.id + '">自动调色</button>';
     return '<div class="ph"><img loading="lazy" src="' + (p.thumb_url || p.display_url || p.enhance_url || p.url) + '">'
       + '<div class="cap">' + (p.pinned ? '📌 ' : '') + (p.caption || '现场照片') + '</div>'
@@ -155,6 +189,7 @@ function renderGrid(photos) {
     btn.onclick = async function () {
       var id = btn.getAttribute('data-id'), op = btn.getAttribute('data-op');
       try {
+        if (op === 'download') { await albDownload(id); return; }
         if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
         else await lp({ action: 'photo_moderate', photo_id: id, op: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
@@ -246,7 +281,7 @@ $('dirInput').onchange = function () { addFiles($('dirInput').files); $('dirInpu
 </div>
 <script>
 // ---------- 公开照片池模式（?e=<event_id>）：与赛事页共用 golf-api wall_get（服务端权益校验：
-// 相册未开通/赛事非公开在服务端拦截）。本模式只做浏览（网格按需分页）/查看（全屏滑动）/下载（默认美化版），
+// 相册未开通/赛事非公开在服务端拦截）。本模式只做浏览（网格按需分页）/查看（全屏滑动）/下载（原图，经 live-photo photo_download 服务端复核），
 // 上传与举报/隐藏/删除等管理能力保留在无 ?e= 的管理台，不在本页重复实现。
 var poolEventId = new URLSearchParams(location.search).get('e');
 if (poolEventId) initPool();
@@ -274,6 +309,39 @@ function initPool() {
   api({ action: 'event_get', event_id: poolEventId }).then(function (d) {
     if (d && d.event && d.event.title) { document.querySelector('h1').textContent = d.event.title + ' · 相册'; document.title = d.event.title + ' · 相册'; }
   }).catch(function () {});
+  // [相册线 2026-11-12] 下载走 live-photo 复核（不带登录态时走匿名 visitor 口径）
+  async function lpDl(photoId) {
+    var headers = { 'Content-Type': 'application/json', apikey: ANON };
+    if (ptoken) headers.Authorization = 'Bearer ' + ptoken;
+    var res = await fetch(SUPA + '/functions/v1/live-photo', { method: 'POST', headers: headers, body: JSON.stringify({ action: 'photo_download', photo_id: photoId }) });
+    var d = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(d.error || ('HTTP ' + res.status));
+    return d;
+  }
+  async function saveOriginal(p) {
+    var dd = await lpDl(p.id);
+    var r = await fetch(dd.url); var b = await r.blob();
+    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'rukik-golf-' + String(p.id || 'photo').slice(0, 8) + '.jpg';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    $('poolMsg').textContent = '已下载原图';
+  }
+  function dlErr(e) { $('poolMsg').textContent = e.message === 'download_restricted' ? '该照片已设置不可下载' : e.message === 'forbidden' ? '无权下载这张照片' : '下载失败，请稍后重试'; }
+  // [相册线] 长按菜单：下载原图 / 查看大图（与滑动、点开大图不冲突：移动即取消长按）
+  function poolMenu(p) {
+    var old = document.getElementById('poolMenu'); if (old) old.remove();
+    var m = document.createElement('div'); m.id = 'poolMenu';
+    m.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(3,10,7,.55)';
+    m.innerHTML = '<div style="position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(420px,92vw);background:#0b2018;border:1px solid rgba(118,229,173,.35);border-radius:16px;padding:14px">'
+      + '<button type="button" id="pmDl" style="display:block;width:100%;padding:12px;border-radius:10px;border:0;background:#76e5ad;color:#062015;font-size:15px;font-weight:700;cursor:pointer">⬇ 下载照片（原图）</button>'
+      + '<button type="button" id="pmView" style="display:block;width:100%;padding:12px;border-radius:10px;border:1px solid rgba(242,255,247,.16);background:#103527;color:#f2fff7;font-size:15px;font-weight:700;margin-top:8px;cursor:pointer">🖼 查看大图</button>'
+      + '<button type="button" id="pmCancel" style="display:block;width:100%;padding:12px;border-radius:10px;border:0;background:transparent;color:#b9d8c6;font-size:15px;font-weight:700;margin-top:8px;cursor:pointer">取消</button></div>';
+    document.body.appendChild(m);
+    function close() { m.remove(); }
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    m.querySelector('#pmCancel').addEventListener('click', close);
+    m.querySelector('#pmView').addEventListener('click', function () { close(); openLb(aliveItems().indexOf(p)); });
+    m.querySelector('#pmDl').addEventListener('click', function () { close(); saveOriginal(p).catch(dlErr); });
+  }
   async function loadNext() {
     if (POOL.loading || !POOL.hasMore) return;
     POOL.loading = true;
@@ -308,6 +376,11 @@ function initPool() {
     img.addEventListener('error', function () { p._dead = true; d.remove(); }); // 坏图自动退出网格，不留破损占位
     d.appendChild(img);
     d.addEventListener('click', function () { openLb(aliveItems().indexOf(p)); });
+    var pressT = null, pressed = false;
+    d.addEventListener('pointerdown', function () { pressT = setTimeout(function () { pressed = true; poolMenu(p); }, 500); });
+    ['pointerup', 'pointermove', 'pointercancel', 'pointerleave'].forEach(function (ev) { d.addEventListener(ev, function () { if (pressT) { clearTimeout(pressT); pressT = null; } }, { passive: true }); });
+    d.addEventListener('click', function (e) { if (pressed) { pressed = false; e.preventDefault(); e.stopPropagation(); } }, true);
+    d.addEventListener('contextmenu', function (e) { e.preventDefault(); poolMenu(p); });
     $('poolGrid').appendChild(d);
   }
   $('poolMore').addEventListener('click', loadNext);
@@ -343,20 +416,31 @@ function initPool() {
     else if (e.key === 'ArrowLeft') { lbIdx--; showLb(); }
     else if (e.key === 'ArrowRight') { lbIdx++; showLb(); }
   });
-  $('lbDl').addEventListener('click', async function () {
+  $('lbDl').addEventListener('click', function () {
     var it = aliveItems()[lbIdx];
     if (!it) return;
-    var url = it.url; // 默认美化版：服务端 feed 的 url 已按「调色版 → 展示图 → 原图」给出
-    try {
-      var r = await fetch(url);
-      var b = await r.blob();
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(b);
-      a.download = 'rukik-golf-' + String(it.id || 'photo').slice(0, 8) + '.jpg';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-    } catch (e) { window.open(url, '_blank'); }
+    // [相册线 2026-11-12] 大图下载＝原图：经 photo_download 服务端复核后取 url（上传原图），
+    // 不再用 feed 的展示/调色版本冒充原图；按钮在左右切换中常驻本工具栏。
+    saveOriginal(it).catch(dlErr);
   });
+  // [相册线 2026-11-12] 池页实时同步：广播到达→探首图变化即整池重拉；推送未就绪时
+  // 30 秒探一次兜底；回前台整池补齐（防旧缓存、防漏删）。
+  var poolRtOk = false;
+  function poolReset() { POOL.items = []; POOL.offset = 0; POOL.hasMore = true; $('poolGrid').innerHTML = ''; loadNext(); }
+  async function poolProbe() {
+    try {
+      var d = await api({ action: 'wall_get', event_id: poolEventId, pool_limit: 1, pool_offset: 0 });
+      var first = d && d.wall && d.wall.pool && d.wall.pool.photos && d.wall.pool.photos[0];
+      var cur = POOL.items[0];
+      if ((first && !cur) || (first && cur && first.id !== cur.id) || (!first && cur)) poolReset();
+    } catch (e) {}
+  }
+  import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm').then(function (m) {
+    var sb = m.createClient(SUPA, ANON, { realtime: { params: { eventsPerSecond: 5 } } });
+    sb.channel('album:golf:' + poolEventId).on('broadcast', { event: 'album_change' }, function () { poolProbe(); }).subscribe(function (st) { poolRtOk = st === 'SUBSCRIBED'; });
+  }).catch(function () {});
+  setInterval(function () { if (!poolRtOk && !document.hidden) poolProbe(); }, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) poolReset(); });
   loadNext();
 }
 </script>
