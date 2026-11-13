@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>认领我的参赛安排 · RUKIK Golf</title>
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#061D15; color:#F2FFF7; }
+  main { max-width:640px; margin:0 auto; padding:28px 18px 60px; }
+  .brand { color:#76E5AD; letter-spacing:.3em; font-size:12px; }
+  h1 { font-size:24px; margin:10px 0 6px; }
+  h1 .gold { color:#DCC47A; }
+  .card { background:#0B3023; border:1px solid rgba(118,229,173,.25); border-radius:16px; padding:18px 20px; margin-top:16px; }
+  .card.alt { background:#0C2B20; }
+  .row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid rgba(118,229,173,.12); font-size:15px; }
+  .row:last-child { border-bottom:0; }
+  .row span { color:#9fc4ab; }
+  button { background:#76E5AD; color:#061D15; border:0; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; cursor:pointer; width:100%; margin-top:14px; }
+  button.ghost { background:transparent; color:#76E5AD; border:1px solid rgba(118,229,173,.5); }
+  input { width:100%; box-sizing:border-box; padding:11px; border:1px solid rgba(118,229,173,.35); border-radius:9px; margin:5px 0 11px; font-size:15px; background:#061D15; color:#F2FFF7; }
+  label { font-size:13px; color:#9fc4ab; }
+  .msg { font-size:14px; line-height:1.7; }
+  .err { color:#f3a8a8; } .ok { color:#76E5AD; }
+  a { color:#DCC47A; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">RUKIK GOLF</div>
+  <h1>认领我的<span class="gold">参赛安排</span></h1>
+  <p style="color:#9fc4ab;font-size:14px;line-height:1.7">主办方已为您预留参赛名额。下方只展示您本人的安排；登录后即可把这份安排关联到您的 RUKIK 账号，之后在赛事页与 App 中都能看到。</p>
+
+  <div class="card" id="infoCard"><p class="msg" id="infoMsg">正在读取您的参赛安排…</p><div id="infoBody"></div></div>
+
+  <div class="card alt" id="actCard" style="display:none">
+    <div id="loginBox" style="display:none">
+      <label>邮箱</label><input id="email" type="email" autocomplete="username">
+      <label>密码</label><input id="password" type="password" autocomplete="current-password">
+      <p class="msg err" id="loginErr"></p>
+    </div>
+    <button id="claimBtn" type="button">登录并认领</button>
+    <p class="msg" id="claimMsg"></p>
+  </div>
+
+  <p style="color:#9fc4ab;font-size:12px;margin-top:18px">本页不会展示任何其他球员的信息。链接由主办方单独发给您，请勿转发。</p>
+</main>
+<script>
+/* [ROSTER-V1] claim 落地页：?t= → golf-api claim_get（免登录，只回本人安排）；
+   认领走 claim_redeem（须登录）。登录态口径与 console 一致：优先 sessionStorage
+   golf_token，其次站内统一会话 localStorage sb-yzgzgtrqrmarfjftgbwt-auth-token；
+   无登录态时本页内嵌邮箱密码登录（GoTrue 同 console）。绝不展示他人信息。 */
+var SB = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+var API = SB + '/functions/v1/golf-api';
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var token = sessionStorage.getItem('golf_token') || '';
+(function adopt() {
+  if (token) return;
+  try {
+    var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token');
+    if (!raw) return;
+    var s = JSON.parse(raw); if (s && s.currentSession) s = s.currentSession;
+    if (s && s.access_token && (!s.expires_at || s.expires_at > Math.floor(Date.now() / 1000) + 30)) { token = s.access_token; sessionStorage.setItem('golf_token', token); }
+  } catch (e) {}
+})();
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function call(action, body, auth) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + (auth ? (token || ANON) : ANON) }, body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
+}
+var T = new URLSearchParams(location.search).get('t') || '';
+var info = null;
+var ERR_TXT = {
+  expired: '这个认领链接已过期。请联系主办方重新发送一条新链接。',
+  revoked: '这个认领链接已被主办方撤销。请联系主办方确认您的参赛安排。',
+  claimed: '这个参赛名额已经认领完成。如需查看安排，请登录 RUKIK 后打开赛事页。',
+  invalid: '这个认领链接无效。请确认链接完整，或联系主办方重新发送。',
+  not_found: '这个认领链接无效。请确认链接完整，或联系主办方重新发送。'
+};
+function failInfo(d) {
+  var code = (d && (d.code || d.error)) || 'invalid';
+  document.getElementById('infoMsg').innerHTML = '<span class="err">' + esc(ERR_TXT[code] || '链接暂时无法使用，请联系主办方。') + '</span>';
+}
+function loadInfo() {
+  if (!T) { document.getElementById('infoMsg').innerHTML = '<span class="err">链接缺少认领凭证。请联系主办方重新发送完整链接。</span>'; return; }
+  call('claim_get', { token: T }, false).then(function (d) {
+    if (!d || d.error || d.ok === false) { failInfo(d); return; }
+    info = d;
+    var ev = d.event || {}, fl = d.flight || null;
+    var when = ev.starts_at ? String(ev.starts_at).slice(0, 16).replace('T', ' ') : '';
+    document.getElementById('infoMsg').textContent = '您好，' + (d.player_name || '球员') + '。这是主办方为您安排的本场信息：';
+    document.getElementById('infoBody').innerHTML =
+      '<div class="row"><span>赛事</span><b>' + esc(ev.title || '—') + '</b></div>' +
+      (when ? '<div class="row"><span>开赛时间</span><b>' + esc(when) + (ev.timezone ? '（' + esc(ev.timezone) + '）' : '') + '</b></div>' : '') +
+      (ev.venue ? '<div class="row"><span>地点</span><b>' + esc(ev.venue) + '</b></div>' : '') +
+      (d.team_name ? '<div class="row"><span>球队</span><b>' + esc(d.team_name) + '</b></div>' : '') +
+      (fl ? '<div class="row"><span>出发组</span><b>第 ' + esc(fl.group_no) + ' 组</b></div>' +
+        (fl.start_hole ? '<div class="row"><span>出发洞</span><b>第 ' + esc(fl.start_hole) + ' 洞</b></div>' : '') +
+        (fl.tee_time ? '<div class="row"><span>开球时间</span><b>' + esc(String(fl.tee_time).slice(0, 16).replace('T', ' ')) + '</b></div>' : '')
+        : '<div class="row"><span>出发组</span><b>主办方尚未发布出发名单，发布后这里会更新</b></div>');
+    var act = document.getElementById('actCard'); act.style.display = 'block';
+    if (!token) document.getElementById('loginBox').style.display = 'block';
+  }).catch(function () { document.getElementById('infoMsg').innerHTML = '<span class="err">网络暂时不通，请稍后刷新重试。</span>'; });
+}
+function redeem() {
+  var m = document.getElementById('claimMsg');
+  call('claim_redeem', { token: T }, true).then(function (d) {
+    if (d && d.candidate) { m.innerHTML = '<span class="ok">已提交关联申请，请在赛事页确认。</span>' + (d.event_id ? ' <a href="https://rukik.com/golf/event.html?e=' + encodeURIComponent(d.event_id) + '">打开赛事页</a>' : ''); return; }
+    if (d && (d.ok || d.event_id)) { m.innerHTML = '<span class="ok">认领成功！正在打开赛事页…</span>'; location.href = 'https://rukik.com/golf/event.html?e=' + encodeURIComponent(d.event_id || (info && info.event_id) || ''); return; }
+    if (d && (d.code === 'claimed' || d.error === 'claimed')) { m.innerHTML = '<span class="err">这个名额已经认领过了。</span>'; return; }
+    if (d && d.status === 409) { m.innerHTML = '<span class="err">存在冲突：这份安排已关联到其他账号。请联系主办方处理。</span>'; return; }
+    m.innerHTML = '<span class="err">认领失败：' + esc((d && (d.message || d.error)) || '未知错误') + '</span>';
+  }).catch(function () { m.innerHTML = '<span class="err">网络暂时不通，请稍后重试。</span>'; });
+}
+document.getElementById('claimBtn').onclick = function () {
+  if (token) { redeem(); return; }
+  var email = document.getElementById('email').value, pw = document.getElementById('password').value;
+  var le = document.getElementById('loginErr');
+  if (!email || !pw) { le.textContent = '请先填写邮箱与密码登录（没有账号请先在 RUKIK 注册同一邮箱/手机号）。'; return; }
+  fetch(SB + '/auth/v1/token?grant_type=password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': ANON }, body: JSON.stringify({ email: email, password: pw }) })
+    .then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.access_token) { le.textContent = '登录失败，请检查邮箱与密码。'; return; }
+      token = d.access_token; sessionStorage.setItem('golf_token', token);
+      document.getElementById('loginBox').style.display = 'none'; le.textContent = '';
+      redeem();
+    });
+};
+loadInfo();
+</script>
+</body>
+</html>
