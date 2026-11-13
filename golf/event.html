@@ -84,6 +84,19 @@
   .funcrow a{flex:1;min-width:140px;text-align:center;background:#eef4ef;color:#14532d;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none}
   iframe.osm{width:100%;height:230px;border:0;border-radius:14px}
   .lmap{width:100%;height:230px;border-radius:14px;overflow:hidden;background:#eef4ef;z-index:0}
+  /* [双图联动20261112] 球场全局图常驻区＋全屏层（第二个独立 Leaflet 实例） */
+  .glmap{width:100%;height:clamp(300px,94vw,400px);border-radius:14px;overflow:hidden;background:#0a2e1f;z-index:0}
+  .glmap .leaflet-div-icon{background:transparent;border:none}
+  .hole-badge{background:#0d8a4a;color:#fff;border:2px solid #fff;border-radius:50%;width:24px;height:24px;line-height:21px;text-align:center;font-size:12px;font-weight:700;box-shadow:0 1px 5px rgba(0,0,0,.55)}
+  .hole-badge.cur{background:#c9962e;border-color:#ffe9a8}
+  .gl-note{margin-top:8px;font-size:12.5px;color:#5c7260;line-height:1.65}
+  .glfsbtn{position:absolute;right:10px;bottom:10px;z-index:1001;width:38px;height:38px;border-radius:10px;border:1px solid rgba(160,220,185,.35);background:rgba(4,24,16,.8);color:#e6f2e9;font-size:17px;line-height:1;cursor:pointer}
+  .glfs{position:fixed;inset:0;z-index:200;background:#081A2C;display:flex;flex-direction:column}
+  .glfs[hidden]{display:none!important}
+  .glfs-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:#eafff2;font-weight:700;font-size:16px}
+  .glfs-close{background:linear-gradient(135deg,#0d8a4a,#0a6e3c);color:#fff;border:none;border-radius:999px;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  #glEvFsMap{flex:1;background:#0a2e1f}
+  #glEvFsMap .leaflet-div-icon{background:transparent;border:none}
   .holebar button.all.on{background:#14532d;color:#fff;border-color:#14532d}
   .car{position:relative;height:264px;border-radius:14px;overflow:hidden;background:#0e2416;isolation:isolate}
   .carTrack{display:flex;transition:transform .45s ease;height:100%}
@@ -302,6 +315,12 @@
   <div id="heroSec"><div class="skl"></div></div>
   <div id="dualSec"></div>
   <div id="mapSec"></div>
+  <div id="glSec"></div>
+  <div id="glEvFs" class="glfs" hidden>
+    <div class="glfs-bar"><span>球场全局图</span><button type="button" class="glfs-close" id="glEvFsClose">关闭 ✕</button></div>
+    <div id="glEvFsMap"></div>
+    <div class="gl-note" id="glEvFsNote" style="padding:8px 14px;color:#9db8a7"></div>
+  </div>
   <div id="partnerSec"></div>
   <div id="boardSec"></div>
   <div id="staffSec"></div>
@@ -1493,7 +1512,7 @@ function openHdOverlay() {
 function closeHdOverlay() { document.getElementById('hdOverlay').classList.add('hidden'); }
 function renderMap() {
   var el = document.getElementById('mapSec');
-  if (!PREVIEW || !PREVIEW.name) { el.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">本场活动尚未关联球场；选定球场后，球场地图（全局图＋逐洞洞图）将自动生成，无需另行配置。</div></div>'; return; }
+  if (!PREVIEW || !PREVIEW.name) { el.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">本场活动尚未关联球场；选定球场后，球场地图（全局图＋逐洞洞图）将自动生成，无需另行配置。</div></div>'; var gs0 = document.getElementById('glSec'); if (gs0) gs0.innerHTML = ''; return; }
   var comp = PREVIEW.completeness || {};
   var h = holeData();
   var suspect = h ? suspectNote(h.hole) : '';
@@ -1514,17 +1533,13 @@ function renderMap() {
   /* [A6] 控件只剩上一洞/下一洞/全屏三件；洞号摘要改静态信息行；
      发球台选择移入球洞信息区（与 Par/码数同区，见 holeinfo 上方 teeBar） */
   el.innerHTML = '<div class="card"><h2>球场地图</h2>' +
-    '<div id="lmapBox"></div>' +
-    '<div id="flyEvCap" style="display:none;margin-top:8px;font-size:13px;color:#5c7260"></div>' +
     '<div class="mapsum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span></div>' +
-    '<div class="holebar"><button type="button" id="flyEvBtn">🎬 全局动图</button><button type="button" id="prevHole">← 上一洞</button><button type="button" id="nextHole">下一洞 →</button><button type="button" class="hdlink" id="hdOpen">⛶ 全屏</button></div>' +
+    teeBar +
+    '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><button type="button" id="nextHole">下一洞 →</button><button type="button" class="hdlink" id="hdOpen">⛶ 全屏</button></div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
     '<div id="mapAssetsBox"></div>' +
-    teeBar +
     '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div></div>';
   el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
-  var flyBtn = el.querySelector('#flyEvBtn');
-  if (flyBtn) flyBtn.addEventListener('click', flyEvToggle);
   el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
   var hdBtn = el.querySelector('#hdOpen');
   if (hdBtn) hdBtn.addEventListener('click', openHdOverlay);
@@ -1536,89 +1551,243 @@ function renderMap() {
     if (tba) tba.textContent = teePickOpen ? '▴' : '▾';
   });
   el.querySelectorAll('.teeitem').forEach(function (b) { b.addEventListener('click', function () { curTee = b.getAttribute('data-tee'); teePickOpen = false; renderMap(); }); });
-  setupBigMap();
+  ensureGlobe();
+  glEvOnHoleChanged(curHole);
   loadHoleSvg();
-}
-// ---- 上方大图（Leaflet）：默认全场总览；点选某洞后平移/缩放聚焦该洞并叠加其几何高亮；「全场」回总览。
-// Leaflet 加载失败（CDN 不可达）时降级回原 OSM 嵌入 iframe，行为不劣于改版前。无几何的洞不画假图、相机不乱动。
-var lmap = null, holeLayer = null, overviewBounds = null, mapFocused = false;
-function fitOverview() {
-  if (!lmap) return;
-  try { lmap.invalidateSize(); } catch (e) {}
-  if (overviewBounds && overviewBounds.isValid()) lmap.fitBounds(overviewBounds);
-  else if (PREVIEW && PREVIEW.latitude != null) lmap.setView([PREVIEW.latitude, PREVIEW.longitude], 15);
-}
-function setupBigMap() {
-  var box = document.getElementById('lmapBox');
-  if (!box || !PREVIEW || PREVIEW.latitude == null) return;
-  var lat = PREVIEW.latitude, lng = PREVIEW.longitude;
-  if (!window.L) {
-    box.innerHTML = '<iframe class="osm" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=' + (lng - 0.013) + ',' + (lat - 0.008) + ',' + (lng + 0.013) + ',' + (lat + 0.008) + '&layer=mapnik&marker=' + lat + ',' + lng + '"></iframe>';
-    return;
-  }
-  if (lmap) { try { lmap.remove(); } catch (e) {} lmap = null; }
-  var div = document.createElement('div');
-  div.className = 'lmap';
-  box.appendChild(div);
-  lmap = L.map(div, { scrollWheelZoom: false });
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(lmap);
-  overviewBounds = L.latLngBounds([lat - 0.008, lng - 0.013], [lat + 0.008, lng + 0.013]);
-  fitOverview();
-  // 容器刚写入 DOM 时 Leaflet 尺寸缓存可能未就绪，立即 fitBounds 会停在世界视图：
-  // 下一帧尺寸稳定后再 fit 一次全场（其后由所选洞的聚焦逻辑接管）。
-  if (window.requestAnimationFrame) requestAnimationFrame(function () {
-    if (!lmap || mapFocused) return;
-    fitOverview();
-    if (geomCache[curHole]) applyHoleFocus(geomCache[curHole]);
-  });
-  L.marker([lat, lng]).addTo(lmap);
-  holeLayer = L.layerGroup().addTo(lmap);
-  mapFocused = false;
-  syncAllBtn();
-  if (geomCache[curHole]) applyHoleFocus(geomCache[curHole]);
-}
-function syncAllBtn() {
-  var b = document.getElementById('allHoles');
-  if (b) b.className = 'all' + (mapFocused ? '' : ' on');
-}
-function resetBigMap() {
-  if (!lmap) return;
-  if (holeLayer) holeLayer.clearLayers();
-  mapFocused = false;
-  fitOverview();
-  syncAllBtn();
 }
 /* 要素填充色：与 App holeMapGeom.ts 的 FILLS 同值。Z28 换渲染器时 var FILLS 定义被一并删除、
    只剩下方 style 回调里的引用悬空，浏览器运行时 ReferenceError 被 loadHoleSvg 的 catch 误报成
    「本洞地图加载失败」并抹掉已渲染好的逐洞 SVG——Z34 恢复定义。 */
 var FILLS = { fairway: '#bfe3c0', green: '#43a047', bunker: '#ecd9a0', water_hazard: '#a8d4f0', rough: '#d8e6c3', tee: '#ffffff' };
-function applyHoleFocus(data) {
-  if (!lmap || !holeLayer) return;
-  /* 聚焦层故障只丢高亮，绝不外抛：不许再被上层误报为逐洞图加载失败（Z34） */
-  try { applyHoleFocusInner(data); } catch (e) { try { holeLayer.clearLayers(); } catch (e2) {} mapFocused = false; syncAllBtn(); }
+
+/* ---------- [双图联动20261112] 球场全局图（常驻嵌入，赛事页） ----------
+ * #glSec 位于 #mapSec 与 #partnerSec 之间：逐洞图（球场地图卡内）之下、
+ * 赛事合作伙伴之上，不点按钮不弹窗。renderMap 每次切洞整卡重渲染，
+ * 但不触碰 #glSec——全局图 Leaflet 实例跨切洞存活，视角状态只属于它
+ * 自己；逐洞 SVG 的平移缩放同理。双图只共享 curHole 一个状态。
+ * 联动与 play.html 同口径：仅洞号真变化才定位、保当前 zoom 优先、
+ * 装不下才最小适配该洞、绝不重置全场；用户在图内缩放/拖动不触发
+ * 重定位；点洞号徽章＝选洞（setHole），点空白/拖动/缩放不切洞。
+ * 数据：course_geometry hole='all' 一次取整场，holes[].hole 即记分卡
+ * 洞号（稳定身份，非数组下标）；无几何的洞如实缺席、相机不动。 */
+var glEvMap = null, glEvBase = null, glEvHi = null, glEvMarkers = {}, glEvData = null, glEvState = 'idle', glEvLastHole = null, glEvFsPending = false;
+function glEvNote(t) { var n = document.getElementById('glEvNote'); if (n) n.textContent = t || ''; }
+function glEvFeatList(entry) {
+  return (entry.features || []).map(function (f) { return { type: 'Feature', properties: { ftype: f.type }, geometry: f.geojson && f.geojson.geometry }; }).filter(function (f) { return !!f.geometry; });
 }
-function applyHoleFocusInner(data) {
-  holeLayer.clearLayers();
-  mapFocused = false;
-  if (!data || !data.available || !(data.features || []).length) { syncAllBtn(); return; } // 无几何：清掉旧高亮即可，不画假图、相机保持原位
-  var feats = (data.features || []).map(function (f) { return { type: 'Feature', properties: { ftype: f.type }, geometry: f.geojson && f.geojson.geometry }; }).filter(function (f) { return !!f.geometry; });
-  if (data.boundary) feats.push({ type: 'Feature', properties: { ftype: 'boundary' }, geometry: data.boundary.geometry });
-  if (!feats.length) { syncAllBtn(); return; }
-  var gj = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
-    style: function (f) {
-      var t = f.properties.ftype;
-      if (t === 'hole') return { color: '#14532d', weight: 4.5, fill: false };
-      if (t === 'boundary') return { color: '#9db8a2', weight: 1.5, dashArray: '5 4', fill: false };
-      if (t === 'cartpath') return { color: '#c9cfc9', weight: 2, fill: false };
-      return { color: '#ffffff', weight: 1, fillColor: FILLS[t] || '#dfe9df', fillOpacity: 0.9 };
-    },
-    pointToLayer: function (f, latlng) { return L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 2, fillColor: '#dc2626', fillOpacity: 1 }); }
+function glEvFeatLatLngs(geom, out) {
+  if (!geom) return;
+  if (geom.type === 'Point') out.push([geom.coordinates[1], geom.coordinates[0]]);
+  else if (geom.type === 'LineString' || geom.type === 'MultiPoint') geom.coordinates.forEach(function (c) { out.push([c[1], c[0]]); });
+  else if (geom.type === 'Polygon' || geom.type === 'MultiLineString') geom.coordinates.forEach(function (r) { r.forEach(function (c) { out.push([c[1], c[0]]); }); });
+  else if (geom.type === 'MultiPolygon') geom.coordinates.forEach(function (pg) { pg.forEach(function (r) { r.forEach(function (c) { out.push([c[1], c[0]]); }); }); });
+  else if (geom.type === 'GeometryCollection') geom.geometries.forEach(function (g) { glEvFeatLatLngs(g, out); });
+}
+function glEvMarkerPos(entry) {
+  var byType = {};
+  (entry.features || []).forEach(function (f) { (byType[f.type] = byType[f.type] || []).push(f); });
+  function centroid(f) { var pts = []; glEvFeatLatLngs(f.geojson && f.geojson.geometry, pts); if (!pts.length) return null; var la = 0, lo = 0; pts.forEach(function (c) { la += c[0]; lo += c[1]; }); return [la / pts.length, lo / pts.length]; }
+  var pin = byType.pin && byType.pin[0];
+  if (pin && pin.geojson && pin.geojson.geometry && pin.geojson.geometry.type === 'Point') { var c = pin.geojson.geometry.coordinates; return [c[1], c[0]]; }
+  var g = byType.green && byType.green[0]; if (g) return centroid(g);
+  var h = byType.hole && byType.hole[0]; if (h) return centroid(h);
+  var t = byType.tee && byType.tee[0]; if (t) return centroid(t);
+  return null;
+}
+function glEvEntry(n) { var e = null; ((glEvData && glEvData.holes) || []).forEach(function (x) { if (x.hole === n) e = x; }); return (e && e.available) ? e : null; }
+function glEvAnyGeom() { return !!(((glEvData && glEvData.holes) || []).some(function (x) { return x.available && (x.features || []).length; })); }
+function glEvDrawInto(map) {
+  var base = L.layerGroup().addTo(map);
+  var bounds = null;
+  function extend(gj) { try { var b = L.geoJSON(gj).getBounds(); if (b && b.isValid()) bounds = bounds ? bounds.extend(b) : b; } catch (e) {} }
+  if (glEvData.boundary && glEvData.boundary.geometry) {
+    L.geoJSON(glEvData.boundary, { style: { color: '#E3C878', weight: 2, dashArray: '6 4', fill: false } }).addTo(base);
+    extend(glEvData.boundary);
+  }
+  var markers = {};
+  (glEvData.holes || []).forEach(function (hd) {
+    if (!hd.available) return;
+    var feats = glEvFeatList(hd);
+    if (!feats.length) return;
+    L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+      style: function (f) {
+        var t = f.properties.ftype;
+        if (t === 'hole') return { color: '#14532d', weight: 4, fill: false };
+        if (t === 'cartpath') return { color: '#c9cfc9', weight: 2, fill: false };
+        return { color: '#ffffff', weight: 1, fillColor: FILLS[t] || '#dfe9df', fillOpacity: 0.85 };
+      },
+      pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 5, color: '#fff', weight: 2, fillColor: '#dc2626', fillOpacity: 1 }); }
+    }).addTo(base);
+    extend({ type: 'FeatureCollection', features: feats });
+    var pos = glEvMarkerPos(hd);
+    if (pos) {
+      var icon = L.divIcon({ className: 'ov-badge-wrap', html: '<div class="hole-badge" data-ovhole="' + hd.hole + '">' + hd.hole + '</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+      var mk = L.marker(pos, { icon: icon }).addTo(base);
+      (function (n) { mk.on('click', function () { setHole(n); }); })(hd.hole);
+      markers[hd.hole] = mk;
+    }
   });
-  holeLayer.addLayer(gj);
-  var b = gj.getBounds();
-  if (b && b.isValid()) { lmap.fitBounds(b.pad(0.3)); mapFocused = true; }
-  syncAllBtn();
+  return { base: base, bounds: bounds, markers: markers };
 }
+function glEvPaint(hi, markers) {
+  if (!hi) return;
+  hi.clearLayers();
+  var e = glEvEntry(curHole);
+  if (e) {
+    var feats = glEvFeatList(e);
+    if (feats.length) L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+      style: { color: '#E3C878', weight: 3.5, fill: false },
+      pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 7, color: '#E3C878', weight: 3, fill: false }); }
+    }).addTo(hi);
+  }
+  Object.keys(markers).forEach(function (k) {
+    var el = markers[k].getElement ? markers[k].getElement() : null;
+    var badge = el ? el.querySelector('.hole-badge') : null;
+    if (badge) badge.classList.toggle('cur', Number(k) === curHole);
+  });
+}
+function glEvSyncHighlight() { if (glEvMap && glEvHi) glEvPaint(glEvHi, glEvMarkers); }
+function glEvFocusOn(map, b) {
+  /* 保当前 zoom 优先：装得下只平移；装不下才最小适配该洞，绝不重置全场。 */
+  try {
+    var zb = map.getBoundsZoom(b, false);
+    if (zb >= map.getZoom()) map.panTo(b.getCenter(), { animate: true });
+    else map.flyToBounds(b.pad(0.15), { duration: 1.2 });
+  } catch (e) {}
+}
+function glEvOnHoleChanged(n) {
+  glEvSyncHighlight();
+  glEvFsSyncHighlight();
+  if (glEvState !== 'ready' || !glEvMap) return;
+  if (glEvLastHole === n) return;
+  glEvLastHole = n;
+  var e = glEvEntry(n);
+  var b = null;
+  if (e) { try { var feats = glEvFeatList(e); if (feats.length) { var bb = L.geoJSON({ type: 'FeatureCollection', features: feats }).getBounds(); if (bb && bb.isValid()) b = bb; } } catch (err) {} }
+  if (b) glEvFocusOn(glEvMap, b);
+}
+function glEvTiles(map) {
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '卫星影像 © Esri, Maxar, Earthstar Geographics' }).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+}
+function glEvNoteText() {
+  return glEvAnyGeom()
+    ? '卫星影像 © Esri · 球洞分布为 RUKIK 已核实测绘几何（OpenStreetMap）· 点选洞号可切换到该洞，金色描边为当前球洞'
+    : '当前显示：球场卫星影像总览与球场边界（真实数据）。本球场逐洞球道、果岭与障碍尚未完成测绘，暂不显示逐洞图形与球洞标记，补齐后自动呈现。';
+}
+function glEvBuild() {
+  var div = document.getElementById('glEvMap');
+  if (!div || !window.L || !glEvData) return;
+  if (!glEvMap) {
+    glEvMap = L.map(div, { scrollWheelZoom: false });
+    glEvTiles(glEvMap);
+    glEvHi = L.layerGroup().addTo(glEvMap);
+    glEvMap.on('zoomend', function () { glEvDeclutterSoon(); });
+  }
+  try { glEvMap.invalidateSize(); } catch (e) {}
+  if (glEvBase) { try { glEvMap.removeLayer(glEvBase); } catch (e) {} glEvBase = null; }
+  var drawn = glEvDrawInto(glEvMap);
+  glEvBase = drawn.base; glEvMarkers = drawn.markers;
+  if (drawn.bounds && drawn.bounds.isValid()) glEvMap.fitBounds(drawn.bounds.pad(0.06));
+  else if (PREVIEW && PREVIEW.latitude != null && PREVIEW.longitude != null) glEvMap.setView([PREVIEW.latitude, PREVIEW.longitude], 15);
+  glEvLastHole = curHole;
+  glEvSyncHighlight();
+  glEvDeclutterSoon();
+  glEvNote(glEvNoteText());
+}
+function ensureGlobe() {
+  var sec = document.getElementById('glSec'); if (!sec) return;
+  if (!PREVIEW || !PREVIEW.name) { sec.innerHTML = ''; glEvState = 'idle'; return; }
+  if (!sec.dataset.built) {
+    sec.dataset.built = '1';
+    sec.innerHTML = '<div class="card"><h2>球场全局图</h2>' +
+      '<div style="position:relative"><div id="glEvMap" class="glmap"></div>' +
+      '<button type="button" class="glfsbtn" id="glEvFsBtn" title="全屏查看全局图">⛶</button></div>' +
+      '<div class="gl-note" id="glEvNote">全局图加载中…</div></div>';
+    var fb = document.getElementById('glEvFsBtn');
+    if (fb) fb.addEventListener('click', glEvOpenFs);
+    var nt = document.getElementById('glEvNote');
+    if (nt) nt.addEventListener('click', function () { if (glEvState === 'idle') ensureGlobe(); });
+  }
+  if (glEvState === 'ready') { if (glEvMap) { try { glEvMap.invalidateSize(); } catch (e) {} glEvSyncHighlight(); } return; }
+  if (glEvState === 'loading') return;
+  if (!window.L) { glEvNote('全局图加载失败（地图组件未就绪），逐洞图不受影响。'); return; }
+  glEvState = 'loading';
+  callRetry('course_geometry', { hole: 'all' }).then(function (j) {
+    glEvData = j;
+    glEvState = 'ready';
+    glEvBuild();
+    if (glEvFsPending) { glEvFsPending = false; glEvBuildFs(); }
+  }).catch(function () {
+    glEvState = 'idle';
+    glEvNote('全局图数据加载失败，点此重试（逐洞图不受影响）。');
+  });
+}
+/* 全局图徽章防挤压：与 play.html 同算法——活动窗口内徽章互距小于 30px
+   时只留当前洞与窗口两端，其余收为小圆点，当前洞徽章永不隐藏。 */
+var glEvDecTimer = null;
+function glEvBadgeEl(mk) { var el = mk && mk.getElement ? mk.getElement() : null; return el ? el.querySelector('.hole-badge') : null; }
+function glEvDeclutterSoon() { if (glEvDecTimer) clearTimeout(glEvDecTimer); glEvDecTimer = setTimeout(glEvDeclutter, 60); }
+function glEvDeclutter() {
+  if (!glEvMap) return;
+  var pts = Object.keys(glEvMarkers).map(function (k) { return { n: Number(k), mk: glEvMarkers[k] }; });
+  if (!pts.length) return;
+  var size = glEvMap.getSize();
+  pts.forEach(function (p) { try { p.px = glEvMap.latLngToContainerPoint(p.mk.getLatLng()); } catch (e) { p.px = null; } });
+  var vis = pts.filter(function (p) { return p.px && p.px.x >= -30 && p.px.y >= -30 && p.px.x <= size.x + 30 && p.px.y <= size.y + 30; }).sort(function (a, b) { return a.px.x - b.px.x || a.px.y - b.px.y; });
+  var hide = {};
+  if (vis.length > 1) {
+    var minD = 30, L2 = vis[0], R2 = vis[vis.length - 1];
+    function gapOK(p) { for (var i = 0; i < vis.length; i++) { var q = vis[i]; if (q === p || hide[q.n]) continue; var dx = q.px.x - p.px.x, dy = q.px.y - p.px.y; if (dx * dx + dy * dy < minD * minD) return false; } return true; }
+    function isCur(p) { return p.n === curHole; }
+    for (var i = 1; i < vis.length - 1; i++) { var p = vis[i]; if (isCur(p)) continue; if (!gapOK(p)) hide[p.n] = 1; }
+    [L2, R2].forEach(function (p) { if (hide[p.n] && !isCur(p)) { hide[p.n] = 0; if (!gapOK(p)) hide[p.n] = 1; } });
+    if (hide[curHole]) hide[curHole] = 0;
+  }
+  pts.forEach(function (p) { var b = glEvBadgeEl(p.mk); if (b) b.classList.toggle('ov-dot', !!hide[p.n]); });
+}
+/* 全局图全屏查看：第二个独立 Leaflet 实例，共用 glEvData 与 curHole，
+   视角与页面内实例互不读写；关闭即销毁，页面内视角原样保留。 */
+var glEvFsInst = null, glEvFsHi = null, glEvFsMarkers = {};
+function glEvFsSyncHighlight() { if (glEvFsInst && glEvFsHi) glEvPaint(glEvFsHi, glEvFsMarkers); }
+function glEvBuildFs() {
+  var div = document.getElementById('glEvFsMap');
+  if (!div || !window.L || !glEvData || glEvFsInst) return;
+  glEvFsInst = L.map(div, { scrollWheelZoom: false });
+  glEvTiles(glEvFsInst);
+  glEvFsHi = L.layerGroup().addTo(glEvFsInst);
+  var drawn = glEvDrawInto(glEvFsInst);
+  glEvFsMarkers = drawn.markers;
+  if (drawn.bounds && drawn.bounds.isValid()) glEvFsInst.fitBounds(drawn.bounds.pad(0.06));
+  else if (PREVIEW && PREVIEW.latitude != null && PREVIEW.longitude != null) glEvFsInst.setView([PREVIEW.latitude, PREVIEW.longitude], 15);
+  var note = document.getElementById('glEvFsNote');
+  if (note) note.textContent = glEvNoteText();
+  glEvFsSyncHighlight();
+  try { glEvFsInst.invalidateSize(); } catch (e) {}
+}
+function glEvOpenFs() {
+  var ov = document.getElementById('glEvFs'); if (!ov) return;
+  if (!ov.dataset.wired) {
+    ov.dataset.wired = '1';
+    var cb = document.getElementById('glEvFsClose');
+    if (cb) cb.addEventListener('click', glEvCloseFs);
+  }
+  ov.hidden = false;
+  if (glEvState === 'ready' && glEvData) glEvBuildFs();
+  else {
+    var note = document.getElementById('glEvFsNote');
+    if (note) note.textContent = '全局图加载中…';
+    glEvFsPending = true;
+    ensureGlobe();
+  }
+}
+function glEvCloseFs() {
+  var ov = document.getElementById('glEvFs'); if (ov) ov.hidden = true;
+  glEvFsPending = false;
+  if (glEvFsInst) { try { glEvFsInst.remove(); } catch (e) {} glEvFsInst = null; glEvFsHi = null; glEvFsMarkers = {}; }
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') glEvCloseFs(); });
+
 function prefetchAround(h) {
   [h - 1, h + 1].forEach(function (n) {
     if (n < 1 || n > 18 || geomCache[n]) return;
@@ -1630,15 +1799,14 @@ function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
   var holeAtCall = curHole;
-  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞逐洞数据完善中，可先看上方全场总览。</div>'; prefetchAround(curHole); return; }
+  if (geomCache[curHole]) { var cj = geomCache[curHole]; box.innerHTML = cj.available ? renderHoleSvg(cj) : '<div class="empty">本洞逐洞数据完善中，可先看下方球场全局图。</div>'; prefetchAround(curHole); return; }
   callRetry('course_geometry', { hole: curHole }).then(function (j) {
     geomCache[holeAtCall] = j;
     if (holeAtCall !== curHole) return; // 用户已切到别的洞，本洞结果只入缓存，不动当前画面与大图
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
     /* [匿名邀请完善20261112] 无逐洞几何是数据完善中的正常态，不是加载失败：
        诚实提示并指向上方全场总览（与地图数据分层诚实口径一致）。 */
-    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞逐洞数据完善中，可先看上方全场总览。</div>';
-    applyHoleFocus(j);
+    b2.innerHTML = j.available ? renderHoleSvg(j) : '<div class="empty">本洞逐洞数据完善中，可先看下方球场全局图。</div>';
     prefetchAround(holeAtCall);
   }).catch(function (e) {
     var b2 = document.getElementById('holeSvg'); if (!b2) return;
@@ -2961,81 +3129,7 @@ function __renderMapAssets() {
 })();
 </script>
 
-<script>
-/* [跨端一致20261112] 赛事页全局动图：与球局页 play.html 同能力口径（卫星底图＋
- * 逐洞自动导览）。导览按洞号顺序调用本页既有 setHole 导航——同一
- * course_geometry 数据、同一渲染路径，不另造数据面；缺图洞如实标注
- * 「暂无逐洞图」不冒充；用户手动切洞即中断导览。 */
-var FLYEV = { on: false, playing: false, step: 0, order: [], timer: null, sat: null };
-function flyEvHoles() {
-  var list = [];
-  try { var by = (PREVIEW && PREVIEW.holes_by_tee) || {}; list = by[curTee] || (PREVIEW && PREVIEW.holes) || []; } catch (e) {}
-  var hs = list.map(function (h) { return h.hole; }).filter(function (n) { return n >= 1 && n <= 18; });
-  if (!hs.length) { for (var i = 1; i <= 18; i++) hs.push(i); }
-  return hs.sort(function (a, b) { return a - b; });
-}
-function flyEvMeta(n) {
-  try { var by = (PREVIEW && PREVIEW.holes_by_tee) || {}; var list = by[curTee] || PREVIEW.holes || []; for (var i = 0; i < list.length; i++) if (list[i].hole === n) return ' · Par ' + list[i].par + (list[i].yards != null ? ' · ' + list[i].yards + ' 码' : ''); } catch (e) {}
-  return '';
-}
-function flyEvCap(txt) { var c = document.getElementById('flyEvCap'); if (c) { c.style.display = txt ? 'block' : 'none'; c.textContent = txt || ''; } }
-function flyEvBtn() { var b = document.getElementById('flyEvBtn'); if (b) b.textContent = FLYEV.playing ? '⏸ 暂停动图' : (FLYEV.on ? '▶ 继续动图' : '🎬 全局动图'); }
-function flyEvBase() {
-  if (!window.L || !lmap) return;
-  try {
-    if (FLYEV.on) {
-      var found = null;
-      lmap.eachLayer(function (ly) { if (ly instanceof L.TileLayer) found = ly; });
-      if (found && String(found._url || '').indexOf('arcgisonline') < 0) { lmap.removeLayer(found); FLYEV.sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '卫星影像 © Esri, Maxar, Earthstar Geographics' }).addTo(lmap); }
-    } else if (FLYEV.sat) {
-      try { lmap.removeLayer(FLYEV.sat); } catch (e) {}
-      FLYEV.sat = null;
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(lmap);
-    }
-  } catch (e) {}
-}
-function flyEvShow() {
-  if (!FLYEV.on) return;
-  var n = FLYEV.order[FLYEV.step];
-  if (curHole !== n) setHole(n);
-  flyEvBase();
-  var avail = geomCache[n] ? !!geomCache[n].available : null;
-  flyEvCap('🎬 全局动图 ' + (FLYEV.step + 1) + '/' + FLYEV.order.length + ' · 第 ' + n + ' 洞' + flyEvMeta(n) + (avail === false ? ' · 暂无逐洞图' : ''));
-  flyEvBtn();
-  if (!FLYEV.playing) return;
-  clearTimeout(FLYEV.timer);
-  FLYEV.timer = setTimeout(function () {
-    if (!FLYEV.on || !FLYEV.playing) return;
-    if (curHole !== FLYEV.order[FLYEV.step]) { flyEvStop(); return; }
-    if (FLYEV.step >= FLYEV.order.length - 1) { flyEvFinish(); return; }
-    FLYEV.step++; flyEvShow();
-  }, 3000);
-}
-function flyEvStart() {
-  FLYEV.order = flyEvHoles();
-  var i = FLYEV.order.indexOf(curHole); FLYEV.step = i >= 0 ? i : 0;
-  FLYEV.on = true; FLYEV.playing = true;
-  flyEvShow();
-}
-function flyEvFinish() {
-  clearTimeout(FLYEV.timer);
-  FLYEV.playing = false; FLYEV.on = false;
-  flyEvBase();
-  try { resetBigMap(); } catch (e) {}
-  flyEvCap('🎬 全局动图 · 导览结束（全场总览）· 点「🎬 全局动图」可重播');
-  flyEvBtn();
-}
-function flyEvStop() {
-  clearTimeout(FLYEV.timer);
-  FLYEV.on = false; FLYEV.playing = false;
-  flyEvBase(); flyEvCap(''); flyEvBtn();
-}
-function flyEvToggle() {
-  if (!FLYEV.on) { flyEvStart(); return; }
-  if (FLYEV.playing) { FLYEV.playing = false; clearTimeout(FLYEV.timer); flyEvBtn(); }
-  else { FLYEV.playing = true; flyEvShow(); }
-}
-</script>
+
 <style>
 .rk-del-ov{position:fixed;inset:0;z-index:300;background:rgba(20,34,53,.45);display:flex;align-items:center;justify-content:center;padding:20px}
 .rk-del-card{background:#fff;border-radius:16px;padding:24px 22px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25);color:#14304A}
