@@ -234,6 +234,7 @@
       <div class="maptabs">
         <button type="button" class="maptab on" id="mapTabHole">当前球洞</button>
         <button type="button" class="maptab" id="mapTabAll">18 洞总览</button>
+        <button type="button" class="maptab" id="mapTabFly">🎬 全局动图</button>
       </div>
       <div id="mapStage">
         <div id="mapSvgBox"><div class="skel">地图加载中…</div></div>
@@ -244,6 +245,7 @@
         <button type="button" class="mapfs" id="mapFsBtn" title="全屏查看" aria-label="全屏查看" hidden>⛶</button>
       </div>
       <div class="mapov-note" id="mapOvNote" hidden></div>
+      <div class="mapov-note" id="mapFlyBar" hidden><span id="mapFlyCap"></span><button class="btn plain" type="button" id="mapFlyToggle" style="margin-left:8px">⏸ 暂停</button><button class="btn plain" type="button" id="mapFlyStop" style="margin-left:8px">结束动图</button></div>
       <div class="holeinfo" id="mapInfo"></div>
     </div>
   </div>
@@ -2563,6 +2565,9 @@ function renderMapStage() {
   if (fs) fs.hidden = showOv || !svgBox.querySelector('svg');
   if (tH) tH.classList.toggle('on', mapView === 'hole');
   if (tA) tA.classList.toggle('on', mapView === 'all');
+  var tF = document.getElementById('mapTabFly');
+  if (tF) tF.classList.toggle('on', typeof FLY !== 'undefined' && !!FLY.on);
+  if (!showOv && typeof FLY !== 'undefined' && FLY.on) flyStop(true);
   if (showOv) ensureOverview();
   bindMapVisibilityGuard();
 }
@@ -2884,6 +2889,7 @@ function ovDeclutterSoon() {
   ovMap.once('moveend', function () { setTimeout(ovDeclutter, 30); });
 }
 function selectOverviewHole(n) {
+  flyStop(true);
   mapView = 'hole';
   var el = document.querySelector('.hole[data-hole="' + n + '"]');
   if (el) el.click();
@@ -2900,6 +2906,133 @@ function ovLocate() {
   }, function () {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
 }
 
+
+/* ---------- [MAPFIX-FLY 2026-11-12] 全局地形动图（与 App 备工同批） ----------
+ * 总览（Leaflet 卫星底图＋真实测绘几何）之上按洞序飞行：从记分卡当前洞
+ * 起始，逐洞 flyToBounds 聚焦＋金色描边高亮，每洞停留约 3 秒（飞行 1.4 秒），
+ * 走完一轮回到全场总览停住。数据只用 ensureOverview 已加载的 ovData（真实
+ * course_geometry），导览期间不发新请求；无逐洞几何的球场明确提示不可用，
+ * 不绘制任何替代图形。暂停/继续/结束齐全；切到当前球洞视图或点选洞号即停。 */
+var FLY = { on: false, playing: false, done: false, step: 0, order: [], timer: null, waitT: null };
+function flyClearTimer() { if (FLY.timer) { clearTimeout(FLY.timer); FLY.timer = null; } }
+function flyCap(t) { var c = document.getElementById('mapFlyCap'); if (c) c.textContent = t; }
+function flyToggleBtn() { var b = document.getElementById('mapFlyToggle'); if (b) b.textContent = FLY.playing ? '⏸ 暂停' : '▶ 继续'; }
+function flyMeta(n) {
+  var hd = ((S.cardData && S.cardData.holes) || []).filter(function (h) { return h.hole === n; })[0] || null;
+  return hd ? (' · Par ' + hd.par + (hd.yards ? ' · ' + hd.yards + ' 码' : '')) : '';
+}
+function flyBoundsOf(data) {
+  try {
+    var feats = ovFeatList(data);
+    if (!feats.length) return null;
+    var b = L.geoJSON({ type: 'FeatureCollection', features: feats }).getBounds();
+    return (b && b.isValid()) ? b : null;
+  } catch (e) { return null; }
+}
+function flyFullBounds() {
+  var full = null;
+  (FLY.order || []).forEach(function (n) {
+    var hd = null;
+    (ovData.holes || []).forEach(function (x) { if (x.hole === n) hd = x; });
+    var b = hd && hd.data ? flyBoundsOf(hd.data) : null;
+    if (b) full = full ? full.extend(b) : b;
+  });
+  return full;
+}
+function flyHighlight(n) {
+  if (!ovHi || !ovData) return;
+  ovHi.clearLayers();
+  var hd = null;
+  (ovData.holes || []).forEach(function (x) { if (x.hole === n) hd = x; });
+  if (hd && hd.data && hd.data.available) {
+    var feats = ovFeatList(hd.data);
+    if (feats.length) L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+      style: { color: '#E3C878', weight: 3.5, fill: false },
+      pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 7, color: '#E3C878', weight: 3, fill: false }); }
+    }).addTo(ovHi);
+  }
+  Object.keys(ovMarkers).forEach(function (k) {
+    var el = ovMarkers[k].getElement ? ovMarkers[k].getElement() : null;
+    var badge = el ? el.querySelector('.hole-badge') : null;
+    if (badge) badge.classList.toggle('cur', Number(k) === n);
+  });
+}
+function flyShow() {
+  if (!FLY.on || !ovMap || !ovData) return;
+  var n = FLY.order[FLY.step], hd = null;
+  (ovData.holes || []).forEach(function (x) { if (x.hole === n) hd = x; });
+  var b = hd && hd.data ? flyBoundsOf(hd.data) : null;
+  flyHighlight(n);
+  if (b) { try { ovMap.flyToBounds(b.pad(0.3), { duration: 1.4 }); } catch (e) {} }
+  flyCap('🎬 全局动图 ' + (FLY.step + 1) + '/' + FLY.order.length + ' · 第 ' + n + ' 洞' + flyMeta(n) + (b ? '' : ' · 暂无逐洞图'));
+}
+function flySchedule() {
+  flyClearTimer();
+  if (!FLY.on || !FLY.playing) return;
+  FLY.timer = setTimeout(function () {
+    if (!FLY.on || !FLY.playing) return;
+    if (FLY.step >= FLY.order.length - 1) { flyFinish(); return; }
+    FLY.step++;
+    flyShow();
+    flySchedule();
+  }, 3000);
+}
+function flyFinish() {
+  flyClearTimer();
+  FLY.playing = false; FLY.done = true;
+  flyToggleBtn();
+  var full = flyFullBounds();
+  if (ovMap && full) { try { ovMap.flyToBounds(full.pad(0.06), { duration: 1.4 }); } catch (e) {} }
+  flyCap('🎬 全局动图 · 导览结束（全场总览）· 点「▶ 继续」可重播');
+}
+function flyBegin() {
+  if (!ovData || !ovData.anyGeom) { flyCap('🎬 本球场暂无逐洞几何，动图导览不可用（卫星总览仍可查看）。'); return; }
+  var holes = (ovData.holes || []).filter(function (x) { return x.data && x.data.available; }).map(function (x) { return x.hole; }).sort(function (a, b) { return a - b; });
+  if (!holes.length) { flyCap('🎬 本球场暂无逐洞几何，动图导览不可用。'); return; }
+  var start = holes.indexOf(curHole) >= 0 ? curHole : holes[0];
+  var i = holes.indexOf(start);
+  FLY.order = holes.slice(i).concat(holes.slice(0, i));
+  FLY.step = 0; FLY.on = true; FLY.playing = true; FLY.done = false;
+  flyToggleBtn();
+  flyShow();
+  flySchedule();
+}
+function flyStart() {
+  var bar = document.getElementById('mapFlyBar'); if (bar) bar.hidden = false;
+  var tF = document.getElementById('mapTabFly'); if (tF) tF.classList.add('on');
+  mapView = 'all';
+  renderMapStage();
+  if (FLY.on) { return; }
+  flyCap('🎬 动图导览准备中…（总览数据加载完成后自动开始）');
+  if (FLY.waitT) clearInterval(FLY.waitT);
+  var tries = 0;
+  FLY.waitT = setInterval(function () {
+    tries++;
+    if (ovState === 'ready' && ovData) { clearInterval(FLY.waitT); FLY.waitT = null; flyBegin(); }
+    else if (ovState === 'error' || tries > 80) { clearInterval(FLY.waitT); FLY.waitT = null; flyCap('🎬 总览数据加载失败，动图导览不可用，请检查网络后重试。'); }
+  }, 300);
+  ensureOverview();
+}
+function flyToggle() {
+  if (!FLY.on) return;
+  if (FLY.playing) { FLY.playing = false; flyClearTimer(); }
+  else {
+    if (FLY.done) { FLY.done = false; FLY.step = 0; flyShow(); }
+    FLY.playing = true;
+    flySchedule();
+  }
+  flyToggleBtn();
+}
+function flyStop(quiet) {
+  flyClearTimer();
+  if (FLY.waitT) { clearInterval(FLY.waitT); FLY.waitT = null; }
+  var was = FLY.on;
+  FLY.on = false; FLY.playing = false; FLY.done = false;
+  var bar = document.getElementById('mapFlyBar'); if (bar) bar.hidden = true;
+  var tF = document.getElementById('mapTabFly'); if (tF) tF.classList.remove('on');
+  if (was && !quiet) { /* 手动结束停留在总览当前画面 */ }
+  if (was && ovMap) ovSyncHighlight();
+}
 
 /* ---------- [分享修复20261112] 分享卡片（对齐 event.html 定版口径） ----------
    静态 og 为通用邀请口径（系统分享面板/微信抓取取静态值）；球局数据到达后
@@ -3489,6 +3622,9 @@ async function roundInvitesSend(round, userIds) {
 (function () {
   var tH = document.getElementById('mapTabHole'); if (tH) tH.addEventListener('click', function () { mapView = 'hole'; renderMapStage(); });
   var tA = document.getElementById('mapTabAll'); if (tA) tA.addEventListener('click', function () { mapView = 'all'; renderMapStage(); });
+  var tF2 = document.getElementById('mapTabFly'); if (tF2) tF2.addEventListener('click', function () { flyStart(); });
+  var fTg = document.getElementById('mapFlyToggle'); if (fTg) fTg.addEventListener('click', function () { flyToggle(); });
+  var fSp = document.getElementById('mapFlyStop'); if (fSp) fSp.addEventListener('click', function () { flyStop(false); });
   var fsb = document.getElementById('mapFsBtn'); if (fsb) fsb.addEventListener('click', openPlayHd);
   var lb = document.getElementById('mapLocBtn'); if (lb) lb.addEventListener('click', ovLocate);
   pzBind();
