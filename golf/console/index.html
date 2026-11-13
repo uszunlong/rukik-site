@@ -92,7 +92,7 @@
             <option value="team_stroke">团队比杆赛（取最佳 N 人汇总）</option><option value="alternate_shot">交替击球赛（双人轮流击球）</option>
             <option value="skins">Skins 逐洞奖金赛</option><option value="six_six_six">Sixes 六六六组合赛</option>
           </select></div>
-          <div><label>人数上限 *</label><input id="fCap" type="number" value="40"></div>
+          <div><label>人数上限（留空＝不限）</label><input id="fCap" type="number" min="1" placeholder="不限"></div>
         </div>
         <div class="row">
           <div><label>报名费模式</label><select id="fFeeMode">
@@ -102,6 +102,15 @@
           </select></div>
           <div><label>报名费金额（美元，线下收款时填）</label><input id="fFeeAmt" type="number" min="0" step="1" placeholder="如 180"></div>
         </div>
+        <details id="qcBrandBox" style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:10px 0">
+          <summary style="cursor:pointer;color:#14532d;font-size:15px">主办方 · 协办方 · 赞助商（可选）</summary>
+          <p style="font-size:12px;color:#5c7260;margin:6px 0">品牌资料保存后建档可跨赛事复用；Logo 用于品牌展示、与海报分开。</p>
+          <label>搜索已有品牌档案</label>
+          <input id="qcOrgQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="qcOrgResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="qcOrgRows"></div>
+          <p style="margin:8px 0 2px"><button class="ghost" id="qcOrgAdd" type="button">＋ 添加品牌或机构</button> <span id="qcOrgMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </details>
         <button id="createBtn">创建草稿</button>
         <p class="ok" id="createMsg"></p>
       </details>
@@ -158,7 +167,7 @@
           <div><label>开球时间 *<span class="srctag" id="tag-wzTime"></span></label><input id="wzTime" type="time" value="09:00"></div>
         </div>
         <div class="row">
-          <div><label>人数上限 *</label><input id="wzCap" type="number" value="40"></div>
+          <div><label>人数上限（留空＝不限）</label><input id="wzCap" type="number" min="1" placeholder="不限"></div>
           <div><label>报名截止（可选）<span class="srctag" id="tag-wzDeadline"></span></label><input id="wzDeadline" type="date"></div>
         </div>
         <div class="row">
@@ -172,6 +181,15 @@
         <label>地点补充 / 赛事介绍<span class="srctag" id="tag-wzDesc"></span></label>
         <textarea id="wzDesc" rows="4" placeholder="可写举办地点补充、主办方与联系人、赛程安排等；海报识别到的主办方/联系人会先出现在这里供您确认"></textarea>
         <div id="wzContactLine" style="font-size:12px;color:#5c7260;margin-top:4px"></div>
+        <details id="wzBrandBox" style="border:1px solid #e5eee1;border-radius:9px;padding:8px 10px;margin:10px 0">
+          <summary style="cursor:pointer;color:#14532d;font-size:15px">主办方 · 协办方 · 赞助商（可选）</summary>
+          <p style="font-size:12px;color:#5c7260;margin:6px 0">品牌资料保存后建档可跨赛事复用；Logo 用于品牌展示、与海报分开。</p>
+          <label>搜索已有品牌档案</label>
+          <input id="wzOrgQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="wzOrgResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="wzOrgRows"></div>
+          <p style="margin:8px 0 2px"><button class="ghost" id="wzOrgAdd" type="button">＋ 添加品牌或机构</button> <span id="wzOrgMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </details>
         <p id="wzStep2Err" class="err"></p>
         <p style="margin-top:12px"><button class="ghost" id="wzBack1" type="button">上一步</button>
         <button id="wzTo3" type="button">下一步：预览</button></p>
@@ -202,6 +220,28 @@
       
       <div class="counts"><div class="count"><b id="cReg">–</b><span>报名人数</span></div><div class="count"><b id="cIn">–</b><span>已签到</span></div><div class="count"><b id="cPairs">–</b><span>分组数量</span></div></div>
       <div id="todos"></div>
+      <!-- [ROSTER-V1] 主办方智能管理：计数带（roster_manage.counts）＋三键，不加第四主按钮 -->
+      <div id="rmHomeBand" style="margin-top:12px">
+        <!-- [ROSTER-FIX 2026-11-12] -->
+        <h4 style="margin:2px 0 8px">球员与分组管理</h4>
+        <div class="counts" id="rmCounts">
+          <div class="count"><b id="rmCReg">–</b><span>已报名</span></div>
+          <div class="count"><b id="rmCBound">–</b><span>已关联</span></div>
+          <div class="count"><b id="rmCPend">–</b><span>待认领</span></div>
+          <div class="count"><b id="rmCConflict">–</b><span>存在冲突</span></div>
+          <div class="count"><b id="rmCGrouped">–</b><span>已分组</span></div>
+          <div class="count"><b id="rmCUngrouped">–</b><span>未分组</span></div>
+          <div class="count"><b id="rmCIn">–</b><span>已确认</span></div>
+          <div class="count"><b id="rmCFlights">–</b><span>出发组数</span></div>
+        </div>
+        <p style="margin-top:10px">
+          <button type="button" id="rmImportBtn">导入球员名单</button>
+          <button type="button" class="ghost" id="rmSmartBtn">智能分组</button>
+          <button type="button" class="ghost" id="rmPublishBtn">发布出发名单</button>
+        </p>
+        <p id="rmHomeMsg" style="font-size:13px;color:#5c7260"></p>
+        <div id="rmReconfirm" style="display:none;background:#fdf6e0;border:1px solid #e5cf8a;border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0"></div>
+      </div>
       
       
       
@@ -210,7 +250,79 @@
       <p class="ok" id="dashMsg"></p>
       <div id="catGrid" style="margin-top:14px"></div>
       </div><!-- /viewHome -->
-      <div id="viewReg" class="catview" style="display:none"><div class="counts"><div class="count"><b id="cReview">–</b><span>待审核报名</span></div></div><div id="regSection" style="margin-top:16px">
+      <div id="viewReg" class="catview" style="display:none"><div class="counts"><div class="count"><b id="cReview">–</b><span>待审核报名</span></div></div>
+      <!-- [ROSTER-V1] 名单智能管理：导入向导＋认领/通知/签到增强表（数据走 roster_manage） -->
+      <div id="rmPanel" style="margin-top:14px;border-top:2px solid #dce7dd;padding-top:12px">
+        <h4 style="margin:6px 0">球员与分组管理</h4>
+        <p style="color:#5c7260;font-size:13px;margin:4px 0">这里是长期球员身份管理：同一球员档案跨赛事复用，名单行可看档案归属（已关联档案／新档案）。线下名单可一键导入：未注册球员先以「待认领」参赛，凭认领链接注册后找回参赛身份并关联其长期档案。联系方式仅主办方可见，此处只显示掩码。</p>
+        <div class="row">
+          <div><label>分组门槛</label><select id="rmGateSel">
+            <option value="registered">已确认报名即可</option>
+            <option value="paid">须付款确认</option>
+            <option value="custom">须其他要求</option>
+          </select></div>
+          <div><label>名单筛选</label><select id="rmFilterSel">
+            <option value="">全部球员</option>
+            <option value="no_show_pending">未到场（已报名未签到）</option>
+            <option value="pending_claim">待认领</option>
+            <option value="conflict">存在冲突</option>
+            <option value="ungrouped">未分组</option>
+          </select></div>
+        </div>
+        <p>
+          <button type="button" id="rmWizardToggle">导入球员名单</button>
+          <button type="button" class="ghost" id="rmCheckinBtn">批量签到（勾选）</button>
+          <button type="button" class="ghost" id="rmUncheckinBtn">批量取消签到</button>
+          <button type="button" class="ghost" id="rmNotifyAllBtn">通知全部已发布名单</button>
+          <button type="button" class="ghost" id="rmReloadBtn">刷新名单</button>
+        </p>
+        <p id="rmMsg" style="font-size:13px;color:#5c7260"></p>
+        <div id="rmWizard" style="display:none;border:1px solid #cfdccf;border-radius:10px;padding:12px 14px;margin:10px 0">
+          <h5 style="margin:4px 0 8px">导入向导</h5>
+          <label>方式一 · 上传文件（.csv / .xlsx）</label>
+          <input type="file" id="rmFile" accept=".csv,.xlsx">
+          <p id="rmFileMsg" style="font-size:13px;color:#5c7260"></p>
+          <label>方式二 · 粘贴名单文本（表格粘贴自动拆列；接龙等不规范文本可用 AI 识别）</label>
+          <textarea id="rmPaste" rows="4" placeholder="粘贴名单：每行一人，列之间用逗号、制表符或空格分隔"></textarea>
+          <p><button type="button" class="ghost" id="rmPasteParseBtn">按表格解析粘贴内容</button>
+          <button type="button" class="ghost" id="rmAiBtn">AI 识别</button>
+          <span id="rmAiMsg" style="font-size:13px;color:#5c7260"></span></p>
+          <label>方式三 · 手动逐行添加</label>
+          <div id="rmManualRows"></div>
+          <p><button type="button" class="ghost" id="rmManualAddBtn">＋ 添加一行</button></p>
+          <div id="rmMapBox" style="display:none">
+            <label>列映射（已按表头别名自动匹配，可逐列修改；选「忽略」不导入该列）</label>
+            <div id="rmMapRow" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          </div>
+          <div class="row"><div><label>整批收款标记（行内未注明时适用）</label><select id="rmPayDefault">
+            <option value="unpaid">未付款</option><option value="paid">线下已收</option>
+          </select></div></div>
+          <p><button type="button" id="rmPreviewBtn">预览校验</button>
+          <button type="button" class="ghost" id="rmCommitBtn" style="display:none">确认导入</button>
+          <span id="rmPreviewMsg" style="font-size:13px;color:#5c7260"></span></p>
+          <div id="rmPreviewBox"></div>
+          <div id="rmCommitBox"></div>
+        </div>
+        <div id="rmTable"></div>
+        <div id="rmClaimBox" style="display:none;border:1px solid #cfdccf;border-radius:10px;padding:10px 12px;margin:8px 0">
+          <label>认领链接（复制后发给球员；球员打开链接登录即可认领本人安排）</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><input id="rmClaimUrl" readonly style="flex:3;min-width:220px">
+          <button type="button" class="ghost" id="rmClaimCopyBtn">复制链接</button>
+          <button type="button" class="ghost" id="rmClaimRevokeBtn">撤销链接</button></div>
+          <p id="rmClaimMsg" style="font-size:13px;color:#5c7260"></p>
+        </div>
+        <div id="rmSubBox" style="display:none;border:1px solid #e5cf8a;background:#fffdf4;border-radius:10px;padding:10px 12px;margin:8px 0">
+          <label>临时替换：为 <b id="rmSubFor"></b> 安排替补（原球员记为未到场，分组席位转给替补）</label>
+          <div class="row">
+            <div><label>替补姓名 *</label><input id="rmSubName"></div>
+            <div><label>替补手机号</label><input id="rmSubPhone"></div>
+            <div><label>替补邮箱</label><input id="rmSubEmail"></div>
+          </div>
+          <p><button type="button" id="rmSubGoBtn">确认替换</button>
+          <button type="button" class="ghost" id="rmSubCancelBtn">取消</button>
+          <span id="rmSubMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </div>
+      </div><div id="regSection" style="margin-top:16px">
         <h4 style="margin:6px 0">报名名单</h4>
         <div id="regList"></div>
         <p class="ok" id="regMsg"></p>
@@ -259,6 +371,22 @@
         </p>
         <div id="pmImpact" style="display:none;background:#fdf1f0;border:1px solid #e0a8a2;border-radius:8px;padding:10px 12px;font-size:14px;margin:8px 0"></div>
         <p class="ok" id="pmMsg"></p>
+        <!-- [ROSTER-V1] 分组增强：同组/不同组规则、资源提示、发布后通知球员 -->
+        <div id="rmGroupExtras" style="margin-top:10px;border-top:1px dashed #cfdccf;padding-top:10px">
+          <h5 style="margin:6px 0">指定同组 / 不同组</h5>
+          <div class="row">
+            <div><label>球员 A</label><select id="rmRuleA"></select></div>
+            <div><label>球员 B</label><select id="rmRuleB"></select></div>
+            <div><label>规则</label><select id="rmRuleKind"><option value="together">必须同组</option><option value="apart">必须不同组</option></select></div>
+          </div>
+          <p><button type="button" class="ghost" id="rmRuleAddBtn">添加规则（随草稿保存）</button>
+          <span id="rmRuleMsg" style="font-size:13px;color:#5c7260"></span></p>
+          <div id="rmRuleList" style="font-size:13px"></div>
+          <div id="rmResWarn" style="display:none;background:#fdf6e0;border:1px solid #e5cf8a;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0"></div>
+          <div id="rmPubReconfirm" style="display:none;background:#fdf6e0;border:1px solid #e5cf8a;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0"></div>
+          <p><button type="button" class="ghost" id="rmNotifyPubBtn" style="display:none">通知球员（发布后）</button>
+          <span id="rmNotifyPubMsg" style="font-size:13px;color:#5c7260"></span></p>
+        </div>
       </div></div></div>
       <div id="viewScore" class="catview" style="display:none"><div class="counts"><div class="count"><b id="cPend">–</b><span>记分卡待确认</span></div></div><p style="margin:4px 0 10px"><button class="ghost" id="boardBtn">大屏排行榜</button></p><div id="scoreSection" style="margin-top:16px">
         <h4 style="margin:6px 0">参赛成绩</h4>
@@ -339,7 +467,22 @@
         </p>
       </div><div style="margin-top:18px"><label>报表与导出</label><p style="margin:6px 0"><button class="ghost" id="reportBtn">运营报表</button>
           <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
-          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="aiCard" style="display:none;margin-top:18px">
+          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="mapCard" style="margin-top:18px">
+      <h3 style="margin-top:0">球场地图配置</h3>
+      <p style="color:#5c7260;font-size:13px;margin-top:0">球场地图是球场基础数据：系统按球场自动关联全局图与逐洞洞形图，同一球场的所有赛事共用，不按赛事重复配置。缺失时系统会自动查找合法数据源补全（自动制图）；您也可以在下方上传有权使用的球场图补充，保存后对本球场的全部赛事生效，且不会被系统自动数据覆盖。</p>
+      <div id="mapCovBox" style="font-size:14px;color:#17301c">打开赛事后加载本场球场的地图覆盖情况…</div>
+      <div id="mapAssetsBox" style="margin-top:8px"></div>
+      <div style="margin-top:10px;border-top:1px solid #e5eee1;padding-top:10px">
+        <label>补充球场图（主办方上传）</label>
+        <div class="row">
+          <div><label>类型</label><select id="mapUpKind"><option value="global">球场全局图</option><option value="hole">单洞洞形图</option></select></div>
+          <div><label>洞号（单洞时填）</label><input id="mapUpHole" type="number" min="1" max="18" placeholder="如 7"></div>
+        </div>
+        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="mapUpRights" style="width:auto;margin-right:6px">我确认有权使用这张图片（球场官方授权／自有拍摄或制作／已获授权）</label>
+        <p><label class="ghost" style="cursor:pointer;padding:6px 10px">选择图片并上传<input type="file" id="mapUpFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+        <span id="mapUpMsg" style="font-size:13px;color:#5c7260"></span></p>
+      </div>
+    </div><div id="aiCard" style="display:none;margin-top:18px">
       <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
 
@@ -437,6 +580,77 @@ var token = sessionStorage.getItem('golf_token') || '';
   } catch (e) {}
 })();
 var currentEvent = null, currentRound = null;
+
+/* [地图标准化20261112] 球场地图配置：覆盖状态展示＋主办方上传补充（人工确认层，
+ * 资产按球场绑定跨赛事复用；自动制图状态随覆盖接口一并读出） */
+function loadCourseMap() {
+  var box = document.getElementById('mapCovBox');
+  if (!box || !currentEvent) return;
+  box.textContent = '正在读取本场球场地图覆盖…';
+  call('course_map_coverage', { event_id: currentEvent.id }).then(function (d) { renderCourseMap(d); })
+    .catch(function () { box.textContent = '地图覆盖读取失败，请稍后重试。'; });
+}
+function renderCourseMap(d) {
+  var box = document.getElementById('mapCovBox'); if (!box) return;
+  if (!d || !d.ok || !d.available || !d.course) { box.innerHTML = '本场活动尚未关联球场。'; return; }
+  var c = d.course, g = d.geometry || {}, sc = d.scorecard || {}, t = d.map_task;
+  var assets = d.assets || [];
+  var hasGlobalAsset = assets.some(function (a) { return a.kind === 'global_map'; });
+  var holesTotal = sc.holes || c.holes_count || 0;
+  var statusTxt = (holesTotal > 0 && (g.layout_holes || 0) >= holesTotal) ? '逐洞洞图完整（已校验：每洞球道＋果岭齐全）' : ((g.holes || 0) > 0 ? '部分覆盖（已生成 ' + (g.holes || 0) + ' 洞、已校验 ' + (g.layout_holes || 0) + '/' + holesTotal + ' 洞，未校验洞待核验）' : '暂无逐洞几何');
+  var taskMap = { queued: '已入队，等待自动制图', running: '自动制图中', partial: '部分完成（缺失洞将继续补全）', complete: '自动制图已完成', awaiting_survey: '影像可得，待影像测绘补全', unavailable: '合法数据源暂不可得，请用下方上传补充', failed: '制图失败，待自动重试' };
+  var taskTxt = t ? ('自动制图：' + (taskMap[t.status] || t.status)) : ((holesTotal > 0 && (g.layout_holes || 0) >= holesTotal) ? '自动制图：已完整，无需制图' : '自动制图：待触发');
+  box.innerHTML = '<div><b>' + escapeHtml(c.name || '') + '</b>' + (c.city ? ' · ' + escapeHtml(c.city) + (c.state ? ', ' + escapeHtml(c.state) : '') : '') + '</div>' +
+    '<div style="margin-top:4px">球场全局图：' + (g.has_boundary ? '有（系统几何总览）' : '无独立全局图') + (hasGlobalAsset ? '＋主办方图' : '') + '</div>' +
+    '<div>逐洞洞形图：球道＋果岭几何 ' + (g.layout_holes || 0) + '/' + holesTotal + ' 洞（' + statusTxt + '）；发球台/果岭/球道/沙坑核心要素全齐 ' + (g.core_complete_holes || 0) + ' 洞</div>' +
+    '<div>记分卡资料：' + (sc.holes || 0) + ' 洞 Par、' + (sc.holes_with_yards || 0) + ' 洞有发球台码数、' + (sc.tees || 0) + ' 个发球台</div>' +
+    '<div>几何来源：' + escapeHtml((g.sources || []).join('、') || '无') + ((g.trust || []).length ? '（核实状态：' + escapeHtml(g.trust.join('、')) + '）' : '') + '</div>' +
+    '<div>' + taskTxt + '</div>';
+  var ab = document.getElementById('mapAssetsBox');
+  ab.innerHTML = assets.length ? '<label>已补充的球场图（主办方提供 · 人工确认，不会被自动数据覆盖）</label>' + assets.map(function (a) {
+    return '<div style="display:flex;gap:8px;align-items:center;margin:4px 0"><img src="' + escapeHtml(a.image_url) + '" style="height:44px;width:64px;object-fit:cover;border-radius:6px;border:1px solid #e5eee1"><span style="font-size:13px">' + (a.kind === 'global_map' ? '球场全局图' : ('第 ' + a.hole_number + ' 洞洞形图')) + ' · v' + a.version + '</span><button type="button" class="ghost map-asset-del" data-id="' + a.id + '">删除</button></div>';
+  }).join('') : '';
+  Array.prototype.forEach.call(ab.querySelectorAll('.map-asset-del'), function (btn) {
+    btn.addEventListener('click', function () {
+      uiConfirm('确定删除这张主办方补充图吗？删除后球员端立即不再显示。').then(function (ok) {
+        if (!ok) return;
+        call('course_map_asset_remove', { event_id: currentEvent.id, asset_id: btn.getAttribute('data-id') }).then(function (r) {
+          var msg = document.getElementById('mapUpMsg');
+          if (r && r.ok) { if (msg) msg.textContent = '已删除。'; loadCourseMap(); }
+          else if (msg) msg.textContent = '删除失败：' + ((r && r.error) || '未知错误');
+        });
+      });
+    });
+  });
+}
+(function wireMapUpload() {
+  var f = document.getElementById('mapUpFile'); if (!f) return;
+  f.addEventListener('change', function () {
+    var file = f.files && f.files[0]; if (!file) return;
+    var msg = document.getElementById('mapUpMsg');
+    function fail(t) { if (msg) msg.textContent = t; f.value = ''; }
+    if (!currentEvent) return fail('请先打开一场赛事。');
+    if (!document.getElementById('mapUpRights').checked) return fail('请先勾选确认有权使用这张图片。');
+    var kind = document.getElementById('mapUpKind').value;
+    var hole = null;
+    if (kind === 'hole') {
+      hole = parseInt(document.getElementById('mapUpHole').value, 10);
+      if (!(hole >= 1 && hole <= 18)) return fail('请填写 1–18 的洞号。');
+    }
+    if (msg) msg.textContent = '上传中…';
+    var rd = new FileReader();
+    rd.onload = function () {
+      var b64 = String(rd.result || '').split(',')[1] || '';
+      call('course_map_upload', { event_id: currentEvent.id, hole_number: hole, data_base64: b64, content_type: file.type || 'image/png', rights_confirmed: true }).then(function (d) {
+        if (d && d.ok) { if (msg) msg.textContent = '已保存，球员端刷新即可见。'; loadCourseMap(); }
+        else fail('上传失败：' + ((d && (d.message || d.error)) || '未知错误'));
+        f.value = '';
+      }).catch(function () { fail('上传失败：网络异常。'); });
+    };
+    rd.readAsDataURL(file);
+  });
+})();
+
 function headers() { return { 'Content-Type': 'application/json', 'apikey': ANON, 'Authorization': 'Bearer ' + (token || ANON) }; }
 function call(action, body) {
   return fetch(API, { method: 'POST', headers: headers(), body: JSON.stringify(Object.assign({ action: action }, body || {})) }).then(function (r) { return r.json(); });
@@ -505,7 +719,7 @@ function openEvent(id) {
     document.getElementById('dash').style.display = 'block';
     if (window.__z49showView) window.__z49showView('home'); /* [线Z49] 打开赛事默认回管理首页 */
     document.getElementById('dashTitle').textContent = d.event.title; /* [线Z49] 状态见首页状态行 */
-    refreshDash(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors(); pstRender();
+    refreshDash(); if (window.__rmOnOpen) window.__rmOnOpen(); loadOrgs(); loadKnowledge(); loadAwardsAdmin(); loadAiPanel(); loadSponsors(); pstRender(); loadCourseMap();
   });
 }
 var ORG_TYPES = ['主办', '联合主办', '承办', '协办', '冠名赞助', '赞助商', '合作伙伴'];
@@ -758,6 +972,227 @@ document.getElementById('orgSave').onclick = function () {
     });
   }).catch(function () { msg.textContent = '保存中出现异常，请刷新后核对。'; });
 };
+
+/* [品牌区·创建流] 向导/快速创建共用品牌行（类名 brow，与赛事管理面 orgrow 完全独立）。
+   只调既有动作 organization_search / organization_create / organization_get /
+   organization_update / organization_logo_upload / organization_link / orgs_update；
+   海报识别 brands 仅为待确认草稿，用户保存后才落档与关联。 */
+function brandEl(x) { return typeof x === 'string' ? document.getElementById(x) : x; }
+function brandSetMsg(msgEl, text) { var m = brandEl(msgEl); if (m) m.textContent = text || ''; }
+function brandRowHtml(o) {
+  o = o || {};
+  var opts = ORG_TYPES.map(function (t) { return '<option' + (t === (o.type || '合作伙伴') ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+  var cand = o.candidateDataUrl || '';
+  return '<div class="brow" data-orgid="' + (o.organization_id || '') + '" style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">' +
+    (o.fromPoster ? '<div style="margin-bottom:4px"><span style="font-size:11px;color:#8a6d00;background:#fff3cd;border:1px solid #ecd27a;border-radius:8px;padding:1px 6px">海报识别 · 待确认</span></div>' : '') +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+    '<select class="b-type">' + opts + '</select>' +
+    '<input class="b-name" placeholder="品牌/机构完整名称" value="' + escapeHtml(o.name || '') + '" style="flex:2;min-width:150px">' +
+    '<label style="font-size:13px;color:#17301c"><input type="checkbox" class="b-public" style="width:auto;margin-right:4px"' + (o.is_public === false ? '' : ' checked') + '>公开展示</label>' +
+    '<button class="ghost b-up" type="button">↑</button><button class="ghost b-down" type="button">↓</button>' +
+    '<button class="ghost b-del" type="button">删除</button></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">' +
+    '<img class="b-logoprev" src="' + escapeHtml(o.logo_url || '') + '" style="' + (o.logo_url ? '' : 'display:none;') + 'height:34px;max-width:110px;object-fit:contain;background:#f7faf7;border:1px solid #eef2ee;border-radius:6px">' +
+    '<input class="b-logo" placeholder="Logo 地址（可粘贴，或用右侧上传）" value="' + escapeHtml(o.logo_url || '') + '" style="flex:2;min-width:150px">' +
+    '<label class="ghost" style="cursor:pointer;padding:6px 10px">上传 Logo<input type="file" class="b-logofile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none"></label>' +
+    '<input class="b-web" placeholder="官方网站（如 example.com，保存时校验）" value="' + escapeHtml(o.website || '') + '" style="flex:2;min-width:150px"></div>' +
+    '<input class="b-intro" placeholder="品牌简介（一句话，进赛事页与球童介绍）" value="' + escapeHtml(o.intro || '') + '" style="width:100%;margin-top:6px;box-sizing:border-box">' +
+    '<div class="b-cand" style="' + (cand ? 'display:flex;' : 'display:none;') + 'gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;border:1px dashed #ecd27a;border-radius:8px;padding:6px 8px;background:#fffdf0">' +
+    '<img class="b-candimg" src="' + escapeHtml(cand) + '" style="height:34px;max-width:110px;object-fit:contain;background:#fff;border:1px solid #eef2ee;border-radius:6px">' +
+    '<span style="font-size:13px;color:#5c7260">海报裁切 Logo 候选（待确认）</span>' +
+    '<button class="ghost b-canduse" type="button">使用此 Logo</button>' +
+    '<button class="ghost b-canddrop" type="button">丢弃</button></div>' +
+    '</div>';
+}
+function ensureBrandOrgId(rowEl) {
+  var oid = rowEl.getAttribute('data-orgid');
+  if (oid) return Promise.resolve(oid);
+  var name = rowEl.querySelector('.b-name').value.trim();
+  if (!name) return Promise.resolve(null);
+  return call('organization_search', { q: name, limit: 5 }).then(function (s) {
+    var list = (s && s.organizations) || [];
+    var hit = list.filter(function (x) { return x.name === name; })[0] || list[0];
+    if (hit) { rowEl.setAttribute('data-orgid', hit.organization_id); return hit.organization_id; }
+    return call('organization_create', { name: name, logo_url: rowEl.querySelector('.b-logo').value.trim() || null, website: orgValidUrl(rowEl.querySelector('.b-web').value.trim()), intro: rowEl.querySelector('.b-intro').value.trim() || null }).then(function (c) {
+      var id = c && c.organization ? c.organization.organization_id : null;
+      if (id) { rowEl.setAttribute('data-orgid', id); rowEl.setAttribute('data-neworg', '1'); rowEl.dataset.neworg = '1'; }
+      return id;
+    });
+  });
+}
+function bindBrandRows(box, msgEl) {
+  var boxEl = brandEl(box); if (!boxEl) return;
+  Array.prototype.forEach.call(boxEl.querySelectorAll('.brow'), function (r) {
+    if (r._brandBound) return; r._brandBound = true;
+    r.querySelector('.b-del').onclick = function () { r.remove(); };
+    r.querySelector('.b-up').onclick = function () { var p = r.previousElementSibling; if (p && p.classList.contains('brow')) r.parentNode.insertBefore(r, p); };
+    r.querySelector('.b-down').onclick = function () { var n = r.nextElementSibling; if (n && n.classList.contains('brow')) r.parentNode.insertBefore(n, r); };
+    r.querySelector('.b-logofile').addEventListener('change', function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      if (!r.querySelector('.b-name').value.trim()) { brandSetMsg(msgEl, '先填品牌名称，再上传 Logo。'); return; }
+      brandSetMsg(msgEl, 'Logo 上传中…');
+      ensureBrandOrgId(r).then(function (oid) {
+        if (!oid) { brandSetMsg(msgEl, '建档失败，Logo 未上传。'); return; }
+        var rd = new FileReader();
+        rd.onload = function () {
+          var b64 = String(rd.result).split(',')[1];
+          call('organization_logo_upload', { organization_id: oid, data_base64: b64, content_type: f.type || 'image/png' }).then(function (d) {
+            if (d && d.ok) { r.querySelector('.b-logo').value = d.logo_url; var im = r.querySelector('.b-logoprev'); im.src = d.logo_url; im.style.display = ''; brandSetMsg(msgEl, 'Logo 已上传并写入品牌档案。'); }
+            else brandSetMsg(msgEl, 'Logo 上传失败：' + ((d && (d.message || d.error)) || '未知错误'));
+          });
+        };
+        rd.readAsDataURL(f);
+      });
+    });
+    var candUse = r.querySelector('.b-canduse');
+    if (candUse) candUse.onclick = function () {
+      var cimg = r.querySelector('.b-candimg');
+      var url = r._logoCandidate || (cimg ? cimg.getAttribute('src') : '');
+      if (!url) return;
+      r._logoDataUrl = url;
+      var im = r.querySelector('.b-logoprev'); if (im) { im.src = url; im.style.display = ''; }
+      brandSetMsg(msgEl, '已选用海报裁切 Logo，保存品牌资料时将上传到品牌档案。');
+    };
+    var candDrop = r.querySelector('.b-canddrop');
+    if (candDrop) candDrop.onclick = function () {
+      var cimg = r.querySelector('.b-candimg'); var cand = r.querySelector('.b-cand');
+      var url = r._logoCandidate || (cimg ? cimg.getAttribute('src') : '');
+      if (r._logoDataUrl && url && r._logoDataUrl === url) { delete r._logoDataUrl; var im = r.querySelector('.b-logoprev'); if (im && !r.querySelector('.b-logo').value.trim()) { im.src = ''; im.style.display = 'none'; } }
+      delete r._logoCandidate;
+      if (cimg) cimg.src = '';
+      if (cand) cand.style.display = 'none';
+    };
+  });
+}
+function attachBrandSearch(qEl, resEl, rowsBox, msgEl) {
+  var q = brandEl(qEl), res = brandEl(resEl), rows = brandEl(rowsBox);
+  if (!q || !res || !rows) return;
+  q.addEventListener('input', function () {
+    var v = q.value.trim();
+    clearTimeout(q._brandSearchTimer);
+    if (v.length < 1) { res.style.display = 'none'; res.innerHTML = ''; return; }
+    q._brandSearchTimer = setTimeout(function () {
+      call('organization_search', { q: v, limit: 8 }).then(function (d) {
+        var list = (d && d.organizations) || [];
+        if (!list.length) { res.innerHTML = '<div style="padding:8px;color:#5c7260;font-size:13px">未找到同名档案，保存时将自动建档</div>'; res.style.display = 'block'; return; }
+        res.innerHTML = list.map(function (o) {
+          return '<div class="b-hit" data-oid="' + o.organization_id + '" style="display:flex;gap:8px;align-items:center;padding:7px 9px;cursor:pointer;border-bottom:1px solid #f0f4f0">' +
+            (o.logo_url ? '<img src="' + escapeHtml(o.logo_url) + '" style="height:24px;max-width:70px;object-fit:contain">' : '') +
+            '<span style="flex:1;font-size:14px">' + escapeHtml(o.name) + ' <span style="color:#5c7260;font-size:12px">已参与 ' + (o.event_count || 0) + ' 场活动</span></span><span style="font-size:12px;color:#14532d">带入本场</span></div>';
+        }).join('');
+        res.style.display = 'block';
+        Array.prototype.forEach.call(res.querySelectorAll('.b-hit'), function (h, hi) {
+          h.onclick = function () {
+            var o = list[hi]; if (!o) return;
+            res.style.display = 'none';
+            rows.insertAdjacentHTML('beforeend', brandRowHtml({ organization_id: o.organization_id, type: '合作伙伴', name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro }));
+            bindBrandRows(rows, msgEl);
+            brandSetMsg(msgEl, '已带入「' + o.name + '」，请选择本场身份后随赛事一并保存品牌资料。');
+          };
+        });
+      });
+    }, 300);
+  });
+}
+function saveBrandsForEvent(eventId, rowsBox, msgEl) {
+  var boxEl = brandEl(rowsBox);
+  if (!boxEl) return Promise.resolve({ saved: 0, errors: ['品牌区不存在'] });
+  var rowEls = Array.prototype.slice.call(boxEl.querySelectorAll('.brow'));
+  var rows = rowEls.map(function (r, idx) {
+    return { el: r, idx: idx, type: r.querySelector('.b-type').value, name: r.querySelector('.b-name').value.trim(),
+      logo_url: r.querySelector('.b-logo').value.trim() || null, websiteRaw: r.querySelector('.b-web').value.trim(),
+      intro: r.querySelector('.b-intro').value.trim() || null, is_public: r.querySelector('.b-public').checked };
+  }).filter(function (o) { return o.name; });
+  if (!rows.length) return Promise.resolve({ saved: 0, errors: [] });
+  for (var i = 0; i < rows.length; i++) {
+    var v = orgValidUrl(rows[i].websiteRaw);
+    if (v === false) { var em = '官网格式不对：' + rows[i].websiteRaw + '（请填完整网址，如 example.com）'; brandSetMsg(msgEl, em); return Promise.resolve({ saved: 0, aborted: true, errors: [em] }); }
+    rows[i].website = v;
+  }
+  if (!rows.some(function (o) { return o.type === '主办'; })) { var m2 = '请至少指定一家主办（也可到赛事管理页再补）'; brandSetMsg(msgEl, '品牌未保存：' + m2); return Promise.resolve({ saved: 0, aborted: true, errors: [m2] }); }
+  brandSetMsg(msgEl, '正在保存品牌资料…');
+  var errors = []; var saved = 0;
+  var snap = rows.map(function (o) { return { type: o.type, name: o.name, logo_url: o.logo_url, website: o.website, intro: o.intro }; });
+  var chain = call('orgs_update', { event_id: eventId, organizations: snap }).then(function (d) {
+    if (d && d.error === 'event_not_linked') return;
+    if (!d || !d.ok) errors.push('品牌快照保存失败：' + ((d && (d.message || d.error)) || '未知错误'));
+  }).catch(function () { errors.push('品牌快照保存请求失败'); });
+  rows.forEach(function (o) {
+    chain = chain.then(function () {
+      brandSetMsg(msgEl, '正在保存品牌资料…（' + o.name + '）');
+      return ensureBrandOrgId(o.el).then(function (oid) {
+        if (!oid) { errors.push('「' + o.name + '」建档失败'); return null; }
+        var seq = Promise.resolve(null);
+        var doUpdate = function () {
+          return call('organization_update', { organization_id: oid, logo_url: o.logo_url, website: o.website, intro: o.intro }).then(function (u) {
+            if (u && u.ok === false) errors.push('「' + o.name + '」档案同步失败：' + (u.message || u.error || '未知错误'));
+          }).catch(function () { errors.push('「' + o.name + '」档案同步请求失败'); });
+        };
+        if (o.el.getAttribute('data-neworg') || o.el.dataset.neworg) { seq = seq.then(doUpdate); }
+        else {
+          seq = seq.then(function () {
+            return call('organization_get', { organization_id: oid }).then(function (g) {
+              if (g && g.ok && g.can_manage) return doUpdate();
+              return null;
+            }).catch(function () { return null; });
+          });
+        }
+        seq = seq.then(function () {
+          if (o.el._logoDataUrl && !o.logo_url) {
+            var mm = /^data:([^;]+);base64,(.+)$/.exec(o.el._logoDataUrl);
+            var ct = mm ? mm[1] : 'image/png'; var b64 = mm ? mm[2] : String(o.el._logoDataUrl).split(',')[1];
+            if (!b64) { errors.push('「' + o.name + '」海报裁切 Logo 数据无效'); return null; }
+            return call('organization_logo_upload', { organization_id: oid, data_base64: b64, content_type: ct }).then(function (u) {
+              if (u && u.ok && u.logo_url) { o.logo_url = u.logo_url; var li = o.el.querySelector('.b-logo'); if (li) li.value = u.logo_url; var im = o.el.querySelector('.b-logoprev'); if (im) { im.src = u.logo_url; im.style.display = ''; } }
+              else errors.push('「' + o.name + '」Logo 上传失败：' + ((u && (u.message || u.error)) || '未知错误'));
+            }).catch(function () { errors.push('「' + o.name + '」Logo 上传请求失败'); });
+          }
+          return null;
+        });
+        seq = seq.then(function () {
+          return call('organization_link', { event_id: eventId, organization_id: oid, role: orgRoleOfType(o.type), role_label: o.type, display_order: o.idx, is_public: o.is_public }).then(function (l) {
+            if (l && l.ok === false) errors.push('「' + o.name + '」关联失败：' + (l.message || l.error || '未知错误'));
+            else saved++;
+          }).catch(function () { errors.push('「' + o.name + '」关联请求失败'); });
+        });
+        return seq;
+      }).catch(function () { errors.push('「' + o.name + '」保存异常'); });
+    });
+  });
+  return chain.then(function () {
+    if (errors.length) brandSetMsg(msgEl, '品牌资料已保存（' + saved + ' 家），部分失败：' + errors.join('；'));
+    else brandSetMsg(msgEl, '品牌资料已保存（' + saved + ' 家）');
+    return { saved: saved, errors: errors };
+  });
+}
+function wzCropPosterLogo(logoBox, cb) {
+  if (!logoBox || typeof WZ === 'undefined' || !WZ.posterDataUrl) { cb(null); return; }
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+      var sx = Math.max(0, Math.round(Number(logoBox.x || 0) / 1000 * sw));
+      var sy = Math.max(0, Math.round(Number(logoBox.y || 0) / 1000 * sh));
+      var cw = Math.round(Number(logoBox.w || 0) / 1000 * sw);
+      var ch = Math.round(Number(logoBox.h || 0) / 1000 * sh);
+      cw = Math.min(cw, sw - sx); ch = Math.min(ch, sh - sy);
+      if (!(cw > 0) || !(ch > 0)) { cb(null); return; }
+      var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      cv.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+      cb(cv.toDataURL('image/png'));
+    } catch (e) { cb(null); }
+  };
+  img.onerror = function () { cb(null); };
+  img.src = WZ.posterDataUrl;
+}
+(function initBrandBoxes() {
+  var wzAdd = document.getElementById('wzOrgAdd');
+  if (wzAdd) wzAdd.onclick = function () { var box = document.getElementById('wzOrgRows'); if (!box) return; box.insertAdjacentHTML('beforeend', brandRowHtml({ type: '合作伙伴' })); bindBrandRows(box, document.getElementById('wzOrgMsg')); };
+  var qcAdd = document.getElementById('qcOrgAdd');
+  if (qcAdd) qcAdd.onclick = function () { var box = document.getElementById('qcOrgRows'); if (!box) return; box.insertAdjacentHTML('beforeend', brandRowHtml({ type: '合作伙伴' })); bindBrandRows(box, document.getElementById('qcOrgMsg')); };
+  attachBrandSearch(document.getElementById('wzOrgQ'), document.getElementById('wzOrgResults'), document.getElementById('wzOrgRows'), document.getElementById('wzOrgMsg'));
+  attachBrandSearch(document.getElementById('qcOrgQ'), document.getElementById('qcOrgResults'), document.getElementById('qcOrgRows'), document.getElementById('qcOrgMsg'));
+})();
 
 var knowEditingId = null, knowSource = { type: 'text', name: null };
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -1242,18 +1677,28 @@ document.getElementById('createBtn').onclick = function () {
     title: document.getElementById('fTitle').value, course_id: document.getElementById('fCourse').value,
     default_tee_id: document.getElementById('fTee').value || undefined,
     starts_at: document.getElementById('fDate').value + 'T' + (document.getElementById('fTime').value || '09:00') + ':00', play_dates: [document.getElementById('fDate').value],
-    format: document.getElementById('fFormat').value, capacity: Number(document.getElementById('fCap').value || 40),
+    format: document.getElementById('fFormat').value, capacity: document.getElementById('fCap').value === '' ? null : Number(document.getElementById('fCap').value),
     fee_mode: document.getElementById('fFeeMode').value,
     fee_cents: Math.round(Number(document.getElementById('fFeeAmt').value || 0) * 100)
   }).then(function (d) {
-    if (d.event) { document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents(); }
+    if (d.event) {
+      document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title; loadEvents();
+      var qcRowsEl = document.getElementById('qcOrgRows');
+      var qcHasBrand = qcRowsEl && Array.prototype.some.call(qcRowsEl.querySelectorAll('.brow'), function (r) { var n = r.querySelector('.b-name'); return n && n.value.trim(); });
+      if (qcHasBrand) {
+        document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title + '，正在保存品牌资料…';
+        saveBrandsForEvent(d.event.id, qcRowsEl, document.getElementById('createMsg')).catch(function () {
+          document.getElementById('createMsg').textContent = '已创建草稿：' + d.event.title + '（品牌资料保存失败，请到赛事管理页补录）';
+        });
+      }
+    }
     else show(d);
   });
 };
 /* [线Z67] 发布新赛事向导：三步（选样板 → 差异项＋海报识别 → 预览发布）。
    克隆走服务端 event_clone_template（严格白名单）；海报识别走 poster_extract
    只回草稿、本页确认后才随创建提交，识别结果不静默落库。 */
-var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, createdId: null, busy: false };
+var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, posterDataUrl: null, createdId: null, busy: false };
 function wzEl(id) { return document.getElementById(id); }
 function wzTag(id, text) { var t = wzEl('tag-' + id); if (t) { t.textContent = text; t.style.display = text ? 'inline-block' : 'none'; } }
 function wzSteps(n) {
@@ -1303,7 +1748,7 @@ function wzPrefillStep2() {
   if (WZ.template === 'clone' && WZ.srcRow) {
     var s = WZ.srcRow;
     wzEl('wzTitle').value = s.title || ''; wzTag('wzTitle', '来自模板');
-    wzEl('wzCap').value = s.capacity || 40;
+    wzEl('wzCap').value = s.capacity == null ? '' : s.capacity;
     wzEl('wzFeeMode').value = s.fee_mode || 'free';
     wzEl('wzFeeAmt').value = s.fee_cents ? Math.round(s.fee_cents / 100) : '';
     wzEl('wzDesc').value = s.description || ''; if (s.description) wzTag('wzDesc', '来自模板');
@@ -1393,7 +1838,8 @@ function wzDownscale(f) {
       var cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
       URL.revokeObjectURL(url);
-      resolve(cv.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      var wzDu = cv.toDataURL('image/jpeg', 0.85); WZ.posterDataUrl = wzDu;
+      resolve(wzDu.split(',')[1]);
     };
     img.onerror = reject; img.src = url;
   });
@@ -1429,6 +1875,27 @@ function wzFillFromDraft(dr) {
         wzRenderCourseResults(list);
       }
     });
+  }
+  if (dr.brands && Object.prototype.toString.call(dr.brands) === '[object Array]') {
+    var wzRowsBox = wzEl('wzOrgRows');
+    if (wzRowsBox) {
+      dr.brands.forEach(function (b) {
+        if (!b || !b.name) return;
+        var bt = ORG_TYPES.indexOf(b.role) >= 0 ? b.role : '合作伙伴';
+        wzRowsBox.insertAdjacentHTML('beforeend', brandRowHtml({ type: bt, name: b.name, fromPoster: true }));
+        bindBrandRows(wzRowsBox, wzEl('wzOrgMsg'));
+        var browEls = wzRowsBox.querySelectorAll('.brow');
+        var browEl = browEls[browEls.length - 1];
+        if (b.logo_box && WZ.posterDataUrl && browEl) {
+          wzCropPosterLogo(b.logo_box, function (dataUrl) {
+            if (!dataUrl) return;
+            browEl._logoCandidate = dataUrl;
+            var cimg = browEl.querySelector('.b-candimg'); if (cimg) cimg.src = dataUrl;
+            var cand = browEl.querySelector('.b-cand'); if (cand) cand.style.display = 'flex';
+          });
+        }
+      });
+    }
   }
 }
 function wzValidate() {
@@ -1466,7 +1933,7 @@ wzEl('wzCreateBtn').onclick = function () {
     title: wzEl('wzTitle').value.trim(), course_id: wzEl('wzCourse').value,
     default_tee_id: wzEl('wzTee').value || undefined,
     starts_at: wzStartsAt(), play_dates: [wzEl('wzDate').value],
-    capacity: Number(wzEl('wzCap').value || 40),
+    capacity: wzEl('wzCap').value === '' ? null : Number(wzEl('wzCap').value),
     fee_mode: wzEl('wzFeeMode').value, fee_cents: Math.round(Number(wzEl('wzFeeAmt').value || 0) * 100),
     registration_deadline: wzEl('wzDeadline').value ? wzEl('wzDeadline').value + 'T23:59:00' : undefined,
     description: wzEl('wzDesc').value.trim() || undefined
@@ -1491,6 +1958,19 @@ wzEl('wzCreateBtn').onclick = function () {
         (WZ.posterFile ? '<br>海报已设为首图与封面。' : '') +
         '<br>公开赛事页预览：<a href="../event.html?e=' + encodeURIComponent(WZ.createdId) + '" target="_blank">打开赛事页</a>（发布前仅您登录可见）';
       loadEvents();
+      var wzRowsEl = wzEl('wzOrgRows');
+      var wzHasBrand = wzRowsEl && Array.prototype.some.call(wzRowsEl.querySelectorAll('.brow'), function (r) { var n = r.querySelector('.b-name'); return n && n.value.trim(); });
+      if (wzHasBrand) {
+        wzEl('wzCreateMsg').textContent = '正在保存品牌资料…';
+        saveBrandsForEvent(WZ.createdId, wzRowsEl, wzEl('wzCreateMsg')).then(function (res) {
+          var line;
+          if (res && res.saved > 0) line = '品牌资料已保存（' + res.saved + ' 家）' + (res.errors && res.errors.length ? '，部分失败：' + res.errors.join('；') : '');
+          else line = '品牌资料保存失败：' + ((res && res.errors && res.errors.length ? res.errors.join('；') : '未知错误')) + '（赛事已创建，可到赛事管理页补录品牌）';
+          var div = document.createElement('div'); div.textContent = line; wzEl('wzCreatedInfo').appendChild(div);
+        }).catch(function () {
+          var div = document.createElement('div'); div.textContent = '品牌资料保存失败（赛事已创建，可到赛事管理页补录品牌）'; wzEl('wzCreatedInfo').appendChild(div);
+        });
+      }
     };
     if (WZ.posterFile) {
       wzEl('wzCreateMsg').textContent = '草稿已生成，正在保存海报…';
@@ -1917,20 +2397,24 @@ if (token) init();
 </script>
 <script>
 // [线Z48] 分组管理面板逻辑（自包含：只依赖页面级 call/escapeHtml/currentEvent/currentRound 与服务端 grouping_* 动作）
-var pmState = { eventId: null, roundId: null, draftId: null, maxSize: 4, groups: [], eligible: {}, eligibleList: [], selected: null, saveTimer: null, saving: false, seededFromPublished: false };
+var pmState = { eventId: null, roundId: null, draftId: null, draftVersion: null, meta: { must_together: [], must_apart: [] }, maxSize: 4, groups: [], eligible: {}, eligibleList: [], selected: null, saveTimer: null, saving: false, seededFromPublished: false }; /* [ROSTER-V1] draftVersion/meta */
 function pmEl(id) { return document.getElementById(id); }
 function pmMsg(t, isErr) { var m = pmEl('pmMsg'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : ''; } }
 function pmSaveState(t, isErr) { var m = pmEl('pmSaveState'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : '#5c7260'; } }
 function pmInfo(pid) { return pmState.eligible[pid] || { player_id: pid, name: pid.slice(0, 8), handicap_index: null, self_group: null }; }
 function pmGroupedSet() { var s = {}; pmState.groups.forEach(function (g) { g.players.forEach(function (p) { s[p.player_id] = true; }); }); return s; }
 function pmSetGroupsFromPayload(payload) {
+  /* [ROSTER-V1] 保留组锁定 locked 与 payload.meta 同组/不同组规则 */
+  pmState.meta = { must_together: ((payload && payload.meta && payload.meta.must_together) || []).slice(), must_apart: ((payload && payload.meta && payload.meta.must_apart) || []).slice() };
   pmState.groups = ((payload && payload.groups) || []).map(function (g) {
-    return { name: g.name != null ? g.name : null, start_hole: g.start_hole != null ? g.start_hole : null, tee_time: g.tee_time != null ? g.tee_time : null, players: (g.players || []).map(function (p) { return { player_id: p.player_id }; }) };
+    return { name: g.name != null ? g.name : null, locked: !!g.locked, source: g.source || null, start_hole: g.start_hole != null ? g.start_hole : null, tee_time: g.tee_time != null ? g.tee_time : null, players: (g.players || []).map(function (p) { return { player_id: p.player_id }; }) };
   });
+  if (window.__rmRenderRules) window.__rmRenderRules();
 }
 function pmSerialize() {
+  /* [ROSTER-V1] 草稿组 locked 随 payload 回写 */
   return pmState.groups.map(function (g) {
-    return { name: g.name || null, start_hole: g.start_hole != null && g.start_hole !== '' ? Number(g.start_hole) : null, tee_time: g.tee_time || null, players: g.players.map(function (p) { return { player_id: p.player_id }; }) };
+    return { name: g.name || null, locked: !!g.locked, start_hole: g.start_hole != null && g.start_hole !== '' ? Number(g.start_hole) : null, tee_time: g.tee_time || null, players: g.players.map(function (p) { return { player_id: p.player_id }; }) };
   });
 }
 function pmOpen() {
@@ -1961,6 +2445,7 @@ async function pmLoad() {
   pmState.seededFromPublished = false;
   if (dg && dg.draft) {
     pmState.draftId = dg.draft.id;
+    pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; /* [ROSTER-V1] 版本并发基线 */
     if (dg.draft.payload && dg.draft.payload.group_size) { pmState.maxSize = dg.draft.payload.group_size; pmEl('pmMaxSize').value = pmState.maxSize; }
     pmSetGroupsFromPayload(dg.draft.payload);
     pmSaveState('已载入未发布草稿');
@@ -1973,7 +2458,7 @@ async function pmLoad() {
       pmState.groups = prs.map(function (p) { return { name: null, start_hole: p.start_hole != null ? p.start_hole : null, tee_time: p.tee_time || null, players: (p.golf_pairing_players || []).map(function (x) { return { player_id: x.player_id }; }) }; });
       pmState.seededFromPublished = true;
       pmSaveState('已载入已发布分组（修改后保存为新草稿，重新发布才生效）');
-    } else { pmState.groups = []; pmSaveState('尚未分组'); }
+    } else { pmState.groups = []; pmState.draftVersion = null; pmSaveState('尚未分组'); }
   }
   var cs = await call('grouping_copy_sources', { event_id: pmState.eventId });
   var srcSel = pmEl('pmCopySrc');
@@ -2002,6 +2487,7 @@ function pmRenderGroups() {
       '<input class="pmGName" data-gi="' + gi + '" placeholder="组名（可选）" value="' + escapeHtml(g.name || '') + '" style="width:130px">' +
       '<label style="font-size:13px">出发洞 <input class="pmGHole" data-gi="' + gi + '" type="number" min="1" max="18" value="' + (g.start_hole != null ? g.start_hole : '') + '" style="width:60px"></label>' +
       '<label style="font-size:13px">开球时间 <input class="pmGTime" data-gi="' + gi + '" type="datetime-local" value="' + (g.tee_time ? String(g.tee_time).slice(0, 16) : '') + '"></label>' +
+      '<label style="font-size:13px" title="锁定的组在重新生成草稿时原样保留">[ROSTER-V1] <input type="checkbox" class="pmGLock" data-gi="' + gi + '"' + (g.locked ? ' checked' : '') + ' style="width:auto">锁定</label>' +
       '<button type="button" class="ghost pmGDel" data-gi="' + gi + '" style="margin-left:auto">删除组</button></div>' +
       '<div style="margin-top:6px">' + (members || '<p style="color:#5c7260;font-size:13px;margin:4px 0">空组</p>') + '</div>' +
       '<p style="margin:8px 0 0"><button type="button" class="ghost pmGAdd" data-gi="' + gi + '">加入选中球员</button></p></div>';
@@ -2050,9 +2536,11 @@ async function pmSave() {
       var r0 = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: 'empty', group_size: pmState.maxSize });
       if (!r0 || !r0.ok) { pmSaveState('保存失败：' + ((r0 && r0.error) || '建草稿失败'), true); return; }
       pmState.draftId = r0.draft.id;
+      pmState.draftVersion = r0.draft.version != null ? r0.draft.version : 1; /* [ROSTER-V1] */
     }
-    var r = await call('grouping_draft_update', { event_id: pmState.eventId, draft_id: pmState.draftId, round_id: pmState.roundId, groups: pmSerialize(), max_group_size: pmState.maxSize });
-    if (r && r.ok) { pmState.seededFromPublished = false; pmSaveState('草稿已自动保存 ' + new Date().toLocaleTimeString()); }
+    var r = await call('grouping_draft_update', { event_id: pmState.eventId, draft_id: pmState.draftId, round_id: pmState.roundId, groups: pmSerialize(), max_group_size: pmState.maxSize, meta: pmState.meta, base_version: pmState.draftVersion }); /* [ROSTER-V1] base_version+meta */
+    if (r && r.ok) { pmState.seededFromPublished = false; if (r.draft && r.draft.version != null) pmState.draftVersion = r.draft.version; else if (pmState.draftVersion != null) pmState.draftVersion += 1; pmSaveState('草稿已自动保存 ' + new Date().toLocaleTimeString()); }
+    else if (r && (r.error === 'draft_version_conflict' || r.status === 409)) { pmSaveState('已被另一管理员更新，请刷新', true); pmMsg('草稿已被另一管理员更新，请刷新后重试。', true); }
     else pmSaveState('保存失败：' + ((r && r.error) || '未知错误'), true);
   } finally { pmState.saving = false; }
 }
@@ -2065,13 +2553,13 @@ function pmAddToGroup(pid, gi) {
 async function pmAuto() {
   pmMsg('');
   var r = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: pmEl('pmMethod').value, group_size: pmState.maxSize });
-  if (r && r.ok) { pmState.draftId = r.draft.id; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender(); pmSaveState('已生成草稿（已保存）'); }
+  if (r && r.ok) { pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender(); if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); pmSaveState('已生成草稿（已保存）'); }
   else pmMsg('生成失败：' + ((r && r.error) || '未知错误'), true);
 }
 async function pmSmart() {
   pmMsg('');
   var r = await call('grouping_smart_fill', { event_id: pmState.eventId, group_size: pmState.maxSize });
-  if (r && r.ok) { var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId }); if (dg && dg.draft) { pmState.draftId = dg.draft.id; pmSetGroupsFromPayload(dg.draft.payload); } pmRender(); pmSaveState('智能补组已生成草稿'); }
+  if (r && r.ok) { if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId }); if (dg && dg.draft) { pmState.draftId = dg.draft.id; pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; pmSetGroupsFromPayload(dg.draft.payload); } pmRender(); pmSaveState('智能补组已生成草稿'); }
   else pmMsg('智能补组失败：' + ((r && r.error) || '未知错误'), true);
 }
 async function pmCopy() {
@@ -2080,7 +2568,7 @@ async function pmCopy() {
   if (!src) { pmEl('pmCopyMsg').textContent = '先选择一场历史赛事'; return; }
   var r = await call('grouping_copy_previous', { event_id: pmState.eventId, round_id: pmState.roundId, source_event_id: src });
   if (r && r.ok) {
-    pmState.draftId = r.draft.id; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender();
+    pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender();
     pmEl('pmCopyMsg').textContent = '已复制：匹配 ' + r.matched + ' 人，未匹配 ' + (r.unmatched || []).length + ' 人';
     var box = pmEl('pmUnmatched');
     if ((r.unmatched || []).length) { box.style.display = 'block'; box.textContent = '以下球员在上一场有分组，但未报名本场或不符合分组资格，未能带入：' + r.unmatched.map(function (u) { return u.name || u.player_id; }).join('、'); }
@@ -2112,10 +2600,12 @@ async function pmPublish(confirmed) {
   if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; }
   if (pmState.draftId || pmState.groups.length) await pmSave();
   if (!pmState.draftId) { pmMsg(pmState.seededFromPublished ? '当前显示的是已发布分组，没有新草稿需要发布。' : '没有可发布的草稿。', !pmState.seededFromPublished); return; }
-  var body = { event_id: pmState.eventId, draft_id: pmState.draftId };
+  var body = { event_id: pmState.eventId, draft_id: pmState.draftId, base_version: pmState.draftVersion };
   if (confirmed) body.confirm_impact = true;
   var r = await call('grouping_publish', body);
-  if (r && r.ok) { pmMsg('分组已发布，球员端（App／网页／球童）已同步为最新分组。'); pmEl('pmImpact').style.display = 'none'; await pmLoad(); }
+  if (window.__rmResWarn) window.__rmResWarn(r && r.resource_warning);
+  if (r && r.ok) { pmMsg('分组已发布，球员端（App／网页／球童）已同步为最新分组。'); pmEl('pmImpact').style.display = 'none'; var nb = document.getElementById('rmNotifyPubBtn'); if (nb) nb.style.display = ''; await pmLoad(); if (window.__rmRefresh) window.__rmRefresh(); }
+  else if (r && (r.error === 'draft_version_conflict' || r.status === 409)) pmMsg('已被另一管理员更新，请刷新', true);
   else if (r && (r.needs_confirm || r.impact)) pmShowImpact(r.impact, r.error || '');
   else pmMsg('发布失败：' + ((r && r.error) || '未知错误'), true);
 }
@@ -2133,7 +2623,8 @@ async function pmPublish(confirmed) {
   });
   groupsBox.addEventListener('change', function (e) {
     var t = e.target; if (!t.dataset) return; var gi = Number(t.dataset.gi); var g = pmState.groups[gi]; if (!g) return;
-    if (t.classList.contains('pmGName')) { g.name = t.value || null; pmScheduleSave(); }
+    if (t.classList.contains('pmGLock')) { g.locked = !!t.checked; pmScheduleSave(); }
+    else if (t.classList.contains('pmGName')) { g.name = t.value || null; pmScheduleSave(); }
     else if (t.classList.contains('pmGHole')) { g.start_hole = t.value === '' ? null : Number(t.value); pmScheduleSave(); }
     else if (t.classList.contains('pmGTime')) { g.tee_time = t.value ? new Date(t.value).toISOString() : null; pmScheduleSave(); }
   });
@@ -2205,5 +2696,330 @@ window.__z49showView = z49ShowView;
   };
 })();
 </script>
+<script>
+/* [ROSTER-V1] 主办方智能管理：名单导入/认领/通知/签到/替补 + 分组规则。
+   契约见 DESIGN.md：动作 roster_import_preview / roster_import_commit / roster_parse_text /
+   roster_manage / claim_link_create / claim_link_revoke / roster_notify / roster_checkin /
+   roster_substitute / grouping_gate_set。只用页面级 call/escapeHtml/currentEvent。
+   口径（2026-11-12 20:28 定版）：认领三态＝已关联／待认领／存在冲突；建名单绝不自动
+   发邀请或通知，通知只由主办方手动点击触发；名单定位＝长期球员身份管理（档案跨赛事复用）。
+   联系方式红线：页面只显示掩码，绝不输出完整手机号/邮箱。 */
+(function () {
+  var FIELDS = [
+    { k: 'name', label: '姓名', aliases: ['姓名', 'name', '球员', 'player', '球員'] },
+    { k: 'phone', label: '手机号', aliases: ['手机号', '手机', 'phone', 'mobile', '电话', '電話'] },
+    { k: 'email', label: '邮箱', aliases: ['邮箱', 'email', 'e-mail', '邮件'] },
+    { k: 'team_name', label: '球队', aliases: ['球队', '队名', 'team', '隊伍', '队伍'] },
+    { k: 'handicap', label: '差点', aliases: ['差点', 'handicap', 'hcp'] },
+    { k: 'gender', label: '性别', aliases: ['性别', 'gender', 'sex'] },
+    { k: 'tee_name', label: '发球台', aliases: ['发球台', 'tee', '梯台'] },
+    { k: 'preset_group', label: '预设组', aliases: ['预设组', '组号', 'group', '组別', '组别'] },
+    { k: 'start_hole', label: '出发洞', aliases: ['出发洞', 'hole', '出發洞'] },
+    { k: 'tee_time', label: '出发时间', aliases: ['出发时间', 'time', '开球时间', 'tee time', '開球時間'] },
+    { k: 'eligibility', label: '资格', aliases: ['资格', 'eligibility', '資格'] },
+    { k: 'payment', label: '付款', aliases: ['付款', 'payment', '收款', '缴费'] },
+    { k: 'note', label: '备注', aliases: ['备注', 'note', '備註', '说明'] }
+  ];
+  var VERDICT = {
+    ok_bound: ['可导入-已关联', '#1d7a3a'], ok_pending: ['可导入-待认领', '#1d7a3a'],
+    conflict: ['存在冲突', '#b91c1c'], dup_in_file: ['重复（文件内）', '#a16207'],
+    dup_existing: ['重复（已报名）', '#a16207'], no_contact: ['缺联系方式', '#a16207'],
+    bad_format: ['格式错', '#b91c1c'], over_capacity: ['超限', '#b91c1c']
+  };
+  /* 认领三态定版文案：bound→已关联 / pending→待认领 / conflict→存在冲突 */
+  var CLAIM_TXT = { bound: '已关联', pending: '待认领', conflict: '存在冲突', candidate: '待认领', none: '待认领' };
+  var state = { rows: [], rawRows: [], headers: [], mapping: [], preview: null, manage: null, claimRegId: null, subRegId: null, xlsxReady: false, xlsxFailed: false };
+  function el(id) { return document.getElementById(id); }
+  function msg(t, isErr) { var m = el('rmMsg'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b91c1c' : '#5c7260'; } }
+  function maskPhone(v) { if (!v) return ''; var s = String(v); if (s.indexOf('*') >= 0) return s; var d = s.replace(/\D/g, ''); if (d.length < 4) return '•••'; return '•••' + d.slice(-4); }
+  function maskEmail(v) { if (!v) return ''; var s = String(v); if (s.indexOf('*') >= 0) return s; var i = s.indexOf('@'); if (i <= 0) return '•••'; return s.slice(0, 1) + '•••' + s.slice(i); }
+  function contactMask(r) {
+    var parts = [];
+    var ph = r.phone_masked || r.masked_phone || r.contact_phone || (r.profile && (r.profile.contact_phone || r.profile.phone)) || r.phone || '';
+    var em = r.email_masked || r.masked_email || r.contact_email || (r.profile && (r.profile.contact_email || r.profile.email)) || r.email || '';
+    if (ph) parts.push(maskPhone(ph)); if (em) parts.push(maskEmail(em));
+    return parts.join(' · ');
+  }
+  function normRow(r) {
+    var p = r.golf_players || r.player || {};
+    var idn = r.identity || {};
+    var claim = r.claim_status || (idn.user_id || r.user_id || (r.golf_players && r.golf_players.user_id) ? 'bound' : 'pending');
+    if (claim === 'candidate') claim = 'pending';
+    if (['bound', 'pending', 'conflict'].indexOf(claim) < 0) claim = 'pending';
+    var notify = r.notify_status || r.notify || null;
+    var notifyTxt = !notify ? '未通知' : (typeof notify === 'string' ? notify : (notify.channel === 'in_app' ? '已通知（站内）' : notify.channel === 'claim_link' ? '认领链接待发送' : notify.channel === 'already' ? '已通知（本版本）' : '已通知'));
+    return {
+      id: r.id || r.registration_id, player_id: r.player_id || p.id || '',
+      name: p.display_name || r.display_name || r.player_name || r.name || '（未命名）',
+      status: r.status || '', claim: claim,
+      archive: r.archive_status || r.profile_status || ((idn.user_id || r.user_id || r.identity_id || p.identity_id || claim === 'bound') ? '已关联档案' : '新档案'),
+      notifyTxt: notifyTxt, contact: contactMask(r),
+      team: r.team_name || r.team || '', group: r.group_no || r.flight_group || null,
+      payment: r.payment_status || r.payment || '', checked: r.status === 'checked_in',
+      checkinSrc: r.checkin_source || ''
+    };
+  }
+  /* ---------- roster_manage: counts + table + reconfirm ---------- */
+  function rmRefresh() {
+    if (!currentEvent) return Promise.resolve();
+    return call('roster_manage', { event_id: currentEvent.id }).then(function (d) {
+      if (!d || d.ok === false || d.error) { msg('名单服务暂不可用（' + ((d && d.error) || '无响应') + '），既有名单功能不受影响。', true); return; }
+      state.manage = d;
+      var c = d.counts || {};
+      var set = function (id, v) { var n = el(id); if (n) n.textContent = v != null ? v : '–'; };
+      set('rmCReg', c.registered); set('rmCBound', c.bound); set('rmCPend', c.pending_claim); set('rmCConflict', c.conflict);
+      set('rmCGrouped', c.grouped); set('rmCUngrouped', c.ungrouped); set('rmCIn', c.checked_in); set('rmCFlights', c.flights);
+      var rec = el('rmReconfirm'), rec2 = el('rmPubReconfirm');
+      [rec, rec2].forEach(function (b) {
+        if (!b) return;
+        if (d.groups_need_reconfirm) { b.style.display = 'block'; b.textContent = '出发名单已发布，但名单有变化（' + (d.reconfirm_detail || '有生效报名未入组或组内有失效报名') + '），请核对分组后重新发布。'; }
+        else b.style.display = 'none';
+      });
+      var gate = (currentEvent.competition_config || {}).grouping_gate || d.grouping_gate;
+      if (gate && el('rmGateSel')) el('rmGateSel').value = gate;
+      renderTable(d.players || d.registrations || d.rows || []); /* [ROSTER-FIX] 服务端定版键为 players */
+      fillRulePlayers();
+    }).catch(function () { msg('名单加载失败，请稍后重试。', true); });
+  }
+  window.__rmRefresh = rmRefresh;
+  window.__rmOnOpen = function () { rmRefresh(); var g = (currentEvent && currentEvent.competition_config || {}).grouping_gate; if (g && el('rmGateSel')) el('rmGateSel').value = g; };
+  function renderTable(rows) {
+    var box = el('rmTable'); if (!box) return;
+    var f = el('rmFilterSel') ? el('rmFilterSel').value : '';
+    var list = rows.map(normRow).filter(function (r) {
+      if (f === 'no_show_pending') return r.status === 'registered';
+      if (f === 'pending_claim') return r.claim === 'pending';
+      if (f === 'conflict') return r.claim === 'conflict';
+      if (f === 'ungrouped') return !r.group;
+      return true;
+    });
+    state.rows = rows;
+    if (!list.length) { box.innerHTML = '<p style="color:#5c7260;font-size:14px">暂无符合条件的球员。用上方「导入球员名单」添加线下名单，或等待球员线上报名。</p>'; return; }
+    box.innerHTML = list.map(function (r) {
+      var conflict = r.claim === 'conflict';
+      var claimHtml = conflict
+        ? '<span style="color:#b91c1c;font-weight:bold;background:#fdf2f2;border:1px solid #f0caca;border-radius:6px;padding:0 6px">存在冲突 · 需处理</span>'
+        : '<span style="color:#5c7260">' + CLAIM_TXT[r.claim] + '</span>';
+      return '<div style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px;' + (conflict ? 'background:#fdf6f6;' : '') + '">' +
+        '<label style="font-size:14px;color:#17301c"><input type="checkbox" class="rm-check" data-id="' + r.id + '" style="width:auto;margin-right:6px">签到</label> ' +
+        '<b>' + escapeHtml(r.name) + '</b> <span style="color:#5c7260">' + escapeHtml(r.status === 'checked_in' ? '已签到' : r.status === 'no_show' ? '未到场' : r.status === 'registered' ? '已报名' : r.status) + (r.checkinSrc === 'staff_proxy' ? '（主办方代签到）' : '') + '</span>' +
+        '<span style="color:#5c7260"> · 认领：</span>' + claimHtml +
+        '<span style="color:#5c7260"> · 档案：' + escapeHtml(r.archive) + ' · 通知：' + escapeHtml(r.notifyTxt) +
+        (r.team ? ' · 球队：' + escapeHtml(r.team) : '') +
+        ' · 分组：' + (r.group ? '第 ' + r.group + ' 组' : '未分组') +
+        (r.payment ? ' · 付款：' + escapeHtml(r.payment) : '') +
+        (r.contact ? ' · 联系：' + escapeHtml(r.contact) : '') + '</span> ' +
+        '<button type="button" class="ghost rm-claim" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">认领链接</button> ' +
+        '<button type="button" class="ghost rm-notify" data-id="' + r.id + '">通知</button> ' +
+        '<button type="button" class="ghost rm-sub" data-id="' + r.id + '" data-name="' + escapeHtml(r.name) + '">临时替换</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.rm-claim'), function (b) { b.onclick = function () { claimCreate(b.getAttribute('data-id'), b.getAttribute('data-name')); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('.rm-notify'), function (b) { b.onclick = function () { notify([b.getAttribute('data-id')]); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('.rm-sub'), function (b) { b.onclick = function () { openSub(b.getAttribute('data-id'), b.getAttribute('data-name')); }; });
+  }
+  function checkedIds() { return Array.prototype.map.call(document.querySelectorAll('.rm-check:checked'), function (c) { return c.getAttribute('data-id'); }); }
+  /* ---------- claim links ---------- */
+  function claimCreate(regId, name) {
+    state.claimRegId = regId;
+    call('claim_link_create', { event_id: currentEvent.id, registration_id: regId }).then(function (d) {
+      var box = el('rmClaimBox'); box.style.display = 'block';
+      var link = d.link || d.claim_url || d.url || '';
+      el('rmClaimUrl').value = link;
+      el('rmClaimMsg').textContent = d.ok || link ? ('已为「' + name + '」生成认领链接（' + (d.expires_at ? '有效期至 ' + String(d.expires_at).slice(0, 10) : '默认 14 天') + '）。请复制后自行发给球员；系统不会自动发送。') : ('生成失败：' + (d.error || '未知错误'));
+    });
+  }
+  /* ---------- notify (manual only) ---------- */
+  function notify(ids) {
+    var body = { event_id: currentEvent.id }; if (ids && ids.length) body.registration_ids = ids;
+    return call('roster_notify', body).then(function (d) {
+      var list = d.results || d.sent || [];
+      var okN = list.filter(function (x) { return x.status !== 'failed'; }).length;
+      var t = '通知完成：' + (list.length ? okN + '/' + list.length + ' 人已处理（站内通知或认领链接待主办方发送）' : '已提交');
+      msg(t); var pm = el('rmNotifyPubMsg'); if (pm) pm.textContent = t;
+      rmRefresh();
+    }).catch(function () { msg('通知失败，请稍后重试。', true); });
+  }
+  /* ---------- substitute ---------- */
+  function openSub(regId, name) { state.subRegId = regId; el('rmSubFor').textContent = name; el('rmSubBox').style.display = 'block'; el('rmSubMsg').textContent = ''; }
+  /* ---------- grouping rules ---------- */
+  function fillRulePlayers() {
+    var list = (window.pmState && pmState.eligibleList) || [];
+    var opts = list.map(function (p) { return '<option value="' + p.player_id + '">' + escapeHtml(p.name || p.player_id.slice(0, 8)) + '</option>'; }).join('');
+    ['rmRuleA', 'rmRuleB'].forEach(function (id) { var s = el(id); if (s && list.length) s.innerHTML = opts; });
+  }
+  function renderRules() {
+    var box = el('rmRuleList'); if (!box || !window.pmState) return;
+    var name = function (pid) { var i = pmInfo(pid); return i.name || pid.slice(0, 8); };
+    var rows = [];
+    (pmState.meta.must_together || []).forEach(function (pr, i) { rows.push('<div>必须同组：' + escapeHtml(name(pr[0])) + ' ＋ ' + escapeHtml(name(pr[1])) + ' <button type="button" class="ghost rm-rule-del" data-kind="together" data-i="' + i + '">删除</button></div>'); });
+    (pmState.meta.must_apart || []).forEach(function (pr, i) { rows.push('<div>必须不同组：' + escapeHtml(name(pr[0])) + ' ≠ ' + escapeHtml(name(pr[1])) + ' <button type="button" class="ghost rm-rule-del" data-kind="apart" data-i="' + i + '">删除</button></div>'); });
+    box.innerHTML = rows.length ? rows.join('') : '<span style="color:#5c7260">暂无规则。规则随草稿一同保存，重新生成草稿时生效。</span>';
+    Array.prototype.forEach.call(box.querySelectorAll('.rm-rule-del'), function (b) { b.onclick = function () { var arr = b.getAttribute('data-kind') === 'together' ? pmState.meta.must_together : pmState.meta.must_apart; arr.splice(Number(b.getAttribute('data-i')), 1); renderRules(); if (window.pmScheduleSave) pmScheduleSave(); }; });
+  }
+  window.__rmRenderRules = renderRules;
+  window.__rmResWarn = function (w) { var b = el('rmResWarn'); if (!b) return; if (w) { b.style.display = 'block'; b.textContent = '资源提示：' + (typeof w === 'string' ? w : (w.message || JSON.stringify(w))); } else b.style.display = 'none'; };
+  /* ---------- import wizard ---------- */
+  function aliasField(h) { var s = String(h || '').trim().toLowerCase(); for (var i = 0; i < FIELDS.length; i++) { for (var j = 0; j < FIELDS[i].aliases.length; j++) { if (s === FIELDS[i].aliases[j].toLowerCase() || s.indexOf(FIELDS[i].aliases[j].toLowerCase()) >= 0) return FIELDS[i].k; } } return ''; }
+  function parseDelimited(text) {
+    var lines = String(text || '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+    return lines.map(function (line) {
+      var cells = [], cur = '', q = false;
+      var delim = line.indexOf('\t') >= 0 ? '\t' : ',';
+      for (var i = 0; i < line.length; i++) { var ch = line[i]; if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; } else if (ch === '"') q = true; else if (ch === delim) { cells.push(cur.trim()); cur = ''; } else cur += ch; }
+      cells.push(cur.trim()); return cells;
+    });
+  }
+  function setRaw(rows2d, sourceKind) {
+    if (!rows2d.length) { el('rmFileMsg').textContent = '没有读到有效行。'; return; }
+    state.rawRows = rows2d; state.sourceKind = sourceKind;
+    var first = rows2d[0].map(function (h) { return aliasField(h); });
+    var hasHeader = first.some(function (x) { return x; });
+    state.headers = hasHeader ? rows2d[0] : rows2d[0].map(function (_, i) { return '列' + (i + 1); });
+    state.mapping = hasHeader ? first : rows2d[0].map(function () { return ''; });
+    state.dataRows = hasHeader ? rows2d.slice(1) : rows2d;
+    renderMapping(); el('rmMapBox').style.display = 'block';
+    el('rmFileMsg').textContent = '已读取 ' + state.dataRows.length + ' 行，请核对列映射后点「预览校验」。';
+  }
+  function renderMapping() {
+    el('rmMapRow').innerHTML = state.headers.map(function (h, i) {
+      var opts = '<option value="">忽略</option>' + FIELDS.map(function (f) { return '<option value="' + f.k + '"' + (state.mapping[i] === f.k ? ' selected' : '') + '>' + f.label + '</option>'; }).join('');
+      return '<label style="font-size:12px">' + escapeHtml(String(h)) + '<select class="rm-map" data-i="' + i + '" style="width:auto">' + opts + '</select></label>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('.rm-map'), function (s) { s.onchange = function () { state.mapping[Number(s.getAttribute('data-i'))] = s.value; }; });
+  }
+  function collectRows() {
+    var rows = [];
+    (state.dataRows || []).forEach(function (cells) { var r = {}; state.mapping.forEach(function (f, i) { if (f) r[f] = cells[i] != null ? String(cells[i]).trim() : ''; }); if (Object.keys(r).length) rows.push(r); });
+    Array.prototype.forEach.call(document.querySelectorAll('.rm-manual-row'), function (row) {
+      var r = {}; var any = false;
+      FIELDS.forEach(function (f) { var inp = row.querySelector('[data-f="' + f.k + '"]'); if (inp) { r[f.k] = inp.value.trim(); if (r[f.k]) any = true; } });
+      if (any) rows.push(r);
+    });
+    return rows.filter(function (r) { return r.name || r.phone || r.email; });
+  }
+  function manualRowHtml() {
+    return '<div class="rm-manual-row" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">' + FIELDS.slice(0, 6).map(function (f) { return '<input data-f="' + f.k + '" placeholder="' + f.label + '" style="width:130px">'; }).join('') + '<button type="button" class="ghost rm-manual-del">删除</button></div>';
+  }
+  function loadXlsx() {
+    return new Promise(function (resolve, reject) {
+      if (window.XLSX) return resolve();
+      if (state.xlsxFailed) return reject(new Error('xlsx-load-failed'));
+      var s = document.createElement('script'); s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+      s.onload = function () { state.xlsxReady = true; resolve(); };
+      s.onerror = function () { state.xlsxFailed = true; reject(new Error('xlsx-load-failed')); };
+      document.head.appendChild(s);
+    });
+  }
+  function verdictChip(v) { var m = VERDICT[v] || [v || '未知', '#5c7260']; return '<span style="color:' + m[1] + ';border:1px solid ' + m[1] + ';border-radius:6px;padding:0 6px;font-size:12px">' + m[0] + '</span>'; }
+  function doPreview() {
+    var rows = collectRows();
+    if (!rows.length) { el('rmPreviewMsg').textContent = '先添加名单行（文件／粘贴／手动至少一种）。'; return; }
+    el('rmPreviewMsg').textContent = '校验中…';
+    call('roster_import_preview', { event_id: currentEvent.id, rows: rows }).then(function (d) {
+      if (!d || d.error) { el('rmPreviewMsg').textContent = '预览失败：' + ((d && d.error) || '服务未就绪'); return; }
+      state.preview = d; state.previewRows = rows;
+      var list = d.rows || d.results || [];
+      var c = d.counts || {};
+      el('rmPreviewMsg').textContent = '预览完成：共 ' + rows.length + ' 行' + (c ? '，汇总 ' + JSON.stringify(c) : '') + (d.capacity ? '，容量余量 ' + JSON.stringify(d.capacity) : '');
+      el('rmPreviewBox').innerHTML = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">' + list.map(function (r, i) {
+        var src = rows[i] || {};
+        var v = r.verdict || r.status || '';
+        var keep = ['ok_bound', 'ok_pending', 'no_contact'].indexOf(v) >= 0;
+        return '<tr style="border-bottom:1px solid #eef2ee"><td><input type="checkbox" class="rm-keep" data-i="' + i + '"' + (keep ? ' checked' : '') + ' style="width:auto"></td><td>' + escapeHtml(r.name || src.name || '') + '</td><td>' + verdictChip(v) + '</td><td style="color:#5c7260">' + escapeHtml(r.reason || r.message || '') + '</td><td style="color:#5c7260">' + escapeHtml(maskPhone(r.phone || src.phone || '') + ' ' + maskEmail(r.email || src.email || '')) + '</td></tr>';
+      }).join('') + '</table></div><p style="font-size:12px;color:#5c7260">取消勾选即可逐行剔除；冲突／重复／格式错／超限行默认不导入。</p>';
+      el('rmCommitBtn').style.display = '';
+    });
+  }
+  function doCommit() {
+    var keepIdx = {}; Array.prototype.forEach.call(document.querySelectorAll('.rm-keep:checked'), function (c) { keepIdx[Number(c.getAttribute('data-i'))] = 1; });
+    var rows = (state.previewRows || []).filter(function (_, i) { return keepIdx[i]; });
+    if (!rows.length) { el('rmPreviewMsg').textContent = '没有勾选要导入的行。'; return; }
+    el('rmPreviewMsg').textContent = '导入中…';
+    call('roster_import_commit', { event_id: currentEvent.id, rows: rows, payment_default: el('rmPayDefault').value, batch_meta: { file_name: state.fileName || null, source_kind: state.sourceKind || 'manual' } }).then(function (d) {
+      if (!d || d.error) { el('rmPreviewMsg').textContent = '导入失败：' + ((d && d.error) || '未知错误'); return; }
+      var list = d.rows || d.results || [];
+      var imported = d.imported_count != null ? d.imported_count : list.filter(function (x) { return x.ok || x.imported; }).length;
+      var skipped = d.skipped_count != null ? d.skipped_count : list.filter(function (x) { return !(x.ok || x.imported); }).length;
+      var problems = d.problem_count != null ? d.problem_count : 0;
+      el('rmCommitBox').innerHTML = '<div style="background:#f4faf2;border:1px solid #cfdccf;border-radius:8px;padding:10px 12px;font-size:14px;margin-top:8px">导入完成：成功 ' + imported + ' 人 · 跳过 ' + skipped + ' 人 · 问题 ' + problems + ' 行。' +
+        list.map(function (r, i) { return '<div style="font-size:13px">' + escapeHtml(r.name || (rows[i] && rows[i].name) || '') + ' — ' + escapeHtml(r.ok || r.imported ? '已导入' : '已跳过：' + (r.reason || r.error || '')) + '</div>'; }).join('') +
+        '<div style="color:#5c7260;margin-top:6px">下一步建议：先去「分组管理」编排出发名单；发布出发名单后，再由您手动点「通知球员」告知球员。</div></div>';
+      el('rmPreviewMsg').textContent = '';
+      rmRefresh(); if (window.refreshDash) refreshDash();
+    });
+  }
+  /* ---------- wiring ---------- */
+  document.addEventListener('DOMContentLoaded', function () { wire(); });
+  function wire() {
+    if (wire._done) return; wire._done = true;
+    var goPair = function (focusPublish) { if (window.__z49showView) window.__z49showView('viewPair'); if (window.pmOpen) pmOpen(); if (focusPublish) { var b = el('pmPublishBtn'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
+    el('rmImportBtn').onclick = function () { if (window.__z49showView) window.__z49showView('viewReg'); el('rmWizard').style.display = 'block'; el('rmWizard').scrollIntoView({ behavior: 'smooth' }); };
+    el('rmSmartBtn').onclick = function () { goPair(false); };
+    el('rmPublishBtn').onclick = function () { goPair(true); };
+    el('rmWizardToggle').onclick = function () { var w = el('rmWizard'); w.style.display = w.style.display === 'none' ? 'block' : 'none'; };
+    el('rmReloadBtn').onclick = function () { rmRefresh(); };
+    el('rmFilterSel').onchange = function () { if (state.manage) renderTable(state.manage.players || state.manage.registrations || state.manage.rows || []); };
+    el('rmGateSel').onchange = function () { call('grouping_gate_set', { event_id: currentEvent.id, gate: this.value }).then(function (d) { msg(d && d.ok ? '分组门槛已更新。' : '门槛更新失败：' + ((d && d.error) || ''), !(d && d.ok)); }); };
+    el('rmCheckinBtn').onclick = function () { var ids = checkedIds(); if (!ids.length) { msg('先勾选要签到的球员。', true); return; } call('roster_checkin', { event_id: currentEvent.id, registration_ids: ids, mark: 'checkin' }).then(function (d) { msg(d && d.ok !== false ? '已批量签到 ' + ids.length + ' 人。' : '签到失败：' + ((d && d.error) || '')); rmRefresh(); }); };
+    el('rmUncheckinBtn').onclick = function () { var ids = checkedIds(); if (!ids.length) { msg('先勾选要取消签到的球员。', true); return; } call('roster_checkin', { event_id: currentEvent.id, registration_ids: ids, mark: 'undo' }).then(function (d) { msg(d && d.ok !== false ? '已取消签到 ' + ids.length + ' 人。' : '操作失败：' + ((d && d.error) || '')); rmRefresh(); }); };
+    el('rmNotifyAllBtn').onclick = function () { notify(null); };
+    el('rmNotifyPubBtn').onclick = function () { notify(null); };
+    el('rmClaimCopyBtn').onclick = function () { var i = el('rmClaimUrl'); i.select(); try { navigator.clipboard.writeText(i.value); } catch (e) { document.execCommand('copy'); } el('rmClaimMsg').textContent = '链接已复制，请自行发给球员。'; };
+    el('rmClaimRevokeBtn').onclick = function () { if (!state.claimRegId) return; call('claim_link_revoke', { event_id: currentEvent.id, registration_id: state.claimRegId }).then(function (d) { el('rmClaimMsg').textContent = d && d.ok !== false ? '认领链接已撤销。' : '撤销失败：' + ((d && d.error) || ''); el('rmClaimUrl').value = ''; }); };
+    el('rmSubCancelBtn').onclick = function () { el('rmSubBox').style.display = 'none'; };
+    el('rmSubGoBtn').onclick = function () {
+      var name = el('rmSubName').value.trim(); if (!name) { el('rmSubMsg').textContent = '替补姓名必填。'; return; }
+      call('roster_substitute', { event_id: currentEvent.id, registration_id: state.subRegId, substitute: { name: name, phone: el('rmSubPhone').value.trim() || undefined, email: el('rmSubEmail').value.trim() || undefined } }).then(function (d) {
+        el('rmSubMsg').textContent = d && d.ok !== false ? '替换完成：替补已占用原分组席位，原球员记为未到场。' : '替换失败：' + ((d && d.error) || '');
+        if (d && d.ok !== false) { el('rmSubBox').style.display = 'none'; rmRefresh(); }
+      });
+    };
+    el('rmRuleAddBtn').onclick = function () {
+      var a = el('rmRuleA').value, b = el('rmRuleB').value;
+      if (!a || !b || a === b) { el('rmRuleMsg').textContent = '请选择两名不同的球员。'; return; }
+      var arr = el('rmRuleKind').value === 'together' ? pmState.meta.must_together : pmState.meta.must_apart;
+      arr.push([a, b]); el('rmRuleMsg').textContent = '规则已添加，保存草稿后写入。'; renderRules(); if (window.pmScheduleSave) pmScheduleSave();
+    };
+    /* wizard inputs */
+    el('rmFile').addEventListener('change', function () {
+      var f = this.files[0]; if (!f) return; state.fileName = f.name;
+      var ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (ext === 'csv') { f.text().then(function (txt) { setRaw(parseDelimited(txt), 'csv'); }); }
+      else if (ext === 'xlsx') {
+        el('rmFileMsg').textContent = '正在加载表格解析组件…';
+        loadXlsx().then(function () { return f.arrayBuffer(); }).then(function (buf) {
+          var wb = window.XLSX.read(buf, { type: 'array' }); var ws = wb.Sheets[wb.SheetNames[0]];
+          setRaw(window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }), 'xlsx');
+        }).catch(function () { el('rmFileMsg').textContent = '表格解析组件加载失败，请把文件另存为 CSV 后重新上传。'; });
+      } else el('rmFileMsg').textContent = '仅支持 .csv / .xlsx 文件。';
+    });
+    el('rmPasteParseBtn').onclick = function () { var txt = el('rmPaste').value; if (!txt.trim()) return; setRaw(parseDelimited(txt), 'paste'); state.sourceKind = 'paste'; };
+    el('rmAiBtn').onclick = function () {
+      var txt = el('rmPaste').value.trim(); if (!txt) { el('rmAiMsg').textContent = '先粘贴接龙文本。'; return; }
+      el('rmAiMsg').textContent = 'AI 识别中…（只整理已有信息，缺失留空）';
+      call('roster_parse_text', { event_id: currentEvent.id, text: txt }).then(function (d) {
+        if (!d || d.error || !(d.rows || []).length) { el('rmAiMsg').textContent = '识别失败：' + ((d && d.error) || '未解析出名单'); return; }
+        state.dataRows = []; state.previewRows = null;
+        el('rmManualRows').innerHTML = '';
+        /* AI rows go through manual-row grid for organizer confirmation */
+        state.aiRows = d.rows;
+        state.dataRows = d.rows.map(function (r) { return FIELDS.map(function (f) { return r[f.k] != null ? String(r[f.k]) : ''; }); });
+        state.headers = FIELDS.map(function (f) { return f.label; });
+        state.mapping = FIELDS.map(function (f) { return f.k; });
+        renderMapping(); el('rmMapBox').style.display = 'block';
+        el('rmAiMsg').textContent = '已识别 ' + d.rows.length + ' 人，请核对列映射与内容后点「预览校验」。拿不准的字段请在预览时留意。';
+        state.sourceKind = 'ai_text';
+      });
+    };
+    el('rmManualAddBtn').onclick = function () { el('rmManualRows').insertAdjacentHTML('beforeend', manualRowHtml()); bindManualDel(); };
+    function bindManualDel() { Array.prototype.forEach.call(document.querySelectorAll('.rm-manual-del'), function (b) { b.onclick = function () { b.parentNode.remove(); }; }); }
+    el('rmPreviewBtn').onclick = doPreview;
+    el('rmCommitBtn').onclick = doCommit;
+    renderRules();
+  }
+  if (document.readyState !== 'loading') wire();
+})();
+</script>
+
 </body>
 </html>
