@@ -82,7 +82,7 @@
   })();
 </script>
 <script type="module">
-import { initAuth, mountLogin, renderAuthBar, getAccessToken } from './auth.js?v=20261112c';
+import { initAuth, mountLogin, renderAuthBar, getAccessToken, getSessionSync } from './auth.js?v=20261112c';
 
 var CFG = window.__caddieCfg;
 var PRO_ID = 'c5b73421-290a-4a1b-8ca3-25364e7d2824'; // 平台官方角色「RUKIK Golf AI球童」（迁移 0696）
@@ -105,13 +105,82 @@ var history = []; // 只含真实问答轮（role/content），欢迎语不入�
 var backUrl = (CFG.ret === 'event' ? 'event.html' : 'play.html') + (CFG.eventId ? '?e=' + encodeURIComponent(CFG.eventId) : '');
 document.getElementById('backBtn').setAttribute('href', backUrl);
 
-// 会话留存（同标签页内返回比赛再进来不丢线程）
-var storeKey = 'golf_caddie_msgs_' + (CFG.eventId || 'none');
-try {
-  var saved = sessionStorage.getItem(storeKey);
-  if (saved) history = JSON.parse(saved) || [];
-} catch (e) { history = []; }
-function persist() { try { sessionStorage.setItem(storeKey, JSON.stringify(history.slice(-20))); } catch (e) {} }
+/* [V2.0 统一记忆根治 2026-11-12 · caddie.html 收尾] 本地历史只是显示缓存，
+ * 服务端为唯一权威（与 play.html／event.html 同款协议）：
+ * 1) 存储键绑定 UID（未登录不落盘、不回放无主副本）；旧版无主 legacy 键
+ *    一律清除，本人历史由下方服务端同步重建；2) 页面打开与每轮发送前以
+ *    本人 JWT 按 RLS 读服务端现存消息重建——服务端已删除的会话/消息本地
+ *    立即清除且不再回传 pro-chat；3) 退出/切换账号即清上一账号全部本地
+ *    副本；4) 每轮带稳定 client_msg_id（新消息新 ID、禁复用已删 ID），供
+ *    服务端墓碑按 ID 拦截复活。同步失败按 ERROR 态处理：保留本地、绝不
+ *    据失败清改；只有查询成功才按服务端结果清改本地。 */
+var uidCache = '';
+function myUid() {
+  var s = null;
+  try { s = getSessionSync(); } catch (e) {}
+  return (s && s.user && s.user.id) || '';
+}
+function storeKey() { var u = myUid(); return u ? 'golf_caddie_msgs_u_' + u + '_' + (CFG.eventId || 'none') : ''; }
+function purgeKeys(all) {
+  try {
+    var ks = [];
+    for (var i = 0; i < sessionStorage.length; i++) { var k = sessionStorage.key(i); if (k && k.indexOf('golf_caddie_msgs_') === 0 && (all || k.indexOf('golf_caddie_msgs_u_') !== 0)) ks.push(k); }
+    ks.forEach(function (k) { sessionStorage.removeItem(k); });
+  } catch (e) {}
+}
+function purgeAllLocal() { purgeKeys(true); history = []; }
+function persist() { var k = storeKey(); if (!k) return; try { sessionStorage.setItem(k, JSON.stringify(history.slice(-20))); } catch (e) {} }
+function loadHistory() {
+  purgeKeys(false);
+  uidCache = myUid();
+  history = [];
+  if (!uidCache) return;
+  try { var s = sessionStorage.getItem(storeKey()); var a = s ? JSON.parse(s) : null; if (Array.isArray(a)) history = a.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }); } catch (e) { history = []; }
+}
+function newCid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+var syncBusy = false;
+async function syncWithServer() {
+  if (syncBusy || sending) return false;
+  var u = myUid(); if (!u) return false;
+  syncBusy = true;
+  try {
+    var tk = await getAccessToken(); if (!tk) return false;
+    var root = API.replace(/\/functions\/v1$/, '');
+    var h = { 'apikey': ANON, 'Authorization': 'Bearer ' + tk };
+    var cr = await fetch(root + '/rest/v1/conversations?select=id,event_context&user_id=eq.' + encodeURIComponent(u) + '&order=updated_at.desc&limit=25', { headers: h });
+    if (!cr.ok) return false;
+    var convs = await cr.json();
+    var ids = (convs || []).filter(function (c) { var ec = (c && c.event_context) || {}; return ec.kind === 'golf_caddie' && String(ec.event_id || '') === String(CFG.eventId || ''); }).map(function (c) { return c.id; });
+    if (!ids.length) {
+      if (history.length) { history = []; persist(); paintHistory(); }
+      return true;
+    }
+    var msgs = [];
+    for (var i = 0; i < ids.length; i++) {
+      var mr = await fetch(root + '/rest/v1/chat_messages?select=role,content,client_msg_id,created_at&conversation_id=eq.' + encodeURIComponent(ids[i]) + '&order=created_at.asc&limit=200', { headers: h });
+      if (!mr.ok) return false;
+      msgs = msgs.concat(await mr.json());
+    }
+    var rebuilt = msgs.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }).map(function (m) { var o = { role: m.role, content: m.content }; if (m.client_msg_id) o.cid = m.client_msg_id; return o; }).slice(-20);
+    var before = JSON.stringify(history);
+    history = rebuilt;
+    if (JSON.stringify(history) !== before) { persist(); paintHistory(); }
+    return true;
+  } catch (e) { return false; } finally { syncBusy = false; }
+}
+function onAuthGuard(s) {
+  var u = (s && s.user && s.user.id) || '';
+  if (!u) {
+    if (uidCache) { purgeAllLocal(); uidCache = ''; paintHistory(); }
+    return;
+  }
+  if (u === uidCache) return;
+  if (uidCache) purgeAllLocal();
+  uidCache = u;
+  loadHistory();
+  paintHistory();
+  syncWithServer();
+}
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 // 轻量结构渲染：## 标题 / - 列表 / **加粗** / 段落（先转义再套格式，用户文本永不注入 HTML）
@@ -188,15 +257,17 @@ function setLoggedIn(on) {
 async function send() {
   var text = (inputEl.value || '').trim();
   if (!text || sending) return;
+  await syncWithServer(); /* 发送前对齐删除状态：已删内容不得再作上下文回传 */
   sending = true; sendBtn.disabled = true; inputEl.value = '';
-  history.push({ role: 'user', content: text });
+  var turnCid = newCid();
+  history.push({ role: 'user', content: text, cid: turnCid });
   addMsg('user', text, false); persist();
   var bubble = addMsg('assistant', '正在思考…', false);
   var acc = '';
   try {
     var tk = await getAccessToken();
     if (!tk) { bubble.textContent = '登录状态已过期，请重新登录后再问我。'; setLoggedIn(false); return; }
-    var payload = { professional_id: PRO_ID, mode: 'web', stream: true, messages: history.slice(-10) };
+    var payload = { professional_id: PRO_ID, mode: 'web', stream: true, client_msg_id: turnCid, messages: history.slice(-10).map(function (m) { return { role: m.role, content: m.content }; }) };
     if (CFG.eventId) payload.golf_event_id = CFG.eventId;
     if (CFG.hole) payload.golf_hole = CFG.hole;
     var res = await fetch(API + '/pro-chat', {
@@ -236,7 +307,7 @@ async function send() {
     }
     if (!acc) { bubble.textContent = '这次没有拿到回答，请再问一次。'; history.pop(); persist(); return; }
     bubble.innerHTML = renderRich(acc);
-    history.push({ role: 'assistant', content: acc });
+    history.push({ role: 'assistant', content: acc, cid: turnCid });
     persist();
   } catch (e) {
     bubble.textContent = '网络好像不太顺，请稍后再试一次。';
@@ -248,9 +319,12 @@ async function send() {
 sendBtn.addEventListener('click', send);
 inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
 
+loadHistory();
 paintHistory();
 initAuth(function (s) {
+  onAuthGuard(s);
   setLoggedIn(!!s);
+  if (s) syncWithServer();
   if (!s) mountLogin(document.getElementById('loginMount'), { onDone: function () { setLoggedIn(true); } });
 });
 renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setLoggedIn(false); } });
