@@ -498,6 +498,18 @@
         <p><label class="ghost" style="cursor:pointer;padding:6px 10px">选择图片并上传<input type="file" id="mapUpFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
         <span id="mapUpMsg" style="font-size:13px;color:#5c7260"></span></p>
       </div>
+      <div style="margin-top:14px;border-top:1px solid #e5eee1;padding-top:10px">
+        <label>官方资料核实（球会资料专用通道）</label>
+        <p style="color:#5c7260;font-size:13px;margin:4px 0 8px">上传球会提供的坐标表（CSV/KML/GeoJSON）后，系统自动与现库逐洞逐字段比对生成差异清单；PDF/图片只登记、需人工锚点。任何差异都必须在下方逐项确认才会更新，系统绝不自动覆盖现库数据，确认后可回滚。</p>
+        <div class="row">
+          <div><label>资料来源</label><select id="ovKind"><option value="club_official">球会官方</option><option value="club_staff_personal">球会工作人员</option><option value="gps_vendor">GPS 厂商</option><option value="organizer">主办方</option><option value="other">其他</option></select></div>
+          <div><label>出具方（如球会名称）</label><input id="ovIssuer" placeholder="如：Tustin Ranch Golf Club"></div>
+        </div>
+        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="ovRights" style="width:auto;margin-right:6px">我确认该资料由球会提供或已获球会授权用于核实</label>
+        <p><label class="ghost" style="cursor:pointer;padding:6px 10px">选择官方资料并上传<input type="file" id="ovFile" accept=".csv,.kml,.geojson,.json,.pdf,.jpg,.jpeg,.png" style="display:none"></label>
+        <span id="ovMsg" style="font-size:13px;color:#5c7260"></span></p>
+        <div id="ovDiffBox" style="font-size:13px;color:#17301c"></div>
+      </div>
     </div><div id="aiCard" style="display:none;margin-top:18px">
       <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
@@ -603,7 +615,7 @@ function loadCourseMap() {
   var box = document.getElementById('mapCovBox');
   if (!box || !currentEvent) return;
   box.textContent = '正在读取本场球场地图覆盖…';
-  call('course_map_coverage', { event_id: currentEvent.id }).then(function (d) { renderCourseMap(d); })
+  call('course_map_coverage', { event_id: currentEvent.id }).then(function (d) { renderCourseMap(d); loadOfficialVerify(); })
     .catch(function () { box.textContent = '地图覆盖读取失败，请稍后重试。'; });
 }
 function renderCourseMap(d) {
@@ -639,6 +651,99 @@ function renderCourseMap(d) {
     });
   });
 }
+/* [官方核实链 2026-11-13] 球会官方资料：登记→自动比对→逐项确认/驳回→可回滚。
+ * 自动链只生成待核实差异，确认才更新；与上方图片资产层并列、不替换。 */
+var OV_FIELD_TXT = { tee_center: '发球台中心', green_center: '果岭中心', hole_line: '洞线', fairway_boundary: '球道边界', par: 'Par', yards: '码数', course_rating: '球场评分', slope: '坡度难度', tee_set_identity: '发球台集合' };
+var OV_LEVEL_TXT = { le_10m: '一致（≤10m）', m_10_30m: '轻微差异（10–30m）', gt_30m: '冲突（>30m）', value_diff: '数值不同', value_same: '数值相同' };
+function ovValTxt(v) {
+  if (!v || typeof v !== 'object') return String(v ?? '');
+  if (v.lat != null && v.lng != null) return Number(v.lat).toFixed(5) + ', ' + Number(v.lng).toFixed(5);
+  var ks = Object.keys(v); return ks.length ? String(v[ks[0]]) : '';
+}
+function loadOfficialVerify() {
+  var box = document.getElementById('ovDiffBox');
+  if (!box || !currentEvent) return;
+  call('official_diff_list', { event_id: currentEvent.id, limit: 200 }).then(function (d) {
+    if (!d || !d.ok) { box.innerHTML = '差异清单读取失败。'; return; }
+    var items = d.items || [], sources = d.sources || [];
+    var pend = items.filter(function (i) { return i.status === 'pending_review'; });
+    var conf = items.filter(function (i) { return i.status === 'confirmed'; });
+    var html = '';
+    if (sources.length) {
+      html += '<div style="margin:6px 0;color:#5c7260">已登记资料 ' + sources.length + ' 份（最近在前）：' + sources.slice(0, 5).map(function (s) { return escapeHtml(s.file_name || '') + '（' + escapeHtml(s.status || '') + '）'; }).join('、') + '</div>';
+    }
+    if (!items.length) { html += '<div style="color:#5c7260">本球场暂无核实差异记录。</div>'; }
+    if (pend.length) {
+      html += '<label>待核实差异（' + pend.length + ' 项，逐项确认才更新）</label>' + pend.map(function (i) {
+        return '<div style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap"><span>' + (i.hole_number ? ('第 ' + i.hole_number + ' 洞') : '课程级') + ' · ' + escapeHtml(OV_FIELD_TXT[i.field] || i.field) + '：' + escapeHtml(ovValTxt(i.current_value)) + ' → ' + escapeHtml(ovValTxt(i.candidate_value)) + '（' + escapeHtml(OV_LEVEL_TXT[i.diff_level] || i.diff_level || '') + '）</span>' +
+          '<button type="button" class="ghost ov-act" data-act="confirm" data-id="' + i.id + '">确认更新</button>' +
+          '<button type="button" class="ghost ov-act" data-act="reject" data-id="' + i.id + '">驳回</button></div>';
+      }).join('');
+    }
+    if (conf.length) {
+      html += '<label style="margin-top:8px;display:block">已确认更新（可回滚）</label>' + conf.map(function (i) {
+        return '<div style="display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap"><span>' + (i.hole_number ? ('第 ' + i.hole_number + ' 洞') : '课程级') + ' · ' + escapeHtml(OV_FIELD_TXT[i.field] || i.field) + '：已更新为 ' + escapeHtml(ovValTxt(i.candidate_value)) + '</span>' +
+          '<button type="button" class="ghost ov-act" data-act="rollback" data-id="' + i.id + '">回滚</button></div>';
+      }).join('');
+    }
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll('.ov-act'), function (btn) {
+      btn.addEventListener('click', function () {
+        var act = btn.getAttribute('data-act'), id = btn.getAttribute('data-id');
+        var msg = document.getElementById('ovMsg');
+        if (act === 'confirm') {
+          uiConfirm('确认以该资料为准更新这一项？旧值会完整保留在核实记录中，之后可回滚。').then(function (ok) {
+            if (!ok) return;
+            call('official_review_apply', { event_id: currentEvent.id, item_id: id, decision: 'confirm' }).then(function (r) {
+              if (msg) msg.textContent = r && r.ok ? '已确认更新。' : ('确认失败：' + ((r && r.error) || '未知错误'));
+              loadOfficialVerify(); loadCourseMap();
+            });
+          });
+        } else if (act === 'reject') {
+          uiConfirm('驳回这一项差异？资料本身会保留，仅该项不再处理。').then(function (ok) {
+            if (!ok) return;
+            call('official_review_apply', { event_id: currentEvent.id, item_id: id, decision: 'reject' }).then(function (r) {
+              if (msg) msg.textContent = r && r.ok ? '已驳回。' : ('驳回失败：' + ((r && r.error) || '未知错误'));
+              loadOfficialVerify();
+            });
+          });
+        } else if (act === 'rollback') {
+          uiConfirm('回滚这一项到更新前的值？').then(function (ok) {
+            if (!ok) return;
+            call('official_review_rollback', { event_id: currentEvent.id, item_id: id }).then(function (r) {
+              if (msg) msg.textContent = r && r.ok ? '已回滚。' : ('回滚失败：' + ((r && r.error) || '未知错误'));
+              loadOfficialVerify(); loadCourseMap();
+            });
+          });
+        }
+      });
+    });
+  }).catch(function () { box.innerHTML = '差异清单读取失败，请稍后重试。'; });
+}
+(function wireOvUpload() {
+  var f = document.getElementById('ovFile'); if (!f) return;
+  f.addEventListener('change', function () {
+    var file = f.files && f.files[0]; if (!file) return;
+    var msg = document.getElementById('ovMsg');
+    function fail(t) { if (msg) msg.textContent = t; f.value = ''; }
+    if (!currentEvent) return fail('请先打开一场赛事。');
+    if (!document.getElementById('ovRights').checked) return fail('请先勾选确认资料来源与使用权限。');
+    if (msg) msg.textContent = '上传并比对中…';
+    var rd = new FileReader();
+    rd.onload = function () {
+      var b64 = String(rd.result || '').split(',')[1] || '';
+      call('official_source_register', { event_id: currentEvent.id, source_kind: document.getElementById('ovKind').value, issuer_name: document.getElementById('ovIssuer').value || '', file_name: file.name, rights_confirmed: true, data_base64: b64 }).then(function (d) {
+        if (!d || !d.ok || !d.source) { fail('登记失败：' + ((d && (d.message || d.error)) || '未知错误')); return; }
+        call('official_source_parse', { event_id: currentEvent.id, source_id: d.source.id }).then(function (p) {
+          if (msg) msg.textContent = p && p.manual_anchor_required ? '已登记：PDF/图片需人工锚点，不自动解析。' : ('比对完成：生成差异 ' + ((p && p.items_created) || 0) + ' 项，见下方清单。');
+          loadOfficialVerify(); f.value = '';
+        }).catch(function () { fail('比对失败：网络异常（资料已登记）。'); });
+      }).catch(function () { fail('登记失败：网络异常。'); });
+    };
+    rd.readAsDataURL(file);
+  });
+})();
+
 (function wireMapUpload() {
   var f = document.getElementById('mapUpFile'); if (!f) return;
   f.addEventListener('change', function () {
