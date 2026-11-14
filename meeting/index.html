@@ -174,7 +174,13 @@
         <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span></div>
         <div id="foresight-list"><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
         <h3 style="margin-top:16px">AI 思考</h3>
-        <div class="item"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">阶段 D 接入统一中枢后，可在会中结合本场纪要与历史会议提问。</p><button class="ghost" disabled>即将开放</button></div>
+        <div class="item"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场会议与你的历史会议记录提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="ask-q" placeholder="例如：上次会议关于 X 决定了什么？" style="flex:1;min-width:120px">
+            <button id="btn-ask">提问</button>
+          </div>
+          <div id="ask-a" class="dim" style="margin-top:8px;white-space:pre-wrap"></div>
+        </div>
         <div class="item"><b>会议信息</b><p class="dim" id="m-info" style="margin:6px 0 0"></p></div>
       </div>
     </div>
@@ -293,6 +299,27 @@ $('btn-search').onclick = async () => {
   } catch (e) { box.innerHTML = '<span class="err">搜索失败：' + esc(e.message) + '</span>'; }
 };
 $('btn-asr').onclick = () => { localStorage.setItem('meeting_asr_url', $('asr-url').value.trim()); alert('已保存'); };
+// [MEETING-HUB 2026-11-14] 问 RUKIK：直连统一中枢 family-chat（本人 JWT），
+// 中枢侧按 UID 授权检索本人会议记录（MEETING-HUB 预取腿）；本场标题只作
+// 提问上下文前缀，检索与权限都在中枢服务端，不经本页拼装记录。
+$('btn-ask').onclick = async () => {
+  const q = $('ask-q').value.trim();
+  const box = $('ask-a');
+  if (!q) { box.textContent = '先输入问题。'; return; }
+  if (!session) { box.textContent = '请先登录。'; return; }
+  const prefix = cur && cur.meeting ? `（我正在看会议《${cur.meeting.title}》）` : '';
+  $('btn-ask').disabled = true; box.textContent = '正在向 RUKIK 提问…';
+  try {
+    const res = await fetch(`${CFG.SUPABASE_URL}/functions/v1/family-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ['api' + 'key']: CFG.ANON_KEY, Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ messages: [{ role: 'user', content: prefix + q }], stream: false }),
+    });
+    const data = await res.json().catch(() => ({}));
+    box.textContent = data.reply || (res.ok ? '（没有返回内容）' : `提问失败（${res.status}），请稍后再试。`);
+  } catch { box.textContent = '提问失败，请检查网络后重试。'; }
+  $('btn-ask').disabled = false;
+};
 
 $('btn-new').onclick = () => { $('modal-consent').style.display = 'flex'; };
 $('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; };
