@@ -249,7 +249,8 @@
       
       
       
-      <p style="margin-top:14px"><button id="primaryBtn">下一步</button>
+      <div style="margin-top:14px"><label>赛事操作（与赛事页「管理赛事」同一状态口径：发布 / 开始 / 结束）</label></div>
+      <p style="margin-top:6px"><button id="primaryBtn">下一步</button>
         <button class="ghost" id="shareBtn">公开赛事页</button></p>
       <p class="ok" id="dashMsg"></p>
       <div id="catGrid" style="margin-top:14px"></div>
@@ -428,8 +429,20 @@
           </p>
           <p class="ok" id="awardMsg"></p>
         </div></div>
-      <div id="viewContent" class="catview" style="display:none"><label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
-        <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div style="margin-top:14px"><label>Golf Live 照片管理</label><p style="margin:6px 0"><button class="ghost" id="photosBtn" type="button">打开照片管理（上传 / 审核 / 删除）</button></p></div><div style="margin-top:14px"><label>赛事海报（顶部相册：上传 / 删除 / 排序 / 设封面，保存即同步赛事页；正式赛事与快速球局同口径）</label><div id="pstList"></div><div class="row"><div><label>添加海报（PNG/JPG/WebP，≤5MB，最多 9 张）</label><input id="pstFile" type="file" accept="image/png,image/jpeg,image/webp"></div></div><p class="ok" id="pstMsg"></p></div><div id="sponsorCard" style="margin-top:14px">
+      <div id="viewContent" class="catview" style="display:none"><div style="margin-top:14px"><label>封面管理 · 赛事海报（顶部相册：上传 / 删除 / 排序 / 设封面，保存即同步赛事页；正式赛事与快速球局同口径）</label><div id="pstList"></div><div class="row"><div><label>添加海报（PNG/JPG/WebP，≤5MB，最多 9 张）</label><input id="pstFile" type="file" accept="image/png,image/jpeg,image/webp"></div></div><p class="ok" id="pstMsg"></p></div><div id="orgCard" style="margin-top:14px">
+        <label>赛事合作伙伴 · 智能品牌档案（主办必填一家；品牌资料会同步给本场 AI 球童做介绍，球员点赛事页 Logo 即可请球童详细介绍。同一品牌建档一次，后续赛事可直接复用）</label>
+        <div id="orgRows"></div>
+        <button class="ghost" id="orgAdd" type="button">＋ 添加合作伙伴</button>
+        <button class="ghost" id="orgSave" type="button">保存合作伙伴</button>
+        <span id="orgMsg" style="font-size:13px;color:#5c7260"></span>
+        <div style="margin-top:10px">
+          <label>复用历史合作伙伴（搜索品牌档案，点选即带入本场，只需重选本场身份）</label>
+          <input id="orgSearchQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
+          <div id="orgSearchResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
+          <div id="orgLib" style="margin-top:6px"></div>
+        </div>
+      </div></div>
+      <div id="sponsorCard" style="margin-top:14px">
         <label>合作伙伴管理（本场赞助商：名称 / 类别 / 官网 / 简介 / 排序 / Logo 自助维护，保存后赛事页与大屏同步展示）</label>
         <div id="spList"></div>
         <div style="border:1px solid #e5eee1;border-radius:9px;padding:8px;margin:6px 0">
@@ -451,20 +464,8 @@
             <span id="spxMsg" style="font-size:13px;color:#5c7260"></span>
           </p>
         </div>
-        </div><div id="orgCard" style="margin-top:14px">
-        <label>赛事合作伙伴 · 智能品牌档案（主办必填一家；品牌资料会同步给本场 AI 球童做介绍，球员点赛事页 Logo 即可请球童详细介绍。同一品牌建档一次，后续赛事可直接复用）</label>
-        <div id="orgRows"></div>
-        <button class="ghost" id="orgAdd" type="button">＋ 添加合作伙伴</button>
-        <button class="ghost" id="orgSave" type="button">保存合作伙伴</button>
-        <span id="orgMsg" style="font-size:13px;color:#5c7260"></span>
-        <div style="margin-top:10px">
-          <label>复用历史合作伙伴（搜索品牌档案，点选即带入本场，只需重选本场身份）</label>
-          <input id="orgSearchQ" placeholder="输入品牌名搜索，如 BD Max" autocomplete="off">
-          <div id="orgSearchResults" style="display:none;border:1px solid #d8e2d8;border-radius:8px;max-height:200px;overflow:auto;background:#fff"></div>
-          <div id="orgLib" style="margin-top:6px"></div>
-        </div>
-      </div></div>
-      <div id="viewSettings" class="catview" style="display:none"><div id="adminCard" style="margin-top:14px">
+        </div><div style="margin-top:14px"><label>相册管理 · Golf Live 照片管理</label><p style="margin:6px 0"><button class="ghost" id="photosBtn" type="button">打开照片管理（上传 / 审核 / 删除）</button></p></div><label>发布公告</label><input id="annTitle" placeholder="公告标题"><textarea id="annBody" rows="2" placeholder="公告内容"></textarea>
+        <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div id="viewSettings" class="catview" style="display:none"><div id="adminCard" style="margin-top:14px">
         <label>管理员（可与主办方一样管理本赛事的账号）</label>
         <p style="color:#5c7260;font-size:13px;margin:4px 0 8px">按手机号或邮箱授权：对方已有账号立即生效；还没有账号的记为「待生效」，其用该手机号/邮箱注册登录后自动生效。手机号与邮箱都填时须属于同一账号，否则会被拒绝。管理员可再授权、也可撤销其他管理员；主办方本人不可撤销。每次授权与撤销都会留下审计记录。</p>
         <div id="admList" style="font-size:14px;color:#17301c">打开赛事后加载。</div>
@@ -474,30 +475,7 @@
         </div>
         <p><button class="ghost" id="admAddBtn" type="button">添加管理员</button>
         <span id="admMsg" style="font-size:13px;color:#5c7260"></span></p>
-      </div><div id="knowCard" style="margin-top:14px">
-        <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
-        <div id="knowList"></div>
-        <div class="row">
-          <div><label>智能关怀模板（选一个一键带入，再改成贵赛事的真实信息；保存草稿→确认→发布后生效）</label>
-          <select id="kTpl"><option value="">— 选择模板 —</option></select></div>
-        </div>
-        <p style="font-size:13px;color:#5c7260;margin:2px 0 8px">带【签到时间】【合影时间】【颁奖时间】标记的条目发布后，RUKIK 会结合赛事时间、分组与球员进度，在对应时刻自动提醒相关球员（智能赛事关怀）；请把标记里的时间改成真实时间，不要删掉标记本身。</p>
-        <div class="row">
-          <div><label>类别</label><select id="kKind"><option value="banquet">晚宴安排</option><option value="rules">比赛规则</option><option value="awards">奖项说明</option><option value="sponsor">赞助商介绍</option><option value="notice">特殊通知</option><option value="other">其他</option></select></div>
-          <div><label>标题 *</label><input id="kTitle" placeholder="如：颁奖晚宴安排"></div>
-        </div>
-        <label>内容 *</label><textarea id="kBody" rows="4" placeholder="直接输入或粘贴赛事说明；也可上传 PDF 自动提取文字后在此核对修改"></textarea>
-        <label>上传文件补充（PDF 自动提取文字；图片 / Word 暂不支持自动解析，会记录文件名，请把要点填入上方内容）</label>
-        <input type="file" id="kFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
-        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="kKey" style="width:auto;margin-right:6px">关键信息（涉及时间 / 地点 / 规则变更——发布后将通过赛事关怀提醒已报名球员）</label>
-        <p>
-          <button class="ghost" id="kSave" type="button">保存草稿</button>
-          <button class="ghost" id="kReset" type="button">清空表单</button>
-          <span id="kMsg" style="font-size:13px;color:#5c7260"></span>
-        </p>
-      </div><div style="margin-top:18px"><label>报表与导出</label><p style="margin:6px 0"><button class="ghost" id="reportBtn">运营报表</button>
-          <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
-          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div><div id="mapCard" style="margin-top:18px">
+      </div><div id="mapCard" style="margin-top:18px">
       <h3 style="margin-top:0">球场地图配置</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">球场地图是球场基础数据：系统按球场自动关联全局图与逐洞洞形图，同一球场的所有赛事共用，不按赛事重复配置。缺失时系统会自动查找合法数据源补全（自动制图）；您也可以在下方上传有权使用的球场图补充，保存后对本球场的全部赛事生效，且不会被系统自动数据覆盖。</p>
       <div id="mapCovBox" style="font-size:14px;color:#17301c">打开赛事后加载本场球场的地图覆盖情况…</div>
@@ -524,7 +502,28 @@
         <span id="ovMsg" style="font-size:13px;color:#5c7260"></span></p>
         <div id="ovDiffBox" style="font-size:13px;color:#17301c"></div>
       </div>
-    </div><div id="aiCard" style="display:none;margin-top:18px">
+    </div><div id="knowCard" style="margin-top:14px">
+        <label>补充赛事知识（海报、组织方、日程、分组、成绩已自动同步给 AI 球童；这里只补原本没有的信息。AI 球童只引用「已发布」条目，草稿不对外）</label>
+        <div id="knowList"></div>
+        <div class="row">
+          <div><label>智能关怀模板（选一个一键带入，再改成贵赛事的真实信息；保存草稿→确认→发布后生效）</label>
+          <select id="kTpl"><option value="">— 选择模板 —</option></select></div>
+        </div>
+        <p style="font-size:13px;color:#5c7260;margin:2px 0 8px">带【签到时间】【合影时间】【颁奖时间】标记的条目发布后，RUKIK 会结合赛事时间、分组与球员进度，在对应时刻自动提醒相关球员（智能赛事关怀）；请把标记里的时间改成真实时间，不要删掉标记本身。</p>
+        <div class="row">
+          <div><label>类别</label><select id="kKind"><option value="banquet">晚宴安排</option><option value="rules">比赛规则</option><option value="awards">奖项说明</option><option value="sponsor">赞助商介绍</option><option value="notice">特殊通知</option><option value="other">其他</option></select></div>
+          <div><label>标题 *</label><input id="kTitle" placeholder="如：颁奖晚宴安排"></div>
+        </div>
+        <label>内容 *</label><textarea id="kBody" rows="4" placeholder="直接输入或粘贴赛事说明；也可上传 PDF 自动提取文字后在此核对修改"></textarea>
+        <label>上传文件补充（PDF 自动提取文字；图片 / Word 暂不支持自动解析，会记录文件名，请把要点填入上方内容）</label>
+        <input type="file" id="kFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+        <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="kKey" style="width:auto;margin-right:6px">关键信息（涉及时间 / 地点 / 规则变更——发布后将通过赛事关怀提醒已报名球员）</label>
+        <p>
+          <button class="ghost" id="kSave" type="button">保存草稿</button>
+          <button class="ghost" id="kReset" type="button">清空表单</button>
+          <span id="kMsg" style="font-size:13px;color:#5c7260"></span>
+        </p>
+      </div><div id="aiCard" style="display:none;margin-top:18px">
       <h3 style="margin-top:0">活动AI · 本场专属 AI 分身</h3>
       <p style="color:#5c7260;font-size:13px;margin-top:0">由 RUKIK 统一智能中枢提供支持。您只需上传资料、确认信息、开启 AI，知识提取与检索由 RUKIK 自动完成。</p>
 
@@ -564,7 +563,9 @@
       <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiCare" style="width:auto;margin-right:6px">启用赛事关怀和提醒</label>
       <label style="display:block;font-size:14px;color:#17301c"><input type="checkbox" id="aiPostOpen" style="width:auto;margin-right:6px">活动结束后继续开放（回忆与历史问答）</label>
       <p><button class="ghost" id="aiSaveSwitches" type="button">保存开放设置</button> <span id="aiMsgE" style="font-size:13px;color:#5c7260"></span></p>
-    </div></div>
+    </div></div><div style="margin-top:18px"><label>报表与导出</label><p style="margin:6px 0"><button class="ghost" id="reportBtn">运营报表</button>
+          <button class="ghost" id="expScoresBtn">导出成绩表 CSV</button>
+          <button class="ghost" id="expRegsBtn">导出报名名单 CSV</button></p></div>
       <pre id="out" style="display:none"></pre>
     
       
@@ -1822,7 +1823,7 @@ function refreshDash() {
     if (pendReg > 0) todos.push('有 ' + pendReg + ' 条报名待审核，请到「报名管理」的名单中通过或拒绝');
     var unpaidN = feeModeNow() === 'offline' ? regs.filter(function (x) { return (x.status === 'registered' || x.status === 'checked_in') && x.payment_status === 'pending'; }).length : 0;
     if (unpaidN > 0) todos.push('有 ' + unpaidN + ' 位球员待确认收款：未确认收款前不会进入正式分组，请到「报名管理」的名单中点「确认已付款」');
-    if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点本页下方「结束比赛」，赛事页将切换为回忆馆');
+    if (currentEvent.status === 'in_progress') todos.push('比赛进行中；收尾时点本页下方「结束赛事」，赛事页将切换为回忆馆') /* [ONEPAGE 20261114] 命名对齐 */;
     if (r.report) {
       var sc = r.report.scoring.by_status || {};
       pend = (sc.submitted || 0) + (sc.verified || 0);
@@ -1839,7 +1840,7 @@ function refreshDash() {
     var pb = document.getElementById('primaryBtn');
     if (currentEvent.status === 'draft') { pb.textContent = '发布赛事'; pb.onclick = function () { updateStatus('published'); }; }
     else if (currentEvent.status === 'published') { pb.textContent = '开始比赛'; pb.onclick = function () { updateStatus('in_progress'); }; }
-    else if (currentEvent.status === 'in_progress') { pb.textContent = '结束比赛'; pb.onclick = finishEvent; }
+    else if (currentEvent.status === 'in_progress') { pb.textContent = '结束赛事'; pb.onclick = finishEvent; }
     else if (currentEvent.status === 'completed') { pb.textContent = '打开赛事页（回忆馆）'; pb.onclick = function () { window.open('../event.html?e=' + encodeURIComponent(currentEvent.id), '_blank'); }; }
     else { pb.textContent = '刷新进度'; pb.onclick = refreshDash; }
   });
@@ -1850,11 +1851,11 @@ function updateStatus(s) {
     else show(d);
   });
 }
-// [线X 补齐 2026-11-11] 结束比赛：与 App「结束比赛（切换回忆馆）」同口径——同一 event_update 动作、
+// [线X 补齐 2026-11-11] 结束赛事（原「结束比赛」）：与 App「结束比赛（切换回忆馆）」同口径——同一 event_update 动作、
 // 同一 requireStaff 权限、同一状态机（in_progress → completed），不另造结束逻辑。
 function finishEvent() {
   /* [线Z3] 原生确认框换页面内统一弹窗（语义与文案不变：取消则不结束、不发请求） */
-  uiConfirm('确定结束比赛吗？结束后赛事页将切换为回忆馆，记分到此为止。').then(function (ok) { if (ok) doFinishEvent(); });
+  uiConfirm('确定结束赛事吗？结束后赛事页将切换为回忆馆，记分到此为止。').then(function (ok) { if (ok) doFinishEvent(); });
 }
 function doFinishEvent() {
   call('event_update', { event_id: currentEvent.id, status: 'completed' }).then(function (d) {
@@ -2889,13 +2890,16 @@ async function pmPublish(confirmed) {
 /* [线Z49] 管理首页 + 6 分类：数据驱动显隐。分类定义带 kinds 适配位——
    本台现仅服务 golf 赛事（数据源 golf-api），普通活动接入时按 kind 过滤分类即可，
    现阶段不声称已覆盖普通活动后台。 */
+/* [ONEPAGE 20261114] 分类顺序与命名对齐统一赛事模板的管理侧：封面/合作伙伴/相册
+   （赛事内容）→ 管理员/地图/设置（赛事设置）→ 报名 → 分组 → 成绩与排名 → 奖项；
+   仅顺序与副标题，分类键与功能不变。 */
 var Z49_CATS = [
+  { key: 'viewContent', name: '赛事内容',   sub: '封面 · 合作伙伴 · 相册', kinds: ['golf'] },
+  { key: 'viewSettings',name: '赛事设置',   sub: '管理员 · 地图 · AI球童 · 导出', kinds: ['golf'] },
   { key: 'viewReg',     name: '报名管理',   sub: '名单 · 收款 · 签到',   kinds: ['golf'] },
   { key: 'viewPair',    name: '分组管理',   sub: '人工分组 · 出发洞',   kinds: ['golf'] },
   { key: 'viewScore',   name: '成绩与排名', sub: '记分 · 裁判 · 排行榜', kinds: ['golf'] },
-  { key: 'viewAward',   name: '奖项管理',   sub: '计算 · 确认 · 颁奖',   kinds: ['golf'] },
-  { key: 'viewContent', name: '赛事内容',   sub: '海报 · 公告 · 合作伙伴', kinds: ['golf'] },
-  { key: 'viewSettings',name: '赛事设置',   sub: '规则 · AI球童 · 导出', kinds: ['golf'] }
+  { key: 'viewAward',   name: '奖项管理',   sub: '计算 · 确认 · 颁奖',   kinds: ['golf'] }
 ];
 function z49EventKind() { return 'golf'; }
 function z49ShowView(key) {

@@ -228,6 +228,23 @@
 </style>
 </head>
 <body>
+<script>
+/* [ONEPAGE 20261114] 记分已并入赛事页（统一模板）：带赛事参数的旧记分链接、通知
+   跳转与历史链接统一落到赛事页记分锚点 #scoreSec。无 e 参数（首页发起/加入/回忆）
+   不受影响；本机未同步记分与赛事页共用同一队列键，迁移后自动续传，不丢分。 */
+(function () {
+  try {
+    var q = new URLSearchParams(location.search);
+    var e = q.get('e');
+    if (e) {
+      var c = q.get('c') || q.get('join') || '';
+      location.replace('event.html?e=' + encodeURIComponent(e) + (c ? '&c=' + encodeURIComponent(c) : '') + '#scoreSec');
+    }
+  } catch (err) {}
+})();
+</script>
+<noscript><div style="margin:12px;padding:14px 16px;background:#103527;color:#eafff3;border-radius:12px;font-size:14px;line-height:1.6">记分功能已并入赛事页：请打开赛事页，在「逐洞记分」区记分（本页记分入口已迁移）。</div></noscript>
+
 <div class="topbar"><div class="in">
   <a class="back" id="backLink" href="event.html">← 返回赛事</a>
   <div class="ttl" id="pageTitle">我的比赛</div>

@@ -330,6 +330,76 @@
   .cd-care .cc-opt{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
   .cd-care .cc-opt.on{background:#E3C878;border-color:#E3C878;color:#0B3B2C;font-weight:700}
   .hidden{display:none}
+
+  /* [ONEPAGE 20261114] 横向条（问 RUKIK Golf／分享）＋记分模块作用域样式（自记分页原样移植、仅加 #scoreSec 前缀防与赛事页类名互扰） */
+  .dualcard.strip{display:flex;align-items:center;gap:12px;margin-top:14px}
+  .dualcard.strip .dc-t{margin-top:0}
+  .dualcard.strip .dc-s{margin-top:1px}
+  .dualcard.strip .dc-arrow{margin-left:auto;font-size:20px;opacity:.8}
+  #scoreSec{scroll-margin-top:10px;margin-top:14px}
+  #scoreSec:empty{display:none}
+  .manageCard{margin-top:14px}
+  .manageCard .mrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .manageCard .mbtn{flex:1;min-width:140px;background:rgba(255,255,255,.06);color:#f2fff7;border:1px solid rgba(242,255,247,.25);border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
+  .manageCard .mbtn.danger{color:#ffb9c6;border-color:rgba(255,150,170,.45)}
+  .manageCard .mmsg{font-size:13px;color:#ffd98a;margin-top:8px;min-height:16px}
+  #scoreSec .card{ background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1px solid rgba(120,255,190,.13); -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); border-radius: 18px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
+  #scoreSec .card h2{ font-size: 17px; margin: 0 0 10px; color: #f4faf5; }
+  #scoreSec .card h3{ font-size: 15px; margin: 14px 0 8px; color: #f4faf5; }
+  #scoreSec .muted{ color: #a9c4b1; font-size: 13px; line-height: 1.7; }
+  #scoreSec .meta{ font-size: 14px; line-height: 1.9; color: #dcebe0; }
+  #scoreSec .pill{ display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(46,224,111,.12); color: #6ee7a0; border: 1px solid rgba(46,224,111,.25); font-weight: 600; }
+  #scoreSec .pill.live{ background: rgba(46,224,111,.18); color: #4ade80; }
+  #scoreSec .pill.post{ background: rgba(227,200,120,.14); color: #E3C878; border-color: rgba(227,200,120,.32); }
+  #scoreSec .btn{ display: block; width: 100%; background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: 1px solid rgba(120,255,190,.25); border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; box-shadow: 0 6px 18px rgba(6,90,45,.45), inset 0 1px 0 rgba(255,255,255,.18); }
+  #scoreSec .btn:disabled{ opacity: .55; }
+  #scoreSec .btn:active{ transform: translateY(1px); }
+  #scoreSec .btn.plain{ background: rgba(255,255,255,.05); color: #cfeedd; border: 1px solid rgba(160,220,185,.35); font-weight: 600; box-shadow: none; }
+  #scoreSec .btn.gold{ background: linear-gradient(135deg, #d9b96a, #b58a58); color: #241a05; border-color: rgba(255,235,190,.4); }
+  #scoreSec .btnrow{ display: flex; gap: 10px; margin-top: 12px; }
+  #scoreSec .btnrow .btn{ flex: 1; }
+  #scoreSec .err{ color: #fda4a4; font-size: 14px; line-height: 1.7; }
+  #scoreSec .okmsg{ color: #4ade80; font-size: 14px; line-height: 1.7; }
+  #scoreSec .fld label{ display: block; font-size: 13px; color: #9db8a7; margin-bottom: 6px; }
+  #scoreSec .fld input{ width: 100%; border: 1px solid rgba(160,220,185,.28); border-radius: 12px; padding: 12px 14px; font-size: 16px; outline: none; background: rgba(3,18,12,.55); color: #f2f8f3; min-height: 44px; }
+  #scoreSec .scorehead .tot{ font-size: 15px; font-weight: 700; color: #E3C878; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #scoreSec .syncbar.bad{ background: rgba(239,68,68,.13); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+  #scoreSec .syncbar.good{ background: rgba(34,197,94,.14); color: #86efac; border-color: rgba(34,197,94,.3); }
+  #scoreSec .holegrid{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 12px; }
+  #scoreSec .hole .hn{ font-size: 11.5px; color: #a9c4b1; }
+  #scoreSec .hole .hp{ font-size: 10.5px; color: #7d9a89; }
+  #scoreSec .hole .hs{ font-size: 18px; font-weight: 700; line-height: 1.25; color: #fff; }
+  #scoreSec .hole .hs.none{ color: #5f7a6a; font-weight: 400; }
+  #scoreSec .hole:has(.dot.saved){ background: linear-gradient(165deg, rgba(34,197,94,.16), rgba(34,197,94,.05)); border-color: rgba(74,222,128,.35); }
+  #scoreSec .hole.sel{ border-color: #2ee06f; background: linear-gradient(165deg, rgba(24,110,64,.55), rgba(10,52,32,.6)); box-shadow: 0 0 0 1.5px rgba(46,224,111,.8), 0 0 16px rgba(46,224,111,.35); }
+  #scoreSec .hole.sel .hn{ color: #b9f4cd; }
+  #scoreSec .hole .dot{ position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; }
+  #scoreSec .dot.saved{ background: #22c55e; }
+  #scoreSec .dot.pending{ background: #f59e0b; }
+  #scoreSec .dot.syncing{ background: #3b82f6; }
+  #scoreSec .dot.conflict{ background: #ef4444; }
+  #scoreSec .editor{ margin-top: 14px; border-top: 1px dashed rgba(160,220,185,.25); padding-top: 14px; }
+  #scoreSec .stepper{ display: flex; align-items: center; justify-content: center; gap: 20px; margin: 12px 0; }
+  #scoreSec .stepper button{ width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid rgba(46,224,111,.55); background: radial-gradient(circle at 35% 30%, rgba(120,255,190,.16), rgba(6,32,20,.85)); color: #7dffb0; font-size: 32px; font-weight: 700; cursor: pointer; line-height: 1; box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08); }
+  #scoreSec .stepper button:active{ background: radial-gradient(circle at 35% 30%, rgba(120,255,190,.30), rgba(10,60,36,.9)); }
+  #scoreSec .stepper .val{ font-size: 54px; font-weight: 800; min-width: 88px; text-align: center; color: #fff; text-shadow: 0 2px 18px rgba(46,224,111,.35); }
+  #scoreSec .stepper.small button{ width: 46px; height: 46px; font-size: 22px; }
+  #scoreSec .stepper.small .val{ font-size: 26px; min-width: 52px; text-shadow: none; }
+  #scoreSec .grow.me{ background: rgba(227,200,120,.07); border-radius: 10px; }
+  #scoreSec .grow.flash{ background: rgba(34,197,94,.12); }
+  #scoreSec .ginfo{ flex: 1; min-width: 0; }
+  #scoreSec .gname{ font-weight: 600; color: #eef7f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #scoreSec .edlabel{ text-align: center; font-size: 15.5px; font-weight: 700; color: #f4faf5; letter-spacing: .2px; }
+  #scoreSec .statetag{ text-align: center; font-size: 13px; margin-top: 6px; color: #c4d8c9; }
+  #scoreSec .conflictbox{ margin-top: 12px; background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.35); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: #fecaca; }
+  #scoreSec .conflictbox input{ width: 100%; border: 1px solid rgba(160,220,185,.28); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 8px; min-height: 42px; background: rgba(3,18,12,.55); color: #f2f8f3; }
+  #scoreSec .preview{ margin-top: 12px; background: rgba(34,197,94,.10); border: 1px solid rgba(74,222,128,.3); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.75; color: #dcebe0; }
+  #scoreSec .preview .t{ font-weight: 700; color: #4ade80; }
+  #scoreSec table.scores{ width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  #scoreSec table.scores th,#scoreSec table.scores td{ padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(160,220,185,.10); }
+  #scoreSec table.scores th{ color: #9db8a7; font-weight: 600; font-size: 12.5px; }
+  #scoreSec .skel{ padding: 34px 0; text-align: center; color: #9db8a7; font-size: 14px; }
+  #scoreSec .sharebox{ background: rgba(34,197,94,.09); border: 1px solid rgba(74,222,128,.28); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.7; word-break: break-all; margin-top: 12px; color: #dcebe0; }
 </style>
 </head>
 <body>
@@ -337,6 +407,8 @@
   <div class="topbar"><span>RUKIK GOLF · LIVE</span><span class="pill pre" id="statePill">加载中</span></div>
   <div id="heroSec"><div class="skl"></div></div>
   <div id="dualSec"></div>
+  <div id="scoreSec"><div id="scApp"></div></div>
+  <div id="shareSec"></div>
   <div id="mapSec"></div>
   <div id="glSec"></div>
   <div id="glEvFs" class="glfs" hidden>
@@ -347,6 +419,7 @@
   <div id="partnerSec"></div>
   <div id="boardSec"></div>
   <div id="staffSec"></div>
+  <div id="manageSec"></div>
 </div>
 <script>
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
@@ -684,10 +757,11 @@ function renderHero() {
   var myReg = EV.my_registration;
   var playUrl = playHref(); /* [403修复20261112] 带凭据透传，见 playHref 注 */
   if (heroPre) {
-    if (!myReg) act = '<a class="signup" href="' + playUrl + '">立即报名</a>';
-    else if (myReg.status === 'pending') act = '<a class="signup alt" href="' + playUrl + '">报名审核中 · 查看进度</a>';
-    else if (myReg.status === 'waitlisted') act = '<a class="signup alt" href="' + playUrl + '">候补中 · 查看进度</a>';
-    else if (myReg.status === 'rejected') act = '<a class="signup alt" href="' + playUrl + '">报名未通过 · 查看详情</a>';
+    /* [ONEPAGE 20261114] 报名/状态落点改本页记分区锚点（记分模块已内嵌，模块内即报名与状态卡） */
+    if (!myReg) act = '<a class="signup" href="#scoreSec">立即报名</a>';
+    else if (myReg.status === 'pending') act = '<a class="signup alt" href="#scoreSec">报名审核中 · 查看进度</a>';
+    else if (myReg.status === 'waitlisted') act = '<a class="signup alt" href="#scoreSec">候补中 · 查看进度</a>';
+    else if (myReg.status === 'rejected') act = '<a class="signup alt" href="#scoreSec">报名未通过 · 查看详情</a>';
   }
   /* [线Z60 2026-11-12] 快速球局（kind=casual）分享落地主流程，覆盖上方正式
      赛事口径：成员→「计分卡」直达记分；非成员→醒目「报名参加」，登录后一键
@@ -696,7 +770,7 @@ function renderHero() {
   if (e.kind === 'casual' && e.status !== 'completed' && e.status !== 'cancelled') {
     var joined = myReg && (myReg.status === 'registered' || myReg.status === 'checked_in');
     if (joined) {
-      act = '<a class="signup" href="' + playUrl + '">计分卡</a>';
+      act = ''; /* [ONEPAGE 20261114] 删除顶部横向「计分卡」按钮：记分已内嵌本页记分区 */
     } else if (!myReg) {
       var joinsClosed = !!((e.competition_config || {}).joins_closed);
       if (joinsClosed) act = '<div class="signup alt">本场球局已关闭加入</div>';
@@ -712,8 +786,6 @@ function renderHero() {
     (c.name ? '<span>📍 ' + esc(c.name) + (c.city ? '，' + esc(c.city) : '') + '</span>' : '') +
     '</div>' +
     act +
-    /* [线Z61 2026-11-12] 分享入口紧邻主行动按钮：系统分享优先、不支持时复制链接（bindZ61Share 绑定） */
-    '<button type="button" class="signup alt" id="z61ShareBtn" style="cursor:pointer;font:inherit;width:100%;margin-top:8px">分享</button><div id="z61ShareNote" style="text-align:center;font-size:13px;margin-top:6px"></div>' +
     /* 减法重构第 1 项：赛制/介绍/日程默认收进「赛事详情」，点开才看 */
     '<button type="button" class="dtoggle" id="dToggle">赛事详情 ▾</button>' +
     '<div class="details hidden" id="detailsBox">' +
@@ -728,7 +800,9 @@ function renderHero() {
   });
   renderHeroMedia();
   renderDual();
+  renderShareStrip();
   renderStaff();
+  renderManage();
   bindZ60Join();
   bindZ61Share();
 }
@@ -764,6 +838,7 @@ function bindZ60Join() {
     call('casual_join', body).then(function (j) {
       if (note) note.textContent = j.already_member ? '您已在这场球局中。' : '报名成功！已为您加入本场球局，也已同步到您的「我的计划」。';
       loadDynamic();
+      if (window.__evScoreReload) window.__evScoreReload(); /* [ONEPAGE 20261114] 记分模块同步落成员态 */
     }).catch(function (err) {
       btn.disabled = false;
       var m = String(err && err.message || err);
@@ -816,38 +891,19 @@ function bindZ61Share() {
     } else copyFallback();
   });
 }
-/* 第二区：记分卡 + 问RUKIK Golf 并排双卡；状态短说明只进记分卡一行，不另堆文字卡 */
+/* [ONEPAGE 20261114] 第二区改版：原「记分卡＋问RUKIK Golf」并排双卡中，记分卡卡删除
+   （记分已内嵌本页记分区），问 RUKIK Golf 改为整行横向条（点击仍开本页球童弹层，入口 id 不变）。 */
 function renderDual() {
   var el = document.getElementById('dualSec');
   if (!el || !EV || !EV.event) return;
-  var st = stateOf();
-  var myReg = EV.my_registration;
-  var t, s;
-  if (st === 'post') { t = '计分卡'; s = myReg ? '查看正式结果' : '查看赛事结果'; }
-  else if (st === 'live') {
-    t = '记分卡';
-    if (myReg && myReg.status === 'pending') s = '报名待主办方审核';
-    else if (myReg && myReg.status === 'rejected') s = '报名未通过';
-    /* 缺陷 c：已开赛但尚未分组，文案与状态一致，不许假装能记分 */
-    else if (myReg && !EV.my_pairing) s = '已开赛 · 尚未分组，请联系主办方';
-    else if (myReg) s = '记录我的成绩 · 同组记分';
-    else s = '登录后记录我的成绩';
-  } else {
-    t = '计分卡';
-    if (myReg && myReg.status === 'pending') s = '报名待主办方审核';
-    else if (myReg && myReg.status === 'rejected') s = '报名未通过';
-    else if (myReg && myReg.status === 'waitlisted') s = '候补中 · 查看进度';
-    else if (myReg) {
-      var feeModeEv = EV.event.fee_mode || (Number(EV.event.fee_cents) > 0 ? 'offline' : 'free');
-      if (feeModeEv === 'offline' && myReg.payment_status === 'pending') s = '已报名 · 费用待主办方确认';
-      else if ((EV.pairings || []).length) s = '已报名 · 查看分组';
-      else s = '已报名 · 等待分组';
-    }
-    else s = '查看分组与准备状态';
-  }
-  el.innerHTML = '<div class="dual">' +
-    '<a class="dualcard score" href="' + playHref() + '"><div class="dc-ic">⛳</div><div class="dc-t">' + t + '</div><div class="dc-s">' + s + '</div></a>' +
-    '<a class="dualcard caddie" href="#" id="cdOpen"><div class="dc-ic">✦</div><div class="dc-t">问 RUKIK Golf</div><div class="dc-s">赛事智能球童</div></a></div>';
+  el.innerHTML = '<a class="dualcard caddie strip" href="#" id="cdOpen"><div class="dc-ic">✦</div><div><div class="dc-t">问 RUKIK Golf</div><div class="dc-s">赛事智能球童</div></div><div class="dc-arrow">›</div></a>';
+}
+/* [ONEPAGE 20261114] 分享横向条（定版第 6 区）：即原 hero 内 Z61 分享按钮整体移位，
+   id 与绑定（bindZ61Share）不变，分享口径（z61ShareUrl）不变。 */
+function renderShareStrip() {
+  var el = document.getElementById('shareSec');
+  if (!el) return;
+  el.innerHTML = '<button type="button" class="signup alt" id="z61ShareBtn" style="cursor:pointer;font:inherit;width:100%;margin-top:14px">分享</button><div id="z61ShareNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
 }
 /* 主办方入口：页面最底部低调单按钮（管理动作仍在主办方台，不塞进球员页） */
 function renderStaff() {
@@ -856,12 +912,46 @@ function renderStaff() {
   /* [Z51 2026-11-12] 管理入口口径与服务端 isStaff 统一：organizer ∪ golf_event_roles 的 admin/referee 均可见；权限未确认（EV/my_role 缺失）默认不渲染 */
   if (EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')) el.innerHTML = '<a class="staffbtn" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场（主办方台）</a>';
   else el.innerHTML = '';
-  /* [0738 赛事删除入口 2026-11-12] 删除仅 organizer/admin（与服务端 event_delete 验权同口径，referee 不显示） */
-  if (EV && (EV.my_role === 'organizer' || EV.my_role === 'admin')) {
-    el.innerHTML += '<button type="button" class="staffbtn" id="evDelBtn" style="width:100%;cursor:pointer;color:#e8a09c;border-color:rgba(179,38,30,.55)">删除赛事</button>';
-    var dbtn = document.getElementById('evDelBtn');
-    if (dbtn) dbtn.addEventListener('click', function () { rkDeleteEventFlowHere(); });
-  }
+}
+/* [ONEPAGE 20261114] 第 12 区「管理赛事」（仅 organizer/admin 渲染，与服务端验权同口径）：
+   结束赛事＝与主办方台同一 event_update 状态动作（正式赛事 in_progress→completed，
+   确认文案与 console 同口径）；取消赛事＝同一动作置 cancelled；删除赛事＝既有
+   event_delete 流程（自原 staffSec 移位至此，流程函数 rkDeleteEventFlowHere 不变）。
+   快速球局的结束走记分模块自带的 casual_finish 结束条（全员可见、服务端验权、
+   与记分页一致），本区不重复造一份，避免双份状态。 */
+function renderManage() {
+  var el = document.getElementById('manageSec');
+  if (!el) return;
+  if (!EV || !EV.event || !(EV.my_role === 'organizer' || EV.my_role === 'admin')) { el.innerHTML = ''; return; }
+  var e = EV.event;
+  var btns = '';
+  if (e.kind !== 'casual' && e.status === 'in_progress') btns += '<button type="button" class="mbtn" id="evFinishBtn">结束赛事</button>';
+  if (e.status !== 'completed' && e.status !== 'cancelled') btns += '<button type="button" class="mbtn" id="evCancelBtn">取消赛事</button>';
+  btns += '<button type="button" class="mbtn danger" id="evDelBtn">删除赛事</button>';
+  el.innerHTML = '<div class="card manageCard"><h2>管理赛事</h2><div class="mrow">' + btns + '</div><div class="mmsg" id="evManageMsg"></div></div>';
+  var msg = document.getElementById('evManageMsg');
+  var fb = document.getElementById('evFinishBtn');
+  if (fb) fb.addEventListener('click', function () {
+    if (!window.confirm('确定结束赛事吗？结束后赛事页将切换为回忆馆，记分到此为止。')) return;
+    fb.disabled = true;
+    dyn('event_update', { status: 'completed' }).then(function () {
+      if (msg) msg.textContent = '赛事已结束，正在刷新为回忆馆…';
+      loadDynamic();
+      if (window.__evScoreReload) window.__evScoreReload();
+    }).catch(function () { fb.disabled = false; if (msg) msg.textContent = '结束没有成功，请稍后再试。'; });
+  });
+  var cb = document.getElementById('evCancelBtn');
+  if (cb) cb.addEventListener('click', function () {
+    if (!window.confirm('确定取消这场赛事吗？取消后球员将不能继续报名与记分。')) return;
+    cb.disabled = true;
+    dyn('event_update', { status: 'cancelled' }).then(function () {
+      if (msg) msg.textContent = '赛事已取消，正在刷新…';
+      loadDynamic();
+      if (window.__evScoreReload) window.__evScoreReload();
+    }).catch(function () { cb.disabled = false; if (msg) msg.textContent = '取消没有成功，请稍后再试。'; });
+  });
+  var db = document.getElementById('evDelBtn');
+  if (db) db.addEventListener('click', function () { rkDeleteEventFlowHere(); });
 }
 /* [A2 2026-11-12 08:31 终裁] 底部球童宣传卡取消；陪伴模式改为紧凑控件
  * 收进球童弹层头部（#cdCareCtl）：只显当前模式、点击展开三选一；真源仍为
@@ -2548,6 +2638,10 @@ function loadDynamic() {
   });
 }
 function boot() {
+  /* [ONEPAGE 20261114] 旧记分链接落点：#scoreSec 锚点在内容就绪后自动定位到记分区 */
+  if (location.hash === '#scoreSec') {
+    [700, 1800].forEach(function (ms) { setTimeout(function () { var s = document.getElementById('scoreSec'); if (s) s.scrollIntoView(); }, ms); });
+  }
   document.getElementById('heroSec').innerHTML = '<div class="skl"></div>';
   loadBoardIntoFunc(); // L2 排名独立启动，不等基础层
   var t0 = Date.now();
@@ -3627,6 +3721,1223 @@ function rkDeleteEventFlowHere() {
     .catch(function (e) { var eEl = document.getElementById('rkDelErr'); if (eEl) eEl.textContent = '删除失败：' + (e && e.message ? e.message : '未知错误'); yes.disabled = false; yes.textContent = '确认删除'; });
   });
 }
+</script>
+<script type="module">
+/* ══════════ [ONEPAGE 20261114] 逐洞记分模块（自记分页 play.html 整体移植） ══════════
+   与记分页同一套状态机/队列/接口：golf-api 的 event_get/player_card/ask_context/
+   score_get_card/score_get_group/score_submit/score_submit_group/certify/casual_join
+   全部原样；本机记分队列键与记分页共用（rukik.golf.scoreQueue.web.v1），旧页未同步
+   的记分在本页自动续传——全站只有这一份记分状态，不存在双份成绩。
+   适配点（均为呈现层）：①渲染目标改为本页 #scApp；②evMetaHtml/backToEventBtn
+   返回空串（赛事名/时间地点已在页首 hero 呈现、返回按钮在本页无意义）；
+   ③syncTail 收敛为「记分当前洞→本页逐洞图跟随」（window.setHole，带 curHole
+   守卫：洞号未变绝不重绘地图，记分录入不重置地图缩放）；④保存确认后顺带刷新
+   本页排行榜区；⑤play 的 toast 在记分页未定义（潜在缺陷），此处补最小实现。 */
+import { initAuth, mountLogin, getSessionSync, getAccessToken } from './auth.js?v=20261113a';
+
+var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
+var qs = new URLSearchParams(location.search);
+var eventId = qs.get('e') || '11564c2e-9c4f-40de-a54a-9803a0ae024c';
+
+
+function normCode(v) { return String(v || '').normalize('NFKC').trim().toUpperCase(); }
+
+function joinErrText(jn) {
+  var m = (jn && jn.error) || '';
+  if (m === 'invite_code_rotated') return '该邀请码已被组织者更新，请向组织者索取最新邀请码或最新链接。';
+  if (m === 'invalid invite code') return '邀请码不正确，请向组织者确认。';
+  if (m === 'joins closed by organizer') return '组织者已关闭这场球局的加入，可直接联系组织者。';
+  if (m === 'round already finished' || (jn && jn.status === 409)) return '这场球局已经结束了。';
+  if (m === 'round cancelled') return '这场球局已取消。';
+  if (m === 'network') return '网络异常，请稍后重试。';
+  return '加入未成功：' + (m || '请稍后重试');
+}
+
+var linkCode = normCode(qs.get('c') || qs.get('join') || '');
+
+function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+function fmtTime(iso, tz) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleString('zh-CN', { timeZone: tz || 'America/Los_Angeles', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', weekday: 'short' }); } catch (e) { return String(iso).slice(0, 16).replace('T', ' '); }
+}
+
+async function golfApi(action, body, needAuth) {
+  var headers = { 'apikey': ANON, 'Content-Type': 'application/json' };
+  var tk = await getAccessToken();
+  if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  else if (needAuth) return { ok: false, status: 401, data: {}, error: 'login_required' };
+  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 20000);
+  try {
+    var res = await fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(Object.assign({ action: action }, body || {})) });
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+    return { ok: res.ok && !data.error, status: res.status, data: data, error: data.error || null };
+  } finally { clearTimeout(to); }
+}
+
+var QUEUE_KEY = 'rukik.golf.scoreQueue.web.v1';
+var CACHE_KEY = 'rukik.golf.playCache.v2'; /* [线Z55] v2 起 cardData 必须带 cardMeta（卡 version/updated_at）才可跨会话复用；v1 无校验缓存整体弃用 */
+
+function loadQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch (e) { return []; } }
+
+function saveQueue(q) { try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch (e) {} }
+
+function newOpId() { return 'web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+
+function enqueueScore(item) {
+  var q = loadQueue();
+  var prev = null;
+  var rest = q.filter(function (x) { if (x.scorecard_id === item.scorecard_id && x.hole === item.hole) { prev = x; return false; } return true; });
+  if (prev && prev.base_strokes !== undefined) item.base_strokes = prev.base_strokes; // 同洞连改沿用最初基线，避免自造假冲突
+  if (prev && prev.op_id) item.op_id = prev.op_id;
+  item.queued_at = Date.now();
+  rest.push(item);
+  saveQueue(rest);
+}
+
+function cacheGet() { try { var c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); return (c && c.eventId === eventId) ? c : null; } catch (e) { return null; } }
+
+function cacheSet(patch) {
+  try {
+    var c = cacheGet() || { eventId: eventId };
+    Object.assign(c, patch); c.at = Date.now();
+    if (patch.cardData && patch.cardData.scorecard) c.cardMeta = { id: patch.cardData.scorecard.id, version: patch.cardData.scorecard.version, updated_at: patch.cardData.scorecard.updated_at };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+  } catch (e) {}
+}
+
+var S = {
+  session: null, ev: null, pc: null, askCtx: null, cardData: null,
+  selHole: null, edStrokes: null, edPutts: null,
+  group: null, gEdits: {}, gDirty: {}, gConflicts: {}, gFlash: {}, gMatrix: false, gInitFor: null, gSaving: false, /* [线Z39] 同组共享记分卡状态 */
+  flushing: false, conflicts: {}, failed: {}, preview: null, loadedAt: 0,
+  authKnown: false, loadSeq: 0, /* [线P] authKnown：会话状态未确认前禁止渲染登录表单；loadSeq：并发装载排序，陈旧运行不得重绘 */
+  fresh: false, freshPc: false, freshAsk: false, cardStale: false, cardLoadFail: false, loadNote: '', /* [线Z55] fresh＝本轮实时 event_get 已确认；未确认前 paint 只出骨架，禁止用缓存/默认值画状态模块 */
+  autoJoinTried: false, autoJoinErr: '', /* [匿名邀请完善20261112] 登录后凭 linkCode 自动加入（仅 casual、每页只试一次） */
+  grpFail: false, /* [线Z78] 同组记分加载失败标记：失败不得静默退回单人形态，记分区须出可见提示＋重试 */
+};
+
+var app = document.getElementById('scApp');
+
+function myCard() {
+  var cards = (S.askCtx && S.askCtx.my_scorecards) || [];
+  if (!cards.length) return null;
+  return cards.filter(function (c) { return c.status !== 'locked'; })[0] || cards[0];
+}
+
+function queuedFor(cardId, hole) {
+  return loadQueue().filter(function (x) { return x.scorecard_id === cardId && (hole == null || x.hole === hole); });
+}
+
+function sleepMs(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+async function golfApiRetry(action, body, needAuth) {
+  var delays = [700, 1800, 4000];
+  var r = null;
+  for (var i = 0; i <= delays.length; i++) {
+    r = await golfApi(action, body, needAuth).catch(function () { return null; });
+    if (r && r.ok) return r;
+    if (r && (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404)) return r; /* 业务性失败不重试 */
+    if (i < delays.length) {
+      S.loadNote = '网络异常，正在自动重试（第 ' + (i + 2) + ' 次）…';
+      paintLoading();
+      await sleepMs(delays[i]);
+    }
+  }
+  return r;
+}
+
+function paintLoading() {
+  var t = esc(S.loadNote || '正在加载最新状态…');
+  if (S.ev && S.ev.event) app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">' + t + '</div></div>';
+  else app.innerHTML = '<div class="card"><div class="skel">' + t + '</div></div>';
+}
+
+function errCardHtml(msg) {
+  return '<div class="card"><div class="err">' + esc(msg) + '</div><div class="btnrow"><button class="btn" id="retryBtn">重新加载</button></div></div>';
+}
+
+function bindRetry() {
+  var rb = document.getElementById('retryBtn');
+  if (rb) rb.addEventListener('click', function () { loadAll(false); });
+}
+
+function renderForbiddenGuide() {
+  var sess = getSessionSync();
+  var loggedIn = !!(sess && sess.user);
+  app.innerHTML = (S.ev && S.ev.event ? evMetaHtml() : '') +
+    '<div class="card"><h2>' + (loggedIn ? '您尚未加入这场球局' : '这是私密球局') + '</h2>' +
+    '<p class="muted">' + (loggedIn ? '您已登录，但还不是这场球局的参与者。请输入组织者给您的邀请码加入，或向组织者索取最新分享链接。' : '本球局仅限受邀参加，登录后即可查看并加入。如果您是经分享链接打开的，请确认打开的是组织者最新分享的完整链接——链接不完整、或邀请码已被组织者更新，都会看到本页。') + '</p>' +
+    (linkCode ? '<p class="err">您打开的链接中的邀请码不正确，或已被组织者更新，请核对后重新输入。</p>' : '') +
+    (loggedIn ? '' : '<div id="forbidLogin"></div>') +
+    '<div class="fld"><label>有邀请码？输入后直接打开</label><input id="forbidCode" type="text" placeholder="邀请码" autocomplete="off"></div>' +
+    '<div class="err" id="forbidCodeErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="forbidCodeBtn" type="button">用邀请码打开</button><button class="btn plain" id="forbidRetry" type="button">重新加载</button></div></div>';
+  if (!loggedIn) mountLogin(document.getElementById('forbidLogin'), { onDone: function () { loadAll(false); } });
+  var cb = document.getElementById('forbidCodeBtn');
+  if (cb) cb.addEventListener('click', function () {
+    var v = normCode(document.getElementById('forbidCode').value);
+    if (!v) { var fe = document.getElementById('forbidCodeErr'); if (fe) fe.textContent = '请先输入邀请码。'; return; }
+    location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
+  });
+  var rb2 = document.getElementById('forbidRetry');
+  if (rb2) rb2.addEventListener('click', function () { loadAll(false); });
+}
+
+async function loadAll(useCachePaint) {
+  var seq = ++S.loadSeq; /* [线P] 运行序号：后发运行优先，陈旧运行返回后不得再 paint */
+  S.fresh = false; S.freshPc = false; S.freshAsk = false; S.cardLoadFail = false; S.loadNote = '';
+  var cached = cacheGet();
+  if (cached && cached.ev) {
+    /* [线Z55] 缓存只种「赛事头」供标题与骨架：状态模块（报名/等待/记分）
+       一律等实时数据确认（S.fresh）后才画。旧版用缓存 ev/pc/askCtx/cardData
+       直接 paint，是首屏闪现「报名参加」错误态与旧球场卡（Par 71）的根因。 */
+    S.ev = cached.ev;
+  }
+  paint();
+  var evBody = { event_id: eventId };
+  if (linkCode) evBody.invite_code = linkCode; /* [403修复20261112] 凭据透传（linkAccess），见 linkCode 注 */
+  var evR = await golfApiRetry('event_get', evBody, false);
+  if (seq !== S.loadSeq) return;
+  if (!evR || !evR.ok) {
+    /* [403修复20261112] 失败按状态分流、三态不许再混：404＝球局不存在或链接
+       已失效；403＝邀请/权限问题（私密球局未带凭据或凭据失效）→ 引导页，
+       绝不写「网络异常」；仅 fetch 异常/超时/5xx 等真网络失败才用网络异常文案。 */
+    var failStatus = evR && evR.status;
+    if (failStatus === 404) { app.innerHTML = errCardHtml('球局不存在或链接已失效。'); bindRetry(); return; }
+    if (failStatus === 403) { renderForbiddenGuide(); return; }
+    /* [线Z55] 实时确认失败＝显式失败态：有缓存头也只显示赛事头＋错误，
+       绝不拿缓存画状态（故障不能伪装成无数据/旧数据） */
+    if (!S.ev) { app.innerHTML = errCardHtml('赛事信息加载失败（网络异常，已自动重试多次）。请检查网络后重新加载。'); }
+    else { app.innerHTML = evMetaHtml() + errCardHtml('赛事最新状态加载失败（网络异常，已自动重试多次）。为避免显示过期信息，这里不展示缓存状态，请重新加载。'); }
+    bindRetry();
+    return;
+  }
+  S.ev = evR.data;
+  S.loadedAt = Date.now();
+  cacheSet({ ev: S.ev });
+  S.fresh = true;
+  /* [ONEPAGE 20261114] 分享卡片由赛事页 applyShare 统一装配，本模块不重复处理 */
+  if (!S.session) { paint(); return; }
+  /* [匿名邀请完善20261112] 登录后自动加入：持有效邀请码打开 casual 球局、登录
+     成功且尚非成员时，自动以邀请码加入一次（与首页 ?join= 自动加入流同口径），
+     成功即整页重载落成员视图；失败如实记录、回落报名表单（邀请码已预填）。 */
+  if (linkCode && S.ev.event.kind === 'casual' && !S.ev.my_player && !S.autoJoinTried) {
+    S.autoJoinTried = true;
+    var sessU = (S.session && S.session.user) || {};
+    var jn = await casualJoin({ event_id: eventId, invite_code: linkCode, display_name: (sessU.user_metadata || {}).display_name || sessU.email || undefined });
+    if (seq !== S.loadSeq) return;
+    if (jn && jn.ok) { loadAll(false); return; }
+    S.autoJoinErr = joinErrText(jn);
+  }
+  var rs = await Promise.all([
+    golfApiRetry('player_card', { event_id: eventId }, true).catch(function () { return null; }),
+    golfApiRetry('ask_context', { event_id: eventId }, true).catch(function () { return null; }),
+  ]);
+  if (seq !== S.loadSeq) return;
+  if (rs[0] && rs[0].ok) { S.pc = rs[0].data.player_card; S.freshPc = true; }
+  else if (rs[0] && rs[0].status === 404) { S.pc = null; S.freshPc = true; }
+  if (rs[1] && rs[1].ok) { S.askCtx = rs[1].data.ask_context; S.freshAsk = true; }
+  cacheSet({ pc: S.pc, askCtx: S.askCtx });
+  if (!S.freshPc || !S.freshAsk) {
+    /* 个人参赛数据没拿到：显式失败，禁止用缓存/默认值继续画状态机 */
+    app.innerHTML = evMetaHtml() + errCardHtml('您的参赛信息加载失败（网络异常，已自动重试多次）。为避免显示错误状态，请重新加载。');
+    bindRetry();
+    return;
+  }
+  var card = myCard();
+  if (card) {
+    /* [线Z55] 跨会话 cardData 复用必须过版本校验：缓存 cardMeta 与实时
+       ask_context 中同卡 version/updated_at 完全一致才可作秒开占位，
+       不一致即弃缓存等实时返回；实时返回一到立即覆盖（cardStale 标记）。 */
+    var meta = cached && cached.cardMeta;
+    var live = (S.askCtx.my_scorecards || []).filter(function (c) { return c.id === card.id; })[0];
+    if (cached && cached.cardData && meta && live && meta.id === card.id && meta.version === live.version && meta.updated_at === live.updated_at && (!S.cardData || S.cardData.scorecard.id !== card.id)) {
+      S.cardData = cached.cardData; S.cardStale = true;
+    }
+    var cd = await golfApiRetry('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; });
+    if (seq !== S.loadSeq) return;
+    if (cd && cd.ok) { S.cardData = cd.data; S.cardStale = false; cacheSet({ cardData: S.cardData }); }
+    else if (!S.cardData) S.cardLoadFail = true;
+    await loadGroup(card, false); /* [线Z39] 同组共享判定：组内个人卡 ≥2 才进共享模式 */
+  }
+  if (seq !== S.loadSeq) return; /* [线P] 陈旧运行不得重绘 */
+  paint();
+  flushQueue(); // 进入页面即尝试回放本地待同步记分
+}
+
+/* [ONEPAGE 20261114] 赛事元信息已在页首呈现，记分卡内不再重复（原 play 函数体保留于来源页） */
+function evMetaHtml() { return ''; }
+/* [ONEPAGE 20261114] 本页即赛事页，不再渲染「返回赛事页」按钮 */
+function backToEventBtn() { return ''; }
+
+function organizerHint() {
+  if (!S.ev || S.ev.my_role !== 'organizer') return '';
+  return '<div class="btnrow"><a class="btn gold" href="console/?e=' + encodeURIComponent(eventId) + '">您是本场主办方，去分组 →</a></div>';
+}
+
+function paint() {
+  if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
+  /* [线Z55] 实时状态未确认（S.fresh=false）前只出骨架：禁止用缓存/默认值
+     画报名、等待、记分等状态模块（首屏错误中间态根因修复） */
+  if (!S.fresh) { paintLoading(); return; }
+  setTailVisible(false); /* [线Z44] 尾部两模块只在记生态呈现，其余状态一律隐藏 */
+  var e = S.ev.event;
+  /* [线P] 会话状态未确认（auth.js 尚在恢复本地会话）时只显示赛事信息＋确认中骨架，
+     绝不抢先渲染登录表单——已登录用户先看到登录表单正是走查投诉的根因之一 */
+  if (!S.session && !S.authKnown) { app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">正在确认登录状态…</div></div>'; return; }
+  if (!S.session) return paintGuest();
+  var mine = S.ev.my_player;
+  var reg = S.ev.my_registration;
+  if (!mine) return paintRegister();
+  if (reg && reg.status === 'waitlisted') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名候补中</h2><p class="muted">本场名额已满，您已进入候补名单。有名额释放时主办方会与您联系。</p>' + backToEventBtn() + '</div>';
+    return;
+  }
+  if (reg && reg.status === 'cancelled') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名已取消</h2><p class="muted">您在本场的报名已取消。如需重新报名，请联系主办方。</p>' + backToEventBtn() + '</div>';
+    return;
+  }
+  /* [线P] 报名审核流球员态（用户定版：报名先待审核、通过后才生效） */
+  if (reg && reg.status === 'pending') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名待主办方审核</h2>' +
+      '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：<b>报名已提交，等待主办方审核</b>。</p>' +
+      '<p class="muted">审核通过后报名即正式生效，这里会继续显示分组与记分入口；未通过会在此如实显示。可稍后刷新查看审核结果。</p>' +
+      '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
+    document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+    return;
+  }
+  if (reg && reg.status === 'rejected') {
+    app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名未通过审核</h2>' +
+      '<p class="muted">主办方未通过您本场的报名，本次报名不生效。如有疑问，请联系主办方。</p>' + backToEventBtn() + '</div>';
+    return;
+  }
+  var card = myCard();
+  if (e.status === 'completed') return paintRecap(card);
+  if (e.status === 'in_progress') {
+    if (card) {
+      /* [线Z55] 记分卡实时加载失败且无可用数据：显式失败，禁止静默画空网格 */
+      if (S.cardLoadFail) { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); return; }
+      return paintScoring(card);
+    }
+    return paintNoCard();
+  }
+  /* published / draft：未开赛 */
+  if (S.pc && S.pc.group_no) return paintPreStart();
+  return paintWaitingGroup();
+}
+
+function paintGuest() {
+  var e = (S.ev && S.ev.event) || {};
+  /* [匿名邀请完善20261112] 邀请感知登录墙：经邀请链接打开（带码）或赛事本身为
+     invite_only 时，墙面先认邀请、再讲登录，并给出输码入口；普通公开赛事保持
+     原通用文案。登录成功走 loadAll——casual 球局会在那里凭 linkCode 自动加入。 */
+  var inviteCtx = !!linkCode || e.visibility === 'invite_only';
+  if (!inviteCtx) {
+    app.innerHTML = evMetaHtml() +
+      '<div class="card"><h2>报名 / 记分需要登录</h2>' +
+      '<p class="muted">公开海报、球场地图与排名可直接在赛事页浏览；报名、提交成绩与保存个人 AI 对话需要登录（与 RUKIK App 同一账号）。</p>' +
+      '<div id="loginBox"></div></div>' + backToEventBtn('先去赛事页逛逛');
+    mountLogin(document.getElementById('loginBox'), { onDone: function () { loadAll(false); } });
+    return;
+  }
+  var casual = e.kind === 'casual';
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>您受邀参加这场' + (casual ? '球局' : '赛事') + '</h2>' +
+    '<p class="muted">' + (casual
+      ? '组织者邀请您参加这场球局。登录后将自动完成加入、直接开始记分（与 RUKIK App 同一账号），无需再输入邀请码。'
+      : '本场为邀请制赛事。登录后即可报名参加，邀请码已由链接带入、无需手输（与 RUKIK App 同一账号）。') + '</p>' +
+    '<div id="loginBox"></div>' +
+    '<div class="fld"><label>有邀请码？输入后直接打开</label><input id="guestCode" type="text" placeholder="邀请码" autocomplete="off"></div>' +
+    '<div class="err" id="guestCodeErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="guestCodeBtn" type="button">用邀请码打开</button></div></div>' + backToEventBtn('先去赛事页逛逛');
+  mountLogin(document.getElementById('loginBox'), { onDone: function () { loadAll(false); } });
+  var gb = document.getElementById('guestCodeBtn');
+  if (gb) gb.addEventListener('click', function () {
+    var v = normCode(document.getElementById('guestCode').value);
+    if (!v) { var ge = document.getElementById('guestCodeErr'); if (ge) ge.textContent = '请先输入邀请码。'; return; }
+    location.href = location.pathname + '?e=' + encodeURIComponent(eventId) + '&c=' + encodeURIComponent(v);
+  });
+}
+
+function paintRegister() {
+  var e = S.ev.event;
+  /* [邀请码根治 20261112] casual 球局不走正式报名（正式 register 对 casual 只落
+     pending、不建组不建卡，且码校验口径不一致）——分流到 casual_join 加入卡。 */
+  if (e.kind === 'casual') return paintCasualJoin();
+  var fee = Number(e.fee_cents || 0);
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>报名参加</h2>' +
+    (fee > 0 ? '<p class="muted">本场费用：$' + (fee / 100).toFixed(fee % 100 ? 2 : 0) + ' / 人（线下收款：报名先在此登记，缴费按主办方通知办理；主办方确认收款后，正式分组资格生效）。</p>' : '<p class="muted">本场免费报名。</p>') +
+    '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="regName" type="text" autocomplete="name" placeholder="您的姓名"></div>' +
+    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="regInvite" type="text" placeholder="主办方提供的邀请码" value="' + esc(linkCode || '') + '"></div>' : '') +
+    '<div class="fld"><label>差点指数（选填）</label><input id="regHcp" type="number" step="0.1" min="-10" max="54" placeholder="如 18.5，没有可留空"></div>' +
+    '<div class="fld"><label>组别（选填）</label><input id="regDiv" type="text" placeholder="如 男子组 / 女子组"></div>' +
+    '<div class="fld"><label>单位 / 机构（选填）</label><input id="regOrg" type="text" placeholder="公司或社团名称"></div>' +
+    '<div class="err" id="regErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="regBtn">提交报名</button></div>' +
+    backToEventBtn() + '</div>';
+  document.getElementById('regBtn').addEventListener('click', async function () {
+    var name = (document.getElementById('regName').value || '').trim();
+    var errEl = document.getElementById('regErr');
+    if (!name) { errEl.textContent = '请填写姓名。'; return; }
+    var body = { event_id: eventId, display_name: name, source: 'web' }; // 报名来源：迁移 0697 已给 golf_registrations_source_check 补 'web' 值（线 K），网页报名直用 web
+    var inv = document.getElementById('regInvite'); if (inv && inv.value.trim()) body.invite_code = inv.value.trim();
+    var hcp = (document.getElementById('regHcp').value || '').trim(); if (hcp !== '') body.handicap_index = Number(hcp);
+    var div = (document.getElementById('regDiv').value || '').trim(); if (div) body.division = div;
+    var org = (document.getElementById('regOrg').value || '').trim(); if (org) body.org_name = org;
+    var btn = this; btn.disabled = true; errEl.textContent = '';
+    var r = await golfApi('register', body, true);
+    btn.disabled = false;
+    if (r.ok) { loadAll(false); }
+    else {
+      var m = r.error || '';
+      errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : ('报名未成功：' + (m || '请稍后重试'));
+    }
+  });
+  if (S.autoJoinErr) { var re0 = document.getElementById('regErr'); if (re0) re0.textContent = S.autoJoinErr; }
+}
+
+function paintCasualJoin() {
+  var e = S.ev.event;
+  var sessU2 = (S.session && S.session.user) || {};
+  var preName = (sessU2.user_metadata || {}).display_name || '';
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>加入这场球局</h2>' +
+    '<p class="muted">确认姓名即可加入本局一起记分（与 RUKIK App 同一账号）。</p>' +
+    '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="cjName" type="text" autocomplete="name" placeholder="您的姓名" value="' + esc(preName) + '"></div>' +
+    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="cjInvite" type="text" placeholder="组织者提供的球局码" value="' + esc(linkCode || '') + '"></div>' : '') +
+    '<div class="err" id="cjErr"></div>' +
+    '<div class="btnrow"><button class="btn" id="cjBtn" type="button">加入球局</button></div>' +
+    backToEventBtn() + '</div>';
+  if (S.autoJoinErr) { var ce0 = document.getElementById('cjErr'); if (ce0) ce0.textContent = S.autoJoinErr; }
+  document.getElementById('cjBtn').addEventListener('click', async function () {
+    var errEl = document.getElementById('cjErr');
+    var name = (document.getElementById('cjName').value || '').trim();
+    if (!name) { errEl.textContent = '请填写姓名。'; return; }
+    var inv = document.getElementById('cjInvite');
+    var code = inv ? normCode(inv.value) : linkCode;
+    if (e.visibility === 'invite_only' && !code) { errEl.textContent = '请输入邀请码。'; return; }
+    var btn = this; btn.disabled = true; errEl.textContent = '';
+    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name });
+    btn.disabled = false;
+    if (jn && jn.ok) { loadAll(false); return; }
+    errEl.textContent = joinErrText(jn);
+  });
+}
+
+function myStatusHtml() {
+  var reg = S.ev && S.ev.my_registration, e = S.ev && S.ev.event;
+  if (!reg || !e) return '';
+  var out = '';
+  var mode = e.fee_mode || (Number(e.fee_cents) > 0 ? 'offline' : 'free');
+  if (mode === 'offline') {
+    var amt = '$' + (Number(e.fee_cents) / 100);
+    if (reg.payment_status === 'confirmed') out += '<p class="meta">参赛费用 ' + amt + '：<b>主办方已确认收款</b> ✅</p>';
+    else if (reg.payment_status === 'pending') out += '<p class="meta">参赛费用 ' + amt + '：<b>待主办方确认收款</b>。本场为线下收款，请按主办方通知缴费；主办方确认后，您的正式分组资格即完整生效。</p>';
+  }
+  if (reg.status === 'checked_in') out += '<p class="meta">签到状态：<b>✅ 已签到</b></p>';
+  else if (reg.status === 'registered' && (e.status === 'published' || e.status === 'in_progress')) {
+    out += '<div class="btnrow"><button class="btn plain" id="ciBtn" type="button">我已到场 · 签到</button></div><div class="err" id="ciErr"></div>';
+  }
+  return out;
+}
+
+function bindMyStatus() {
+  var b = document.getElementById('ciBtn');
+  if (!b) return;
+  b.addEventListener('click', function () {
+    b.disabled = true;
+    golfApi('check_in', { event_id: eventId }, true).then(function (r) {
+      if (r.ok) loadAll(false);
+      else {
+        var e2 = document.getElementById('ciErr');
+        if (e2) e2.textContent = r.error === 'check-in window not open' ? '尚未到签到时间：开赛前 12 小时起可自助签到。' : '签到未成功：' + (r.error || '请稍后重试');
+        b.disabled = false;
+      }
+    });
+  });
+}
+
+function paintWaitingGroup() {
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>✅ 报名成功</h2>' +
+    '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
+    '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>' +
+    organizerHint() + myStatusHtml() +
+    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
+  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
+}
+
+function paintPreStart() {
+  var pc = S.pc;
+  var mates = (pc.groupmates || []).length ? '<br>同组球员：' + pc.groupmates.map(esc).join('；') : '';
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>🏌️ 我的分组</h2>' +
+    '<p class="meta">第 <b>' + esc(pc.group_no) + '</b> 组' +
+    (pc.tee_time ? '<br>开球时间：' + fmtTime(pc.tee_time, (S.ev.event || {}).timezone) : '') +
+    (pc.start_hole ? '<br>出发洞：第 ' + esc(pc.start_hole) + ' 洞' : '') + mates + '</p>' +
+    (pc.course_name ? '<p class="meta">球场：' + esc(pc.course_name) + (pc.course_address ? '（' + esc(pc.course_address) + '）' : '') + '</p>' : '') +
+    (pc.weather_line ? '<p class="muted">' + esc(pc.weather_line) + '</p>' : '') +
+    myStatusHtml() +
+    '<h3>比赛准备</h3><p class="muted">请提前到达出发洞附近等候；开赛后本页会自动切换为记分模式。记分与 App 共用同一张记分卡，断网时成绩先保存在本机、恢复网络后自动同步。</p>' +
+    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
+  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
+}
+
+function paintNoCard() {
+  var grouped = S.pc && S.pc.group_no;
+  app.innerHTML = evMetaHtml() +
+    '<div class="card"><h2>比赛进行中</h2>' +
+    (grouped
+      ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
+      : '<p class="muted">已开赛 · 您尚未分组，暂时无法记分。请联系主办方安排分组。</p>') +
+    organizerHint() + myStatusHtml() +
+    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
+  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+  bindMyStatus();
+}
+
+function paintRecap(card) {
+  var pc = S.pc || {};
+  var ms = pc.my_score || (card ? { gross_total: card.gross_total, to_par: card.to_par, status: card.status } : null);
+  var html = evMetaHtml() + '<div class="card"><h2>🏆 我的成绩</h2>';
+  if (ms && ms.gross_total != null) {
+    html += '<p class="meta">总杆：<b>' + esc(ms.gross_total) + '</b> 杆' +
+      (ms.to_par != null ? '（相对标准杆 ' + (ms.to_par > 0 ? '+' + ms.to_par : ms.to_par) + '）' : '') +
+      (ms.net_total != null ? '<br>净杆：' + esc(ms.net_total) + ' 杆' : '') +
+      '<br>成绩状态：' + (ms.status === 'locked' || ms.is_final ? '已最终确认（正式成绩）' : '未最终确认，以主办方公布为准') + '</p>';
+  } else {
+    html += '<p class="muted">本场暂无您的成绩记录。</p>';
+  }
+  if (pc.course_revisit && pc.course_revisit.line) html += '<div class="preview"><span class="t">球场记忆</span><br>' + esc(pc.course_revisit.line) + '</div>';
+  if (S.cardData && S.cardData.holes && (!card || (S.cardData.scorecard && S.cardData.scorecard.id === card.id))) {
+    html += '<h3>逐洞成绩</h3><table class="scores"><tr><th>洞</th><th>Par</th><th>杆数</th></tr>' +
+      S.cardData.holes.map(function (h) { return '<tr><td>' + h.hole + '</td><td>' + h.par + '</td><td>' + (h.strokes == null ? '—' : '<b>' + h.strokes + '</b>') + '</td></tr>'; }).join('') + '</table>';
+  }
+  /* [主会话] 完赛回顾态亦保留球童入口（与 paintScoring 同口径；复盘本场成绩是球童核心用法，完赛不得消失） */
+  html += myStatusHtml();
+  html += '<div class="btnrow"><a class="btn plain" href="caddie.html?e=' + encodeURIComponent(eventId) + '">问 RUKIK Golf</a></div>';
+  html += '<div class="btnrow"><a class="btn" href="event.html?e=' + encodeURIComponent(eventId) + '">查看排行榜与赛事回忆</a></div></div>';
+  app.innerHTML = html;
+}
+
+function holeState(cardId, hole, serverStrokes) {
+  if (S.conflicts[hole]) return 'conflict';
+  var q = queuedFor(cardId, hole);
+  if (q.length) return S.flushing ? 'syncing' : (S.failed[hole] ? 'conflict' : 'pending');
+  return serverStrokes == null ? 'none' : 'saved';
+}
+
+function effStrokes(cardId, h) {
+  var q = queuedFor(cardId, h.hole);
+  if (q.length) return q[q.length - 1].strokes;
+  return h.strokes;
+}
+
+async function loadGroup(card, keepEdits) {
+  var r = await golfApi('score_get_group', { scorecard_id: card.id }, true).catch(function () { return null; });
+  if (!r || !r.ok || !r.data) { S.grpFail = true; S.group = null; return null; } /* [线Z78] 请求失败/超时：标记失败待提示，禁止静默伪装成单人形态 */
+  S.grpFail = false; /* 请求已成功到达：以下为「确实没有同组」的正常单人形态，不出失败提示 */
+  if ((r.data.players || []).filter(function (p) { return p.scorecard_id; }).length < 2) { S.group = null; return null; }
+  S.group = r.data;
+  if (!keepEdits || !Object.keys(S.gDirty).length) {
+    if (S.selHole != null) { initGEdits(S.selHole); S.gInitFor = S.selHole; }
+  } else {
+    (S.group.players || []).forEach(function (p) {
+      if (!S.gDirty[p.player_id]) {
+        var c = (S.group.cells[p.player_id] || {})[S.selHole];
+        S.gEdits[p.player_id] = c ? c.strokes : null;
+      }
+    });
+  }
+  return S.group;
+}
+
+function grpFailHtml() {
+  if (!S.grpFail || S.group) return '';
+  return '<div class="syncbar bad">同组记分暂时没加载出来（网络异常），您仍可先记自己的分。<div class="btnrow"><button class="btn plain" type="button" id="grpRetryBtn">重试</button></div></div>';
+}
+
+async function grpRetry(card) { await loadGroup(card, false); paint(); }
+
+function initGEdits(hole) {
+  S.gEdits = {}; S.gDirty = {};
+  if (!S.group) return;
+  (S.group.players || []).forEach(function (p) {
+    var c = (S.group.cells[p.player_id] || {})[hole];
+    S.gEdits[p.player_id] = c ? c.strokes : null;
+  });
+}
+
+function gOpenHole() {
+  if (!S.group) return null;
+  var hs = S.group.holes || [];
+  for (var i = 0; i < hs.length; i++) {
+    var missing = (S.group.players || []).some(function (p) { return p.scorecard_id && !(S.group.cells[p.player_id] || {})[hs[i].hole]; });
+    if (missing) return hs[i].hole;
+  }
+  return hs.length ? hs[hs.length - 1].hole : null;
+}
+
+function gRelTxt(v) { return v == null ? '' : v === 0 ? ' · Par' : v < 0 ? ' · ' + v : ' · +' + v; }
+
+function paintGroupScoring(card) {
+  var g = S.group;
+  var me = (g.players || []).filter(function (p) { return p.is_me; })[0] || null;
+  var lockedG = !!me && me.card_status === 'locked';
+  if (S.selHole == null) S.selHole = gOpenHole() || 1;
+  if (S.gInitFor !== S.selHole) { initGEdits(S.selHole); S.gInitFor = S.selHole; }
+  var curH = (g.holes || []).filter(function (h) { return h.hole === S.selHole; })[0] || (g.holes || [])[0];
+  if (!curH) return paintScoringFallbackToSingle(card);
+  var par = curH.par;
+  var cardIds = {};
+  (g.players || []).forEach(function (p) { if (p.scorecard_id) cardIds[p.scorecard_id] = 1; });
+  var qAll = loadQueue().filter(function (x) { return cardIds[x.scorecard_id]; });
+  var syncHtml;
+  if (lockedG) syncHtml = '<div class="syncbar good">成绩已锁定（正式成绩），不可再修改。</div>';
+  else if (Object.keys(S.gConflicts).length) syncHtml = '<div class="syncbar bad">有成绩冲突等待确认（见下方球员行），不会被静默覆盖。</div>';
+  else if (qAll.length) syncHtml = '<div class="syncbar">有 ' + qAll.length + ' 条记分已保存到本机，等待同步（联网后自动同步、全组可见）。</div>';
+  else syncHtml = '<div class="syncbar good">全组记分已同步。</div>';
+
+  var rows = (g.players || []).map(function (p) {
+    var cell = (g.cells[p.player_id] || {})[curH.hole];
+    var v = S.gEdits[p.player_id];
+    var flash = S.gFlash[p.player_id];
+    var cf = S.gConflicts[p.player_id];
+    var sub;
+    if (cf) sub = '<span style="color:#dc2626">冲突：服务端现为 ' + (cf.current == null ? '—' : cf.current) + ' 杆，你记的是 ' + cf.mine + ' 杆</span>';
+    else if (flash) sub = '<span style="color:#15803d">✓ 已同步 · ' + esc(flash.text) + '</span>';
+    else if (v == null && !cell) sub = '待记录';
+    else if (S.gDirty[p.player_id]) sub = '<span style="color:#d97706">待保存（已修改，未提交）</span>';
+    else sub = '<span style="color:#15803d">已同步' + gRelTxt(cell ? cell.strokes - par : null) + (cell && cell.updated_by_name ? ' · ' + esc(cell.updated_by_name) + ' 记录' : '') + '</span>';
+    return '<div class="grow' + (p.is_me ? ' me' : '') + (flash ? ' flash' : '') + '">' +
+      '<div class="ginfo"><div class="gname">' + esc(p.display_name) + (p.is_me ? '（我）' : '') + '</div><div class="gsub">' + sub + '</div>' +
+      (cf ? '<div class="btnrow"><button class="btn plain" data-gcf="server" data-pid="' + p.player_id + '">用服务端的</button><button class="btn gold" data-gcf="mine" data-pid="' + p.player_id + '">以我的为准</button></div>' : '') +
+      '</div>' +
+      (lockedG ? '<div class="val" style="font-size:24px;font-weight:800">' + (v == null ? '—' : v) + '</div>'
+        : '<div class="stepper small"><button type="button" data-gstep="-1" data-pid="' + p.player_id + '" aria-label="减一杆">−</button><div class="val">' + (v == null ? '—' : v) + '</div><button type="button" data-gstep="1" data-pid="' + p.player_id + '" aria-label="加一杆">＋</button></div>') +
+      '</div>';
+  }).join('');
+
+  var matrix = '';
+  if (S.gMatrix) {
+    var head = '<tr><th>球员</th>' + (g.holes || []).map(function (h) { return '<th>' + h.hole + '</th>'; }).join('') + '<th>总杆</th></tr>';
+    var parRow = '<tr><td>Par</td>' + (g.holes || []).map(function (h) { return '<td>' + h.par + '</td>'; }).join('') + '<td>' + (g.holes || []).reduce(function (a, h) { return a + (h.par || 0); }, 0) + '</td></tr>';
+    var pRows = (g.players || []).map(function (p) {
+      return '<tr><td>' + esc(p.display_name) + '</td>' + (g.holes || []).map(function (h) {
+        var c = (g.cells[p.player_id] || {})[h.hole];
+        return '<td>' + (c ? '<b>' + c.strokes + '</b>' : '·') + '</td>';
+      }).join('') + '<td>' + (p.gross_total == null ? '—' : '<b>' + p.gross_total + '</b>') + '</td></tr>';
+    }).join('');
+    matrix = '<div style="overflow-x:auto;margin-top:10px"><table class="scores mx">' + head + parRow + pRows + '</table></div>';
+  }
+
+  var certHtml = '';
+  if (!lockedG && me && me.scorecard_id) {
+    var totalHoles = (g.holes || []).length;
+    if ((me.card_status === 'in_progress' || me.card_status === 'not_started' || me.card_status === 'disputed') && me.thru >= totalHoles && totalHoles) {
+      certHtml = '<div class="btnrow"><button class="btn gold" id="gCertSubmit">全部洞已录完 · 提交成绩核对</button></div>';
+    }
+    if (me.card_status === 'submitted') {
+      certHtml = '<div class="btnrow"><button class="btn gold" id="gCertApprove">确认成绩无误</button><button class="btn plain" id="gCertFlag">成绩有异议</button></div>' +
+        '<p class="muted" style="margin-top:10px">成绩已提交，等待球员确认 / 裁判核对。</p>';
+    }
+    if (me.card_status === 'verified') certHtml = '<p class="muted" style="margin-top:10px">成绩已确认，等待主办方锁定为正式成绩。</p>';
+  }
+
+  var html = evMetaHtml() +
+    '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 同组共享记分</h2><span class="tot">第 ' + (g.pairing.group_no == null ? '' : g.pairing.group_no + ' 组 · ') + '第 ' + curH.hole + ' 洞 · Par ' + par + (curH.yards ? ' · ' + curH.yards + ' 码' : '') + '</span></div>' +
+    syncHtml + myStatusHtml() +
+    '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
+    rows +
+    (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
+    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（18 洞）') + '</button></div>' +
+    matrix + certHtml +
+    backToEventBtn('返回赛事页') + '</div>';
+  app.innerHTML = html;
+  setTailVisible(true); syncTail(); maybeCasualFinish(); maybeInviteCtl(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
+  bindMyStatus();
+  app.querySelectorAll('[data-gstep]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var pid = el.dataset.pid;
+      var p = (g.players || []).filter(function (x) { return x.player_id === pid; })[0];
+      var cell = (g.cells[pid] || {})[curH.hole];
+      var base = S.gEdits[pid] != null ? S.gEdits[pid] : (cell ? cell.strokes : par);
+      var nv = Math.max(1, Math.min(15, base + Number(el.dataset.gstep)));
+      S.gEdits[pid] = nv; S.gDirty[pid] = 1;
+      paint();
+    });
+  });
+  app.querySelectorAll('[data-gcf]').forEach(function (el) {
+    el.addEventListener('click', function () { gResolve(el.dataset.pid, el.dataset.gcf === 'mine'); });
+  });
+  var sv = document.getElementById('gSave');
+  if (sv) sv.addEventListener('click', gSave);
+  var pv = document.getElementById('gPrev');
+  if (pv) pv.addEventListener('click', function () { if (S.selHole > 1) { S.selHole--; paint(); } });
+  var nx = document.getElementById('gNext');
+  if (nx) nx.addEventListener('click', function () { if (S.selHole < (g.holes || []).length) { S.selHole++; paint(); } });
+  var mx = document.getElementById('gMx');
+  if (mx) mx.addEventListener('click', function () { S.gMatrix = !S.gMatrix; paint(); });
+  var cs = document.getElementById('gCertSubmit');
+  if (cs && me) cs.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'scorer_submit' }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+  var ca = document.getElementById('gCertApprove');
+  if (ca && me) ca.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'player_verify', decision: 'approve' }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('确认失败：' + (r.error || '请稍后重试')); }
+  });
+  var cf2 = document.getElementById('gCertFlag');
+  if (cf2 && me) cf2.addEventListener('click', async function () {
+    var note = prompt('请简单说明异议（如：第 7 洞应为 4 杆）');
+    if (note == null) return;
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: me.scorecard_id, step: 'player_verify', decision: 'flag', note: note }, true);
+    if (r.ok) { await loadGroup(card, false); paint(); } else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+}
+
+function paintScoringFallbackToSingle(card) { S.group = null; paintScoring(card); }
+
+async function gSave() {
+  var g = S.group; if (!g || S.gSaving) return;
+  var hole = S.selHole;
+  var entries = [], sent = {};
+  (g.players || []).forEach(function (p) {
+    if (!S.gDirty[p.player_id]) return;
+    var v = S.gEdits[p.player_id];
+    var cell = (g.cells[p.player_id] || {})[hole];
+    entries.push({ player_id: p.player_id, strokes: v == null ? null : v, op_id: newOpId(), base_strokes: cell ? cell.strokes : null });
+    if (v != null) sent[p.player_id] = v;
+  });
+  if (!entries.length) return;
+  S.gSaving = true; paint();
+  try {
+    var r = await golfApi('score_submit_group', { pairing_id: g.pairing.id, hole: hole, entries: entries }, true);
+    if (!r.ok) throw new Error(r.error || 'submit failed');
+    var myRound = null, myCardId = null;
+    (r.data.results || []).forEach(function (res) {
+      var pl = (g.players || []).filter(function (x) { return x.player_id === res.player_id; })[0];
+      if (res.status === 'saved' || res.status === 'idempotent') {
+        delete S.gDirty[res.player_id];
+        var cel = res.celebration;
+        if (cel && cel.first_confirm) S.gFlash[res.player_id] = { text: cel.strokes + ' 杆 · ' + cel.label, level: cel.level };
+        if (pl && pl.is_me) { myCardId = pl.scorecard_id; if (cel && cel.round_complete && cel.round) myRound = cel; }
+      } else if (res.status === 'conflict') {
+        S.gConflicts[res.player_id] = { current: res.current_strokes != null ? res.current_strokes : null, mine: sent[res.player_id] };
+      } else if (res.status === 'error') {
+        var e0 = entries.filter(function (x) { return x.player_id === res.player_id; })[0];
+        if (pl && pl.scorecard_id && e0 && e0.strokes != null) {
+          enqueueScore({ op_id: e0.op_id, scorecard_id: pl.scorecard_id, hole: hole, strokes: e0.strokes, base_strokes: e0.base_strokes, uid: S.session ? S.session.user.id : null });
+          delete S.gDirty[res.player_id];
+        }
+      }
+    });
+    setTimeout(function () { S.gFlash = {}; if (S.group) paint(); }, 2600);
+    var card = myCard();
+    if (card) await loadGroup(card, false);
+    try { if (window.loadBoardIntoFunc) window.loadBoardIntoFunc(); } catch (e) {} /* [ONEPAGE 20261114] 全组保存后刷新本页排行榜 */
+    S.gSaving = false;
+    if (myRound && myCardId) {
+      var flagKey = 'rukik.golf.roundCelebrated.v1.' + myCardId;
+      var seen = null; try { seen = localStorage.getItem(flagKey); } catch (e) {}
+      if (!seen) {
+        try { localStorage.setItem(flagKey, new Date().toISOString()); } catch (e) {}
+        var rd = myRound.round; var relS = rd.to_par;
+        var hlHoles = (rd.highlight_holes || []).map(function (x) { return x.hole; });
+        var linesR = ['完成球洞 ' + myRound.holes_completed + ' / ' + myRound.holes_total + ' · 本场总杆 ' + rd.gross_total + ' 杆（相对标准杆 ' + (relS === 0 ? '±0' : relS > 0 ? '+' + relS : '' + relS) + '）'];
+        if (rd.birdie_plus_count > 0) linesR.push('今天打出 ' + rd.birdie_plus_count + ' 次 Birdie 及更好' + (hlHoles.length ? '，亮点洞：第 ' + hlHoles.join('、') + ' 洞' : '') + '——都已记入你的赛事回忆。');
+        linesR.push('今天的每一杆，都值得被记住。');
+        linesR.push(rd.status_line);
+        paint();
+        showCelebration({ title: (g.holes || []).length + ' 洞，精彩完赛！', lines: linesR, round: true, level: 'round' });
+        return;
+      }
+    }
+    if (!Object.keys(S.gConflicts).length && hole < (g.holes || []).length) S.selHole = hole + 1;
+    paint();
+  } catch (e) {
+    entries.forEach(function (e0) {
+      var pl = (g.players || []).filter(function (x) { return x.player_id === e0.player_id; })[0];
+      if (pl && pl.scorecard_id && e0.strokes != null) {
+        enqueueScore({ op_id: e0.op_id, scorecard_id: pl.scorecard_id, hole: hole, strokes: e0.strokes, base_strokes: e0.base_strokes, uid: S.session ? S.session.user.id : null });
+        delete S.gDirty[e0.player_id];
+        S.gEdits[e0.player_id] = e0.strokes;
+      }
+    });
+    S.gInitFor = hole;
+    S.gSaving = false;
+    paint(); flushQueue();
+    alert('网络暂时不可用，本洞成绩已保存到本机，等待同步；联网后会自动同步、全组可见。');
+  }
+}
+
+async function gResolve(pid, useMine) {
+  var cf = S.gConflicts[pid]; var g = S.group;
+  if (!cf || !g) return;
+  delete S.gConflicts[pid];
+  if (!useMine) {
+    delete S.gDirty[pid];
+    var c0 = myCard(); if (c0) await loadGroup(c0, true);
+    paint();
+    return;
+  }
+  try {
+    var r = await golfApi('score_submit_group', { pairing_id: g.pairing.id, hole: S.selHole, entries: [{ player_id: pid, strokes: cf.mine, op_id: newOpId(), base_strokes: cf.current, force: true, reason: '同组记分员核对后确认覆盖' }] }, true);
+    var res = ((r.data || {}).results || [])[0];
+    if (res && res.status === 'conflict') S.gConflicts[pid] = { current: res.current_strokes != null ? res.current_strokes : null, mine: cf.mine };
+    else if (res && (res.status === 'saved' || res.status === 'idempotent')) delete S.gDirty[pid];
+    else { S.gConflicts[pid] = cf; alert('提交失败，请稍后重试。'); }
+  } catch (e) {
+    S.gConflicts[pid] = cf;
+    alert('提交失败，请检查网络后再试。');
+  }
+  var c1 = myCard(); if (c1) await loadGroup(c1, true);
+  paint();
+}
+
+function paintScoring(card) {
+  var cd = S.cardData;
+  if (!cd || !cd.scorecard || cd.scorecard.id !== card.id) {
+    app.innerHTML = evMetaHtml() + '<div class="card"><div class="skel">正在加载记分卡…</div></div>';
+    golfApiRetry('score_get_card', { scorecard_id: card.id }, true).then(function (r) {
+      if (r && r.ok) { S.cardData = r.data; S.cardStale = false; cacheSet({ cardData: S.cardData }); paint(); }
+      else { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); }
+    });
+    return;
+  }
+  if (S.group) return paintGroupScoring(card);
+  var sc = cd.scorecard;
+  var locked = sc.status === 'locked';
+  var holes = cd.holes || [];
+  var queued = queuedFor(card.id);
+  var conflictHoles = Object.keys(S.conflicts);
+  if (S.selHole == null && holes.length) {
+    var firstOpen = holes.filter(function (h) { return effStrokes(card.id, h) == null; })[0];
+    S.selHole = (firstOpen || holes[holes.length - 1]).hole;
+  }
+  var sel = holes.filter(function (h) { return h.hole === S.selHole; })[0] || holes[0];
+  if (S.edStrokes == null && sel) { S.edStrokes = effStrokes(card.id, sel) != null ? effStrokes(card.id, sel) : sel.par; S.edPutts = null; }
+
+  var syncHtml;
+  if (locked) syncHtml = '<div class="syncbar good">成绩已锁定（正式成绩），不可再修改。</div>';
+  else if (conflictHoles.length) syncHtml = '<div class="syncbar bad">有 ' + conflictHoles.length + ' 洞与服务端记录不一致，等待您确认（见下方编辑区）。成绩不会被静默覆盖。</div>';
+  else if (queued.length) syncHtml = '<div class="syncbar">' + (S.flushing ? '正在同步 ' + queued.length + ' 条记分…' : '有 ' + queued.length + ' 条记分已保存到本机，等待同步（联网后自动同步，不会丢分）。') + '</div>';
+  else syncHtml = '<div class="syncbar good">全部记分已同步。</div>';
+
+  var grid = holes.map(function (h) {
+    var v = effStrokes(card.id, h);
+    var st = holeState(card.id, h.hole, h.strokes);
+    return '<div class="hole' + (sel && h.hole === sel.hole ? ' sel' : '') + '" data-hole="' + h.hole + '">' +
+      (st !== 'none' && st !== 'saved' ? '<span class="dot ' + st + '"></span>' : (st === 'saved' ? '<span class="dot saved"></span>' : '')) +
+      '<div class="hn">第 ' + h.hole + ' 洞</div><div class="hs' + (v == null ? ' none' : '') + '">' + (v == null ? '—' : v) + '</div><div class="hp">Par ' + h.par + '</div></div>';
+  }).join('');
+
+  var html = evMetaHtml() +
+    '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 逐洞记分</h2><span class="tot">' +
+    esc((cd.player || {}).display_name || '') + (sc.thru != null ? ' · 已完成 ' + sc.thru + ' 洞' : '') + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : '') + '</span></div>' +
+    syncHtml + myStatusHtml() + grpFailHtml() +
+    '<div class="holegrid">' + grid + '</div>';
+
+  if (sel && !locked) {
+    var st2 = holeState(card.id, sel.hole, sel.strokes);
+    var tag = st2 === 'saved' ? '<span style="color:#15803d">● 已同步</span>' : st2 === 'syncing' ? '<span style="color:#2563eb">● 同步中…</span>' : st2 === 'pending' ? '<span style="color:#d97706">● 已保存到本机，等待同步</span>' : st2 === 'conflict' ? (S.conflicts[sel.hole] ? '<span style="color:#dc2626">● 有冲突，等待您确认</span>' : '<span style="color:#d97706">● 已保存到本机，等待同步</span>') : '<span style="color:#8B857D">尚未录入</span>';
+    html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + (sel.yards ? ' · ' + sel.yards + ' 码' : '') + (sel.strokes_received ? ' · 本洞让 ' + sel.strokes_received + ' 杆' : '') + '</div>' +
+      '<div class="stepper"><button type="button" id="stMinus" aria-label="减一杆">−</button><div class="val" id="stVal">' + (S.edStrokes == null ? sel.par : S.edStrokes) + '</div><button type="button" id="stPlus" aria-label="加一杆">＋</button></div>' +
+      '<div class="edlabel">杆数</div>' +
+      '<div class="stepper small"><button type="button" id="ptMinus" aria-label="减一推">−</button><div class="val" id="ptVal">' + (S.edPutts == null ? '—' : S.edPutts) + '</div><button type="button" id="ptPlus" aria-label="加一推">＋</button></div>' +
+      '<div class="edlabel">推杆数（选填）</div>' +
+      '<div class="statetag">' + tag + '</div>' +
+      '<div class="btnrow"><button class="btn" id="saveHole">保存本洞</button></div>';
+    var cf = S.conflicts[sel.hole];
+    if (cf) {
+      html += '<div class="conflictbox"><b>本洞成绩有冲突</b><br>服务端现值：<b>' + esc(cf.current_strokes == null ? '无记录' : cf.current_strokes + ' 杆') + '</b>；您录入：<b>' + esc(cf.item.strokes) + ' 杆</b>。请选择：' +
+        '<div class="btnrow"><button class="btn plain" id="cfAccept">采用服务端值</button><button class="btn gold" id="cfForce">以我的杆数为准</button></div>' +
+        '<input id="cfReason" type="text" placeholder="坚持修改时请填写原因（必填，记入审计）" hidden></div>';
+    }
+    html += '</div>';
+  }
+  if (locked && sel) {
+    html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + ' · ' + (sel.strokes == null ? '未录入' : sel.strokes + ' 杆') + '</div></div>';
+  }
+  if (S.preview) html += '<div class="preview"><span class="t">下一洞</span><br>' + S.preview + '</div>';
+  /* 确认流（与 App/服务端同一流程） */
+  if (!locked) {
+    if ((sc.status === 'in_progress' || sc.status === 'not_started' || sc.status === 'disputed') && sc.thru >= holes.length && holes.length) {
+      html += '<div class="btnrow"><button class="btn gold" id="certSubmit">全部洞已录完 · 提交成绩核对</button></div>';
+    }
+    if (sc.status === 'submitted' && cd.player && S.ev.my_player && cd.player.id === S.ev.my_player.id) {
+      html += '<div class="btnrow"><button class="btn gold" id="certApprove">确认成绩无误</button><button class="btn plain" id="certFlag">成绩有异议</button></div>';
+    }
+    if (sc.status === 'submitted') html += '<p class="muted" style="margin-top:10px">成绩已提交，等待球员确认 / 裁判核对。</p>';
+    if (sc.status === 'verified') html += '<p class="muted" style="margin-top:10px">成绩已确认，等待主办方锁定为正式成绩。</p>';
+  }
+  /* [线Z44] 球童已改为页内模块②（记分卡正下方），不再跳独立球童页 */
+  html += backToEventBtn('返回赛事页（排行榜 / 球场地图）') + '</div>';
+  app.innerHTML = html;
+  bindMyStatus();
+  var grb = document.getElementById('grpRetryBtn');
+  if (grb) grb.addEventListener('click', function () { grpRetry(card); });
+  app.querySelectorAll('.hole').forEach(function (el) {
+    el.addEventListener('click', function () {
+      S.selHole = Number(el.dataset.hole);
+      var h = (cd.holes || []).filter(function (x) { return x.hole === S.selHole; })[0];
+      S.edStrokes = h ? (effStrokes(card.id, h) != null ? effStrokes(card.id, h) : h.par) : null;
+      S.edPutts = null;
+      paint();
+    });
+  });
+  if (sel && !locked) {
+    var upd = function () { var v = document.getElementById('stVal'); if (v) v.textContent = S.edStrokes; var p = document.getElementById('ptVal'); if (p) p.textContent = S.edPutts == null ? '—' : S.edPutts; };
+    document.getElementById('stMinus').addEventListener('click', function () { S.edStrokes = Math.max(1, (S.edStrokes || sel.par) - 1); upd(); });
+    document.getElementById('stPlus').addEventListener('click', function () { S.edStrokes = Math.min(15, (S.edStrokes || sel.par) + 1); upd(); });
+    document.getElementById('ptMinus').addEventListener('click', function () { S.edPutts = S.edPutts == null ? null : Math.max(0, S.edPutts - 1); upd(); });
+    document.getElementById('ptPlus').addEventListener('click', function () { S.edPutts = S.edPutts == null ? 1 : Math.min(10, S.edPutts + 1); upd(); });
+    document.getElementById('saveHole').addEventListener('click', function () {
+      var item = {
+        op_id: newOpId(), scorecard_id: card.id, hole: sel.hole,
+        strokes: S.edStrokes || sel.par, putts: S.edPutts,
+        base_strokes: sel.strokes != null ? sel.strokes : null,
+        uid: S.session ? S.session.user.id : null,
+      };
+      enqueueScore(item);
+      /* [线W2] 记住用户刚主动保存的这一洞：只有它在回放中被服务端确认，才触发仪式反馈（后台回放不触发） */
+      S.justSaved = { scorecard_id: card.id, hole: item.hole, strokes: item.strokes, par: sel.par, at: Date.now() };
+      delete S.failed[sel.hole];
+      paint();
+      flushQueue();
+    });
+    var cfA = document.getElementById('cfAccept');
+    if (cfA) cfA.addEventListener('click', function () {
+      var cf = S.conflicts[sel.hole]; if (!cf) return;
+      saveQueue(loadQueue().filter(function (x) { return x.op_id !== cf.item.op_id; }));
+      delete S.conflicts[sel.hole];
+      S.edStrokes = cf.current_strokes != null ? cf.current_strokes : sel.par;
+      loadCardOnly(card.id);
+    });
+    var cfF = document.getElementById('cfForce');
+    if (cfF) cfF.addEventListener('click', async function () {
+      var cf = S.conflicts[sel.hole]; if (!cf) return;
+      var reasonEl = document.getElementById('cfReason');
+      if (reasonEl.hidden) { reasonEl.hidden = false; reasonEl.focus(); this.textContent = '确认以我的杆数重提'; return; }
+      var reason = (reasonEl.value || '').trim();
+      if (!reason) { reasonEl.focus(); reasonEl.placeholder = '原因必填，请先填写'; return; }
+      var item = Object.assign({}, cf.item, { op_id: newOpId(), force: true, reason: reason });
+      saveQueue(loadQueue().filter(function (x) { return x.op_id !== cf.item.op_id; }));
+      delete S.conflicts[sel.hole];
+      var r = await golfApi('score_submit', sendShape(item), true);
+      if (r.ok) { loadCardOnly(card.id); }
+      else { enqueueScore(cf.item); S.conflicts[sel.hole] = cf; paint(); }
+    });
+  }
+  var cs = document.getElementById('certSubmit');
+  if (cs) cs.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: card.id, step: 'scorer_submit' }, true);
+    if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+  var ca = document.getElementById('certApprove');
+  if (ca) ca.addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: card.id, step: 'player_verify', decision: 'approve' }, true);
+    if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('确认失败：' + (r.error || '请稍后重试')); }
+  });
+  var cf2 = document.getElementById('certFlag');
+  if (cf2) cf2.addEventListener('click', async function () {
+    var note = prompt('请简单说明异议（如：第 7 洞应为 4 杆）');
+    if (note == null) return;
+    this.disabled = true;
+    var r = await golfApi('certify', { scorecard_id: card.id, step: 'player_verify', decision: 'flag', note: note }, true);
+    if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
+  });
+  setTailVisible(true); syncTail(); maybeCasualFinish(); maybeInviteCtl(); /* [线Z44] 一页式：记分卡下方接球童与地图；日常球局补结束入口 */
+}
+
+function sendShape(item) {
+  var o = { scorecard_id: item.scorecard_id, hole: item.hole, strokes: item.strokes, op_id: item.op_id };
+  if (item.putts != null) o.putts = item.putts;
+  if (item.base_strokes != null) o.base_strokes = item.base_strokes;
+  if (item.force) { o.force = true; o.reason = item.reason; }
+  return o;
+}
+
+async function loadCardOnly(cardId) {
+  var r = await golfApi('score_get_card', { scorecard_id: cardId }, true).catch(function () { return null; });
+  if (r && r.ok) { S.cardData = r.data; cacheSet({ cardData: S.cardData }); }
+  paint();
+}
+
+async function flushQueue() {
+  if (S.flushing || !S.session) return;
+  var uid = S.session.user.id;
+  var q = loadQueue().filter(function (x) { return !x.uid || x.uid === uid; });
+  if (!q.length) return;
+  S.flushing = true;
+  var remain = loadQueue().filter(function (x) { return x.uid && x.uid !== uid; });
+  var sentAny = false;
+  var confirmedJS = null;
+  for (var i = 0; i < q.length; i++) {
+    var item = q[i];
+    try {
+      var r = await golfApi('score_submit', sendShape(item), true);
+      if (r.ok) {
+        sentAny = true;
+        delete S.conflicts[item.hole]; delete S.failed[item.hole];
+        if (r.data && r.data.next_hole_preview) S.preview = previewText(r.data.next_hole_preview);
+        if (S.justSaved && item.scorecard_id === S.justSaved.scorecard_id && item.hole === S.justSaved.hole && Date.now() - S.justSaved.at < 30000) { confirmedJS = S.justSaved; if (r.data && r.data.celebration) confirmedJS.cel = r.data.celebration; }
+      } else if (r.status === 409) {
+        S.conflicts[item.hole] = { item: item, current_strokes: r.data.current_strokes != null ? r.data.current_strokes : null };
+        remain.push(item);
+      } else {
+        S.failed[item.hole] = true;
+        remain.push(item);
+      }
+    } catch (e) {
+      S.failed[item.hole] = true;
+      remain.push(item);
+    }
+  }
+  saveQueue(remain);
+  S.flushing = false;
+  var card = myCard();
+  if (card && S.ev && S.ev.event && S.ev.event.status === 'in_progress') {
+    if (sentAny) { var cd = await golfApi('score_get_card', { scorecard_id: card.id }, true).catch(function () { return null; }); if (cd && cd.ok) { S.cardData = cd.data; cacheSet({ cardData: S.cardData }); } }
+    paint();
+  }
+  /* [ONEPAGE 20261114] 本页排行榜联动：本轮有记分被服务端确认即刷新排行榜区（同页呈现，不跳转） */
+  try { if (sentAny && window.loadBoardIntoFunc) window.loadBoardIntoFunc(); } catch (e) {}
+  /* [线W2] 记分仪式感（与 App 同口径）：仅当用户刚主动保存的那一洞在本轮
+     回放中被服务端确认（r.ok）才触发；待同步/失败/409 不庆祝；后台定时
+     回放无 justSaved 不触发。整轮打满＝完赛喝彩（一轮一次，localStorage
+     持久标记防刷新/重进重播），数据全部取已保存成绩，不编造。 */
+  if (confirmedJS) {
+    S.justSaved = null;
+    var cd2 = S.cardData;
+    if (card && cd2 && cd2.scorecard && cd2.scorecard.id === card.id) {
+      var hs = cd2.holes || [];
+      var queueLeft = loadQueue().some(function (x) { return x.scorecard_id === card.id; });
+      var allPlayed = hs.length > 0 && hs.every(function (h) { return effStrokes(card.id, h) != null; });
+      if (allPlayed && !queueLeft) {
+        var flagKey = 'rukik.golf.roundCelebrated.v1.' + card.id;
+        var seen = null; try { seen = localStorage.getItem(flagKey); } catch (e) {}
+        if (!seen) {
+          try { localStorage.setItem(flagKey, new Date().toISOString()); } catch (e) {}
+          var celR = confirmedJS.cel;
+          if (celR && celR.round_complete && celR.round) {
+            /* [线Z37] 完赛数据优先服务端真实汇总（总杆/亮点洞/确认状态） */
+            var rd = celR.round;
+            var relS = rd.to_par;
+            var hlHoles = (rd.highlight_holes || []).map(function (x) { return x.hole; });
+            var linesR = ['完成球洞 ' + celR.holes_completed + ' / ' + celR.holes_total + ' · 本场总杆 ' + rd.gross_total + ' 杆（相对标准杆 ' + (relS === 0 ? '±0' : relS > 0 ? '+' + relS : '' + relS) + '）'];
+            if (rd.birdie_plus_count > 0) linesR.push('今天打出 ' + rd.birdie_plus_count + ' 次 Birdie 及更好' + (hlHoles.length ? '，亮点洞：第 ' + hlHoles.join('、') + ' 洞' : '') + '——都已记入你的赛事回忆。');
+            linesR.push('今天的每一杆，都值得被记住。');
+            linesR.push(rd.status_line);
+            showCelebration({ title: hs.length + ' 洞，精彩完赛！', lines: linesR, round: true, level: 'round' });
+          } else {
+          var gross = 0, parT = 0, birdies = 0, best = null, bestRel = Infinity;
+          hs.forEach(function (h) { var sc = effStrokes(card.id, h); gross += sc; parT += (h.par || 0); if (sc < (h.par || 0)) birdies++; var rl = sc - (h.par || 0); if (rl < bestRel) { bestRel = rl; best = h; } });
+          var relT = gross - parT;
+          var lines = ['完成球洞 ' + hs.length + ' / ' + hs.length + ' · 本场总杆 ' + gross + ' 杆（相对标准杆 ' + (relT === 0 ? '±0' : relT > 0 ? '+' + relT : '' + relT) + '）'];
+          if (birdies) lines.push('今天打出 ' + birdies + ' 个 Birdie' + (best ? '，最佳一洞是第 ' + best.hole + ' 洞' : '') + '——都已记入你的赛事回忆。');
+          else if (best) lines.push('最佳一洞：第 ' + best.hole + ' 洞，' + effStrokes(card.id, best) + ' 杆。');
+          lines.push('今天的每一杆，都值得被记住。');
+          lines.push(cd2.scorecard.status === 'locked' ? '成绩已锁定（正式成绩）' : '实时成绩，待赛事最终确认');
+          showCelebration({ title: hs.length + ' 洞，精彩完赛！', lines: lines, round: true });
+          }
+        }
+      } else {
+        var rel = confirmedJS.strokes - confirmedJS.par;
+        var label = rel <= -3 ? 'Albatross' : rel === -2 ? 'Eagle' : rel === -1 ? 'Birdie' : rel === 0 ? 'Par' : rel === 1 ? 'Bogey' : rel === 2 ? 'Double Bogey' : '+' + rel;
+        var fb = rel <= -1 ? '带着这份好状态，迎接下一洞。' : rel === 0 ? '稳稳完成这一洞。下一洞，继续享受挥杆。' : rel === 1 ? '这一洞已经过去，下一洞又是新的开始。' : '这一洞已经过去，下一洞按自己的节奏来。';
+        var cel = confirmedJS.cel;
+        if (cel) {
+          /* [线Z37] 服务端上下文优先：分级/事实句/鼓励均来自真实成绩；
+             first_confirm=false（编辑改分/同值重提）不播首次庆祝。 */
+          if (cel.first_confirm) {
+            var linesH = [cel.strokes + ' 杆 · ' + cel.label].concat((cel.fact_lines || []).slice(0, 2));
+            linesH.push(cel.cheer || fb);
+            showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞 · 成绩已保存', lines: linesH, round: false, level: cel.level });
+          }
+        } else {
+          var levelL = rel <= -3 ? 'albatross' : rel === -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double_plus';
+          showCelebration({ title: '第 ' + confirmedJS.hole + ' 洞 · 成绩已保存', lines: [confirmedJS.strokes + ' 杆 · ' + label, fb], round: false, level: levelL });
+        }
+      }
+    }
+  }
+}
+
+function showCelebration(o) {
+  var old = document.getElementById('w2Celeb'); if (old) old.remove();
+  var reduced = false; try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var el = document.createElement('div');
+  el.id = 'w2Celeb';
+  /* [线Z3] 浮层只呈现、不拦截点击：快速连点记分时曾遮挡洞位按钮导致漏录；pointer-events:none 后点按直接落到页面，浮层仍按原时长自动关闭（保存/同步逻辑未动） */
+  el.setAttribute('style', 'position:fixed;inset:0;z-index:90;background:rgba(20,34,53,.28);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s;pointer-events:' + (o.round ? 'auto' : 'none'));
+  var lv = o.level || '';
+  var accent = o.round || lv === 'eagle' || lv === 'albatross' || lv === 'hole_in_one' ? ';border:1.5px solid #B58A58'
+    : lv === 'par' ? ';border:1.5px solid #4A7C59'
+    : lv === 'bogey' ? ';border:1.5px solid #9DBEA8' : '';
+  var cardCss = 'background:#F7F3EC;border-radius:16px;padding:28px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)' + accent;
+  var kicker = o.round || lv === 'eagle' || lv === 'albatross' || lv === 'hole_in_one' ? '🏆 RUKIK GOLF' : lv === 'birdie' ? '⭐ RUKIK GOLF' : '⛳ RUKIK GOLF';
+  var inner = '<div style="' + cardCss + '"><div style="font-size:12px;letter-spacing:2px;color:#8B857D">' + kicker + '</div>' +
+    '<div style="font-size:' + (o.round ? '26px' : '22px') + ';font-weight:700;color:#14304A;margin:8px 0">' + esc(o.title) + '</div>';
+  (o.lines || []).forEach(function (ln, i) { inner += '<div style="font-size:' + (i === 0 ? '16px' : '14px') + ';color:#2B2B28;margin-top:4px;line-height:1.55">' + esc(ln) + '</div>'; });
+  if (o.round) inner += '<div style="margin-top:14px"><a href="event.html?e=' + encodeURIComponent(eventId) + '" style="display:inline-block;background:#14532D;color:#fff;font-size:15px;font-weight:600;padding:10px 26px;border-radius:10px;text-decoration:none">查看我的成绩</a></div>';
+  inner += '<div style="font-size:12px;color:#8B857D;margin-top:10px">' + (o.round ? '轻点空白处关闭' : '轻点任意处继续') + '</div></div>';
+  el.innerHTML = inner;
+  document.body.appendChild(el);
+  requestAnimationFrame(function () { el.style.opacity = '1'; });
+  var done = false;
+  var close = function () { if (done) return; done = true; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 180); };
+  el.addEventListener('click', close);
+  setTimeout(close, reduced ? 1400 : (o.round ? 3200 : 1900));
+}
+
+function previewText(p) {
+  if (!p) return '';
+  var parts = [];
+  var nx = p.next_hole || p.next || null;
+  if (nx && nx.hole) parts.push('第 ' + nx.hole + ' 洞' + (nx.par ? ' · Par ' + nx.par : '') + (nx.yards ? ' · ' + nx.yards + ' 码' : ''));
+  if (p.history_line) parts.push(esc(p.history_line));
+  (p.care_lines || []).slice(0, 2).forEach(function (t) { parts.push(esc(t)); });
+  (p.safety || []).forEach(function (t) { parts.push('⚠️ ' + esc(t)); });
+  /* [线W2] 不渲染 missing[]：其中可能含引擎口径（如天气缓存说明），内部口径禁入用户可见字段 */
+  return parts.join('<br>');
+}
+
+/* [ONEPAGE 20261114] play 的尾部显隐（球童/地图模块）在本页由静态布局承担，此处只保留
+   「记分当前洞 → 逐洞图跟随」联动：洞号未变化时绝不触碰地图（缩放状态不被记分重绘重置）；
+   逐洞图与全局图缩放状态各自独立（全局图由赛事页 Leaflet 实例自理，本函数不触碰）。 */
+function setTailVisible(show) {}
+function syncTail() {
+  try {
+    if (S.selHole != null && typeof window.setHole === 'function' && window.curHole !== S.selHole) window.setHole(S.selHole);
+  } catch (e) {}
+}
+/* [ONEPAGE 20261114] 最小 toast（记分页同名调用未定义，此处补齐；仅供结束条提示） */
+function toast(msg) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.setAttribute('style', 'position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(9,32,22,.94);color:#eafff3;border:1px solid rgba(118,229,173,.5);border-radius:999px;padding:10px 18px;font-size:14px;z-index:400;box-shadow:0 8px 24px rgba(0,0,0,.35)');
+  document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, 2400);
+}
+
+function maybeCasualFinish() {
+  if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return; /* [线Z55 修复] 原读 S.ev.kind/status（event_get 顶层无此二字段）致结束入口永不渲染 */
+  var app = document.getElementById('scApp');
+  if (!app || document.getElementById('casualBar')) return;
+  var bar = document.createElement('div');
+  bar.className = 'card';
+  bar.id = 'casualBar';
+  bar.innerHTML = '<b>日常球局</b><p class="muted">全组打完后，点下面按钮结束本场——成绩会锁定并生成回忆。还没打完时，只有发起人可以提前结束。</p>' +
+    '<div class="btnrow"><button class="btn plain" id="casualFinishBtn" type="button">结束本场球局</button></div><div id="casualFinishMsg"></div>';
+  app.appendChild(bar);
+  document.getElementById('casualFinishBtn').addEventListener('click', async function () {
+    var msg = document.getElementById('casualFinishMsg');
+    if (!window.confirm('确定结束本场球局吗？有成绩的记分卡会锁定。')) return;
+    this.disabled = true;
+    var r = await golfApi('casual_finish', { event_id: eventId }, true).catch(function () { return null; }); /* [线Z55 修复] 原 S.eid 从未赋值 */
+    if (r && r.ok) { toast('球局已结束，正在生成回忆'); setTimeout(function () { location.reload(); }, 900); return; }
+    this.disabled = false;
+    var em = (r && r.data && (r.data.error || r.data.message)) || '';
+    if (msg) msg.innerHTML = '<p class="err">' + (r && r.status === 403 ? '还没全部打完时，只有发起人可以提前结束本场。' : '结束没有成功' + (em ? '（' + esc(em) + '）' : '') + '，请稍后再试。') + '</p>';
+  });
+}
+
+function maybeInviteCtl() {
+  if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return;
+  if (S.ev.my_role !== 'organizer') return;
+  var app = document.getElementById('scApp');
+  if (!app || document.getElementById('inviteBar')) return;
+  var code = S.ev.event.invite_code || '';
+  /* [线Z60 2026-11-12] 主按钮改复制「活动链接」（event.html?e=活动ID，&c= 携带
+     邀请凭据）：好友落地赛事页点「报名参加」一键加入；?join= 链接与手输球局码
+     保留为备用加入方式，服务端校验口径不变。 */
+  var joinLink = location.origin + '/golf/event.html?e=' + encodeURIComponent(S.ev.event.id) + (code ? '&c=' + encodeURIComponent(code) : '');
+  var closed = !!((S.ev.event.competition_config || {}).joins_closed);
+  var bar = document.createElement('div');
+  bar.className = 'card';
+  bar.id = 'inviteBar';
+  bar.innerHTML = '<b>邀请好友</b>' +
+    '<p class="muted">把邀请链接发给好友，对方打开、登录后即可加入本局一起记分。球局码：<b>' + esc(code) + '</b>' + (closed ? '<br><b style="color:#b91c1c">加入已关闭</b>：新成员暂时不能凭码加入（已加入的球友不受影响）。' : '') + '</p>' +
+    '<div class="sharebox">' + esc(joinLink) + '</div>' +
+    '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制活动链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
+    '<div class="btnrow"><button class="btn plain" id="invReset" type="button">重置邀请码</button><button class="btn plain" id="invToggle" type="button">' + (closed ? '恢复加入' : '关闭加入') + '</button></div>' +
+    '<div id="invMsg"></div>';
+  app.appendChild(bar);
+  var msg = document.getElementById('invMsg');
+  function say(html) { if (msg) msg.innerHTML = html; }
+  document.getElementById('invCopy').addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制。</p>'); }, function () { say('<p class="err">复制没成功，请长按上方链接手动复制。</p>'); });
+    else say('<p class="err">当前浏览器不支持自动复制，请长按上方链接手动复制。</p>');
+  });
+  document.getElementById('invShare').addEventListener('click', function () {
+    /* [COURSE-NAME 2026-11-14] 系统分享面板与 applyPlayShare 同一份分享数据（有球场以球场名为准）；数据未就绪时回落定版文案。 */
+    var sd = window.__playShareData;
+    if (navigator.share) navigator.share(sd ? { title: sd.title, text: sd.desc, url: joinLink } : { title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink }).catch(function () {});
+    else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制，去粘贴发送吧。</p>'); });
+  });
+  document.getElementById('invReset').addEventListener('click', async function () {
+    if (!window.confirm('重置邀请码后，旧邀请链接和旧球局码将立即失效。确定重置吗？')) return;
+    this.disabled = true;
+    var r = await golfApi('casual_invite_reset', { event_id: eventId }, true).catch(function () { return null; });
+    if (r && r.ok) { say('<p class="okmsg">已生成新邀请码，正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
+    else { this.disabled = false; say('<p class="err">重置没有成功，请稍后再试。</p>'); }
+  });
+  document.getElementById('invToggle').addEventListener('click', async function () {
+    this.disabled = true;
+    var r = await golfApi('casual_joins_set', { event_id: eventId, closed: !closed }, true).catch(function () { return null; });
+    if (r && r.ok) { say('<p class="okmsg">' + (!closed ? '已关闭加入。' : '已恢复加入。') + '正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
+    else { this.disabled = false; say('<p class="err">设置没有成功，请稍后再试。</p>'); }
+  });
+}
+
+async function casualJoin(body) {
+  var r = await golfApi('casual_join', body, true).catch(function () { return null; });
+  if (!r) return { ok: false, error: 'network' };
+  if (!r.ok) return { ok: false, error: (r.data && (r.data.error || r.data.message)) || 'join_failed', status: r.status };
+  var d = r.data || {}, ev = d.event || {};
+  return { ok: true, event_id: ev.id || null, member_count: d.member_count };
+}
+
+/* ---------- 启动（与记分页同口径：会话确认后才装载，会话变化重装） ---------- */
+initAuth(function (s) {
+  var wasKnown = S.authKnown;
+  var was = !!S.session;
+  S.session = s;
+  S.authKnown = true; /* 会话状态未确认前禁止渲染登录表单（paint 骨架守卫） */
+  if (!wasKnown || !!s !== was) loadAll(false);
+  else paint();
+});
+window.__evScoreReload = function () { loadAll(false); }; /* 供赛事页加入/管理动作后同步刷新 */
+(function boot() {
+  var s = getSessionSync();
+  S.session = s;
+  loadAll(true);
+})();
+setInterval(function () {
+  if (document.hidden) return;
+  flushQueue();
+  /* 共享模式聚焦期同节奏刷新全组视图：他人保存，我这边可见 */
+  if (S.group && S.session) { var c = myCard(); if (c) loadGroup(c, true).then(function () { if (S.group) paint(); }); }
+}, 15000);
+window.addEventListener('online', function () { flushQueue(); });
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) return;
+  flushQueue();
+  if (!S.group && S.session) { var vc = myCard(); if (vc) loadGroup(vc, false).then(function (g) { if (g) paint(); }); }
+});
 </script>
 </body>
 </html>
