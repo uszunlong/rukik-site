@@ -23,6 +23,8 @@
   .empty { font-size:24px; color:#b9d3ae; padding:30px 0; }
   .upd { font-size:16px; color:#9fd08a; margin-top:8px; }
   .upd.stale { color:#ffb4a8; }
+  .waitlist { padding:0 40px 12px; font-size:20px; color:#b9d3ae; }
+  .waitlist b { color:#eef7ee; margin-right:10px; }
   footer { padding:0 40px 26px; color:#6f8f66; font-size:15px; }
 </style>
 </head>
@@ -43,6 +45,7 @@
     <tbody id="rows"><tr><td colspan="4" class="empty">正在加载…</td></tr></tbody>
   </table>
 </main>
+<div class="waitlist" id="waitlist"></div>
 <div class="sponsors" id="sponsors"></div>
 <footer>成绩由 RUKIK Golf 确定性规则引擎计算；未锁定成绩为实时排名，不作为正式名次。每 20 秒自动刷新。</footer>
 <script>
@@ -77,6 +80,37 @@ function markBoardStale() {
   var el = document.getElementById('upd');
   if (el) { el.textContent = lastOkAt ? ('刷新失败 · 当前为 ' + fmtClock(lastOkAt) + ' 的数据，可能已过期') : '数据加载失败，正在重试…'; el.classList.add('stale'); }
 }
+/* [ONEPAGE-LB 2026-11-14] 与赛事页同一排序口径：中文按拼音、英文 A–Z 统一键序，
+同键以报名确认时间＋选手稳定 ID 兜底，保证各端排序一致、刷新不乱跳。 */
+var LB_PINYIN = {};
+('王:wang|李:li|张:zhang|刘:liu|陈:chen|杨:yang|黄:huang|周:zhou|吴:wu|徐:xu|孙:sun|胡:hu|朱:zhu|高:gao|林:lin|何:he|郭:guo|马:ma|罗:luo|梁:liang|宋:song|郑:zheng|谢:xie|韩:han|唐:tang|冯:feng|于:yu|董:dong|萧:xiao|程:cheng|曹:cao|袁:yuan|邓:deng|许:xu|傅:fu|沈:shen|曾:zeng|彭:peng|吕:lu|苏:su|卢:lu|蒋:jiang|蔡:cai|贾:jia|丁:ding|魏:wei|薛:xue|叶:ye|阎:yan|余:yu|潘:pan|杜:du|戴:dai|夏:xia|钟:zhong|汪:wang|田:tian|任:ren|姜:jiang|范:fan|方:fang|石:shi|姚:yao|谭:tan|廖:liao|邹:zou|熊:xiong|金:jin|陆:lu|郝:hao|孔:kong|白:bai|崔:cui|康:kang|毛:mao|邱:qiu|秦:qin|江:jiang|史:shi|顾:gu|侯:hou|邵:shao|孟:meng|龙:long|万:wan|段:duan|雷:lei|钱:qian|汤:tang|尹:yin|黎:li|易:yi|常:chang|武:wu|莫:mo|贺:he|赖:lai|龚:gong|文:wen|安:an|包:bao|庞:pang|宁:ning|乔:qiao|欧:ou|伟:wei|芳:fang|娜:na|敏:min|静:jing|磊:lei|洋:yang|艳:yan|勇:yong|杰:jie|涛:tao|明:ming|超:chao|雪:xue|霞:xia|平:ping|刚:gang|桂:gui|英:ying|华:hua|玉:yu|萍:ping|红:hong|娥:e|娟:juan|辉:hui|建:jian|军:jun|斌:bin|波:bo|强:qiang|健:jian|俊:jun|峰:feng|志:zhi|立:li|丽:li|莉:li|佳:jia|倩:qian|欣:xin|子:zi|涵:han|晨:chen|宇:yu|泽:ze|轩:xuan|浩:hao|然:ran|天:tian|思:si|远:yuan|嘉:jia|凯:kai|婷:ting|博:bo|昊:hao|一:yi|二:er|三:san|四:si|五:wu|六:liu|七:qi|八:ba|九:jiu|十:shi|小:xiao|大:da|中:zhong|国:guo|东:dong|南:nan|西:xi|北:bei|春:chun|秋:qiu|冬:dong|海:hai|山:shan|水:shui|云:yun|飞:fei|凤:feng|兰:lan|梅:mei|菊:ju|竹:zhu|松:song|柏:bai|柳:liu|桃:tao|杏:xing|梨:li|蓉:rong|芬:fen|芹:qin|莲:lian|荷:he|薇:wei|蕾:lei|蕊:rui|琳:lin|玲:ling|珍:zhen|珠:zhu|琼:qiong|瑶:yao|瑾:jin|璐:lu|璇:xuan|怡:yi|悦:yue|乐:le|欢:huan|心:xin|慧:hui|颖:ying|雯:wen|婧:jing|妍:yan|妙:miao|诗:shi|琪:qi|梦:meng|雨:yu|晴:qing|霜:shuang|露:lu|冰:bing|晶:jing|洁:jie|纯:chun|真:zhen|善:shan|美:mei|雅:ya|优:you|秀:xiu|智:zhi|仁:ren|义:yi|礼:li|信:xin|忠:zhong|孝:xiao|恒:heng|毅:yi|诚:cheng|谦:qian|和:he|康:kang|泰:tai|顺:shun|利:li|祥:xiang|吉:ji|福:fu|禄:lu|寿:shou|喜:xi|庆:qing|荣:rong|昌:chang|盛:sheng|兴:xing|旺:wang|达:da|通:tong|富:fu|贵:gui|光:guang|亮:liang|煌:huang|灿:can|鑫:xin|森:sen|淼:miao|焱:yan|球:qiu|杆:gan|洞:dong|果:guo|岭:ling|嘉:jia|豪:hao|哲:zhe|睿:rui|琪:qi|玥:yue|彤:tong|丹:dan|青:qing|紫:zi|碧:bi|翠:cui|珊:shan|瑚:hu|妮:ni|娅:ya|媛:yuan|嫣:yan|姣:jiao|娇:jiao|娴:xian|娣:di|娓:wei|婕:jie|婵:chan|婉:wan|婷:ting|娃:wa|娜:na|蓓:bei|蕊:rui|薇:wei|薏:yi|蕙:hui|蕞:zui|莲:lian|莹:ying|莺:ying|莘:shen|莺:ying|菲:fei|菊:ju|菁:jing|菀:wan|萍:ping|萱:xuan|萱:xuan|葳:wei|葵:kui|蒂:di|蒙:meng|蓝:lan|蓓:bei|蕾:lei|璇:xuan|璐:lu|璟:jing|璨:can|璐:lu|瑞:rui|瑜:yu|瑾:jin|珺:jun|珂:ke|珏:jue|珑:long|珉:min|珈:jia|珉:min').split('|').forEach(function (kv) { var p = kv.split(':'); if (p.length === 2) LB_PINYIN[p[0]] = p[1]; });
+function lbNameKey(name) {
+  var s = String(name == null ? '' : name).trim(), out = '';
+  for (var i = 0; i < s.length; i++) {
+    var ch = s.charAt(i);
+    if (LB_PINYIN[ch]) out += LB_PINYIN[ch];
+    else if (/[a-zA-Z]/.test(ch)) out += ch.toLowerCase();
+    else if (/[0-9]/.test(ch)) out += ch;
+    else if (/\s/.test(ch)) out += '';
+    else out += '~' + ch;
+  }
+  return out;
+}
+function nameCmpRows(a, b) {
+  var ka = lbNameKey(a.name), kb = lbNameKey(b.name);
+  if (ka !== kb) return ka < kb ? -1 : 1;
+  var ra = a.registered_at || '', rb = b.registered_at || '';
+  if (ra !== rb) return ra < rb ? -1 : 1;
+  var ia = a.player_id || '', ib = b.player_id || '';
+  if (ia !== ib) return ia < ib ? -1 : 1;
+  var na = String(a.name || ''), nb = String(b.name || '');
+  return na < nb ? -1 : na > nb ? 1 : 0;
+}
+function boardHasScore(e) {
+  var th = e.completedHoles != null ? e.completedHoles : e.thru;
+  if (th != null) return Number(th) > 0;
+  return (e.totalPoints != null && Number(e.totalPoints) > 0) || (e.points != null && Number(e.points) > 0) || (e.skins != null && Number(e.skins) > 0);
+}
 function render() {
   if (!eventId) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">缺少赛事参数</td></tr>'; return; }
   call('event_get', { event_id: eventId }).then(function (d) {
@@ -90,15 +124,44 @@ function render() {
     if (!d || d.error) { markBoardStale(); return; }
     markBoardOk(d.computed_at);
     var st = document.getElementById('status');
-    if (d.is_final) { st.textContent = '正式排名'; st.classList.add('final'); } else { st.textContent = '实时排名 · 未最终确认'; st.classList.remove('final'); }
-    var rows = (d.entries || []);
-    if (!rows.length) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">暂无成绩</td></tr>'; return; }
-    document.getElementById('rows').innerHTML = rows.map(function (e, i) {
-      var rank = e.rank != null ? e.rank : (i + 1);
-      // [线Z85] 并列名次加 T：名次只用服务端 rank，相邻条目同 rank 即并列。
-      var tied = e.rank != null && ((i > 0 && rows[i - 1].rank === e.rank) || (i < rows.length - 1 && rows[i + 1].rank === e.rank));
-      return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + (tied ? 'T' : '') + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
-    }).join('');
+    var entries = (d.entries || []).concat(d.individuals || []);
+    var scored = entries.filter(boardHasScore);
+    var phase = d.is_final ? 'final' : (scored.length ? 'live' : 'pre');
+    /* [ONEPAGE-LB 2026-11-14] 副标题三阶段：赛前名单／比赛进行中／最终成绩；
+       赛前直接显示已确认参赛名单，未记分不赋名次、不显示 0 杆。 */
+    if (phase === 'final') { st.textContent = '最终成绩'; st.classList.add('final'); }
+    else if (phase === 'pre') { st.textContent = '赛前名单'; st.classList.remove('final'); }
+    else { st.textContent = '比赛进行中'; st.classList.remove('final'); }
+    var wl = document.getElementById('waitlist');
+    var wlNames = ((d.waitlist || []).slice().sort(nameCmpRows)).map(function (r) { return r.name || ''; }).filter(Boolean);
+    wl.innerHTML = wlNames.length ? '<b>候补名单</b>' + wlNames.join('、') : '';
+    var html = '';
+    if (phase === 'pre') {
+      var pre = (d.roster || []).map(function (r) { return { name: r.name || '', player_id: r.player_id || null, registered_at: r.registered_at || null }; });
+      if (!pre.length) pre = entries.map(function (e) { return { name: e.name || e.teamId || '', player_id: e.playerId || null, registered_at: null }; });
+      pre = pre.sort(nameCmpRows);
+      if (!pre.length) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">暂无已确认参赛选手</td></tr>'; return; }
+      html = pre.map(function (r, i) {
+        return '<tr><td>' + (i + 1) + '</td><td>' + r.name + '</td><td>未开赛</td><td>—</td></tr>';
+      }).join('');
+    } else {
+      var rows = scored;
+      html = rows.map(function (e, i) {
+        var rank = e.rank != null ? e.rank : (i + 1);
+        // [线Z85] 并列名次加 T：名次只用服务端 rank，相邻条目同 rank 即并列。
+        var tied = e.rank != null && ((i > 0 && rows[i - 1].rank === e.rank) || (i < rows.length - 1 && rows[i + 1].rank === e.rank));
+        return '<tr class="' + (i === 0 ? 'leader' : '') + '"><td>' + (tied ? 'T' : '') + rank + '</td><td>' + (e.name || e.teamId || '') + '</td><td>' + scoreText(e, d.scope) + '</td><td>' + (e.completedHoles != null ? e.completedHoles : (e.thru != null ? e.thru : '—')) + '</td></tr>';
+      }).join('');
+      var scoredIds = {};
+      rows.forEach(function (e) { if (e.playerId) scoredIds[e.playerId] = 1; });
+      var un = (d.roster || []).filter(function (r) { return !(r.player_id && scoredIds[r.player_id]); })
+        .map(function (r) { return { name: r.name || '', player_id: r.player_id || null, registered_at: r.registered_at || null }; }).sort(nameCmpRows);
+      html += un.map(function (r) {
+        return '<tr><td>—</td><td>' + r.name + '</td><td>未记分</td><td>—</td></tr>';
+      }).join('');
+      if (!html) { document.getElementById('rows').innerHTML = '<tr><td colspan="4" class="empty">暂无排名</td></tr>'; return; }
+    }
+    document.getElementById('rows').innerHTML = html;
   }).catch(function () { markBoardStale(); });
 }
 render();

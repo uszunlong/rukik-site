@@ -81,6 +81,10 @@
   table.board th{color:#40584a;font-weight:700}
   #boardSec .card{color:#1a2b22}
   #boardSec .empty{color:#52665a}
+  #boardSec .bsec{margin:12px 0 4px;font-weight:600;color:#1a2b22;font-size:14px}
+  #boardSec .bteam{color:#7a8a7f;font-size:12px;margin-left:6px}
+  #boardSec .bwait{margin-top:10px;font-size:13px;color:#52665a}
+  #boardSec .bwait-t{font-weight:600;color:#1a2b22;margin-right:6px}
   .feed{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .feed figure{margin:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(20,60,35,.06)}
   .feed img{width:100%;height:150px;object-fit:cover;display:block}
@@ -2267,6 +2271,118 @@ function boardScore(en, scope) {
 }
 function boardThru(en) { return en.completedHoles != null ? en.completedHoles : (en.thru != null ? en.thru : '—'); }
 var boardOpen = false; // [Z53] 默认只显前三名，展开看全部
+/* [ONEPAGE-LB 2026-11-14] 排行榜三阶段（赛前名单→赛中→赛后）呈现层：名单只读
+   leaderboard_get 附带的 roster（报名权威数据），排序/分区均为呈现逻辑，
+   不改服务端计分与名次。姓名排序键：中文按拼音、英文 A–Z 统一成同一键序，
+   同键以报名确认时间＋选手稳定 ID 兜底，保证刷新不乱跳、各端一致。 */
+var boardOpenUn = false; // 未记分名单展开态（与已记分榜展开态独立）
+var LB_PINYIN = {};
+('王:wang|李:li|张:zhang|刘:liu|陈:chen|杨:yang|黄:huang|周:zhou|吴:wu|徐:xu|孙:sun|胡:hu|朱:zhu|高:gao|林:lin|何:he|郭:guo|马:ma|罗:luo|梁:liang|宋:song|郑:zheng|谢:xie|韩:han|唐:tang|冯:feng|于:yu|董:dong|萧:xiao|程:cheng|曹:cao|袁:yuan|邓:deng|许:xu|傅:fu|沈:shen|曾:zeng|彭:peng|吕:lu|苏:su|卢:lu|蒋:jiang|蔡:cai|贾:jia|丁:ding|魏:wei|薛:xue|叶:ye|阎:yan|余:yu|潘:pan|杜:du|戴:dai|夏:xia|钟:zhong|汪:wang|田:tian|任:ren|姜:jiang|范:fan|方:fang|石:shi|姚:yao|谭:tan|廖:liao|邹:zou|熊:xiong|金:jin|陆:lu|郝:hao|孔:kong|白:bai|崔:cui|康:kang|毛:mao|邱:qiu|秦:qin|江:jiang|史:shi|顾:gu|侯:hou|邵:shao|孟:meng|龙:long|万:wan|段:duan|雷:lei|钱:qian|汤:tang|尹:yin|黎:li|易:yi|常:chang|武:wu|莫:mo|贺:he|赖:lai|龚:gong|文:wen|安:an|包:bao|庞:pang|宁:ning|乔:qiao|欧:ou|伟:wei|芳:fang|娜:na|敏:min|静:jing|磊:lei|洋:yang|艳:yan|勇:yong|杰:jie|涛:tao|明:ming|超:chao|雪:xue|霞:xia|平:ping|刚:gang|桂:gui|英:ying|华:hua|玉:yu|萍:ping|红:hong|娥:e|娟:juan|辉:hui|建:jian|军:jun|斌:bin|波:bo|强:qiang|健:jian|俊:jun|峰:feng|志:zhi|立:li|丽:li|莉:li|佳:jia|倩:qian|欣:xin|子:zi|涵:han|晨:chen|宇:yu|泽:ze|轩:xuan|浩:hao|然:ran|天:tian|思:si|远:yuan|嘉:jia|凯:kai|婷:ting|博:bo|昊:hao|一:yi|二:er|三:san|四:si|五:wu|六:liu|七:qi|八:ba|九:jiu|十:shi|小:xiao|大:da|中:zhong|国:guo|东:dong|南:nan|西:xi|北:bei|春:chun|秋:qiu|冬:dong|海:hai|山:shan|水:shui|云:yun|飞:fei|凤:feng|兰:lan|梅:mei|菊:ju|竹:zhu|松:song|柏:bai|柳:liu|桃:tao|杏:xing|梨:li|蓉:rong|芬:fen|芹:qin|莲:lian|荷:he|薇:wei|蕾:lei|蕊:rui|琳:lin|玲:ling|珍:zhen|珠:zhu|琼:qiong|瑶:yao|瑾:jin|璐:lu|璇:xuan|怡:yi|悦:yue|乐:le|欢:huan|心:xin|慧:hui|颖:ying|雯:wen|婧:jing|妍:yan|妙:miao|诗:shi|琪:qi|梦:meng|雨:yu|晴:qing|霜:shuang|露:lu|冰:bing|晶:jing|洁:jie|纯:chun|真:zhen|善:shan|美:mei|雅:ya|优:you|秀:xiu|智:zhi|仁:ren|义:yi|礼:li|信:xin|忠:zhong|孝:xiao|恒:heng|毅:yi|诚:cheng|谦:qian|和:he|康:kang|泰:tai|顺:shun|利:li|祥:xiang|吉:ji|福:fu|禄:lu|寿:shou|喜:xi|庆:qing|荣:rong|昌:chang|盛:sheng|兴:xing|旺:wang|达:da|通:tong|富:fu|贵:gui|光:guang|亮:liang|煌:huang|灿:can|鑫:xin|森:sen|淼:miao|焱:yan|球:qiu|杆:gan|洞:dong|果:guo|岭:ling|嘉:jia|豪:hao|哲:zhe|睿:rui|琪:qi|玥:yue|彤:tong|丹:dan|青:qing|紫:zi|碧:bi|翠:cui|珊:shan|瑚:hu|妮:ni|娅:ya|媛:yuan|嫣:yan|姣:jiao|娇:jiao|娴:xian|娣:di|娓:wei|婕:jie|婵:chan|婉:wan|婷:ting|娃:wa|娜:na|蓓:bei|蕊:rui|薇:wei|薏:yi|蕙:hui|蕞:zui|莲:lian|莹:ying|莺:ying|莘:shen|莺:ying|菲:fei|菊:ju|菁:jing|菀:wan|萍:ping|萱:xuan|萱:xuan|葳:wei|葵:kui|蒂:di|蒙:meng|蓝:lan|蓓:bei|蕾:lei|璇:xuan|璐:lu|璟:jing|璨:can|璐:lu|瑞:rui|瑜:yu|瑾:jin|珺:jun|珂:ke|珏:jue|珑:long|珉:min|珈:jia|珉:min').split('|').forEach(function (kv) { var p = kv.split(':'); if (p.length === 2) LB_PINYIN[p[0]] = p[1]; });
+function lbNameKey(name) {
+  var s = String(name == null ? '' : name).trim(), out = '';
+  for (var i = 0; i < s.length; i++) {
+    var ch = s.charAt(i);
+    if (LB_PINYIN[ch]) out += LB_PINYIN[ch];
+    else if (/[a-zA-Z]/.test(ch)) out += ch.toLowerCase();
+    else if (/[0-9]/.test(ch)) out += ch;
+    else if (/\s/.test(ch)) out += '';
+    else out += '~' + ch;
+  }
+  return out;
+}
+function nameCmpRows(a, b) {
+  var ka = lbNameKey(a.name), kb = lbNameKey(b.name);
+  if (ka !== kb) return ka < kb ? -1 : 1;
+  var ra = a.registered_at || '', rb = b.registered_at || '';
+  if (ra !== rb) return ra < rb ? -1 : 1;
+  var ia = a.player_id || '', ib = b.player_id || '';
+  if (ia !== ib) return ia < ib ? -1 : 1;
+  var na = String(a.name || ''), nb = String(b.name || '');
+  return na < nb ? -1 : na > nb ? 1 : 0;
+}
+function boardHasScore(en) {
+  if (!en) return false;
+  var th = en.completedHoles != null ? en.completedHoles : en.thru;
+  if (th != null) return Number(th) > 0;
+  return (en.totalPoints != null && Number(en.totalPoints) > 0) || (en.points != null && Number(en.points) > 0) || (en.skins != null && Number(en.skins) > 0);
+}
+function boardPhase(b) {
+  if (!b) return 'loading';
+  if (b.is_final) return 'final';
+  var any = (b.entries || []).some(boardHasScore) || (b.individuals || []).some(boardHasScore);
+  return any ? 'live' : 'pre';
+}
+function boardEntryAsRoster(en) {
+  return { name: en.name || en.team_name || '', team_name: null, player_id: en.playerId || en.player_id || null, registered_at: null };
+}
+function boardPreList(b) {
+  var list = [], seen = {};
+  ((b && b.roster) || []).forEach(function (r) {
+    if (r.player_id) { if (seen[r.player_id]) return; seen[r.player_id] = 1; }
+    list.push({ name: r.name || '', team_name: r.team_name || null, player_id: r.player_id || null, registered_at: r.registered_at || null });
+  });
+  if (!list.length) {
+    var src = boardIsTeam(b) ? ((b.individuals && b.individuals.length) ? b.individuals : (b.entries || [])) : (b.entries || []);
+    src.forEach(function (en) {
+      var row = boardEntryAsRoster(en);
+      if (row.player_id) { if (seen[row.player_id]) return; seen[row.player_id] = 1; }
+      list.push(row);
+    });
+  }
+  return list.sort(nameCmpRows);
+}
+function boardUnscoredList(b, scoredList) {
+  var scoredIds = {};
+  (scoredList || []).forEach(function (en) { var pid = en.playerId || en.player_id; if (pid) scoredIds[pid] = 1; });
+  var list = [], seen = {};
+  ((b && b.roster) || []).forEach(function (r) {
+    if (r.player_id && scoredIds[r.player_id]) return;
+    if (r.player_id) { if (seen[r.player_id]) return; seen[r.player_id] = 1; }
+    list.push({ name: r.name || '', team_name: r.team_name || null, player_id: r.player_id || null, registered_at: r.registered_at || null });
+  });
+  if (!((b && b.roster) || []).length) {
+    ((b && b.entries) || []).forEach(function (en) {
+      if (boardHasScore(en)) return;
+      var row = boardEntryAsRoster(en);
+      if (row.player_id) { if (seen[row.player_id]) return; seen[row.player_id] = 1; }
+      list.push(row);
+    });
+    ((b && b.individuals) || []).forEach(function (en) {
+      if (boardHasScore(en)) return;
+      var row = boardEntryAsRoster(en);
+      if (row.player_id) { if (seen[row.player_id]) return; seen[row.player_id] = 1; }
+      list.push(row);
+    });
+  }
+  return list.sort(nameCmpRows);
+}
+function boardNameCell(r) {
+  return esc(r.name || '') + (r.team_name ? '<span class="bteam">' + esc(r.team_name) + '</span>' : '');
+}
+function boardRosterRowsHtml(list) {
+  var shown = boardOpen ? list : list.slice(0, 3);
+  var html = '<table class="board"><tr><th>序号</th><th>名称</th><th>已打</th><th>成绩</th></tr>' + shown.map(function (r, i) {
+    return '<tr><td>' + (i + 1) + '</td><td>' + boardNameCell(r) + '</td><td>—</td><td>未开赛</td></tr>';
+  }).join('') + '</table>';
+  if (list.length > 3) html += '<button type="button" class="boardmore" id="boardMore">' + (boardOpen ? '收起 ▴' : '展开全部（共 ' + list.length + ' 名）▾') + '</button>';
+  return html;
+}
+function boardUnscoredHtml(list) {
+  if (!list || !list.length) return '';
+  var shown = boardOpenUn ? list : list.slice(0, 3);
+  var html = '<div class="bsec">未记分球员</div><table class="board"><tr><th>名次</th><th>名称</th><th>已打</th><th>成绩</th></tr>' + shown.map(function (r) {
+    return '<tr><td>—</td><td>' + boardNameCell(r) + '</td><td>—</td><td>未记分</td></tr>';
+  }).join('') + '</table>';
+  if (list.length > 3) html += '<button type="button" class="boardmore" id="boardMoreUn">' + (boardOpenUn ? '收起 ▴' : '展开全部未记分（共 ' + list.length + ' 名）▾') + '</button>';
+  return html;
+}
+function boardWaitlistHtml(b) {
+  var wl = ((b && b.waitlist) || []).slice().sort(nameCmpRows);
+  if (!wl.length) return '';
+  var names = wl.map(function (r) { return esc(r.name || ''); }).filter(Boolean).join('、');
+  if (!names) return '';
+  return '<div class="bwait"><span class="bwait-t">候补名单</span>' + names + '</div>';
+}
 function boardToPar(en, scope) {
   // [线Z85] 相对标准杆随成绩同显（如「28 杆 (-11)」）：数据只读服务端条目
   // 自带的 toPar（entries/individuals 均已由服务端算好），前端不另算；
@@ -2295,29 +2411,51 @@ function renderBoard() {
   if (!el) return;
   var b = LASTBOARD;
   var upd = LASTBOARD_AT ? '<span class="bupd">更新于 ' + ('0' + LASTBOARD_AT.getHours()).slice(-2) + ':' + ('0' + LASTBOARD_AT.getMinutes()).slice(-2) + '</span>' : '';
-  var head = '<div class="bhead"><h2>🏆 ' + (b && b.is_final ? '正式排行榜' : '实时排行榜') + '</h2>' +
-    (b ? '<span class="btag' + (b.is_final ? ' final' : '') + '">' + (b.is_final ? '正式排名' : '实时 · 非最终成绩') + '</span>' : '') + upd + '</div>';
-  var body = '';
-  /* [A8] 未开赛：只显示「开赛后更新」，不渲染名次行（board 未发布同理） */
-  if (stateOf() === 'pre') body = '<div class="empty">开赛后更新</div>';
-  else if (!b) body = '<div class="skl" style="margin-top:10px"></div>';
-  else if (boardIsTeam(b)) {
-    var tab = boardTab || 'team';
-    body = '<div class="btabs"><button type="button" data-btab="team"' + (tab === 'team' ? ' class="on"' : '') + '>团队榜</button><button type="button" data-btab="ind"' + (tab === 'ind' ? ' class="on"' : '') + '>个人榜</button></div>' +
-      (tab === 'team'
-        ? (boardRowsHtml(b.entries, b.scope) || '<div class="empty">暂无团队成绩</div>')
-        : (boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无个人成绩</div>'));
-  } else {
-    body = boardRowsHtml(b.entries, b.scope) || boardRowsHtml(b.individuals, b.scope) || '<div class="empty">暂无排名</div>';
+  var phase = boardPhase(b);
+  /* [ONEPAGE-LB 2026-11-14] 标题恒为「实时排行榜」；副标题区分三阶段：
+     赛前名单／比赛进行中／最终成绩。赛前（全员无有效成绩）直接显示已确认
+     参赛名单，不再用「开赛后更新」空白逻辑。 */
+  var tag = '';
+  if (b) {
+    if (phase === 'pre') tag = '<span class="btag">赛前名单</span>';
+    else if (phase === 'final') tag = '<span class="btag final">最终成绩</span>';
+    else tag = '<span class="btag">比赛进行中</span>';
   }
+  var head = '<div class="bhead"><h2>🏆 实时排行榜</h2>' + tag + upd + '</div>';
+  var body = '';
+  if (!b) body = '<div class="skl" style="margin-top:10px"></div>';
+  else if (phase === 'pre') {
+    var preList = boardPreList(b);
+    body = preList.length ? boardRosterRowsHtml(preList) : '<div class="empty">暂无已确认参赛选手</div>';
+  } else if (boardIsTeam(b)) {
+    var tab = boardTab || 'team';
+    var tSrc = tab === 'team' ? (b.entries || []) : (b.individuals || []);
+    var tScored = tSrc.filter(boardHasScore);
+    var tUn = tab === 'team'
+      ? tSrc.filter(function (en) { return !boardHasScore(en); }).map(boardEntryAsRoster).sort(nameCmpRows)
+      : boardUnscoredList(b, tScored);
+    body = '<div class="btabs"><button type="button" data-btab="team"' + (tab === 'team' ? ' class="on"' : '') + '>团队榜</button><button type="button" data-btab="ind"' + (tab === 'ind' ? ' class="on"' : '') + '>个人榜</button></div>' +
+      (boardRowsHtml(tScored, b.scope) || '') + boardUnscoredHtml(tUn);
+    if (!tScored.length && !tUn.length) body += '<div class="empty">暂无排名</div>';
+  } else if (b.scope === 'match') {
+    body = boardRowsHtml(b.entries, b.scope) || '<div class="empty">暂无排名</div>';
+  } else {
+    var scored = (b.entries || []).filter(boardHasScore);
+    var un = boardUnscoredList(b, scored);
+    body = (boardRowsHtml(scored, b.scope) || '') + boardUnscoredHtml(un);
+    if (!scored.length && !un.length) body = '<div class="empty">暂无排名</div>';
+  }
+  if (b) body += boardWaitlistHtml(b);
   el.innerHTML = '<div class="card">' + head + body +
     '<div id="awardZone"></div>' +
     '<div class="boardfoot"><a href="https://rukik.com/golf/board.html?e=' + encodeURIComponent(eventId) + '">📺 大屏榜 · 查看完整榜单</a></div></div>';
   el.querySelectorAll('[data-btab]').forEach(function (btn) {
-    btn.addEventListener('click', function () { boardTab = btn.getAttribute('data-btab'); boardOpen = false; renderBoard(); loadAwards(); });
+    btn.addEventListener('click', function () { boardTab = btn.getAttribute('data-btab'); boardOpen = false; boardOpenUn = false; renderBoard(); loadAwards(); });
   });
   var bm = el.querySelector('#boardMore');
   if (bm) bm.addEventListener('click', function () { boardOpen = !boardOpen; renderBoard(); loadAwards(); });
+  var bmu = el.querySelector('#boardMoreUn');
+  if (bmu) bmu.addEventListener('click', function () { boardOpenUn = !boardOpenUn; renderBoard(); loadAwards(); });
 }
 // ---- Golf Live 照片墙（第一区 Hero 媒体）：单个横向自动轮播，2 秒/张循环，无标题/上传人；
 // 点击任意照片进入完整照片池（photos.html?e=）。坏图自动剔除不占位；手动滑动暂停；
@@ -2439,9 +2577,12 @@ function boardSigRows(list, scope) {
     return [en.id || en.playerId || en.teamId || '', en.rank != null ? en.rank : i + 1, en.name || en.team_name || '', boardThru(en), boardScore(en, scope), en.status || '', en.toPar != null ? en.toPar : ''].join(':');
   }).join('|');
 }
+function boardSigRoster(list) {
+  return (list || []).map(function (r) { return [r.player_id || '', r.name || '', r.status || ''].join(':'); }).join('|');
+}
 function boardSignature(b) {
   if (!b) return '';
-  return [b.scope || '', b.is_final ? 'final' : 'live', boardSigRows(b.entries, b.scope), boardSigRows(b.individuals, b.scope)].join('#');
+  return [b.scope || '', b.is_final ? 'final' : 'live', boardSigRows(b.entries, b.scope), boardSigRows(b.individuals, b.scope), boardSigRoster(b.roster), boardSigRoster(b.waitlist)].join('#');
 }
 function boardResponseVersion(j) {
   if (!j) return null;
