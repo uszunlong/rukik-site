@@ -52,6 +52,7 @@
   .skl{border-radius:12px;background:linear-gradient(90deg,#0d2438 25%,#14324e 50%,#0d2438 75%);background-size:200% 100%;animation:sk 1.2s infinite;min-height:74px}
   @keyframes sk{to{background-position:-200% 0}}
   .err{background:#fdf3f3;border:1px solid #f3d2d2;color:#8c2f2f;border-radius:12px;padding:12px;font-size:14px}
+  .err:empty{display:none} /* [EVENTBTN 20261114] 空错误占位（如 ciErr）无文案时不渲染，避免空白条 */
   .empty{color:#7a8a7d;font-size:14px;padding:8px 0}
   button.retry{margin-top:8px;background:#14532d;color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:14px;cursor:pointer}
   .holebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}
@@ -344,9 +345,9 @@
   #scoreSec:empty{display:none}
   .manageCard{margin-top:14px}
   .manageCard .mrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  .manageCard .mbtn{flex:1;min-width:140px;background:rgba(255,255,255,.06);color:#f2fff7;border:1px solid rgba(242,255,247,.25);border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
-  .manageCard .mbtn.danger{color:#ffb9c6;border-color:rgba(255,150,170,.45)}
-  .manageCard .mmsg{font-size:13px;color:#ffd98a;margin-top:8px;min-height:16px}
+  .manageCard .mbtn{flex:1;min-width:140px;background:#fff;color:#15803d;border:1.5px solid #15803d;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer} /* [EVENTBTN 20261114] 定版：白底＋绿边＋绿字（原深色配色在白卡上不可见） */
+  .manageCard .mbtn.danger{background:#fff;color:#b3261e;border-color:#b3261e} /* [EVENTBTN 20261114] 定版：白底＋红边＋红字 */
+  .manageCard .mmsg{font-size:13px;color:#8a6100;margin-top:8px;min-height:16px} /* [EVENTBTN 20261114] 原浅黄在白卡不可见，改深琥珀 */
   #scoreSec .card{ background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1px solid rgba(120,255,190,.13); -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); border-radius: 18px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
   #scoreSec .card h2{ font-size: 17px; margin: 0 0 10px; color: #f4faf5; }
   #scoreSec .card h3{ font-size: 15px; margin: 14px 0 8px; color: #f4faf5; }
