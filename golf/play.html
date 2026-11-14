@@ -112,7 +112,7 @@
   .edlabel { text-align: center; font-size: 15.5px; font-weight: 700; color: #f4faf5; letter-spacing: .2px; }
   .statetag { text-align: center; font-size: 13px; margin-top: 6px; color: #c4d8c9; }
   .conflictbox { margin-top: 12px; background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.35); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: #fecaca; }
-  .conflictbox input { width: 100%; border: 1px solid rgba(160,220,185,.28); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 8px; min-height: 42px; background: rgba(3,18,12,.55); color: #f2f8f3; }
+  .conflictbox input { width: 100%; border: 1px solid rgba(160,220,185,.28); border-radius: 10px; padding: 10px 12px; font-size: 16px; margin-top: 8px; min-height: 42px; background: rgba(3,18,12,.55); color: #f2f8f3; }
   .preview { margin-top: 12px; background: rgba(34,197,94,.10); border: 1px solid rgba(74,222,128,.3); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.75; color: #dcebe0; }
   .preview .t { font-weight: 700; color: #4ade80; }
   table.scores { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
@@ -134,7 +134,7 @@
   .cd-chips button { background: rgba(255,255,255,.05); border: 1px solid rgba(120,255,190,.3); color: #8ff5b6; border-radius: 999px; padding: 8px 13px; font-size: 13px; cursor: pointer; font-family: inherit; }
   .cd-chips button:active { background: rgba(34,197,94,.18); }
   .cd-inrow { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
-  .cd-inrow textarea { flex: 1; min-width: 0; border: 1px solid rgba(160,220,185,.28); border-radius: 14px; padding: 11px 13px; font-size: 15px; outline: none; background: rgba(3,18,12,.55); color: #f2f8f3; resize: none; max-height: 96px; font-family: inherit; }
+  .cd-inrow textarea { flex: 1; min-width: 0; border: 1px solid rgba(160,220,185,.28); border-radius: 14px; padding: 11px 13px; font-size: 16px; outline: none; background: rgba(3,18,12,.55); color: #f2f8f3; resize: none; max-height: 96px; font-family: inherit; }
   .cd-inrow button { background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: none; border-radius: 14px; padding: 12px 18px; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .cd-inrow button:disabled { opacity: .55; }
   .cd-hint { font-size: 12px; color: #7d9a89; margin-top: 8px; line-height: 1.6; }
@@ -2233,13 +2233,16 @@ function cdLoadHistory() {
   cdUidCache = cdUid();
   cdHistory = [];
   if (!cdUidCache) return;
-  try { var s = sessionStorage.getItem(cdStoreKey()); var a = s ? JSON.parse(s) : null; if (Array.isArray(a)) cdHistory = a.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }); } catch (e) { cdHistory = []; }
+  try { var s = sessionStorage.getItem(cdStoreKey()); var a = s ? JSON.parse(s) : null; if (Array.isArray(a)) cdHistory = a.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && !(m.cid && String(m.cid).indexOf('care-') === 0); }); } catch (e) { cdHistory = []; }
 }
 function cdNewCid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
 var cdSyncBusy = false;
+var cdSyncGen = 0;
 async function cdSyncWithServer() {
   if (cdSyncBusy || cdSending) return false;
   var u = cdUid(); if (!u || !eventId) return false;
+  var genAtStart = ++cdSyncGen;
+  var evAtStart = eventId;
   cdSyncBusy = true;
   try {
     var tk = await getAccessToken(); if (!tk) return false;
@@ -2248,6 +2251,7 @@ async function cdSyncWithServer() {
     var cr = await fetch(root + '/rest/v1/conversations?select=id,event_context&user_id=eq.' + encodeURIComponent(u) + '&order=updated_at.desc&limit=25', { headers: h });
     if (!cr.ok) return false;
     var convs = await cr.json();
+    if (genAtStart !== cdSyncGen || String(eventId) !== String(evAtStart) || cdUid() !== u) return true; /* [CADDIE-ISOLATION 2026-11-14] 球局/账号已切换：旧同步结果不得回写 */
     var ids = (convs || []).filter(function (c) { var ec = (c && c.event_context) || {}; return ec.kind === 'golf_caddie' && String(ec.event_id || '') === String(eventId); }).map(function (c) { return c.id; });
     if (!ids.length) {
       if (cdHistory.length) { cdHistory = []; cdPersist(); cdPaintThread(); }
@@ -2259,7 +2263,8 @@ async function cdSyncWithServer() {
       if (!mr.ok) return false;
       msgs = msgs.concat(await mr.json());
     }
-    var rebuilt = msgs.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; }).map(function (m) { var o = { role: m.role, content: m.content }; if (m.client_msg_id) o.cid = m.client_msg_id; return o; }).slice(-20);
+    var rebuilt = msgs.filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && !(m.client_msg_id && String(m.client_msg_id).indexOf('care-') === 0); }).map(function (m) { var o = { role: m.role, content: m.content }; if (m.client_msg_id) o.cid = m.client_msg_id; return o; }).slice(-20);
+    if (genAtStart !== cdSyncGen || String(eventId) !== String(evAtStart) || cdUid() !== u) return true; /* 回写点二次校验：消息在途期间切换亦不得回写 */
     var before = JSON.stringify(cdHistory);
     cdHistory = rebuilt;
     if (JSON.stringify(cdHistory) !== before) { cdPersist(); cdPaintThread(); }
