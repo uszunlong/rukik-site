@@ -86,6 +86,18 @@
   #boardSec .bteam{color:#7a8a7f;font-size:12px;margin-left:6px}
   #boardSec .bwait{margin-top:10px;font-size:13px;color:#52665a}
   #boardSec .bwait-t{font-weight:600;color:#1a2b22;margin-right:6px}
+  /* [CONTRAST 20261114] 本场进程/分享邀请（#casualSec）对比度修复：.card 为白底但未设文字色，
+     正文原继承 body 近白色 #F4F1EA 呈白底白字不可读（.btn/.sharebox 的样式又只存在于
+     #scoreSec 深色记分卡作用域）。按 #boardSec 与 .manageCard 白卡既定口径补齐本区配色，
+     只改颜色/按钮配色，不动布局与文案。 */
+  #casualSec .card{color:#1a2b22}
+  #casualSec .muted{color:#52665a;line-height:1.7}
+  #casualSec .sharebox{background:#eef4ef;border:1px solid #dce8de;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.7;word-break:break-all;margin-top:12px;color:#14532d}
+  #casualSec .btnrow{display:flex;gap:10px;margin-top:12px}
+  #casualSec .btnrow .btn{flex:1}
+  #casualSec .btn{display:block;width:100%;box-sizing:border-box;background:#14532d;color:#fff;border:1px solid #14532d;border-radius:12px;padding:11px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+  #casualSec .btn.plain{background:#fff;color:#15803d;border:1.5px solid #15803d;font-weight:600}
+  #casualSec .btn:disabled{opacity:.55}
   .feed{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .feed figure{margin:0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(20,60,35,.06)}
   .feed img{width:100%;height:150px;object-fit:cover;display:block}
@@ -923,8 +935,10 @@ function renderDual() {
    管理本场融合进下方「管理赛事」模块，作展开后第一按钮（链接与权限口径不变）。 */
 /* [LAYOUT-V2 20261114]＋[UNIFY 20261114] 「管理本场」融合进「管理赛事」：页面最后只剩本模块一个管理入口。
    未展开时只呈现「管理赛事」一个入口；点击展开两按钮——管理本场（＝原 staffSec 的
-   主办方台链接，organizer/admin/referee 可见，落点与权限不变）／取消赛事（仅
-   organizer/admin，显隐条件与确认流程不变）。「删除赛事」按钮已按用户 2026-11-14
+   主办方台链接，organizer/admin/referee 可见，落点与权限不变）／结束赛事（仅
+   organizer/admin；原「取消赛事」，[END-EVENT 20261114] 按用户裁决文案＋行为一起改：
+   走 event_update {status:'completed'} 结束机制、二次确认按状态分文案，详见按钮绑定处）。
+   「删除赛事」按钮已按用户 2026-11-14
    12:49 指令移除（与取消赛事功能重复）：删除入口保留在主办方台（管理本场）内，
    本页不再绑定 rkDeleteEventFlowHere（函数保留备查）。
    原独立「结束赛事」按钮此前已按定版不再单列，其 event_update 结束
@@ -937,7 +951,7 @@ function renderManage() {
   var canManage = EV.my_role === 'organizer' || EV.my_role === 'admin';
   var btns = '<a class="mbtn go" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场</a>';
   if (canManage) {
-    if (e.status !== 'completed' && e.status !== 'cancelled') btns += '<button type="button" class="mbtn" id="evCancelBtn">取消赛事</button>';
+    if (e.status !== 'completed' && e.status !== 'cancelled') btns += '<button type="button" class="mbtn" id="evEndBtn">结束赛事</button>';
 
   }
   el.innerHTML = '<div class="card manageCard"><button type="button" class="mtoggle" id="evManageToggle" aria-expanded="false"><span>管理赛事</span><span class="mchev">▾</span></button><div id="evManageBody" style="display:none"><div class="mrow">' + btns + '</div><div class="mmsg" id="evManageMsg"></div></div></div>';
@@ -950,15 +964,21 @@ function renderManage() {
     var ch = tg.querySelector('.mchev'); if (ch) ch.textContent = open ? '▾' : '▴';
   });
   var msg = document.getElementById('evManageMsg');
-  var cb = document.getElementById('evCancelBtn');
+  var cb = document.getElementById('evEndBtn');
   if (cb) cb.addEventListener('click', function () {
-    if (!window.confirm('确定取消这场赛事吗？取消后球员将不能继续报名与记分。')) return;
+    /* [END-EVENT 20261114] 结束赛事：与 console 管理本场同一 event_update {status:'completed'}
+       结束机制（requireStaff、排行榜转最终榜、赛事页切回忆馆），不置 cancelled、不发取消类通知；
+       二次确认按状态如实写后果。相册按定版赛后仍开放，本动作不触碰相册。 */
+    var confirmText = e.status === 'in_progress'
+      ? '确定结束这场赛事吗？结束后赛事页将切换为回忆馆，排行榜转为赛后榜，记分到此为止。'
+      : '确定结束这场尚未开赛的赛事吗？结束后将停止报名，赛事页将切换为回忆馆。';
+    if (!window.confirm(confirmText)) return;
     cb.disabled = true;
-    dyn('event_update', { status: 'cancelled' }).then(function () {
-      if (msg) msg.textContent = '赛事已取消，正在刷新…';
+    dyn('event_update', { status: 'completed' }).then(function () {
+      if (msg) msg.textContent = '赛事已结束，正在刷新…';
       loadDynamic();
       if (window.__evScoreReload) window.__evScoreReload();
-    }).catch(function () { cb.disabled = false; if (msg) msg.textContent = '取消没有成功，请稍后再试。'; });
+    }).catch(function () { cb.disabled = false; if (msg) msg.textContent = '结束没有成功，请稍后再试。'; });
   });
   /* [UNIFY 20261114] evDelBtn 已移除（见上方注释），本页不再绑定删除流程。 */
 }
