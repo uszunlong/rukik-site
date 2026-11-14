@@ -543,11 +543,11 @@ function callOnce(action, extra, timeoutMs) {
     .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) { var er = new Error(j.error || ('HTTP ' + r.status)); er.status = r.status; throw er; } return j; }); })
     .catch(function (e) { clearTimeout(to); window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: false }); throw e; });
 }
-function dyn(action, extra) {
+function dyn(action, extra, timeoutMs) {
   var key = action + ':' + eventId + ':' + JSON.stringify(extra || {});
   if (INFLIGHT[key]) return INFLIGHT[key];
   var attempt = function (n) {
-    return callOnce(action, extra).catch(function (e) {
+    return callOnce(action, extra, timeoutMs).catch(function (e) {
       if (e && (e.status === 403 || e.status === 404)) throw e; /* [匿名邀请完善20261112] 业务性拒绝不重试，与记分页口径一致 */
       if (n >= 2) throw e;
       var wait = (n === 0 ? 700 : 2000) * (0.7 + Math.random() * 0.6);
@@ -2750,8 +2750,10 @@ function renderForbiddenGuideEv() {
     }).catch(function () {});
   }
 }
+var dynFailStreak = 0, dynMapOk = false;
 function loadDynamic() {
-  dyn('event_get', inviteCodeParam ? { invite_code: inviteCodeParam } : {}).then(function (j) {
+  dyn('event_get', inviteCodeParam ? { invite_code: inviteCodeParam } : {}, 20000).then(function (j) {
+    dynFailStreak = 0;
     EV = j; PREVIEW = j.course_preview || null;
     applyShare(j.event);
     /* 发球台默认优先级（Z33）：赛事官方指定台（rounds.default_tee_id 且能在预览台列表中
@@ -2765,20 +2767,40 @@ function loadDynamic() {
       }
     }
     curTee = officialTeeId || (PREVIEW && PREVIEW.main_tee_id);
-    renderHero(); renderPartners(); renderMap();
+    renderHero(); renderPartners();
+    /* [MAPFIX 20261114] 地图渲染隔离：renderMap 同步抛错只伤地图区自身，
+       不再连累整条动态链触发整页级误报 catch。 */
+    try { renderMap(); dynMapOk = true; }
+    catch (e2) { errBox(document.getElementById('mapSec'), '球场地图渲染失败，请重试。', function () { try { renderMap(); } catch (e3) {} }); }
     if (LASTBOARD) loadBoardIntoFunc();
     if (WALL) renderLive(); // wall 先于动态层到达时在此补渲染 Hero 照片墙
     maybeWall();
   }).catch(function (e) {
     var msg = String(e && e.message || e);
-    if (!SNAP) {
-      if (msg.indexOf('forbidden') >= 0) { renderForbiddenGuideEv(); } /* [403修复20261112] 私密球局未带凭据→引导页，不报假故障 */
-      else {
-        errBox(document.getElementById('heroSec'), msg.indexOf('event not found') >= 0 ? '赛事不存在或链接无效。' : '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
+    if (!SNAP && msg.indexOf('forbidden') >= 0) { renderForbiddenGuideEv(); } /* [403修复20261112] 私密球局未带凭据→引导页，不报假故障 */
+    else if (!SNAP && msg.indexOf('event not found') >= 0) {
+      errBox(document.getElementById('heroSec'), '赛事不存在或链接无效。', loadDynamic);
+      document.getElementById('statePill').textContent = '加载失败';
+    } else if (!dynMapOk) {
+      /* [MAPFIX 20261114] 定因：动态主链（event_get）失败≠球场地图故障。旧逻辑在
+         SNAP 已呈现基础层时，把与失败点无关的「球场地图加载失败」粉框写进地图区，
+         PREVIEW 永不赋值致逐洞图/全局图永不渲染、且只能手动重试。改为：诚实占位
+         ＋有限自动重试（3s/9s 两次）；耗尽才出如实归因的提示＋重试按钮。地图已
+         成功渲染后（dynMapOk）的后续刷新失败不触碰已渲染内容。 */
+      dynFailStreak++;
+      var msEl = document.getElementById('mapSec');
+      if (dynFailStreak <= 2) {
+        /* [MAPFIX 20261114] 主链失败先自愈、不提前判死：SNAP 在位时地图区出诚实
+           占位；SNAP 不在位时 hero 保持骨架屏（记分模块/排行榜走各自独立链，
+           不受本链失败牵连），两次自动重试（3s/9s）耗尽才判失败。 */
+        if (SNAP && msEl && !msEl.innerHTML) msEl.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">赛事信息正在加载，球场地图马上就来…</div></div>';
+        setTimeout(function () { loadDynamic(); }, dynFailStreak === 1 ? 3000 : 9000);
+      } else if (!SNAP) {
+        errBox(document.getElementById('heroSec'), '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
         document.getElementById('statePill').textContent = '加载失败';
+      } else if (msEl) {
+        errBox(msEl, '赛事信息加载未完成，球场地图暂未呈现（网络或服务暂时不可用）。', loadDynamic);
       }
-    } else {
-      errBox(document.getElementById('mapSec'), '球场地图加载失败，请重试。', loadDynamic);
     }
     maybeWall();
   });
@@ -2791,7 +2813,7 @@ function boot() {
   document.getElementById('heroSec').innerHTML = '<div class="skl"></div>';
   loadBoardIntoFunc(); // L2 排名独立启动，不等基础层
   var t0 = Date.now();
-  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 4000);
+  var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 8000); /* [MAPFIX 20261114] 4s 实测频繁误杀慢快照（存储直出可达 10s），放宽至 8s 保住兜底层 */
   fetch(SNAP_URL, { signal: ctrl.signal }).then(function (r) { clearTimeout(to); if (!r.ok) throw new Error('snap ' + r.status); return r.json(); })
     .then(function (j) {
       window.__reqLog.push({ action: 'snapshot', ms: Date.now() - t0, ok: true });
@@ -4298,11 +4320,30 @@ function myStatusHtml() {
   return out;
 }
 
+/* [MAPFIX 20261114] 签到窗外提示：开放时刻按服务端签到窗规则（开赛前 12 小时）
+   以本场开赛时间（S.ev.event.starts_at，服务端返回）计算、按赛事时区呈现，
+   不写死任何具体日期；数据缺失时回落规则文案。 */
+function ciWindowMsg() {
+  try {
+    var e0 = S && S.ev && S.ev.event;
+    if (e0 && e0.starts_at) {
+      var open = new Date(new Date(e0.starts_at).getTime() - 12 * 3600 * 1000);
+      if (!isNaN(open.getTime())) {
+        var f = new Intl.DateTimeFormat('zh-CN', { timeZone: e0.timezone || undefined, month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit', hourCycle: 'h23' });
+        return '签到尚未开放：本场签到将于 ' + f.format(open) + ' 起开放（开赛前 12 小时），请届时再来签到。';
+      }
+    }
+  } catch (e) {}
+  return '尚未到签到时间：开赛前 12 小时起可自助签到。';
+}
+
 function bindMyStatus() {
   var b = document.getElementById('ciBtn');
   if (!b) return;
   b.addEventListener('click', function () {
     b.disabled = true;
+    var origLabel = b.textContent;
+    b.textContent = '正在签到…';
     golfApi('check_in', { event_id: eventId }, true).then(function (r) {
       if (r.ok) {
         loadAll(false);
@@ -4313,9 +4354,17 @@ function bindMyStatus() {
       }
       else {
         var e2 = document.getElementById('ciErr');
-        if (e2) e2.textContent = r.error === 'check-in window not open' ? '尚未到签到时间：开赛前 12 小时起可自助签到。' : '签到未成功：' + (r.error || '请稍后重试');
+        if (e2) e2.textContent = r.error === 'check-in window not open' ? ciWindowMsg() : '签到未成功：' + (r.error || '请稍后重试');
         b.disabled = false;
+        b.textContent = origLabel;
       }
+    }).catch(function () {
+      /* [MAPFIX 20261114] 原 handler 无 catch：请求 reject（20s 超时/断网）时按钮
+         永久 disabled 且零提示（用户实报「点了没反应」）。补齐失败反馈与按钮恢复。 */
+      var e2 = document.getElementById('ciErr');
+      if (e2) e2.textContent = '签到未成功：网络暂时不可用，请稍后重试。';
+      b.disabled = false;
+      b.textContent = origLabel;
     });
   });
 }
