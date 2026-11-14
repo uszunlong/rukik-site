@@ -1335,9 +1335,8 @@ function paint() {
   if (reg && reg.status === 'pending') {
     app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名待主办方审核</h2>' +
       '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：<b>报名已提交，等待主办方审核</b>。</p>' +
-      '<p class="muted">审核通过后报名即正式生效，这里会继续显示分组与记分入口；未通过会在此如实显示。可稍后刷新查看审核结果。</p>' +
-      '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
-    document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+      '<p class="muted">审核通过后报名即正式生效，这里会继续显示分组与记分入口；未通过会在此如实显示。下次打开页面即可看到审核结果。</p>' +
+      backToEventBtn() + '</div>';
     return;
   }
   if (reg && reg.status === 'rejected') {
@@ -1502,8 +1501,7 @@ function paintWaitingGroup() {
     '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
     '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>' +
     organizerHint() + myStatusHtml() +
-    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
-  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+    backToEventBtn() + '</div>';
   bindMyStatus();
 }
 
@@ -1519,8 +1517,7 @@ function paintPreStart() {
     (pc.weather_line ? '<p class="muted">' + esc(pc.weather_line) + '</p>' : '') +
     myStatusHtml() +
     '<h3>比赛准备</h3><p class="muted">请提前到达出发洞附近等候；开赛后本页会自动切换为记分模式。记分与 App 共用同一张记分卡，断网时成绩先保存在本机、恢复网络后自动同步。</p>' +
-    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
-  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+    backToEventBtn() + '</div>';
   bindMyStatus();
 }
 
@@ -1532,8 +1529,7 @@ function paintNoCard() {
       ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
       : '<p class="muted">已开赛 · 您尚未分组，暂时无法记分。请联系主办方安排分组。</p>') +
     organizerHint() + myStatusHtml() +
-    '<div class="btnrow"><button class="btn plain" id="refreshBtn">刷新状态</button></div>' + backToEventBtn() + '</div>';
-  document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(false); });
+    backToEventBtn() + '</div>';
   bindMyStatus();
 }
 
