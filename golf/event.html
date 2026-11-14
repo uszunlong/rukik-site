@@ -350,11 +350,32 @@ try { var raw = localStorage.getItem('sb-yzgzgtrqrmarfjftgbwt-auth-token'); if (
 function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 // 分享卡片（定版口径：标题＝赛事名、描述＝赛事主题句、缩略图＝官方海报）。
 // 静态标签保持赛事中立（品牌默认，见 head 注释）；快照/动态数据到达后按当前赛事刷新 og 与微信分享数据。
-function shareDescOf(d) {
+/* [COURSE-NAME 2026-11-14] 有对应球场的活动，分享卡以球场名为准（用户亲定）：
+   标题优先用赛事 title（生成格式已含球场名，如「球场名 · 好友球局」），
+   casual 局 title 未含球场名时前置球场名，title 缺失时以球场名拼接兜底；
+   描述无正文时带球场名。无球场时保持原口径不变。 */
+function shareCourseName(e) {
+  if (!e) return '';
+  var n = e.course_name || (e.course && e.course.name) || '';
+  if (!n && typeof EV !== 'undefined' && EV && EV.course) n = EV.course.name || '';
+  return String(n || '').trim();
+}
+function shareTitleOf(e, courseName) {
+  var t = String((e && e.title) || '').trim();
+  if (courseName) {
+    if (!t) return courseName + (e && e.kind === 'casual' ? ' · 好友球局' : ' · 赛事');
+    if (e && e.kind === 'casual' && t.indexOf(courseName) === -1) return courseName + ' · ' + t;
+    return t;
+  }
+  return t;
+}
+function shareDescOf(d, courseName, kind) {
   var s = String(d || '').replace(/\s+/g, ' ').trim();
-  if (!s) return '赛事互动 · 精彩瞬间 · 实时成绩';
-  var cut = s.indexOf('。');
-  return cut > 0 ? s.slice(0, cut + 1) : s.slice(0, 80);
+  if (s) { var cut = s.indexOf('。'); return cut > 0 ? s.slice(0, cut + 1) : s.slice(0, 80); }
+  if (courseName) return kind === 'casual'
+    ? courseName + ' 好友球局 · 实时记分、实时排行榜、AI 球童全程相伴'
+    : courseName + ' · 赛事互动 · 精彩瞬间 · 实时成绩';
+  return '赛事互动 · 精彩瞬间 · 实时成绩';
 }
 function setMeta(sel, val) { var el = document.querySelector(sel); if (el && val) el.setAttribute('content', val); }
 function pushWxShare(data) {
@@ -370,10 +391,15 @@ function pushWxShare(data) {
   return false;
 }
 function applyShare(e) {
-  if (!e || !e.title) return;
+  if (!e) return;
+  var courseName = shareCourseName(e);
+  var shareTitle = shareTitleOf(e, courseName);
+  if (!shareTitle) return;
   /* 无自有封面回退高尔夫主题图，禁落空值：setMeta 对空值跳过、wx 空 imgUrl 会回退抓静态 og，
-     任一都会让分享图停在静态值上（串图根因之二）。 */
-  var data = { title: e.title, desc: shareDescOf(e.description), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || 'https://rukik.com/golf/golf-share.jpg' };
+     任一都会让分享图停在静态值上（串图根因之二）。图源优先序：本场封面→海报
+     →（公开活动）派生缩略图→Golf 品牌图；球场官方图资产当前无可用数据，
+     有 cover/poster 时派生图即按本场图生成。 */
+  var data = { title: shareTitle, desc: shareDescOf(e.description, courseName, e.kind), link: location.href.split('#')[0], imgUrl: e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || 'https://rukik.com/golf/golf-share.jpg' };
   /* [分享引擎 2026-11-12] 公开活动分享链接改走服务端分享页（og 已按本场真实标题/海报/文案写死，
      抓取端无需执行 JS 即得本场卡片）；非公开活动保持原链接（邀请码凭据不写入公开分享页）。 */
   if (e.visibility === 'public' && eventId) {
@@ -391,7 +417,7 @@ function applyShare(e) {
       }).catch(function () {});
     }
   }
-  document.title = e.title + ' · RUKIK Golf';
+  document.title = (e.title || shareTitle) + ' · RUKIK Golf';
   setMeta('meta[property="og:title"]', data.title);
   setMeta('meta[property="og:description"]', data.desc);
   setMeta('meta[property="og:image"]', data.imgUrl);
@@ -399,11 +425,11 @@ function applyShare(e) {
   setMeta('meta[name="twitter:title"]', data.title);
   setMeta('meta[name="twitter:description"]', data.desc);
   setMeta('meta[name="twitter:image"]', data.imgUrl);
-  // jweixin 由 wxshare.js 在微信内按需加载，可能晚于快照到达：短时重试直至 SDK 就绪，失败静默。
+  // jweixin 由 wxshare.js 在微信内按需加载，可能晚于快照到达：重试直至 SDK 就绪（上限放宽至约 18 秒，覆盖弱网加载），失败静默。
   var tries = 0;
   (function attempt() {
     if (pushWxShare(data)) return;
-    if (++tries <= 8) setTimeout(attempt, 900);
+    if (++tries <= 20) setTimeout(attempt, 900);
   })();
 }
 // 页面加载架构（定版）：动态层请求纪律——同 action+event 在飞去重、重试上限 2 次、指数退避＋抖动、单次超时 12s。

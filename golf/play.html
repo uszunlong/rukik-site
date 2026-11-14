@@ -3115,12 +3115,26 @@ function applyPlayShare() {
   /* [线Z60 2026-11-12] 微信/系统分享目标改为活动链接（event.html?e=活动ID&c=邀请码），
      好友落地即见「报名参加」；旧 ?join= 链接继续可用（play 落地自动加入逻辑保留）。 */
   if (casual) link = location.origin + '/golf/event.html?e=' + encodeURIComponent(e.id) + (e.invite_code ? '&c=' + encodeURIComponent(e.invite_code) : '');
+  /* [COURSE-NAME 2026-11-14] 有对应球场的 casual 局，分享卡以球场名为准
+     （用户亲定）：2026-11-13 定版品牌文案只保留给无球场球局。球场名取
+     event_get 的 course.name；标题优先赛事 title（生成格式已含球场名），
+     未含时前置球场名，缺失时以球场名拼接兜底；描述与 event.html 同口径
+     （描述首句优先，无描述时用球场名句）；图源：本场封面→海报→品牌图。 */
+  var courseName = String((S.ev.course && S.ev.course.name) || '').trim();
+  var casualTitle = 'RUKIK Golf · AI高尔夫大师';
+  if (casual && courseName) {
+    var t0 = String(e.title || '').trim();
+    casualTitle = !t0 ? courseName + ' · 好友球局' : (t0.indexOf(courseName) === -1 ? courseName + ' · ' + t0 : t0);
+  }
+  var evDesc = String(e.description || '').replace(/\s+/g, ' ').trim();
+  var courseDesc = evDesc ? (evDesc.indexOf('。') > 0 ? evDesc.slice(0, evDesc.indexOf('。') + 1) : evDesc.slice(0, 80)) : (courseName + ' 好友球局 · 实时记分、实时排行榜、AI 球童全程相伴');
   var data = {
-    title: casual ? 'RUKIK Golf · AI高尔夫大师' : (e.title || 'RUKIK Golf · 一页球局'),
-    desc: casual ? '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。' : 'RUKIK Golf 网页记分：报名、分组、逐洞记分与成绩回顾，无需下载 App。',
+    title: casual ? casualTitle : (e.title || 'RUKIK Golf · 一页球局'),
+    desc: casual ? (courseName ? courseDesc : '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。') : 'RUKIK Golf 网页记分：报名、分组、逐洞记分与成绩回顾，无需下载 App。',
     link: link,
-    imgUrl: casual ? PLAY_SHARE_IMG : (e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || PLAY_SHARE_IMG)
+    imgUrl: (casual && !courseName) ? PLAY_SHARE_IMG : (e.cover_url || (Array.isArray(e.poster_urls) && e.poster_urls[0]) || PLAY_SHARE_IMG)
   };
+  window.__playShareData = data;
   /* [分享引擎 2026-11-12] 公开活动分享链接改走服务端分享页（og 按本场真实数据写死）；
      非公开球局保持原链接（邀请码凭据不写入公开分享页）。 */
   if (e.visibility === 'public' && e.id) {
@@ -3134,11 +3148,11 @@ function applyPlayShare() {
   setMeta('meta[name="twitter:title"]', data.title);
   setMeta('meta[name="twitter:description"]', data.desc);
   setMeta('meta[name="twitter:image"]', data.imgUrl);
-  /* jweixin 由 wxshare.js 在微信内按需加载，可能晚于数据到达：短时重试直至 SDK 就绪，失败静默。 */
+  /* jweixin 由 wxshare.js 在微信内按需加载，可能晚于数据到达：重试直至 SDK 就绪（上限放宽至约 18 秒，覆盖弱网加载），失败静默。 */
   var tries = 0;
   (function attempt() {
     if (pushWxShare(data)) return;
-    if (++tries <= 8) setTimeout(attempt, 900);
+    if (++tries <= 20) setTimeout(attempt, 900);
   })();
 }
 
@@ -3176,7 +3190,9 @@ function maybeInviteCtl() {
     else say('<p class="err">当前浏览器不支持自动复制，请长按上方链接手动复制。</p>');
   });
   document.getElementById('invShare').addEventListener('click', function () {
-    if (navigator.share) navigator.share({ title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink }).catch(function () {});
+    /* [COURSE-NAME 2026-11-14] 系统分享面板与 applyPlayShare 同一份分享数据（有球场以球场名为准）；数据未就绪时回落定版文案。 */
+    var sd = window.__playShareData;
+    if (navigator.share) navigator.share(sd ? { title: sd.title, text: sd.desc, url: joinLink } : { title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink }).catch(function () {});
     else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制，去粘贴发送吧。</p>'); });
   });
   document.getElementById('invReset').addEventListener('click', async function () {
