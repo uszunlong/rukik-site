@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RUKIK AI 会议伴侣（内部测试）</title>
+<link rel="stylesheet" href="https://esm.sh/@xyflow/react@12.3.6/dist/style.css">
+<script type="importmap">
+{"imports":{
+ "react":"https://esm.sh/react@19.1.0",
+ "react-dom":"https://esm.sh/react-dom@19.1.0?deps=react@19.1.0",
+ "react-dom/client":"https://esm.sh/react-dom@19.1.0/client?deps=react@19.1.0",
+ "@xyflow/react":"https://esm.sh/@xyflow/react@12.3.6?deps=react@19.1.0,react-dom@19.1.0"
+}}
+</script>
+<style>
+  :root{--bg:#0b1220;--panel:#111a2e;--panel2:#0e1626;--line:#22304d;--txt:#e8eef7;--dim:#93a4bd;--acc:#35c48d;--warn:#e0a63f;--bad:#e05d5d;--chip:#1b2947}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  a{color:var(--acc)} button{background:var(--acc);color:#06251a;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)} button.danger{background:var(--bad);color:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;width:100%}
+  .wrap{max-width:1440px;margin:0 auto;padding:14px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .top h1{font-size:18px;margin:0} .tag{font-size:12px;color:var(--dim)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:20% 1fr 25%;gap:12px;align-items:start}
+  .center-col{min-width:0}
+  .viz-canvas{height:440px;position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .viz-wrap.in-projection{position:fixed;inset:0;z-index:60;background:#05080f}
+  .viz-wrap.in-projection .viz-canvas{height:100vh;border:0;border-radius:0}
+  .viz-exit-chip{position:absolute;top:14px;right:14px;z-index:70;background:rgba(17,26,46,.85);color:var(--txt);border:1px solid var(--line)}
+  .viz-node{background:#101c33;border:1.6px solid var(--acc);border-radius:12px;padding:8px 12px;min-width:150px;max-width:230px;color:var(--txt);box-shadow:0 4px 18px rgba(0,0,0,.35)}
+  .viz-node-tag{font-size:11px;letter-spacing:.04em}
+  .viz-node-label{font-size:14px;font-weight:600;line-height:1.35}
+  .viz-node-detail{font-size:12px;color:var(--dim);margin-top:2px;line-height:1.35}
+  .viz-selected{box-shadow:0 0 0 2px #fff3,0 4px 18px rgba(0,0,0,.4)}
+  @keyframes vizpop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+  .viz-fresh{animation:vizpop .55s ease-out}
+  .viz-detail{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);display:none}
+  .seg.flash{background:#2a3f66;transition:background .3s}
+  .fs-part{margin-top:6px;font-size:13px}
+  .fs-part b.k{color:#7be3b8}.fs-part b.a{color:#e8d28a}.fs-part b.o{color:#9fc2ff}.fs-part b.u{color:#c792ea}
+  .fs-scen{border:1px dashed var(--warn);border-radius:10px;padding:8px 10px;margin-top:8px;background:rgba(224,166,63,.06)}
+  .replaybar{display:flex;gap:8px;align-items:center;margin-bottom:8px;background:var(--panel2);border:1px solid var(--warn);border-radius:10px;padding:6px 10px}
+  .col h3{margin:2px 0 10px;font-size:14px;color:var(--dim);letter-spacing:.05em}
+  .seg{padding:6px 8px;border-radius:8px;margin-bottom:4px}
+  .seg:hover{background:var(--panel2)} .seg .tm{color:var(--dim);font-size:12px;margin-right:8px}
+  .partial{color:var(--warn);font-style:italic}
+  .chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 8px;font-size:12px;margin-right:6px;color:var(--dim)}
+  .chip.confirmed{color:#7be3b8}.chip.discussing{color:#e8d28a}.chip.proposed{color:#9fc2ff}.chip.disputed{color:#f0a3a3}.chip.withdrawn{color:#77828f;text-decoration:line-through}
+  .item{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--panel2)}
+  .item .meta{font-size:12px;color:var(--dim);margin-top:4px}
+  .item select{width:auto;padding:2px 6px;font-size:12px}
+  .rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--bad);margin-right:6px;animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .tabs{display:none;gap:8px;margin-bottom:10px}
+  .meeting-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel2);cursor:pointer}
+  .err{color:var(--bad)} .ok{color:var(--acc)} .dim{color:var(--dim)}
+  .modal{position:fixed;inset:0;background:rgba(3,6,12,.7);display:flex;align-items:center;justify-content:center;z-index:9}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:460px;width:92%}
+  @media (max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .center-col{display:contents}
+    .tabs{display:flex}
+    .col{display:none}.col.active{display:block}
+    .viz-canvas{height:52vh}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>RUKIK AI 会议伴侣</h1><span class="tag">内部测试 · 让会议可视化，让未来可预见</span>
+    <span style="flex:1"></span><span id="who" class="tag"></span>
+    <button id="signout" class="ghost" style="display:none">退出登录</button>
+  </div>
+
+  <!-- 登录 -->
+  <div id="view-login" class="card" style="max-width:420px;margin:40px auto">
+    <h3 style="margin-top:0">使用 RUKIK 账号登录</h3>
+    <p class="dim">统一 UID 登录。会议功能目前仅对内部测试名单开放。</p>
+    <p><input id="email" type="email" placeholder="邮箱" autocomplete="username"></p>
+    <p><input id="password" type="password" placeholder="密码" autocomplete="current-password"></p>
+    <p><button id="btn-login" style="width:100%">登录</button></p>
+    <p id="login-err" class="err"></p>
+  </div>
+
+  <!-- 首页 -->
+  <div id="view-home" style="display:none">
+    <div class="card">
+      <button id="btn-new">＋ 开始新会议</button>
+      <span class="dim" style="margin-left:10px">打开即录：先确认录音同意，再开始实时转写与纪要。</span>
+      <span id="home-flag" class="err" style="margin-left:10px"></span>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">搜索会议</h3>
+      <div style="display:flex;gap:8px"><input id="q" placeholder="搜索标题或发言内容…"><button id="btn-search" class="ghost">搜索</button></div>
+      <div id="search-results" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">我的会议</h3>
+      <div id="meeting-list"><span class="dim">加载中…</span></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">会议设置</h3>
+      <label class="dim">转写服务地址（ASR WebSocket）</label>
+      <div style="display:flex;gap:8px;margin-top:4px"><input id="asr-url"><button id="btn-asr" class="ghost">保存</button></div>
+      <p class="dim">录音与转写仅保存在你的账号下，默认私有；删除会议后其内容将不可再被检索。发言人分离在后续阶段提供；会议导图与 AI 预见已上线（内部测试）。</p>
+    </div>
+  </div>
+
+  <!-- 工作台 -->
+  <div id="view-ws" style="display:none">
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button id="btn-back" class="ghost">← 我的会议</button>
+        <input id="m-title" style="width:280px;font-weight:700">
+        <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
+        <span id="m-timer" class="tag"></span>
+        <span style="flex:1"></span>
+        <span id="rec-ind" style="display:none"><span class="rec-dot"></span>录音中</span>
+        <button id="btn-pause" class="ghost">暂停</button>
+        <button id="btn-analyze" class="ghost">更新纪要</button>
+        <button id="btn-end" class="danger">结束会议</button>
+        <button id="btn-delete" class="ghost" style="display:none;color:var(--bad)">删除会议</button>
+      </div>
+      <p id="ws-err" class="err" style="margin:6px 0 0"></p>
+    </div>
+    <div class="tabs">
+      <button data-tab="0" class="ghost">实时字幕</button><button data-tab="1" class="ghost">会议导图</button><button data-tab="2" class="ghost">会议纪要</button><button data-tab="3" class="ghost">AI 预见</button>
+    </div>
+    <div class="grid">
+      <div class="card col active" id="col-transcript">
+        <h3>实时字幕 <label class="dim" style="float:right;font-weight:400"><input type="checkbox" id="follow" checked style="width:auto"> 自动跟随</label></h3>
+        <div id="segments"></div>
+        <div id="partial" class="seg partial"></div>
+      </div>
+      <div class="center-col">
+      <div class="card col" id="col-viz">
+        <h3>会议导图 · 实时生长 <span style="font-weight:400">（点节点可回溯来源发言；可拖动、锁定、编辑，AI 不覆盖锁定与人工修改）</span></h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+          <button class="ghost" id="btn-viz-grow">✦ 立即生长</button>
+          <button class="ghost" id="btn-viz-tidy">整理布局</button>
+          <button class="ghost" id="btn-viz-follow">自动跟随：开</button>
+          <button class="ghost" id="btn-viz-replay">▶ 回放形成过程</button>
+          <button class="ghost" id="btn-viz-project">⛶ 全屏投影</button>
+          <span class="chip" id="viz-stat">节点 0 · 连线 0</span>
+        </div>
+        <div class="replaybar" id="viz-replaybar" style="display:none">
+          <button class="ghost" id="rp-play">▶ 播放</button>
+          <input type="range" id="rp-slider" min="0" max="1000" value="0" style="flex:1;width:auto">
+          <span class="tag" id="rp-label"></span>
+          <select id="rp-speed" style="width:auto"><option value="4">4×</option><option value="12" selected>12×</option><option value="30">30×</option></select>
+          <button class="ghost" id="rp-exit">退出回放</button>
+        </div>
+        <div id="viz-mount"><div class="dim" style="padding:8px 0">打开会议后导图将在此生长…</div></div>
+      </div>
+      <div class="card col" id="col-minutes">
+        <h3>会议纪要（可编辑，人工修改不会被 AI 覆盖）</h3>
+        <div id="summary" class="item" style="display:none"></div>
+        <div id="items"></div>
+        <div style="border-top:1px solid var(--line);padding-top:10px;margin-top:6px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="new-kind" style="width:auto"><option value="decision">决策</option><option value="action">行动项</option><option value="question">待确认</option><option value="risk">风险</option></select>
+            <input id="new-text" placeholder="新增一条纪要…" style="flex:1;min-width:160px">
+            <button id="btn-add-item">添加</button>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="card col" id="col-ai">
+        <h3>AI 预见 <span class="chip" style="color:var(--warn)">AI 推演 · 非会议事实</span></h3>
+        <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span></div>
+        <div id="foresight-list"><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
+        <h3 style="margin-top:16px">AI 思考</h3>
+        <div class="item"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">阶段 D 接入统一中枢后，可在会中结合本场纪要与历史会议提问。</p><button class="ghost" disabled>即将开放</button></div>
+        <div class="item"><b>会议信息</b><p class="dim" id="m-info" style="margin:6px 0 0"></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新建会议：同意门 -->
+<div id="modal-consent" class="modal" style="display:none">
+  <div class="box">
+    <h3 style="margin-top:0">开始新会议</h3>
+    <p><input id="new-title" placeholder="会议名称（可留空，稍后修改）"></p>
+    <p><select id="new-mode"><option value="meeting">会议模式（多人讨论）</option><option value="speech">演讲模式（单人）</option></select></p>
+    <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="consent" style="width:auto;margin-top:3px">
+      <span>我确认已向参会者告知本次会议将被录音并转写，且已取得适用的同意。录音开始后请让页面保持前台。</span></label>
+    <p id="consent-err" class="err"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="btn-cancel-new" class="ghost">取消</button>
+      <button id="btn-create">创建并开始录音</button>
+    </div>
+  </div>
+</div>
+
+<script src="./assets/config.js"></script>
+<script type="module">
+window.__rfPromise = (async () => {
+  const [React, rdc, rf] = await Promise.all([import('react'), import('react-dom/client'), import('@xyflow/react')]);
+  return { React: React.default ?? React, createRoot: rdc.createRoot, ReactFlow: rf.ReactFlow, Background: rf.Background, Controls: rf.Controls, Handle: rf.Handle, Position: rf.Position };
+})();
+window.__rfPromise.catch(() => {});
+</script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm';
+import { MeetingClient } from './assets/api/meeting-client.js';
+import { floatToPcm16, downsampleTo16k, parseServerEvent } from './assets/api/realtime-protocol.js';
+import { createVizUI } from './assets/viz-ui.js';
+
+const CFG = window.MEETING_CFG;
+const sb = createClient(CFG.SUPABASE_URL, CFG.ANON_KEY);
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtT = (sec) => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
+
+let session = null;
+const client = new MeetingClient({
+  baseUrl: CFG.SUPABASE_URL + '/functions/v1',
+  anonKey: CFG.ANON_KEY,
+  getAccessToken: async () => session?.access_token ?? null,
+});
+let flagEnabled = false;
+let cur = null; // {meeting, minutes, segments}
+let ws = null, audio = null, lastAnalyzeAt = 0, finalsSinceAnalyze = 0, timerInt = null;
+let vizUI = null, lastVizAt = 0, finalsSinceViz = 0, lastForesightAt = 0, finalsSinceForesight = 0;
+
+function show(view) {
+  for (const v of ['login','home','ws']) $('view-'+v).style.display = v === view ? '' : 'none';
+  $('signout').style.display = view === 'login' ? 'none' : '';
+}
+
+async function refreshSession() {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (session) { $('who').textContent = session.user.email || session.user.id; }
+  return session;
+}
+
+$('btn-login').onclick = async () => {
+  $('login-err').textContent = '';
+  const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  if (error) { $('login-err').textContent = '登录失败：' + error.message; return; }
+  session = data.session; await enterHome();
+};
+$('signout').onclick = async () => { stopCapture(); await sb.auth.signOut(); session = null; show('login'); };
+
+async function enterHome() {
+  $('who').textContent = session.user.email || session.user.id;
+  show('home');
+  $('asr-url').value = localStorage.getItem('meeting_asr_url') || CFG.DEFAULT_ASR_WS;
+  try {
+    const f = await client.flagStatus();
+    flagEnabled = !!f.enabled;
+    $('home-flag').textContent = flagEnabled ? '' : '当前账号不在内部测试名单内，暂不能开始新会议。';
+    $('btn-new').disabled = !flagEnabled;
+  } catch { $('home-flag').textContent = '无法读取功能开关状态。'; }
+  await loadList();
+}
+
+async function loadList() {
+  const box = $('meeting-list');
+  try {
+    const { meetings } = await client.listMeetings();
+    if (!meetings.length) { box.innerHTML = '<span class="dim">还没有会议。点上方按钮开始第一场。</span>'; return; }
+    box.innerHTML = '';
+    for (const m of meetings) {
+      const row = document.createElement('div'); row.className = 'meeting-row';
+      row.innerHTML = `<span><b>${esc(m.title)}</b> <span class="chip">${m.mode === 'speech' ? '演讲' : '会议'}</span><span class="chip ${m.status}">${esc(m.status)}</span></span><span class="dim">${esc((m.started_at || m.created_at || '').replace('T',' ').slice(0,16))}</span>`;
+      row.onclick = () => openMeeting(m.id);
+      box.appendChild(row);
+    }
+  } catch (e) { box.innerHTML = '<span class="err">加载失败：' + esc(e.message) + '</span>'; }
+}
+
+$('btn-search').onclick = async () => {
+  const q = $('q').value.trim(); const box = $('search-results');
+  if (!q) { box.innerHTML = ''; return; }
+  box.innerHTML = '<span class="dim">搜索中…</span>';
+  try {
+    const { hits } = await client.search(q);
+    if (!hits.length) { box.innerHTML = '<span class="dim">没有找到相关会议。</span>'; return; }
+    box.innerHTML = '';
+    for (const h of hits) {
+      const row = document.createElement('div'); row.className = 'meeting-row';
+      row.innerHTML = `<span><b>${esc(h.title)}</b><br><span class="dim">${h.via === 'title' ? '标题匹配' : esc(fmtT(h.start_sec)) + ' · ' + esc(h.quote)}</span></span>`;
+      row.onclick = () => openMeeting(h.meeting_id);
+      box.appendChild(row);
+    }
+  } catch (e) { box.innerHTML = '<span class="err">搜索失败：' + esc(e.message) + '</span>'; }
+};
+$('btn-asr').onclick = () => { localStorage.setItem('meeting_asr_url', $('asr-url').value.trim()); alert('已保存'); };
+
+$('btn-new').onclick = () => { $('modal-consent').style.display = 'flex'; };
+$('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; };
+$('btn-create').onclick = async () => {
+  if (!$('consent').checked) { $('consent-err').textContent = '请先确认录音同意。'; return; }
+  $('consent-err').textContent = '';
+  try {
+    const { meeting } = await client.createMeeting($('new-title').value.trim() || undefined, $('new-mode').value);
+    await client.consent(meeting.id);
+    const { meeting: started } = await client.start(meeting.id);
+    $('modal-consent').style.display = 'none';
+    await openMeeting(started.id, true);
+  } catch (e) { $('consent-err').textContent = '创建失败：' + e.message; }
+};
+
+$('btn-back').onclick = async () => { stopCapture(); if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
+
+async function openMeeting(id, autostart = false) {
+  const data = await client.getMeeting(id);
+  cur = data;
+  show('ws');
+  renderMeeting();
+  await loadVizAndForesight();
+  if ((cur.meeting.status === 'live') && autostart) startCapture();
+  if (cur.meeting.status === 'live' && !autostart) { /* 回到进行中的会议：可手动继续 */ $('ws-err').textContent = '会议进行中，点「暂停」旁的录音将自动恢复连接。'; startCapture(); }
+}
+
+function renderMeeting() {
+  const m = cur.meeting;
+  $('m-title').value = m.title;
+  $('m-mode').textContent = m.mode === 'speech' ? '演讲模式' : '会议模式';
+  $('m-status').textContent = m.status;
+  $('m-info').innerHTML = `会议 ID：${esc(m.id)}<br>创建：${esc((m.created_at||'').replace('T',' ').slice(0,19))}<br>时区：${esc(m.timezone)}`;
+  $('btn-delete').style.display = m.status === 'ended' ? '' : 'none';
+  $('btn-end').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
+  $('btn-pause').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
+  $('btn-pause').textContent = m.status === 'paused' ? '继续' : '暂停';
+  $('rec-ind').style.display = m.status === 'live' ? '' : 'none';
+  clearInterval(timerInt);
+  if (m.started_at) {
+    const tick = () => { const end = m.ended_at ? new Date(m.ended_at).getTime() : Date.now(); $('m-timer').textContent = '时长 ' + fmtT(Math.max(0, (end - new Date(m.started_at).getTime()) / 1000)); };
+    tick(); if (!m.ended_at) timerInt = setInterval(tick, 1000);
+  }
+  renderSegments(); renderMinutes();
+}
+
+function renderSegments() {
+  const box = $('segments'); box.innerHTML = '';
+  for (const s of cur.segments) {
+    const div = document.createElement('div'); div.className = 'seg'; div.dataset.seg = s.id;
+    div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${esc(s.text)}`;
+    box.appendChild(div);
+  }
+  if ($('follow').checked) box.scrollTop = box.scrollHeight;
+  const panel = $('col-transcript'); panel.scrollTop = panel.scrollHeight;
+}
+
+function locateSegment(id) {
+  document.querySelectorAll('.tabs button')[0].click();
+  const el = document.querySelector(`[data-seg="${CSS.escape(id)}"]`);
+  if (!el) { $('ws-err').textContent = '来源片段不在当前字幕列表中。'; return; }
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2400);
+}
+
+function updateVizStat() {
+  if (!vizUI) return;
+  const g = vizUI.store.mode === 'replay' && vizUI.store.replay ? vizUI.store.replay.state.graph : vizUI.store.graph;
+  $('viz-stat').textContent = `节点 ${g.nodes.length} · 连线 ${g.edges.length} · 图版本 ${g.version}` + (vizUI.store.mode === 'replay' ? '（回放中）' : '');
+}
+
+async function loadVizAndForesight() {
+  if (!vizUI) {
+    vizUI = createVizUI({
+      mount: $('viz-mount'), client,
+      getMeetingId: () => cur.meeting.id,
+      getSegments: () => cur.segments,
+      onLocateSegment: locateSegment,
+      onError: (m) => { $('ws-err').textContent = m; },
+      onReplayChange: syncReplayBar,
+    });
+    vizUI.store.listeners.add(updateVizStat);
+    try {
+      const bits = await Promise.race([window.__rfPromise, new Promise((_, rej) => setTimeout(() => rej(new Error('画布组件加载超时')), 30000))]);
+      vizUI.attach(bits);
+    } catch (e) { $('viz-mount').innerHTML = '<p class="err">导图画布组件加载失败：' + esc(e.message) + '（纪要与字幕不受影响）</p>'; }
+  }
+  try { await vizUI.load(); updateVizStat(); } catch (e) { $('ws-err').textContent = '导图加载失败：' + e.message; }
+  await loadForesight();
+}
+
+function syncReplayBar(rp) {
+  const bar = $('viz-replaybar');
+  if (!rp) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  $('rp-slider').value = String(Math.round(1000 * rp.offsetMs / Math.max(1, rp.totalMs)));
+  $('rp-label').textContent = `${fmtT(rp.offsetMs / 1000)} / ${fmtT(rp.totalMs / 1000)} · ${vizUI.store.replay.state.graph.nodes.length} 节点`;
+  $('rp-play').textContent = rp.playing ? '⏸ 暂停' : '▶ 播放';
+}
+
+$('btn-viz-grow').onclick = async () => {
+  $('btn-viz-grow').disabled = true; $('ws-err').textContent = '';
+  try {
+    const r = await client.analyze(cur.meeting.id, true, 'viz');
+    if (r.ran) { const n = await vizUI.syncNewPatches(); if (!n) $('ws-err').textContent = '本轮没有新的图增量。'; }
+    else $('ws-err').textContent = '未生长：' + (r.reason || (r.results && r.results.viz && r.results.viz.reason) || '');
+    lastVizAt = Date.now(); finalsSinceViz = 0; updateVizStat();
+  } catch (e) { $('ws-err').textContent = '导图生长失败：' + e.message; }
+  $('btn-viz-grow').disabled = false;
+};
+$('btn-viz-tidy').onclick = () => vizUI && vizUI.tidyLayout();
+$('btn-viz-follow').onclick = () => {
+  if (!vizUI) return;
+  vizUI.setAutoFollow(!vizUI.store.autoFollow);
+  $('btn-viz-follow').textContent = '自动跟随：' + (vizUI.store.autoFollow ? '开' : '关');
+};
+$('btn-viz-replay').onclick = () => { if (vizUI) { try { vizUI.startReplay(); } catch (e) { $('ws-err').textContent = e.message; } } };
+$('rp-exit').onclick = () => vizUI && vizUI.stopReplay();
+$('rp-play').onclick = () => vizUI && vizUI.store.replay && vizUI.playReplay(!vizUI.store.replay.playing);
+$('rp-slider').oninput = () => { if (vizUI && vizUI.store.replay) vizUI.seekReplay(Number($('rp-slider').value) / 1000 * vizUI.store.replay.totalMs); };
+$('rp-speed').onchange = () => { if (vizUI && vizUI.store.replay) vizUI.store.replay.speed = Number($('rp-speed').value); };
+$('btn-viz-project').onclick = () => vizUI && vizUI.enterProjection();
+
+const FS_LABEL = { risk: '决策风险', conflict: '逻辑冲突', gap: '被忽略的问题', dependency: '任务依赖与瓶颈', delay: '潜在延误', history_change: '历史决策变化', simulation: '情景推演' };
+async function loadForesight() {
+  const box = $('foresight-list');
+  try {
+    const { insights } = await client.foresightList(cur.meeting.id);
+    $('fs-stat').textContent = insights.length ? `共 ${insights.length} 条` : '';
+    if (!insights.length) { box.innerHTML = '<p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p>'; return; }
+    box.innerHTML = '';
+    for (const f of insights.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
+      const ep = f.epistemic || {};
+      const parts = [];
+      const segLink = (id) => { const sg = cur.segments.find((x) => x.id === id); return sg ? `<a href="javascript:void 0" data-fseg="${esc(id)}">${fmtT(Number(sg.start_sec))}</a>` : ''; };
+      if ((ep.known_facts || []).length) parts.push(`<div class="fs-part"><b class="k">已知事实</b>：${ep.known_facts.map((k) => esc(k.text) + (k.basis_ref ? ' ' + segLink(k.basis_ref) : '')).join('；')}</div>`);
+      if ((ep.assumptions || []).length) parts.push(`<div class="fs-part"><b class="a">推理假设</b>：${ep.assumptions.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')}</div>`);
+      if ((ep.possible_outcomes || []).length) parts.push(`<div class="fs-part"><b class="o">可能结果</b>：${ep.possible_outcomes.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')}</div>`);
+      if ((ep.uncertainties || []).length) parts.push(`<div class="fs-part"><b class="u">不确定性</b>：${ep.uncertainties.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')}</div>`);
+      const scenPart = (ep2) => { if (!ep2) return ''; const pp = []; if ((ep2.known_facts || []).length) pp.push('已知：' + ep2.known_facts.map((k) => esc(k.text)).join('；')); if ((ep2.assumptions || []).length) pp.push('假设：' + ep2.assumptions.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.possible_outcomes || []).length) pp.push('结果：' + ep2.possible_outcomes.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.uncertainties || []).length) pp.push('不确定：' + ep2.uncertainties.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); return pp.length ? `<div class="dim" style="margin-top:4px;font-size:12px">${pp.join('<br>')}</div>` : ''; };
+      const scen = (f.scenarios || []).map((sc) => `<div class="fs-scen"><b>情景推演 · ${esc(sc.label || '')}</b><br>${esc(sc.summary || '')}${scenPart(sc.epistemic)}</div>`).join('');
+      const dg = (f.downgrades || []).length ? `<div class="meta" style="color:var(--warn)">服务端校验：${f.downgrades.length} 条原标「已知事实」因无来源或确定性措辞已自动降级为推理假设。</div>` : '';
+      const div = document.createElement('div'); div.className = 'item';
+      div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${f.status !== 'open' ? `<span class="chip">${f.status === 'accepted' ? '已关注' : '已忽略'}</span>` : ''}
+        <br><b>${esc(f.title)}</b><p style="margin:4px 0 0">${esc(f.body)}</p>${parts.join('')}${scen}${dg}
+        <div style="margin-top:6px;display:flex;gap:6px">
+          ${f.status === 'open' ? '<button class="ghost" data-fact="ack">关注</button><button class="ghost" data-fact="dis">忽略</button>' : ''}
+        </div>`;
+      div.querySelectorAll('[data-fseg]').forEach((a) => { a.onclick = () => locateSegment(a.dataset.fseg); });
+      const ack = div.querySelector('[data-fact="ack"]'); if (ack) ack.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'accepted'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
+      const dis = div.querySelector('[data-fact="dis"]'); if (dis) dis.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'dismissed'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
+      box.appendChild(div);
+    }
+  } catch (e) { box.innerHTML = '<span class="err">预见加载失败：' + esc(e.message) + '</span>'; }
+}
+$('btn-fs-scan').onclick = async () => {
+  $('btn-fs-scan').disabled = true; $('ws-err').textContent = '';
+  try {
+    const r = await client.analyze(cur.meeting.id, true, 'foresight');
+    if (r.ran) await loadForesight(); else $('ws-err').textContent = '未扫描：' + (r.reason || (r.results && r.results.foresight && r.results.foresight.reason) || '');
+    lastForesightAt = Date.now(); finalsSinceForesight = 0;
+  } catch (e) { $('ws-err').textContent = '预见扫描失败：' + e.message; }
+  $('btn-fs-scan').disabled = false;
+};
+
+const KIND_LABEL = { decision: '决策', action: '行动项', question: '待确认', risk: '风险' };
+const STATUS_LABEL = { confirmed: '已确认', discussing: '讨论中', proposed: '建议', disputed: '存在争议', withdrawn: '已撤回' };
+
+function renderMinutes() {
+  const { doc, items } = cur.minutes;
+  const sum = doc.sections && doc.sections.summary;
+  $('summary').style.display = sum ? '' : 'none';
+  if (sum) $('summary').innerHTML = '<b>摘要</b><br>' + esc(sum);
+  const box = $('items'); box.innerHTML = '';
+  const visible = items.slice().sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  if (!visible.length) box.innerHTML = '<p class="dim">暂无纪要条目。开会讨论后点「更新纪要」，或在下方手动添加。</p>';
+  for (const it of visible) {
+    const div = document.createElement('div'); div.className = 'item';
+    const sel = ['confirmed','discussing','proposed','disputed','withdrawn'].map(s => `<option value="${s}" ${s===it.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
+    div.innerHTML = `<span class="chip">${KIND_LABEL[it.kind] || it.kind}</span><span class="chip ${it.status}">${STATUS_LABEL[it.status] || it.status}</span>${it.user_locked ? '<span class="chip">已锁定</span>' : ''}<br>
+      <span class="txt">${esc(it.text)}</span>
+      <div class="meta">${it.owner_label ? '负责人：' + esc(it.owner_label) + ' · ' : ''}${it.due_at ? '截止：' + esc(String(it.due_at).slice(0,10)) + ' · ' : ''}${it.origin === 'user' ? '人工条目' : 'AI 整理'}${it.supersedes_id ? ' · 替代了先前一条' : ''}</div>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+        <select data-act="status">${sel}</select>
+        <button class="ghost" data-act="edit">编辑</button>
+        <button class="ghost" data-act="del">删除</button>
+      </div>`;
+    div.querySelector('[data-act="status"]').onchange = async (ev) => {
+      try { await client.setItemStatus(cur.meeting.id, it.id, ev.target.value); await reloadMinutes(); } catch (e) { $('ws-err').textContent = e.message; }
+    };
+    div.querySelector('[data-act="edit"]').onclick = async () => {
+      const nt = prompt('修改条目内容（保存后将锁定，AI 不会再覆盖）：', it.text);
+      if (nt && nt.trim() && nt !== it.text) {
+        try { await client.upsertItemUser(cur.meeting.id, { id: it.id, kind: it.kind, text: nt.trim(), status: it.status }); await reloadMinutes(); } catch (e) { $('ws-err').textContent = e.message; }
+      }
+    };
+    div.querySelector('[data-act="del"]').onclick = async () => {
+      if (!confirm('删除这条纪要？')) return;
+      try { await client.deleteItem(cur.meeting.id, it.id); await reloadMinutes(); } catch (e) { $('ws-err').textContent = e.message; }
+    };
+    box.appendChild(div);
+  }
+}
+
+async function reloadMinutes() {
+  const data = await client.getMeeting(cur.meeting.id);
+  cur.minutes = data.minutes; cur.meeting = data.meeting; renderMinutes();
+}
+
+$('btn-add-item').onclick = async () => {
+  const text = $('new-text').value.trim(); if (!text) return;
+  try {
+    await client.upsertItemUser(cur.meeting.id, { kind: $('new-kind').value, text, status: 'discussing' });
+    $('new-text').value = ''; await reloadMinutes();
+  } catch (e) { $('ws-err').textContent = e.message; }
+};
+
+$('m-title').onchange = async () => {
+  const t = $('m-title').value.trim(); if (!t || t === cur.meeting.title) return;
+  try { await client.rename(cur.meeting.id, t); cur.meeting.title = t; } catch (e) { $('ws-err').textContent = e.message; }
+};
+
+$('btn-analyze').onclick = async () => {
+  $('btn-analyze').disabled = true; $('ws-err').textContent = '';
+  try {
+    const r = await client.analyze(cur.meeting.id, true);
+    if (r.ran) { await reloadMinutes(); const data = await client.getMeeting(cur.meeting.id); cur.segments = data.segments; }
+    else $('ws-err').textContent = '未更新：' + (r.reason || '');
+    lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
+  } catch (e) { $('ws-err').textContent = '更新纪要失败：' + e.message; }
+  $('btn-analyze').disabled = false;
+};
+
+$('btn-pause').onclick = async () => {
+  try {
+    if (cur.meeting.status === 'live') { sendCtl({ type: 'pause' }); await client.pause(cur.meeting.id); cur.meeting.status = 'paused'; suspendCapture(); }
+    else if (cur.meeting.status === 'paused') { await client.resume(cur.meeting.id); cur.meeting.status = 'live'; sendCtl({ type: 'resume' }); resumeCapture(); }
+    renderMeeting();
+  } catch (e) { $('ws-err').textContent = e.message; }
+};
+
+$('btn-end').onclick = async () => {
+  if (!confirm('结束会议？结束后将生成最终纪要，可在历史中回看。')) return;
+  try {
+    sendCtl({ type: 'end' });
+    stopCapture();
+    await client.end(cur.meeting.id);
+    const data = await client.getMeeting(cur.meeting.id); cur = data; renderMeeting();
+  } catch (e) { $('ws-err').textContent = e.message; }
+};
+
+$('btn-delete').onclick = async () => {
+  if (!confirm('删除这场会议？删除后其转写与纪要将不可再被检索。')) return;
+  try { await client.deleteMeeting(cur.meeting.id); show('home'); await loadList(); } catch (e) { $('ws-err').textContent = e.message; }
+};
+
+document.querySelectorAll('.tabs button').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('.col').forEach((c) => c.classList.remove('active'));
+    document.querySelectorAll('.col')[Number(b.dataset.tab)].classList.add('active');
+  };
+});
+
+// ---------- 录音与实时转写 ----------
+function sendCtl(obj) { try { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); } catch {} }
+
+async function startCapture() {
+  if (!session) return;
+  const asrUrl = localStorage.getItem('meeting_asr_url') || CFG.DEFAULT_ASR_WS;
+  try {
+    ws = new WebSocket(`${asrUrl}?meeting=${encodeURIComponent(cur.meeting.id)}&token=${encodeURIComponent(session.access_token)}`);
+    ws.binaryType = 'arraybuffer';
+  } catch (e) { $('ws-err').textContent = '转写服务连接失败：' + e.message; return; }
+  ws.onmessage = (ev) => {
+    const msg = parseServerEvent(ev.data); if (!msg) return;
+    if (msg.type === 'transcript.partial') { $('partial').textContent = msg.text; }
+    if (msg.type === 'transcript.final') {
+      $('partial').textContent = '';
+      cur.segments.push(msg.segment); renderSegments();
+      finalsSinceAnalyze += 1;
+      if (finalsSinceAnalyze >= 2 && Date.now() - lastAnalyzeAt > 25000) {
+        lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
+        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); }).catch(() => {});
+      }
+      finalsSinceViz += 1; finalsSinceForesight += 1;
+      if (vizUI && finalsSinceViz >= 2 && Date.now() - lastVizAt > 30000) {
+        lastVizAt = Date.now(); finalsSinceViz = 0;
+        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } }).catch(() => {});
+      }
+      if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
+        lastForesightAt = Date.now(); finalsSinceForesight = 0;
+        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); }).catch(() => {});
+      }
+    }
+    if (msg.type === 'error') { $('ws-err').textContent = '转写提示：' + msg.message; }
+  };
+  ws.onclose = (ev) => { if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存的字幕不会丢失，刷新页面可继续。'; };
+  ws.onerror = () => { $('ws-err').textContent = '转写服务连接失败（内部测试需 ASR 服务可达）。纪要与历史功能不受影响。'; };
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    const ctx = new AudioContext();
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    src.connect(proc); proc.connect(ctx.destination);
+    proc.onaudioprocess = (e) => {
+      if (!ws || ws.readyState !== 1 || cur.meeting.status !== 'live') return;
+      const ds = downsampleTo16k(e.inputBuffer.getChannelData(0), ctx.sampleRate);
+      ws.send(floatToPcm16(ds));
+    };
+    audio = { stream, ctx, proc };
+  } catch (e) { $('ws-err').textContent = '无法使用麦克风：' + e.message; }
+}
+function suspendCapture() { /* 暂停时仅停发音频（onaudioprocess 按状态拦截），保留连接 */ }
+function resumeCapture() { /* 状态恢复 live 后 onaudioprocess 自动继续发送 */ }
+function stopCapture() {
+  try { if (audio) { audio.proc.disconnect(); audio.ctx.close(); audio.stream.getTracks().forEach((t) => t.stop()); } } catch {}
+  audio = null;
+  try { if (ws) ws.close(); } catch {}
+  ws = null;
+}
+
+(async () => {
+  await refreshSession();
+  if (session) await enterHome(); else show('login');
+})();
+</script>
+</body>
+</html>
