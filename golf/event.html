@@ -5158,29 +5158,43 @@ function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模�
   /* [线Z60 2026-11-12] 主按钮复制「活动链接」（event.html?e=活动ID，&c= 携带邀请凭据），与原邀请卡同一链接构造 */
   var joinLink = location.origin + '/golf/event.html?e=' + encodeURIComponent(e.id) + (code ? '&c=' + encodeURIComponent(code) : '');
   var bar = document.createElement('div');
-  bar.className = 'card';
+  bar.className = 'card manageCard'; /* [INVITE-COLLAPSE 20261114] 与「管理赛事」同款横条：复用 .manageCard .mtoggle 样式 */
   bar.id = 'inviteBar';
+  /* [INVITE-COLLAPSE 20261114] 用户 15:53 定版：一行折叠式——默认收起只显标题条
+     （左「分享邀请」＋右向下箭头），不再默认显示说明文字/球局码/长链接/按钮；
+     点击展开现有操作（复制活动链接／分享／重置邀请码／关闭加入或开启加入，
+     两列两行），再点收起。操作与权限分流全部复用原实现（重置走原 confirm、
+     关闭/开启走 casual_joins_set），邀请/分享/加入核心逻辑零改动；原「分享邀请
+     正文对比度修复」项随改版自然消解，不再单列。 */
+  var invHead = '<button type="button" class="mtoggle" id="invToggleBar" aria-expanded="false"><span>分享邀请</span><span class="mchev">▾</span></button>';
   if (e.kind === 'casual') {
     var closed = !!((e.competition_config || {}).joins_closed);
-    bar.innerHTML = '<b>分享邀请</b>' +
-      '<p class="muted">把邀请链接发给好友，对方打开、登录后即可加入本局一起记分。球局码：<b>' + esc(code) + '</b>' + (closed ? '<br><b style="color:#b91c1c">加入已关闭</b>：新成员暂时不能凭码加入（已加入的球友不受影响）。' : '') + '</p>' +
-      '<div class="sharebox">' + esc(joinLink) + '</div>' +
+    bar.innerHTML = invHead +
+      '<div id="invBody" style="display:none">' +
+      (closed ? '<p class="muted"><b style="color:#b91c1c">加入已关闭</b>：新成员暂时不能凭码加入（已加入的球友不受影响）。</p>' : '') +
       '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制活动链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
-      '<div class="btnrow"><button class="btn plain" id="invReset" type="button">重置邀请码</button><button class="btn plain" id="invToggle" type="button">' + (closed ? '恢复加入' : '关闭加入') + '</button></div>' +
-      '<div id="invMsg"></div>';
+      '<div class="btnrow"><button class="btn plain" id="invReset" type="button">重置邀请码</button><button class="btn plain" id="invToggle" type="button">' + (closed ? '开启加入' : '关闭加入') + '</button></div>' +
+      '<div id="invMsg"></div></div>';
   } else {
-    bar.innerHTML = '<b>分享邀请</b>' +
-      '<p class="muted">把活动链接发给好友，对方打开、登录后即可报名参加本场赛事。' + (code ? '邀请码：<b>' + esc(code) + '</b>' : '') + '</p>' +
-      '<div class="sharebox">' + esc(joinLink) + '</div>' +
+    bar.innerHTML = invHead +
+      '<div id="invBody" style="display:none">' +
       '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制活动链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
-      '<div id="invMsg"></div>';
+      '<div id="invMsg"></div></div>';
   }
   sec.appendChild(bar);
+  var itg = document.getElementById('invToggleBar');
+  var ibd = document.getElementById('invBody');
+  if (itg && ibd) itg.addEventListener('click', function () {
+    var open = ibd.style.display !== 'none';
+    ibd.style.display = open ? 'none' : '';
+    itg.setAttribute('aria-expanded', open ? 'false' : 'true');
+    var ch = itg.querySelector('.mchev'); if (ch) ch.textContent = open ? '▾' : '▴';
+  });
   var msg = document.getElementById('invMsg');
   function say(html) { if (msg) msg.innerHTML = html; }
   document.getElementById('invCopy').addEventListener('click', function () {
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制。</p>'); }, function () { say('<p class="err">复制没成功，请长按上方链接手动复制。</p>'); });
-    else say('<p class="err">当前浏览器不支持自动复制，请长按上方链接手动复制。</p>');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制。</p>'); }, function () { say('<p class="err">复制没成功，请稍后再试。</p>'); });
+    else say('<p class="err">当前浏览器不支持自动复制。</p>');
   });
   document.getElementById('invShare').addEventListener('click', function () {
     /* [SHARE-FIX 2026-11-14] 与页面 applyShare 同一分享口径：标题跟随球场名（有球场＝shareTitleOf 动态标题；无球场才回落品牌定版），点击时用 shareCourseName/shareTitleOf/shareDescOf 现算 */
@@ -5204,7 +5218,7 @@ function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模�
     this.disabled = true;
     var closedNow = !!((e.competition_config || {}).joins_closed);
     var r = await golfApi('casual_joins_set', { event_id: eventId, closed: !closedNow }, true).catch(function () { return null; });
-    if (r && r.ok) { say('<p class="okmsg">' + (!closedNow ? '已关闭加入。' : '已恢复加入。') + '正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
+    if (r && r.ok) { say('<p class="okmsg">' + (!closedNow ? '已关闭加入。' : '已开启加入。') + '正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
     else { this.disabled = false; say('<p class="err">设置没有成功，请稍后再试。</p>'); }
   });
 }
