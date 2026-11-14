@@ -188,6 +188,12 @@
    * 发布冲回，本线自 fit4 发布版（a9cc901e）在现行 96661165 基线上恢复。 */
   .hdov .hd-box { background: #fdfdf8; color: #20242a; border-radius: 16px; padding: 12px; width: min(1180px, calc(100vw - 32px)); aspect-ratio: 118 / 70; max-height: 88vh; overflow: hidden; box-sizing: border-box; }
   .hdov .hd-box svg.map { width: 100%; height: 100%; display: block; }
+  /* [逐洞图全屏手势20261114] 全屏逐洞图手势与赛事页同口径（holePz）：克隆图可双指缩放/拖动 */
+  #playHdBox { touch-action: none; }
+  #playHdBox.haspz { cursor: grab; }
+  #playHdBox.haspz:active { cursor: grabbing; }
+  #playHdBox svg.map { transform-origin: 0 0; }
+  #playHdBox svg.pz-anim { transition: transform .28s ease; }
   /* [全局图安全区修复 2026-11-14] 逐洞图全屏层关闭钮同为视口右上固定定位，同步补 safe-area-inset-top 与 44px 热区 */
   .hdov .hd-close { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 14px; min-height: 44px; background: linear-gradient(135deg, #0d8a4a, #0a6e3c); color: #fff; border: none; border-radius: 999px; padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer; z-index: 96; }
   .entry { display: block; width: 100%; text-align: left; background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1.5px solid rgba(120,255,190,.16); border-radius: 16px; padding: 16px; font-size: 17px; font-weight: 700; color: #f2f8f3; cursor: pointer; margin-top: 12px; text-decoration: none; box-shadow: 0 10px 26px rgba(0,0,0,.35); font-family: inherit; }
@@ -2529,6 +2535,95 @@ function loadPlayHoleSvg(hole) {
     if (r) r.addEventListener('click', function () { delete geomCache[hole]; mapHoleShown = null; syncMap(); });
   });
 }
+/* [逐洞图全屏手势20261114] 全屏逐洞图平移/缩放：与赛事页 event.html 的
+ * holePz 逐字同一套手势数学（内联图仍用上方 pz 不动），仅供全屏克隆图
+ * 使用——双指 pinch 钳制 1–4.5 倍、单指拖动平移（放大后）、滚轮缩放、
+ * 双击/触摸双击切换放大/复原；transform 作用于整幅 SVG、标记同变换。 */
+function holePz(box) {
+  if (!box) return null;
+  if (box._pz) return box._pz;
+  var st = { s: 1, x: 0, y: 0 }, pts = {}, lastDist = 0, dragging = false;
+  var lastTapT = 0, lastTapX = 0, lastTapY = 0, tapMoved = false;
+  function svg() { return box.querySelector('svg'); }
+  function apply(anim) {
+    var el = svg(); if (!el) return;
+    el.classList.toggle('pz-anim', !!anim);
+    /* 静止态不保留 CSS transform（同 pz 口径：防 iOS Safari 滚动丢栅格） */
+    if (st.s === 1 && st.x === 0 && st.y === 0) { el.style.transform = ''; return; }
+    el.style.transform = 'translate(' + st.x + 'px,' + st.y + 'px) scale(' + st.s + ')';
+  }
+  function clampPan() {
+    if (st.s === 1) { st.x = 0; st.y = 0; return; }
+    var r = box.getBoundingClientRect(), mx = r.width * 0.8 * st.s, my = r.height * 0.8 * st.s;
+    st.x = Math.max(-mx, Math.min(mx, st.x)); st.y = Math.max(-my, Math.min(my, st.y));
+  }
+  function zoomAt(cx, cy, ns, anim) {
+    ns = Math.max(1, Math.min(4.5, ns));
+    var k = ns / st.s;
+    st.x = cx - (cx - st.x) * k; st.y = cy - (cy - st.y) * k; st.s = ns;
+    clampPan(); apply(anim);
+  }
+  function reset(anim) { st = { s: 1, x: 0, y: 0 }; apply(anim); }
+  function toggleAt(cx, cy) {
+    if (st.s > 1.01) { reset(true); return; }
+    var el = svg(); if (el) el.classList.add('pz-anim');
+    zoomAt(cx, cy, 2.5, false);
+  }
+  box.addEventListener('pointerdown', function (e) {
+    if (!svg()) return;
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (Object.keys(pts).length === 1) tapMoved = false;
+    if (Object.keys(pts).length === 2) { var a = Object.values(pts); lastDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+    dragging = true;
+    try { box.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  box.addEventListener('pointermove', function (e) {
+    if (!dragging || !pts[e.pointerId]) return;
+    var prev = pts[e.pointerId]; pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (Math.abs(e.clientX - prev.x) + Math.abs(e.clientY - prev.y) > 2) tapMoved = true;
+    var ids = Object.keys(pts);
+    if (ids.length === 1) {
+      if (st.s > 1) { st.x += e.clientX - prev.x; st.y += e.clientY - prev.y; clampPan(); apply(false); }
+    } else if (ids.length === 2) {
+      var a = Object.values(pts), d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+      if (lastDist > 0 && d > 0) {
+        var r = box.getBoundingClientRect();
+        zoomAt((a[0].x + a[1].x) / 2 - r.left, (a[0].y + a[1].y) / 2 - r.top, st.s * (d / lastDist), false);
+      }
+      lastDist = d;
+    }
+  });
+  function endPt(e) {
+    var wasTap = dragging && !!pts[e.pointerId] && !tapMoved && Object.keys(pts).length === 1;
+    delete pts[e.pointerId];
+    if (!Object.keys(pts).length) { dragging = false; lastDist = 0; }
+    if (wasTap && e.pointerType && e.pointerType !== 'mouse') {
+      var now = Date.now();
+      if (now - lastTapT < 350 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 40) {
+        var r = box.getBoundingClientRect();
+        toggleAt(e.clientX - r.left, e.clientY - r.top);
+        lastTapT = 0;
+      } else { lastTapT = now; lastTapX = e.clientX; lastTapY = e.clientY; }
+    }
+  }
+  box.addEventListener('pointerup', endPt);
+  box.addEventListener('pointercancel', function (e) { delete pts[e.pointerId]; if (!Object.keys(pts).length) { dragging = false; lastDist = 0; } });
+  box.addEventListener('wheel', function (e) {
+    if (!svg()) return;
+    e.preventDefault();
+    var r = box.getBoundingClientRect();
+    zoomAt(e.clientX - r.left, e.clientY - r.top, st.s * Math.exp(-e.deltaY * 0.0016), false);
+  }, { passive: false });
+  box.addEventListener('dblclick', function (e) {
+    if (!svg()) return;
+    var r = box.getBoundingClientRect();
+    toggleAt(e.clientX - r.left, e.clientY - r.top);
+  });
+  box.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  var ctl = { reset: function () { reset(false); }, zoomAt: zoomAt, state: function () { return { s: st.s, x: st.x, y: st.y }; } };
+  box._pz = ctl;
+  return ctl;
+}
 function openPlayHd() {
   var src = document.getElementById('mapSvgBox'), box = document.getElementById('playHdBox'), ov = document.getElementById('playHd');
   if (!src || !box || !ov || !src.querySelector('svg')) return;
@@ -2543,6 +2638,9 @@ function openPlayHd() {
   clone.classList.remove('pz-anim');
   box.innerHTML = '';
   box.appendChild(clone);
+  /* [逐洞图全屏手势20261114] 全屏克隆图绑 holePz（与赛事页全屏同口径），每次打开从 1 倍起步 */
+  box.classList.add('haspz');
+  var pzCtl = holePz(box); if (pzCtl) pzCtl.reset();
   ov.hidden = false;
 }
 function closePlayHd() { var ov = document.getElementById('playHd'); if (ov) ov.hidden = true; }
