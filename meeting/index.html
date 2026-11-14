@@ -232,6 +232,8 @@ const client = new MeetingClient({
 let flagEnabled = false;
 let cur = null; // {meeting, minutes, segments}
 let ws = null, audio = null, lastAnalyzeAt = 0, finalsSinceAnalyze = 0, timerInt = null;
+let wsReady = false; // [READY-GATE 2026-11-14] 应用层 ready 帧（服务端鉴权+归属校验通过后才发）到达前，onaudioprocess 不发送任何音频
+let endWaiter = null; // [END-RACE 2026-11-14] 结束会议时等待服务端 meeting.state=ended 确认的一次性等待器
 let vizUI = null, lastVizAt = 0, finalsSinceViz = 0, lastForesightAt = 0, finalsSinceForesight = 0;
 
 function show(view) {
@@ -337,12 +339,24 @@ $('btn-create').onclick = async () => {
 
 $('btn-back').onclick = async () => { stopCapture(); if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
 
+let lastAnalyzeNoteAt = 0;
+function noteAnalyzeFail(r) {
+  if (r && !r.ran && r.reason === 'model_unavailable') {
+    const t = Date.now();
+    if (t - lastAnalyzeNoteAt > 30000) { lastAnalyzeNoteAt = t; $('ws-err').textContent = '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。'; }
+  }
+}
 async function openMeeting(id, autostart = false) {
   const data = await client.getMeeting(id);
   cur = data;
   show('ws');
   renderMeeting();
   await loadVizAndForesight();
+  try { // 恢复补分析：有未处理片段（游标落后）时自动补跑，不依赖手动按钮
+    const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
+    if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) await loadVizAndForesight(); else noteAnalyzeFail(r); }).catch(() => {});
+    if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); else noteAnalyzeFail(r); }).catch(() => {});
+  } catch { /* 补分析失败不挡页面 */ }
   if ((cur.meeting.status === 'live') && autostart) startCapture();
   if (cur.meeting.status === 'live' && !autostart) { /* 回到进行中的会议：可手动继续 */ $('ws-err').textContent = '会议进行中，点「暂停」旁的录音将自动恢复连接。'; startCapture(); }
 }
@@ -564,12 +578,38 @@ $('btn-pause').onclick = async () => {
 $('btn-end').onclick = async () => {
   if (!confirm('结束会议？结束后将生成最终纪要，可在历史中回看。')) return;
   try {
-    sendCtl({ type: 'end' });
-    stopCapture();
+    if (ws && ws.readyState === 1) {
+      // [END-RACE 2026-11-14] 旧流程 sendCtl(end)->stopCapture()(内含 ws.close) 会在尾段
+      // 仍在落库时先把会议结束。新流程：先停麦克风采集（不断 WS）-> 发 end -> 等服务端
+      // 完成确认（超时 15s），按结果三态分开处理：
+      // - ended：服务端确认全部片段已落库，才调 client.end 走正常结束；
+      // - end_incomplete：服务端明确回报仍有片段未落库——提示未保存成功并保留重试
+      //   入口（再次点「结束会议」），不得走正常结束流程、不得报成功；
+      // - timeout/closed：结果未知，如实提示，不得结束。
+      stopMic();
+      $('ws-err').textContent = '正在保存尾段转写…';
+      const wait = waitMeetingEnded(15000);
+      sendCtl({ type: 'end' });
+      const res = await wait;
+      if (res.outcome === 'incomplete') { $('ws-err').textContent = '尾段有 ' + (res.pending ?? '若干') + ' 段转写未能保存成功，会议尚未结束。请检查网络后，再次点「结束会议」重试。'; return; }
+      if (res.outcome === 'timeout') { $('ws-err').textContent = '尾段仍在保存中，请稍候重试结束。'; return; }
+      if (res.outcome !== 'ended') { $('ws-err').textContent = '转写连接已断开，无法确认尾段保存结果。已保存到服务器的字幕会保留；请刷新页面后重试结束。'; return; }
+      try { ws.close(); } catch {}
+      ws = null; wsReady = false;
+    } else {
+      stopCapture();
+    }
     await client.end(cur.meeting.id);
     const data = await client.getMeeting(cur.meeting.id); cur = data; renderMeeting();
   } catch (e) { $('ws-err').textContent = e.message; }
 };
+
+function waitMeetingEnded(timeoutMs) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { endWaiter = null; resolve({ outcome: 'timeout' }); }, timeoutMs);
+    endWaiter = (res) => { clearTimeout(timer); endWaiter = null; resolve(res); };
+  });
+}
 
 $('btn-delete').onclick = async () => {
   if (!confirm('删除这场会议？删除后其转写与纪要将不可再被检索。')) return;
@@ -593,8 +633,15 @@ async function startCapture() {
     ws = new WebSocket(`${asrUrl}?meeting=${encodeURIComponent(cur.meeting.id)}&token=${encodeURIComponent(session.access_token)}`);
     ws.binaryType = 'arraybuffer';
   } catch (e) { $('ws-err').textContent = '转写服务连接失败：' + e.message; return; }
+  wsReady = false;
+  $('rec-ind').style.display = 'none';
+  $('ws-err').textContent = '正在连接转写服务（连接中/鉴权中）…';
+  const sock = ws; // onclose 身份守卫：旧连接迟到的关闭事件不得动新会话的状态
   ws.onmessage = (ev) => {
     const msg = parseServerEvent(ev.data); if (!msg) return;
+    if (msg.type === 'ready') { wsReady = true; $('ws-err').textContent = '转写已连接，录音中。'; if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = ''; }
+    if (msg.type === 'meeting.state' && msg.status === 'ended' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'ended' }); }
+    if (msg.type === 'meeting.state' && msg.status === 'end_incomplete' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'incomplete', pending: msg.pending, client_refs: msg.client_refs }); }
     if (msg.type === 'transcript.partial') { $('partial').textContent = msg.text; }
     if (msg.type === 'transcript.final') {
       $('partial').textContent = '';
@@ -602,21 +649,26 @@ async function startCapture() {
       finalsSinceAnalyze += 1;
       if (finalsSinceAnalyze >= 2 && Date.now() - lastAnalyzeAt > 25000) {
         lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
-        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); }).catch(() => {});
+        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
       finalsSinceViz += 1; finalsSinceForesight += 1;
       if (vizUI && finalsSinceViz >= 2 && Date.now() - lastVizAt > 30000) {
         lastVizAt = Date.now(); finalsSinceViz = 0;
-        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } }).catch(() => {});
+        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastVizAt -= 20000; } }).catch(() => {});
       }
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
-        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); }).catch(() => {});
+        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); else noteAnalyzeFail(r); }).catch(() => {});
       }
     }
     if (msg.type === 'error') { $('ws-err').textContent = '转写提示：' + msg.message; }
   };
-  ws.onclose = (ev) => { if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存的字幕不会丢失，刷新页面可继续。'; };
+  ws.onclose = (ev) => {
+    if (ws !== sock) return; // 已被新连接取代或已主动置空：迟到的关闭事件不处理
+    wsReady = false;
+    if (endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'closed', code: ev.code }); }
+    if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存到服务器的字幕会保留；断开期间的声音不会被记录。刷新页面后将从服务器记录的最新进度继续，不会从头重记。';
+  };
   ws.onerror = () => { $('ws-err').textContent = '转写服务连接失败（内部测试需 ASR 服务可达）。纪要与历史功能不受影响。'; };
 
   try {
@@ -626,7 +678,7 @@ async function startCapture() {
     const proc = ctx.createScriptProcessor(4096, 1, 1);
     src.connect(proc); proc.connect(ctx.destination);
     proc.onaudioprocess = (e) => {
-      if (!ws || ws.readyState !== 1 || cur.meeting.status !== 'live') return;
+      if (!ws || ws.readyState !== 1 || !wsReady || cur.meeting.status !== 'live') return;
       const ds = downsampleTo16k(e.inputBuffer.getChannelData(0), ctx.sampleRate);
       ws.send(floatToPcm16(ds));
     };
@@ -635,11 +687,14 @@ async function startCapture() {
 }
 function suspendCapture() { /* 暂停时仅停发音频（onaudioprocess 按状态拦截），保留连接 */ }
 function resumeCapture() { /* 状态恢复 live 后 onaudioprocess 自动继续发送 */ }
-function stopCapture() {
+function stopMic() {
   try { if (audio) { audio.proc.disconnect(); audio.ctx.close(); audio.stream.getTracks().forEach((t) => t.stop()); } } catch {}
   audio = null;
+}
+function stopCapture() {
+  stopMic();
   try { if (ws) ws.close(); } catch {}
-  ws = null;
+  ws = null; wsReady = false;
 }
 
 (async () => {
