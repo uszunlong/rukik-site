@@ -86,7 +86,7 @@
   #boardSec .bteam{color:#7a8a7f;font-size:12px;margin-left:6px}
   #boardSec .bwait{margin-top:10px;font-size:13px;color:#52665a}
   #boardSec .bwait-t{font-weight:600;color:#1a2b22;margin-right:6px}
-  /* [CONTRAST 20261114] 本场进程/分享邀请（#casualSec）对比度修复：.card 为白底但未设文字色，
+  /* [CONTRAST 20261114] 分享邀请（#casualSec；本场进程已删，[REMOVE-SESSIONBAR 20261114]）对比度修复：.card 为白底但未设文字色，
      正文原继承 body 近白色 #F4F1EA 呈白底白字不可读（.btn/.sharebox 的样式又只存在于
      #scoreSec 深色记分卡作用域）。按 #boardSec 与 .manageCard 白卡既定口径补齐本区配色，
      只改颜色/按钮配色，不动布局与文案。 */
@@ -2770,11 +2770,86 @@ function renderForbiddenGuideEv() {
     }).catch(function () {});
   }
 }
+/* [MAPDECOUPLE 20261114] P0 地图加载链根治（用户 15:47 升级令）：地图不再等待
+   event_get 主链——BD Max/Sandpiper 实证主链在弱网（微信 WebView）可长时间不达，
+   旧链 PREVIEW 只由 event_get 赋值，占位「马上就来」无限停留。独立链：
+   course_map_coverage（按 event_id 服务端解析球场）→ course_get（球场预览数据）
+   → 组装 course_preview 兼容对象 → renderMap；逐洞图（loadHoleSvg）与全局图
+   （ensureGlobe）在 renderMap 内各自独立取数/重试/终态，互不阻塞。event_get
+   成功后仍以权威 course_preview 覆盖重渲染（官方台等以主链为准）。
+   硬不变量：本链必达终态——成功渲染，或明确失败＋手动重试（只重试本链）；
+   30 秒看门狗兜底，占位绝不无限停留；迟到成功仍渲染（数据已到必须呈现）。 */
+var mapChainState = 'idle'; /* idle|loading|ok|error */
+var mapChainWatchdog = null;
+function buildPreviewFromCourse(cov, cg) {
+  var course = (cg && cg.course) || {};
+  var tees = (cg && cg.tees) || [];
+  var byTee = {};
+  ((cg && cg.holes) || []).forEach(function (h) {
+    var row = { hole: h.hole_number, par: h.par, stroke_index: h.stroke_index, yards: h.yards };
+    (byTee[h.tee_id] = byTee[h.tee_id] || []).push(row);
+  });
+  Object.keys(byTee).forEach(function (k) { byTee[k].sort(function (a, b) { return a.hole - b.hole; }); });
+  var mainTee = tees.length ? tees[0].id : null; /* 查看态默认台：event_get 到达后按官方台/主台权威重定 */
+  return {
+    course_id: course.id || (cov && cov.course && cov.course.id) || null,
+    name: course.name || (cov && cov.course && cov.course.name) || null,
+    address: course.address || null, city: course.city || null,
+    latitude: course.latitude, longitude: course.longitude,
+    tees: tees, main_tee_id: mainTee,
+    holes: mainTee ? (byTee[mainTee] || []) : [],
+    holes_by_tee: byTee, completeness: {}
+  };
+}
+function mapChainFail(msg) {
+  if (mapChainWatchdog) { clearTimeout(mapChainWatchdog); mapChainWatchdog = null; }
+  if (mapChainState !== 'loading') return;
+  mapChainState = 'error';
+  var el = document.getElementById('mapSec');
+  if (el) errBox(el, msg, function () { loadMapChain(); });
+  var gs = document.getElementById('glSec');
+  if (gs && !gs.innerHTML) gs.innerHTML = '<div class="card"><h2>球场全局图</h2><div class="empty">全局图随球场地图一并未能加载，请用上方「球场地图」卡的重试。</div></div>';
+}
+function loadMapChain() {
+  if (mapChainState === 'loading' || mapChainState === 'ok') return;
+  mapChainState = 'loading';
+  var msEl = document.getElementById('mapSec');
+  if (msEl && !msEl.innerHTML) msEl.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">球场地图加载中…</div></div>';
+  if (mapChainWatchdog) clearTimeout(mapChainWatchdog);
+  mapChainWatchdog = setTimeout(function () { mapChainFail('球场地图加载超时（网络或服务暂时不可用）。'); }, 30000);
+  dyn('course_map_coverage', {}).then(function (cov) {
+    var cid = cov && cov.course && cov.course.id;
+    if (!cid) { /* 本场未关联球场：诚实终态（renderMap 无 PREVIEW 分支），不重试 */
+      if (mapChainWatchdog) { clearTimeout(mapChainWatchdog); mapChainWatchdog = null; }
+      mapChainState = 'ok';
+      try { renderMap(); } catch (e) {}
+      return null;
+    }
+    return dyn('course_get', { course_id: cid }).then(function (cg) {
+      if (mapChainWatchdog) { clearTimeout(mapChainWatchdog); mapChainWatchdog = null; }
+      var pv = buildPreviewFromCourse(cov, cg);
+      if (!pv.name) { mapChainState = 'loading'; mapChainFail('球场地图加载失败（球场资料暂不可用）。'); return; }
+      if (!(EV && EV.course_preview)) { PREVIEW = pv; if (!curTee) curTee = pv.main_tee_id; }
+      mapChainState = 'ok';
+      try { renderMap(); dynMapOk = true; }
+      catch (e2) { errBox(document.getElementById('mapSec'), '球场地图渲染失败，请重试。', function () { try { renderMap(); } catch (e3) {} }); }
+    });
+  }).catch(function (e) {
+    if (e && e.status === 403) { /* 无凭据看私密赛事：诚实权限态，不报假故障、不无限占位 */
+      if (mapChainWatchdog) { clearTimeout(mapChainWatchdog); mapChainWatchdog = null; }
+      mapChainState = 'error';
+      var el9 = document.getElementById('mapSec');
+      if (el9) el9.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">登录或使用邀请链接打开本页后，球场地图将自动呈现。</div></div>';
+      return;
+    }
+    mapChainFail('球场地图加载失败（网络或服务暂时不可用）。');
+  });
+}
 var dynFailStreak = 0, dynMapOk = false;
 function loadDynamic() {
   dyn('event_get', inviteCodeParam ? { invite_code: inviteCodeParam } : {}, 20000).then(function (j) {
     dynFailStreak = 0;
-    EV = j; PREVIEW = j.course_preview || null;
+    EV = j; PREVIEW = j.course_preview || PREVIEW; /* [MAPDECOUPLE 20261114] 主链无预览/迟到时保留独立链已组装的 PREVIEW，不清空已渲染地图 */
     applyShare(j.event);
     /* 发球台默认优先级（Z33）：赛事官方指定台（rounds.default_tee_id 且能在预览台列表中
        解析；记分卡/分组在服务端同取此值、即球员已确认台同源）＞ 球场主台 main_tee_id。
@@ -2801,25 +2876,17 @@ function loadDynamic() {
     else if (!SNAP && msg.indexOf('event not found') >= 0) {
       errBox(document.getElementById('heroSec'), '赛事不存在或链接无效。', loadDynamic);
       document.getElementById('statePill').textContent = '加载失败';
-    } else if (!dynMapOk) {
-      /* [MAPFIX 20261114] 定因：动态主链（event_get）失败≠球场地图故障。旧逻辑在
-         SNAP 已呈现基础层时，把与失败点无关的「球场地图加载失败」粉框写进地图区，
-         PREVIEW 永不赋值致逐洞图/全局图永不渲染、且只能手动重试。改为：诚实占位
-         ＋有限自动重试（3s/9s 两次）；耗尽才出如实归因的提示＋重试按钮。地图已
-         成功渲染后（dynMapOk）的后续刷新失败不触碰已渲染内容。 */
+    } else {
+      /* [MAPDECOUPLE 20261114] 主链失败只管动态层自身：有限自动重试（3s/9s 两次）；
+         地图区自此与本链彻底脱钩——不再写「马上就来」占位、不再写地图粉框，
+         地图终态由独立链 loadMapChain 管理。SNAP 在位时基础层已呈现，耗尽后
+         静默等待下轮刷新/重进；SNAP 不在位才整页级报错（hero）。 */
       dynFailStreak++;
-      var msEl = document.getElementById('mapSec');
       if (dynFailStreak <= 2) {
-        /* [MAPFIX 20261114] 主链失败先自愈、不提前判死：SNAP 在位时地图区出诚实
-           占位；SNAP 不在位时 hero 保持骨架屏（记分模块/排行榜走各自独立链，
-           不受本链失败牵连），两次自动重试（3s/9s）耗尽才判失败。 */
-        if (SNAP && msEl && !msEl.innerHTML) msEl.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">赛事信息正在加载，球场地图马上就来…</div></div>';
         setTimeout(function () { loadDynamic(); }, dynFailStreak === 1 ? 3000 : 9000);
       } else if (!SNAP) {
         errBox(document.getElementById('heroSec'), '赛事信息加载失败（网络或服务暂时不可用）。', loadDynamic);
         document.getElementById('statePill').textContent = '加载失败';
-      } else if (msEl) {
-        errBox(msEl, '赛事信息加载未完成，球场地图暂未呈现（网络或服务暂时不可用）。', loadDynamic);
       }
     }
     maybeWall();
@@ -2832,6 +2899,7 @@ function boot() {
   }
   document.getElementById('heroSec').innerHTML = '<div class="skl"></div>';
   loadBoardIntoFunc(); // L2 排名独立启动，不等基础层
+  loadMapChain(); // [MAPDECOUPLE 20261114] 地图独立链与主链并行启动，互不等待
   var t0 = Date.now();
   var ctrl = new AbortController(); var to = setTimeout(function () { ctrl.abort(); }, 8000); /* [MAPFIX 20261114] 4s 实测频繁误杀慢快照（存储直出可达 10s），放宽至 8s 保住兜底层 */
   fetch(SNAP_URL, { signal: ctrl.signal }).then(function (r) { clearTimeout(to); if (!r.ok) throw new Error('snap ' + r.status); return r.json(); })
@@ -4177,11 +4245,7 @@ function organizerHint() {
   return '<div class="btnrow"><a class="btn gold" href="console/?e=' + encodeURIComponent(eventId) + '">您是本场主办方，去分组 →</a></div>';
 }
 
-function clearCasualBars() { /* [LAYOUT-V2 20261114] 日常球局/邀请好友两条已迁出记分模块、置于 casualSec（排行榜下方）；每次 paint 先清场，记分 paint 末尾再按条件重建，离开记生态即消失（与原 scApp 内生命周期等价） */
-  var cb = document.getElementById('casualBar'); if (cb) cb.remove(); /* [UNIFY 20261114] inviteBar（分享邀请）不再由 paint 清场：其呈现跨记生态（published 态亦呈现），改由 renderShareInvite 按 EV 权限/状态全权管理生命周期 */
-}
 function paint() {
-  clearCasualBars();
   var __ss = document.getElementById('statusSec'); if (__ss) __ss.innerHTML = ''; /* [UNIFY 20261114] 状态卡槽位每轮先清，记生态由 paintStatusSec 重建 */
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
   /* [线Z55] 实时状态未确认（S.fresh=false）前只出骨架：禁止用缓存/默认值
@@ -4604,7 +4668,7 @@ function paintGroupScoring(card) {
     matrix + certHtml +
     backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
-  setTailVisible(true); syncTail(); paintStatusSec(); maybeSessionBar(); renderShareInvite(); /* [UNIFY 20261114] 记生态尾部统一渲染：状态卡（statusSec）→本场进程→分享邀请（casualSec 槽位，两类赛事同位同序） */
+  setTailVisible(true); syncTail(); paintStatusSec(); renderShareInvite(); /* [UNIFY 20261114]＋[REMOVE-SESSIONBAR 20261114] 记生态尾部统一渲染：状态卡（statusSec）→分享邀请（casualSec 槽位，两类赛事同位同序；本场进程已整段删除） */
   bindMyStatus();
   app.querySelectorAll('[data-gstep]').forEach(function (el) {
     el.addEventListener('click', function () {
@@ -4903,7 +4967,7 @@ function paintScoring(card) {
     var r = await golfApi('certify', { scorecard_id: card.id, step: 'player_verify', decision: 'flag', note: note }, true);
     if (r.ok) loadCardOnly(card.id); else { this.disabled = false; alert('提交失败：' + (r.error || '请稍后重试')); }
   });
-  setTailVisible(true); syncTail(); paintStatusSec(); maybeSessionBar(); renderShareInvite(); /* [UNIFY 20261114] 记生态尾部统一渲染：状态卡（statusSec）→本场进程→分享邀请（casualSec 槽位，两类赛事同位同序） */
+  setTailVisible(true); syncTail(); paintStatusSec(); renderShareInvite(); /* [UNIFY 20261114]＋[REMOVE-SESSIONBAR 20261114] 记生态尾部统一渲染：状态卡（statusSec）→分享邀请（casualSec 槽位，两类赛事同位同序；本场进程已整段删除） */
 }
 
 function sendShape(item) {
@@ -5077,39 +5141,12 @@ function toast(msg) {
   setTimeout(function () { t.remove(); }, 2400);
 }
 
-function maybeSessionBar() { /* [UNIFY 20261114] 原 maybeCasualFinish（仅快速球局呈现）按 12:45 统一终裁通用化并改名「本场进程」：两类赛事同槽（casualSec 首位、排行榜下方）同名同位、in_progress 记生态呈现；内容按类型/身份分——快速球局＝结束本场（casual_finish，行为口径与原实现不变）；正式赛事＝进程说明，staff 另给「前往管理本场」入口（结束/锁定在主办方台承载，本卡不新增结束路径） */
-  if (!S.ev || !S.ev.event || S.ev.event.status !== 'in_progress') return;
-  var app = document.getElementById('casualSec');
-  if (!app || document.getElementById('casualBar')) return;
-  var e = S.ev.event;
-  var bar = document.createElement('div');
-  bar.className = 'card';
-  bar.id = 'casualBar';
-  var ib = document.getElementById('inviteBar');
-  if (e.kind === 'casual') {
-    bar.innerHTML = '<b>本场进程</b><p class="muted">全组打完后，点下面按钮结束本场——成绩会锁定并生成回忆。还没打完时，只有发起人可以提前结束。</p>' +
-      '<div class="btnrow"><button class="btn plain" id="casualFinishBtn" type="button">结束本场球局</button></div><div id="casualFinishMsg"></div>';
-    if (ib) app.insertBefore(bar, ib); else app.appendChild(bar);
-    document.getElementById('casualFinishBtn').addEventListener('click', async function () {
-      var msg = document.getElementById('casualFinishMsg');
-      if (!window.confirm('确定结束本场球局吗？有成绩的记分卡会锁定。')) return;
-      this.disabled = true;
-      var r = await golfApi('casual_finish', { event_id: eventId }, true).catch(function () { return null; });
-      if (r && r.ok) { toast('球局已结束，正在生成回忆'); setTimeout(function () { location.reload(); }, 900); return; }
-      this.disabled = false;
-      var em = (r && r.data && (r.data.error || r.data.message)) || '';
-      if (msg) msg.innerHTML = '<p class="err">' + (r && r.status === 403 ? '还没全部打完时，只有发起人可以提前结束本场。' : '结束没有成功' + (em ? '（' + esc(em) + '）' : '') + '，请稍后再试。') + '</p>';
-    });
-  } else {
-    var staff = S.ev.my_role === 'organizer' || S.ev.my_role === 'admin';
-    bar.innerHTML = '<b>本场进程</b>' + (staff
-      ? '<p class="muted">赛事进行中。结束赛事、锁定成绩等收官操作在主办方台进行。</p><div class="btnrow"><a class="btn plain" href="console/?e=' + encodeURIComponent(eventId) + '">前往管理本场</a></div>'
-      : '<p class="muted">赛事进行中，成绩实时更新中。本场结束与成绩锁定由主办方统一操作。</p>');
-    if (ib) app.insertBefore(bar, ib); else app.appendChild(bar);
-  }
-}
+/* [REMOVE-SESSIONBAR 20261114] 「本场进程」模块按用户 15:40 定版整段删除：其「结束本场球局」
+   与管理赛事「结束赛事」重复，结束动作唯一入口收敛为管理赛事区「结束赛事」
+   （event_update completed，[END-EVENT 20261114]）。原 maybeSessionBar 函数、两处 paint
+   调用与 clearCasualBars 清场已一并移除；casualSec 现只承载「分享邀请」。 */
 
-function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模块位（排行榜与管理赛事之间，casualSec 次位）：由原「邀请好友」卡合并改名（用户 2026-11-14 12:49 定名），快速球局与正式赛事同位同式；呈现口径＝邀请权限（organizer/admin 必见，与邀请卡显隐口径一致）＋赛事 published/in_progress（赛前即可邀请，不限记生态）；内容复用既有邀请机制——活动链接＋邀请码，分享 payload 与原邀请卡「分享」按钮同一生成路径（shareCourseName/shareTitleOf/shareDescOf 点击时现算）；快速球局另含邀请码重置/关闭加入（球局码机制专属操作，行为口径不变）。本函数按 EV 全权管理 #inviteBar 生命周期（paint 不再清场本卡），由 renderHero（动态层）与记分 paint 尾部共同调用、幂等重建 */
+function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模块位（排行榜与管理赛事之间，casualSec 唯一模块）：由原「邀请好友」卡合并改名（用户 2026-11-14 12:49 定名），快速球局与正式赛事同位同式；呈现口径＝邀请权限（organizer/admin 必见，与邀请卡显隐口径一致）＋赛事 published/in_progress（赛前即可邀请，不限记生态）；内容复用既有邀请机制——活动链接＋邀请码，分享 payload 与原邀请卡「分享」按钮同一生成路径（shareCourseName/shareTitleOf/shareDescOf 点击时现算）；快速球局另含邀请码重置/关闭加入（球局码机制专属操作，行为口径不变）。本函数按 EV 全权管理 #inviteBar 生命周期（paint 不再清场本卡），由 renderHero（动态层）与记分 paint 尾部共同调用、幂等重建 */
   var sec = document.getElementById('casualSec');
   if (!sec) return;
   var old = document.getElementById('inviteBar');
