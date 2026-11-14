@@ -26,7 +26,7 @@
 <style>
   body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#081A2C;color:#F4F1EA}
   .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
-  .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 2px 6px;font-weight:700;letter-spacing:.06em;color:#E3C878;font-size:13px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 2px 6px;font-weight:700;letter-spacing:.06em;color:#E3C878;font-size:13px} /* [顶栏安全区修复 2026-11-14] 品牌字与状态胶囊补 safe-area-inset-top（口径同本页 .glfs-bar/play 顶栏），全屏 WebView 下整体下移至状态栏下方，无 cover 环境 env=0 无副作用 */
   .pill{background:#16a34a;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;letter-spacing:0}
   .pill.pre{background:#64748b}.pill.post{background:#7c3aed}
   h1{font-size:24px;margin:10px 0 4px;line-height:1.3;color:#FFFFFF}
@@ -319,7 +319,7 @@
   #palOverlay{position:fixed;inset:0;z-index:90;background:rgba(4,12,20,.96);display:flex;align-items:center;justify-content:center}
   #palOverlay.hidden{display:none}
   #palOverlay img{max-width:94vw;max-height:86dvh;object-fit:contain;border-radius:8px}
-  .pal-x{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;width:36px;height:36px;font-size:15px;cursor:pointer}
+  .pal-x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px; /* [VIEWER-FIX 2026-11-14] ✕ 补 safe-area-inset-top，完整落入可点区（原 top:14px 贴状态栏，用户 11:47 实报） */background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;width:36px;height:36px;font-size:15px;cursor:pointer}
   .pal-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;width:40px;height:40px;font-size:20px;cursor:pointer}
   .pal-nav.prev{left:10px}.pal-nav.next{right:10px}
   .pal-count{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:rgba(244,241,234,.8);font-size:13px}
@@ -348,6 +348,9 @@
   .manageCard .mbtn{flex:1;min-width:140px;background:#fff;color:#15803d;border:1.5px solid #15803d;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer} /* [EVENTBTN 20261114] 定版：白底＋绿边＋绿字（原深色配色在白卡上不可见） */
   .manageCard .mbtn.danger{background:#fff;color:#b3261e;border-color:#b3261e} /* [EVENTBTN 20261114] 定版：白底＋红边＋红字 */
   .manageCard .mmsg{font-size:13px;color:#8a6100;margin-top:8px;min-height:16px} /* [EVENTBTN 20261114] 原浅黄在白卡不可见，改深琥珀 */
+  .manageCard .mtoggle{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:0;font:inherit;font-size:19px;font-weight:800;color:#123524;cursor:pointer;text-align:left} /* [LAYOUT-V2 20261114] 管理赛事合并：未展开只呈现一个入口标题条 */
+  .manageCard a.mbtn{display:flex;align-items:center;justify-content:center;text-decoration:none}
+  .manageCard .mbtn.go{background:#15803d;color:#fff;border-color:#15803d} /* [LAYOUT-V2 20261114] 管理本场＝统一主按钮样式（实心绿） */
   #scoreSec .card{ background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1px solid rgba(120,255,190,.13); -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); border-radius: 18px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
   #scoreSec .card h2{ font-size: 17px; margin: 0 0 10px; color: #f4faf5; }
   #scoreSec .card h3{ font-size: 15px; margin: 14px 0 8px; color: #f4faf5; }
@@ -413,7 +416,6 @@
   <div id="heroSec"><div class="skl"></div></div>
   <div id="dualSec"></div>
   <div id="scoreSec"><div id="scApp"></div></div>
-  <div id="shareSec"></div>
   <div id="mapSec"></div>
   <div id="glSec"></div>
   <div id="glEvFs" class="glfs" hidden>
@@ -423,7 +425,7 @@
   </div>
   <div id="partnerSec"></div>
   <div id="boardSec"></div>
-  <div id="staffSec"></div>
+  <div id="casualSec"></div>
   <div id="manageSec"></div>
 </div>
 <script>
@@ -716,13 +718,25 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   palStart();
   bindPcBtn(box);
 }
+/* [VIEWER-FIX 2026-11-14] 根因：本 IIFE 原在经典脚本解析期执行，而 #palOverlay 的
+   静态 HTML 位于该脚本之后，getElementById 恒为 null 直接 return——✕/上一张/下一张/
+   点遮罩关闭四条路径自上线起从未绑定成功（用户 11:47 录屏实证点 ✕ 关不掉）。
+   改为 DOM 就绪后绑定＋幂等 guard；✕ 与箭头点击 stopPropagation 防冒泡重开；
+   补 Esc 关闭（与本页其他弹层口径一致）。openPal 只有用户手势一条打开路径，
+   无异步/状态恢复重开入口，关闭即终态、不复活。 */
 (function bindPalOverlay() {
-  var c = document.getElementById('palClose'), pv = document.getElementById('palPrev'), nx = document.getElementById('palNext'), ov = document.getElementById('palOverlay');
-  if (!c) return;
-  c.addEventListener('click', closePal);
-  if (pv) pv.addEventListener('click', function () { PALB.idx = (PALB.idx - 1 + PALB.list.length) % PALB.list.length; palLbShow(); palGo(PALB.idx); });
-  if (nx) nx.addEventListener('click', function () { PALB.idx = (PALB.idx + 1) % PALB.list.length; palLbShow(); palGo(PALB.idx); });
-  if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closePal(); });
+  function bind() {
+    var c = document.getElementById('palClose'), pv = document.getElementById('palPrev'), nx = document.getElementById('palNext'), ov = document.getElementById('palOverlay');
+    if (!c || c.dataset.palBound) return;
+    c.dataset.palBound = '1';
+    c.addEventListener('click', function (e) { if (e) e.stopPropagation(); closePal(); });
+    if (pv) pv.addEventListener('click', function (e) { if (e) e.stopPropagation(); PALB.idx = (PALB.idx - 1 + PALB.list.length) % PALB.list.length; palLbShow(); palGo(PALB.idx); });
+    if (nx) nx.addEventListener('click', function (e) { if (e) e.stopPropagation(); PALB.idx = (PALB.idx + 1) % PALB.list.length; palLbShow(); palGo(PALB.idx); });
+    if (ov) ov.addEventListener('click', function (e) { if (e.target === ov) closePal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && !ov.classList.contains('hidden')) closePal(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
 })();
 /* 减法重构（Z29）：赛制人类可读名 11 种全覆盖，枚举绝不上屏（缺陷 a） */
 var FORMAT_LABELS = { stroke: '个人比杆赛', net_stroke: '净杆赛', stableford: 'Stableford 积分赛', scramble: 'Scramble 团队赛', best_ball: 'Best Ball 最佳球赛', match_play: '比洞赛', team_points: '团队积分赛', team_stroke: '团体比杆赛', alternate_shot: '交替击球赛', skins: 'Skins 逐洞赛', six_six_six: 'Sixes 六六六组合赛' };
@@ -805,11 +819,8 @@ function renderHero() {
   });
   renderHeroMedia();
   renderDual();
-  renderShareStrip();
-  renderStaff();
   renderManage();
   bindZ60Join();
-  bindZ61Share();
 }
 /* [线Z60 2026-11-12] 「报名参加」一键加入：令牌现读 localStorage（与
    photos.html 同口径，不依赖页面加载快照）；未登录先在原地挂载登录区，
@@ -903,48 +914,38 @@ function renderDual() {
   if (!el || !EV || !EV.event) return;
   el.innerHTML = '<a class="dualcard caddie strip" href="#" id="cdOpen"><div class="dc-ic">✦</div><div><div class="dc-t">问 RUKIK Golf</div><div class="dc-s">赛事智能球童</div></div><div class="dc-arrow">›</div></a>';
 }
-/* [ONEPAGE 20261114] 分享横向条（定版第 6 区）：即原 hero 内 Z61 分享按钮整体移位，
-   id 与绑定（bindZ61Share）不变，分享口径（z61ShareUrl）不变。 */
-function renderShareStrip() {
-  var el = document.getElementById('shareSec');
-  if (!el) return;
-  el.innerHTML = '<button type="button" class="signup alt" id="z61ShareBtn" style="cursor:pointer;font:inherit;width:100%;margin-top:14px">分享</button><div id="z61ShareNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
-}
-/* 主办方入口：页面最底部低调单按钮（管理动作仍在主办方台，不塞进球员页） */
-function renderStaff() {
-  var el = document.getElementById('staffSec');
-  if (!el) return;
-  /* [Z51 2026-11-12] 管理入口口径与服务端 isStaff 统一：organizer ∪ golf_event_roles 的 admin/referee 均可见；权限未确认（EV/my_role 缺失）默认不渲染 */
-  if (EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')) el.innerHTML = '<a class="staffbtn" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场（主办方台）</a>';
-  else el.innerHTML = '';
-}
-/* [ONEPAGE 20261114] 第 12 区「管理赛事」（仅 organizer/admin 渲染，与服务端验权同口径）：
-   结束赛事＝与主办方台同一 event_update 状态动作（正式赛事 in_progress→completed，
-   确认文案与 console 同口径）；取消赛事＝同一动作置 cancelled；删除赛事＝既有
-   event_delete 流程（自原 staffSec 移位至此，流程函数 rkDeleteEventFlowHere 不变）。
-   快速球局的结束走记分模块自带的 casual_finish 结束条（全员可见、服务端验权、
-   与记分页一致），本区不重复造一份，避免双份状态。 */
+/* [LAYOUT-V2 20261114] 独立分享横条（原定版第 6 区）已按用户口径删除：与邀请好友卡内
+   「分享」小按钮等既有分享入口重复。renderShareStrip 与其调用已移除；
+   bindZ61Share/z61ShareUrl 定义保留备查（页面已无调用点）。 */
+/* [LAYOUT-V2 20261114] 原独立「管理本场（主办方台）」入口（renderStaff/staffSec）已删除：
+   管理本场融合进下方「管理赛事」模块，作展开后第一按钮（链接与权限口径不变）。 */
+/* [LAYOUT-V2 20261114] 「管理本场」融合进「管理赛事」：页面最后只剩本模块一个管理入口。
+   未展开时只呈现「管理赛事」一个入口；点击展开三按钮——管理本场（＝原 staffSec 的
+   主办方台链接，organizer/admin/referee 可见，落点与权限不变）／取消赛事／删除赛事
+   （仅 organizer/admin，显隐条件、确认文案与流程函数 rkDeleteEventFlowHere 均不变）。
+   原独立「结束赛事」按钮按用户「展开恰三按钮」定版不再单列，其 event_update 结束
+   动作仍在主办方台（管理本场）内可用，功能未下线。 */
 function renderManage() {
   var el = document.getElementById('manageSec');
   if (!el) return;
-  if (!EV || !EV.event || !(EV.my_role === 'organizer' || EV.my_role === 'admin')) { el.innerHTML = ''; return; }
+  if (!EV || !EV.event || !isEventStaff()) { el.innerHTML = ''; return; }
   var e = EV.event;
-  var btns = '';
-  if (e.kind !== 'casual' && e.status === 'in_progress') btns += '<button type="button" class="mbtn" id="evFinishBtn">结束赛事</button>';
-  if (e.status !== 'completed' && e.status !== 'cancelled') btns += '<button type="button" class="mbtn" id="evCancelBtn">取消赛事</button>';
-  btns += '<button type="button" class="mbtn danger" id="evDelBtn">删除赛事</button>';
-  el.innerHTML = '<div class="card manageCard"><h2>管理赛事</h2><div class="mrow">' + btns + '</div><div class="mmsg" id="evManageMsg"></div></div>';
-  var msg = document.getElementById('evManageMsg');
-  var fb = document.getElementById('evFinishBtn');
-  if (fb) fb.addEventListener('click', function () {
-    if (!window.confirm('确定结束赛事吗？结束后赛事页将切换为回忆馆，记分到此为止。')) return;
-    fb.disabled = true;
-    dyn('event_update', { status: 'completed' }).then(function () {
-      if (msg) msg.textContent = '赛事已结束，正在刷新为回忆馆…';
-      loadDynamic();
-      if (window.__evScoreReload) window.__evScoreReload();
-    }).catch(function () { fb.disabled = false; if (msg) msg.textContent = '结束没有成功，请稍后再试。'; });
+  var canManage = EV.my_role === 'organizer' || EV.my_role === 'admin';
+  var btns = '<a class="mbtn go" href="console/?e=' + encodeURIComponent(eventId) + '">管理本场</a>';
+  if (canManage) {
+    if (e.status !== 'completed' && e.status !== 'cancelled') btns += '<button type="button" class="mbtn" id="evCancelBtn">取消赛事</button>';
+    btns += '<button type="button" class="mbtn danger" id="evDelBtn">删除赛事</button>';
+  }
+  el.innerHTML = '<div class="card manageCard"><button type="button" class="mtoggle" id="evManageToggle" aria-expanded="false"><span>管理赛事</span><span class="mchev">▾</span></button><div id="evManageBody" style="display:none"><div class="mrow">' + btns + '</div><div class="mmsg" id="evManageMsg"></div></div></div>';
+  var tg = document.getElementById('evManageToggle');
+  var bd = document.getElementById('evManageBody');
+  if (tg && bd) tg.addEventListener('click', function () {
+    var open = bd.style.display !== 'none';
+    bd.style.display = open ? 'none' : '';
+    tg.setAttribute('aria-expanded', open ? 'false' : 'true');
+    var ch = tg.querySelector('.mchev'); if (ch) ch.textContent = open ? '▾' : '▴';
   });
+  var msg = document.getElementById('evManageMsg');
   var cb = document.getElementById('evCancelBtn');
   if (cb) cb.addEventListener('click', function () {
     if (!window.confirm('确定取消这场赛事吗？取消后球员将不能继续报名与记分。')) return;
@@ -4120,7 +4121,12 @@ function organizerHint() {
   return '<div class="btnrow"><a class="btn gold" href="console/?e=' + encodeURIComponent(eventId) + '">您是本场主办方，去分组 →</a></div>';
 }
 
+function clearCasualBars() { /* [LAYOUT-V2 20261114] 日常球局/邀请好友两条已迁出记分模块、置于 casualSec（排行榜下方）；每次 paint 先清场，记分 paint 末尾再按条件重建，离开记生态即消失（与原 scApp 内生命周期等价） */
+  var cb = document.getElementById('casualBar'); if (cb) cb.remove();
+  var ib = document.getElementById('inviteBar'); if (ib) ib.remove();
+}
 function paint() {
+  clearCasualBars();
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
   /* [线Z55] 实时状态未确认（S.fresh=false）前只出骨架：禁止用缓存/默认值
      画报名、等待、记分等状态模块（首屏错误中间态根因修复） */
@@ -4270,7 +4276,7 @@ function paintCasualJoin() {
   });
 }
 
-function myStatusHtml() {
+function myStatusHtml(noCi) {
   var reg = S.ev && S.ev.my_registration, e = S.ev && S.ev.event;
   if (!reg || !e) return '';
   var out = '';
@@ -4280,8 +4286,10 @@ function myStatusHtml() {
     if (reg.payment_status === 'confirmed') out += '<p class="meta">参赛费用 ' + amt + '：<b>主办方已确认收款</b> ✅</p>';
     else if (reg.payment_status === 'pending') out += '<p class="meta">参赛费用 ' + amt + '：<b>待主办方确认收款</b>。本场为线下收款，请按主办方通知缴费；主办方确认后，您的正式分组资格即完整生效。</p>';
   }
-  if (reg.status === 'checked_in') out += '<p class="meta">签到状态：<b>✅ 已签到</b></p>';
-  else if (reg.status === 'registered' && (e.status === 'published' || e.status === 'in_progress')) {
+  /* [LAYOUT-V2 20261114] 签到呈现新口径：签到成功后全页不留「已签到」常驻行，签到模块
+     整体消失（签到数据照常落库、主办方侧可见性不变）；noCi=true（记分模块调用）时
+     任何状态都不渲染签到按钮与空白占位行。 */
+  if (!noCi && reg.status === 'registered' && (e.status === 'published' || e.status === 'in_progress')) {
     out += '<div class="btnrow"><button class="btn plain" id="ciBtn" type="button">我已到场 · 签到</button></div><div class="err" id="ciErr"></div>';
   }
   return out;
@@ -4494,7 +4502,7 @@ function paintGroupScoring(card) {
 
   var html = evMetaHtml() +
     '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 同组共享记分</h2><span class="tot">第 ' + (g.pairing.group_no == null ? '' : g.pairing.group_no + ' 组 · ') + '第 ' + curH.hole + ' 洞 · Par ' + par + (curH.yards ? ' · ' + curH.yards + ' 码' : '') + '</span></div>' +
-    syncHtml + myStatusHtml() +
+    syncHtml + myStatusHtml(true) +
     '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
     rows +
     (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
@@ -4687,7 +4695,7 @@ function paintScoring(card) {
   var html = evMetaHtml() +
     '<div class="card"><div class="scorehead"><h2 style="margin:0">⛳ 逐洞记分</h2><span class="tot">' +
     esc((cd.player || {}).display_name || '') + (sc.thru != null ? ' · 已完成 ' + sc.thru + ' 洞' : '') + (sc.gross_total != null ? ' · 总杆 ' + sc.gross_total : '') + '</span></div>' +
-    syncHtml + myStatusHtml() + grpFailHtml() +
+    syncHtml + myStatusHtml(true) + grpFailHtml() +
     '<div class="holegrid">' + grid + '</div>';
 
   if (sel && !locked) {
@@ -4977,7 +4985,7 @@ function toast(msg) {
 
 function maybeCasualFinish() {
   if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return; /* [线Z55 修复] 原读 S.ev.kind/status（event_get 顶层无此二字段）致结束入口永不渲染 */
-  var app = document.getElementById('scApp');
+  var app = document.getElementById('casualSec'); /* [LAYOUT-V2 20261114] 迁移：排行榜下方、管理赛事上方（原在记分模块 scApp 内追加） */
   if (!app || document.getElementById('casualBar')) return;
   var bar = document.createElement('div');
   bar.className = 'card';
@@ -5000,7 +5008,7 @@ function maybeCasualFinish() {
 function maybeInviteCtl() {
   if (!S.ev || !S.ev.event || S.ev.event.kind !== 'casual' || S.ev.event.status !== 'in_progress') return;
   if (S.ev.my_role !== 'organizer') return;
-  var app = document.getElementById('scApp');
+  var app = document.getElementById('casualSec'); /* [LAYOUT-V2 20261114] 迁移：紧随日常球局之后（排行榜→日常球局→邀请好友→管理赛事） */
   if (!app || document.getElementById('inviteBar')) return;
   var code = S.ev.event.invite_code || '';
   /* [线Z60 2026-11-12] 主按钮改复制「活动链接」（event.html?e=活动ID，&c= 携带
@@ -5025,9 +5033,16 @@ function maybeInviteCtl() {
     else say('<p class="err">当前浏览器不支持自动复制，请长按上方链接手动复制。</p>');
   });
   document.getElementById('invShare').addEventListener('click', function () {
-    /* [COURSE-NAME 2026-11-14] 系统分享面板与 applyPlayShare 同一份分享数据（有球场以球场名为准）；数据未就绪时回落定版文案。 */
-    var sd = window.__playShareData;
-    if (navigator.share) navigator.share(sd ? { title: sd.title, text: sd.desc, url: joinLink } : { title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink }).catch(function () {});
+    /* [SHARE-FIX 2026-11-14] 与原分享横条/applyShare 同一分享口径：标题跟随球场名
+       （有球场＝shareTitleOf 动态标题，如「球场名 · 好友球局」；无球场才回落品牌定版）。
+       原实现读 window.__playShareData——该字段在本页从未被赋值（applyPlayShare 是
+       play.html 的函数），故恒走写死品牌名分支（用户 11:44 录屏实证）；改为点击时
+       直接用本页同一套 shareCourseName/shareTitleOf/shareDescOf 现算。 */
+    var se = S.ev.event || {};
+    var scn = (typeof shareCourseName === 'function') ? shareCourseName(se) : '';
+    var stitle = scn && typeof shareTitleOf === 'function' ? shareTitleOf(se, scn) : '';
+    var sd = stitle ? { title: stitle, text: (typeof shareDescOf === 'function' ? shareDescOf(se.description, scn, se.kind) : ''), url: joinLink } : { title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink };
+    if (navigator.share) navigator.share(sd).catch(function () {});
     else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制，去粘贴发送吧。</p>'); });
   });
   document.getElementById('invReset').addEventListener('click', async function () {

@@ -6,7 +6,7 @@
 <title>RUKIK Golf 主办方工作台</title>
 <style>
   body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f4f8f2; color:#17301c; }
-  header { background:#0b1f14; color:#fff; padding:18px 22px; }
+  header { background:#0b1f14; color:#fff; padding:calc(18px + env(safe-area-inset-top)) 22px; } /* [顶栏安全区修复 2026-11-14] 页首标题栏补 safe-area-inset-top（全屏 WebView 同型预防，env=0 环境无变化） */
   header .brand { color:#9fd08a; letter-spacing:2px; font-size:12px; }
   header h1 { margin:4px 0 0; font-size:21px; }
   main { max-width:820px; margin:0 auto; padding:18px 18px 50px; }

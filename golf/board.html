@@ -7,7 +7,7 @@
 <style>
   :root { color-scheme: dark; }
   body { margin:0; background:#0b1f14; color:#eef7ee; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-  header { padding:28px 40px 8px; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; }
+  header { padding:calc(28px + env(safe-area-inset-top)) 40px 8px; /* [顶栏安全区修复 2026-11-14] 页首标题栏补 safe-area-inset-top（全屏 WebView 同型预防，env=0 环境无变化） */ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; }
   h1 { font-size:40px; margin:0; letter-spacing:1px; }
   .brand { color:#9fd08a; font-size:16px; letter-spacing:3px; }
   .status { font-size:20px; padding:6px 18px; border-radius:999px; background:#7a5b12; color:#ffe9a8; }
