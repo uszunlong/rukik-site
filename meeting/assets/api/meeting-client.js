@@ -79,6 +79,10 @@ export class MeetingClient {
     }
     // ---- [TRANSLATE-P1 2026-11-14] 翻译层（展示语言≠识别语言：以下均为呈现/翻译数据面，不碰 ASR） ----
     translationsList(meetingId) { return this.api('translations_list', { meeting_id: meetingId }); }
+    // [PROVISIONAL-TRANSLATE 2026-11-15] 临时字幕译文（无落库）：partial 稳定后由页面防抖单飞调用，结果只填临时行、final 后由正式译文替换
+    translatePartial(meetingId, tentativeId, text, srcLang, tgtLang) {
+        return this.api('translate_partial', { meeting_id: meetingId, tentative_id: tentativeId, text, src_lang: srcLang, tgt_lang: tgtLang });
+    }
     setTranslationEnabled(meetingId, enabled) {
         return this.api('set_translation_enabled', { meeting_id: meetingId, enabled });
     }
