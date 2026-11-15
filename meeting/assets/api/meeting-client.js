@@ -76,4 +76,13 @@ export class MeetingClient {
     foresightSetStatus(meetingId, insightId, status) {
         return this.api('foresight_set_status', { meeting_id: meetingId, insight_id: insightId, status });
     }
+    // ---- [TRANSLATE-P1 2026-11-14] 翻译层（展示语言≠识别语言：以下均为呈现/翻译数据面，不碰 ASR） ----
+    translationsList(meetingId) { return this.api('translations_list', { meeting_id: meetingId }); }
+    setTranslationEnabled(meetingId, enabled) {
+        return this.api('set_translation_enabled', { meeting_id: meetingId, enabled });
+    }
+    glossaryList(meetingId) { return this.api('glossary_list', { meeting_id: meetingId }); }
+    glossarySeedPack(meetingId, pack) {
+        return this.api('glossary_seed_pack', { meeting_id: meetingId, pack });
+    }
 }

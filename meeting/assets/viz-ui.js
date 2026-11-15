@@ -13,6 +13,9 @@ export const TYPE_META = {
   milestone: { label: '里程碑', color: '#e0a63f' },
 };
 const EDGE_LABEL = { depends_on: '依赖', blocks: '阻碍', contradicts: '矛盾', supports: '支持', owns: '负责', precedes: '先于' };
+// [TRANSLATE-P1 2026-11-14] 类型/关系标签的英文版（随展示语言切换；展示语言≠识别语言，与 ASR 无关）
+export const TYPE_META_EN = { topic: 'Topic', decision: 'Decision', action: 'Action', risk: 'Risk', question: 'Open', person: 'Person', milestone: 'Milestone' };
+const EDGE_LABEL_EN = { depends_on: 'depends on', blocks: 'blocks', contradicts: 'contradicts', supports: 'supports', owns: 'owns', precedes: 'precedes' };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const emptyGraph = (mid) => ({ meeting_id: mid, nodes: [], edges: [], version: 1, updated_by: 'ai', updated_at: '' });
@@ -38,6 +41,22 @@ export function createVizUI(opts) {
     version: 0,
   };
   const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); renderSpeakerBar(); };
+  // [TRANSLATE-P1 2026-11-14] 展示语言：页面持有唯一状态（opts.getDisplayLang 注入），本模块只读不写 ASR 任何状态。
+  // 切换只换节点展示文字——位置存 store.positions 与文本无关、盒宽取双语包络，节点中心坐标不变（验收坐标差=0）。
+  let displayLangLocal = 'zh';
+  const curLang = () => (opts.getDisplayLang ? opts.getDisplayLang() : displayLangLocal);
+  function nodeText(n) {
+    const v = n.i18n && n.i18n[curLang()];
+    return { label: (v && v.label) || n.label || '', detail: (v && v.detail) || n.detail || '' };
+  }
+  function typeLabel(t) { const m = TYPE_META[t] || TYPE_META.topic; return curLang() === 'en' ? (TYPE_META_EN[t] || m.label) : m.label; }
+  function edgeLabel(t) { return curLang() === 'en' ? (EDGE_LABEL_EN[t] || EDGE_LABEL[t]) : EDGE_LABEL[t]; }
+  const estTextW = (s) => { let w = 0; for (const ch of String(s || '')) w += /[㐀-鿿豈-﫿]/.test(ch) ? 13 : 7; return w; };
+  function nodeWidth(n) {
+    const labels = [n.label, n.i18n && n.i18n.zh && n.i18n.zh.label, n.i18n && n.i18n.en && n.i18n.en.label].filter(Boolean);
+    const w = Math.max(0, ...labels.map(estTextW)) + 28;
+    return Math.min(280, Math.max(120, Math.ceil(w)));
+  }
   // [STAGE 2026-11-14] 程序化视口移动统一走此包装，避免被误判为用户手动平移而暂停跟随
   function progMove(fn) {
     store._progMove = true;
@@ -240,8 +259,8 @@ export function createVizUI(opts) {
     detailEl.style.display = 'block';
     detailEl.innerHTML = `
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <span class="chip" style="color:${meta.color};border:1px solid ${meta.color}">${meta.label}</span>
-        <b>${esc(node.label)}</b>
+        <span class="chip" style="color:${meta.color};border:1px solid ${meta.color}">${typeLabel(node.type)}</span>
+        <b>${esc(nodeText(node).label)}</b>
         ${node.locked ? '<span class="chip">🔒 已锁定（AI 不可改）</span>' : ''}
         ${node.version > 1 ? `<span class="chip">版本 ${node.version}</span>` : ''}
         <span style="flex:1"></span>
@@ -250,7 +269,7 @@ export function createVizUI(opts) {
         <button class="ghost" data-vact="lock">${node.locked ? '解锁' : '锁定'}</button>
         <button class="ghost" data-vact="del" style="color:var(--bad)">删除节点</button>` : '<span class="dim">回放中（只读）</span>'}
       </div>
-      ${node.detail ? `<p style="margin:6px 0 0">${esc(node.detail)}</p>` : ''}
+      ${nodeText(node).detail ? `<p style="margin:6px 0 0">${esc(nodeText(node).detail)}</p>` : ''}
       <div class="meta" style="margin-top:6px;color:var(--dim);font-size:12px">来源发言（点按定位字幕）：${srcs.length ? '' : '无'}
         ${srcs.map((s) => `<a href="javascript:void 0" data-seg="${esc(s.id)}" style="margin-right:8px">${esc(fmtClock(s.start_sec))} · ${esc(String(s.text).slice(0, 42))}…</a>`).join('')}
       </div>`;
@@ -402,6 +421,8 @@ export function createVizUI(opts) {
     store, load, syncNewPatches, setGraph, userPatch, tidyLayout,
     startReplay, seekReplay, playReplay, stopReplay,
     enterProjection, exitProjection, renderDetail, resumeFollow,
+    // [TRANSLATE-P1] 展示语言切换：只重渲染文字（emit+renderDetail），不触碰 positions/图结构/节点 ID
+    setDisplayLang(l) { displayLangLocal = l === 'en' ? 'en' : 'zh'; emit(); renderDetail(); },
     select(id) { store.selectedId = id; emit(); renderDetail(); },
     setAutoFollow(v) { store.autoFollow = v; if (v) { store.followHold = false; syncFollowChip(); } if (opts.onFollowChange) opts.onFollowChange(); },
     _mountReact: null, // 由页面模块在 import React Flow 后调用 attachReact
@@ -415,12 +436,14 @@ export function createVizUI(opts) {
       const meta = TYPE_META[n.type] || TYPE_META.topic;
       return React.createElement('div', {
         className: 'viz-node' + (data.fresh ? ' viz-fresh' : '') + (data.deepened ? ' viz-deepen' : '') + (data.speakerDim ? ' viz-dim' : '') + (selected ? ' viz-selected' : ''),
+        // [TRANSLATE-P1] 盒宽＝双语包络宽度（data.width），两语言同宽→切换时盒与中心不动
+        style: { width: data.width },
         // [WB-REDESIGN 2026-11-14] 边框改由 CSS 中性描边（类型色保留在标签上），选中/新节点以薄荷环与柔光区分
       },
         React.createElement(Handle, { type: 'target', position: Position.Top, style: { opacity: 0 } }),
-        React.createElement('div', { className: 'viz-node-tag', style: { color: meta.color } }, meta.label + (n.locked ? ' 🔒' : '') + (n.version > 1 ? ` · v${n.version}` : '')),
-        React.createElement('div', { className: 'viz-node-label' }, n.label),
-        n.detail ? React.createElement('div', { className: 'viz-node-detail' }, n.detail) : null,
+        React.createElement('div', { className: 'viz-node-tag', style: { color: meta.color } }, typeLabel(n.type) + (n.locked ? ' 🔒' : '') + (n.version > 1 ? ` · v${n.version}` : '')),
+        React.createElement('div', { className: 'viz-node-label' }, data.dispLabel),
+        data.dispDetail ? React.createElement('div', { className: 'viz-node-detail' }, data.dispDetail) : null,
         React.createElement(Handle, { type: 'source', position: Position.Bottom, style: { opacity: 0 } }),
       );
     };
@@ -434,16 +457,16 @@ export function createVizUI(opts) {
       }, []);
       const g = store.mode === 'replay' && store.replay ? store.replay.state.graph : store.graph;
       const posMap = store.mode === 'replay' && store.replay ? store.replay.state.positions : store.positions;
-      const rfNodes = g.nodes.map((n) => ({
+      const rfNodes = g.nodes.map((n) => { const t = nodeText(n); const w = nodeWidth(n); return ({
         id: n.id, type: 'viz',
         position: posMap.get(n.id) || { x: 0, y: 0 },
-        data: { viz: n, fresh: store.fresh.has(n.id), deepened: store.deepened.has(n.id), speakerDim: !!store.speakerFilter && !nodeSpeakers(n).has(store.speakerFilter) },
+        data: { viz: n, dispLabel: t.label, dispDetail: t.detail, width: w, fresh: store.fresh.has(n.id), deepened: store.deepened.has(n.id), speakerDim: !!store.speakerFilter && !nodeSpeakers(n).has(store.speakerFilter) },
         selected: store.selectedId === n.id,
         draggable: store.mode === 'live',
-      }));
+      }); });
       const rfEdges = g.edges.map((e) => ({
         id: e.id, source: e.from, target: e.to,
-        label: EDGE_LABEL[e.type] || undefined,
+        label: edgeLabel(e.type) || undefined,
         animated: store.freshEdges.has(e.id),
         style: { stroke: e.type === 'contradicts' || e.type === 'blocks' ? '#e05d5d' : e.type === 'depends_on' ? '#e0a63f' : '#3ba273', strokeWidth: 1.6 },
         labelStyle: { fill: '#8b979e', fontSize: 11 },

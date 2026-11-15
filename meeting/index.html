@@ -387,6 +387,13 @@
         <span id="mic-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
         <button id="btn-pause" class="ghost">暂停</button>
         <button id="btn-end" class="danger">结束会议</button>
+        <!-- [TRANSLATE-P1 2026-11-14] 展示语言（全伴侣单一设置：字幕/导图/预见/纪要同步切换）；
+             与上方「更多」菜单里的识别语言（ASR 输入语言）是两个独立设置、互不代替 -->
+        <span style="display:flex;align-items:center;gap:4px;flex:none">
+          <span class="dim" style="font-size:12px">展示</span>
+          <button id="dl-zh" class="ghost">中文</button>
+          <button id="dl-en" class="ghost">English</button>
+        </span>
         <div class="ws-menu-wrap">
           <button id="btn-more" class="ghost">⋯ 更多</button>
           <div id="ws-menu" class="ws-menu" style="display:none">
@@ -528,6 +535,56 @@ let ws = null, audio = null, lastAnalyzeAt = 0, finalsSinceAnalyze = 0, timerInt
 let wsReady = false; // [READY-GATE 2026-11-14] 应用层 ready 帧（服务端鉴权+归属校验通过后才发）到达前，onaudioprocess 不发送任何音频
 let endWaiter = null; // [END-RACE 2026-11-14] 结束会议时等待服务端 meeting.state=ended 确认的一次性等待器
 let vizUI = null, lastVizAt = 0, finalsSinceViz = 0, lastForesightAt = 0, finalsSinceForesight = 0;
+
+// [TRANSLATE-P1 2026-11-14] 统一展示语言（统一语言呈现修正令 V1.0）：全伴侣单一设置，
+// localStorage 键 rukik.meeting.lang（zh/en）；默认继承浏览器语言（本页无 Rukik 账号级语言
+// 偏好来源时以此回落）。红线：展示语言≠识别语言——本设置只决定字幕/导图/预见/纪要的呈现
+// 文字，绝不写入 meetings.lang、绝不喂 ASR 通道分流；识别语言只由 m-lang/new-lang 决定。
+// 原始转写独立保存于服务端，译文只在渲染层替换显示，永不覆盖原文数据。
+let displayLang = (() => { try { const v = localStorage.getItem('rukik.meeting.lang'); if (v === 'zh' || v === 'en') return v; } catch { /* ignore */ } return (navigator.language || 'zh').toLowerCase().startsWith('en') ? 'en' : 'zh'; })();
+let translationsBySeg = new Map(); // `${segment_id}|${tgt_lang}` -> 译文行
+let lastTranslateAt = 0, finalsSinceTranslate = 0;
+const fnv1aPage = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return 'fnv1a:' + h.toString(16); };
+const detectLangPage = (text) => { const han = (String(text).match(/[㐀-鿿豈-﫿]/g) || []).length; const lw = (String(text).match(/[A-Za-z]+(?:[-'][A-Za-z0-9]+)*|[0-9]+(?:[.,][0-9]+)*/g) || []).length; if (han >= 4 && lw >= 2) return 'mixed'; if (han > 0 && han >= lw) return 'zh'; if (lw > 0) return 'en'; return han > 0 ? 'zh' : 'unknown'; };
+function indexTranslations(rows) { translationsBySeg = new Map(); for (const t of rows || []) translationsBySeg.set(`${t.segment_id}|${t.tgt_lang}`, t); }
+async function loadTranslations() { if (!cur || !cur.meeting) return; try { const r = await client.translationsList(cur.meeting.id); indexTranslations(r.translations); } catch { /* 译文加载失败：保持原文呈现，不挡页面 */ } }
+// 段呈现：以生效原文（原文/校订/人工版）为底；展示语言不同且译文源哈希与生效文本一致才用译文。
+// entity_mismatch 的译文不展示、只显原文＋弱提示；provisional 弱化标注；缺译/过期回落原文（过渡态）。
+function segDisplay(s, baseText) {
+  const srcLang = s.lang || detectLangPage(baseText);
+  if (displayLang === srcLang || srcLang === 'unknown') return { text: baseText, chip: '' };
+  const t = translationsBySeg.get(`${s.id}|${displayLang}`);
+  if (!t || t.state === 'failed') return { text: baseText, chip: '' };
+  if (t.source_text_hash && t.source_text_hash !== fnv1aPage(baseText)) return { text: baseText, chip: '' };
+  if (t.quality_flag === 'entity_mismatch') return { text: baseText, chip: '<span class="chip">译文待核对</span>' };
+  return { text: t.translated_text, chip: t.state === 'provisional' ? '<span class="chip">译文·临时</span>' : '<span class="chip">译文</span>' };
+}
+function syncDispLangBtns() { const z = $('dl-zh'), e = $('dl-en'); if (z) z.style.fontWeight = displayLang === 'zh' ? '700' : ''; if (e) e.style.fontWeight = displayLang === 'en' ? '700' : ''; }
+async function setDisplayLang(l) {
+  if (l !== 'zh' && l !== 'en') return;
+  displayLang = l;
+  try { localStorage.setItem('rukik.meeting.lang', l); } catch { /* ignore */ }
+  syncDispLangBtns();
+  renderSegments(); renderMinutes(); loadForesight();
+  if (vizUI) vizUI.setDisplayLang(l);
+  // 存量补译：已生成内容随之切换——缺译/过期由 translate kind 异步补齐后自动重刷，切换本身不阻塞
+  if (cur && cur.meeting && cur.meeting.translation_enabled) {
+    try {
+      const r = await client.analyze(cur.meeting.id, true, 'translate');
+      if (r && r.ran) { await loadTranslations(); await loadVizAndForesight(); renderSegments(); renderMinutes(); }
+    } catch { /* 补译失败保持原文呈现 */ }
+  }
+}
+$('dl-zh').onclick = () => setDisplayLang('zh');
+$('dl-en').onclick = () => setDisplayLang('en');
+syncDispLangBtns();
+// 实时翻译节律：与导图同一 5 秒复核拍点，有新 final 且距上轮 >8 秒才触发（失败静默、原文呈现不受影响）
+function maybeFireTranslate() {
+  if (!cur || !cur.meeting || !cur.meeting.translation_enabled) return;
+  if (!(finalsSinceTranslate >= 1 && Date.now() - lastTranslateAt > 8000)) return;
+  lastTranslateAt = Date.now(); finalsSinceTranslate = 0;
+  client.analyze(cur.meeting.id, false, 'translate').then(async (r) => { if (r && r.ran) { await loadTranslations(); renderSegments(); } }).catch(() => {});
+}
 
 function show(view) {
   for (const v of ['login','home','ws']) $('view-'+v).style.display = v === view ? '' : 'none';
@@ -700,7 +757,7 @@ function maybeFireViz() {
     }
   }).catch(() => {});
 }
-setInterval(() => { if (cur && cur.meeting && cur.meeting.status === 'live') maybeFireViz(); }, 5000);
+setInterval(() => { if (cur && cur.meeting && cur.meeting.status === 'live') { maybeFireViz(); maybeFireTranslate(); } }, 5000);
 
 async function openMeeting(id, autostart = false) {
   const data = await client.getMeeting(id);
@@ -714,6 +771,8 @@ async function openMeeting(id, autostart = false) {
     const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
     if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) await loadVizAndForesight(); else noteAnalyzeFail(r); }).catch(() => {});
     if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); else noteAnalyzeFail(r); }).catch(() => {});
+    // [TRANSLATE-P1] 译文补跑：游标落后时补齐（存量切换/重开会议的译文在此收敛）
+    if (cur.meeting.translation_enabled && maxSeq > Number(cur.meeting.last_translated_seq || 0)) client.analyze(cur.meeting.id, false, 'translate').then(async (r) => { if (r && r.ran) { await loadTranslations(); renderSegments(); } }).catch(() => {});
   } catch { /* 补分析失败不挡页面 */ }
   if (cur.meeting.status === 'ended') { loadCorrection(); triggerCorrection(); } // [TEXT-CORRECTION 2026-11-14] 打开已结束会议：先显示已有校订，再幂等触发（未校订或人工锁定有变更才真跑）
   if ((cur.meeting.status === 'live') && autostart) startCapture();
@@ -721,6 +780,7 @@ async function openMeeting(id, autostart = false) {
 }
 
 function renderMeeting() {
+  if (cur.translations) indexTranslations(cur.translations); // [TRANSLATE-P1] get 响应自带译文，重开/刷新即按展示语言渲染
   const m = cur.meeting;
   $('m-title').value = m.title;
   $('m-title-view').textContent = m.title; // [WB-REDESIGN 2026-11-14] 标题默认文字呈现，点击才进编辑态
@@ -801,6 +861,9 @@ function renderSegments() {
       if (s.user_locked && s.user_text) { body = s.user_text; chips = '<span class="chip">人工修订</span>'; }
       else if (ce) { body = ce.text; if (ce.source === 'user_locked') chips = '<span class="chip">人工修订</span>'; else if (ce.text !== s.text) chips = '<span class="chip">校订</span>'; }
     } else if (s.user_locked) chips = '<span class="chip">已锁定（人工修订）</span>';
+    // [TRANSLATE-P1] 展示语言层：仅渲染层替换，cur.segments 原文数据不动、永不被译文覆盖
+    const disp = segDisplay(s, body);
+    body = disp.text; if (disp.chip) chips += disp.chip;
     div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${esc(body)}${chips}`;
     if (corrView === 'original') {
       const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '改';
@@ -839,6 +902,7 @@ async function loadVizAndForesight() {
       onLocateSegment: locateSegment,
       onError: (m) => { $('ws-err').textContent = m; },
       onReplayChange: syncReplayBar,
+      getDisplayLang: () => displayLang, // [TRANSLATE-P1] 导图与页面共用同一展示语言状态（单一设置、同一入口语义）
       onFollowChange: syncFollowBtn, // [STAGE 2026-11-14] 跟随被手动平移暂停/恢复时同步按钮文案
       getStageInfo: () => ({ title: (cur && cur.meeting && cur.meeting.title) || '未命名会议', status: cur && cur.meeting ? cur.meeting.status : '', recording: !!(cur && cur.meeting && cur.meeting.status === 'live' && wsReady) }), // [STAGE 2026-11-14] 演讲模式极简提示行数据源
     });
@@ -927,11 +991,15 @@ async function loadForesight() {
       const scenPart = (ep2) => { if (!ep2) return ''; const pp = []; if ((ep2.known_facts || []).length) pp.push('已知：' + ep2.known_facts.map((k) => esc(k.text)).join('；')); if ((ep2.assumptions || []).length) pp.push('假设：' + ep2.assumptions.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.possible_outcomes || []).length) pp.push('结果：' + ep2.possible_outcomes.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.uncertainties || []).length) pp.push('不确定：' + ep2.uncertainties.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); return pp.length ? `<div class="dim" style="margin-top:4px;font-size:12px">${pp.join('<br>')}</div>` : ''; };
       const scen = (f.scenarios || []).map((sc) => `<div class="fs-scen"><b>情景推演 · ${esc(sc.label || '')}</b><br>${esc(sc.summary || '')}${scenPart(sc.epistemic)}</div>`).join('');
       const dg = (f.downgrades || []).length ? `<div class="meta" style="color:var(--warn)">服务端校验：${f.downgrades.length} 条原标「已知事实」因无来源或确定性措辞已自动降级为推理假设。</div>` : '';
+      // [TRANSLATE-P1] 预见标题/正文随展示语言切换（i18n 版本由翻译层补齐；缺译回落原文）
+      const fi = f.i18n && f.i18n[displayLang];
+      const fTitle = (fi && fi.title) || f.title;
+      const fBody = (fi && fi.body) || f.body;
       // [WB-REDESIGN 2026-11-14] 卡面只留标题与正文；依据/情景/校验说明折叠进「查看依据」，无依据不给入口、不伪造引用
       const hasBasis = parts.length > 0 || !!scen || !!dg;
       const div = document.createElement('div'); div.className = 'item';
       div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${f.status !== 'open' ? `<span class="chip">${f.status === 'accepted' ? '已关注' : '已忽略'}</span>` : ''}
-        <br><b>${esc(f.title)}</b><p style="margin:4px 0 0">${esc(f.body)}</p>
+        <br><b>${esc(fTitle)}</b><p style="margin:4px 0 0">${esc(fBody)}</p>
         ${hasBasis ? `<div class="fs-details" style="display:none">${parts.join('')}${scen}${dg}</div>` : ''}
         <div style="margin-top:6px;display:flex;gap:6px">
           ${hasBasis ? '<button class="ghost" data-fact="basis">查看依据</button>' : ''}
@@ -960,7 +1028,9 @@ const STATUS_LABEL = { confirmed: '已确认', discussing: '讨论中', proposed
 
 function renderMinutes() {
   const { doc, items } = cur.minutes;
-  const sum = doc.sections && doc.sections.summary;
+  // [TRANSLATE-P1] 摘要随展示语言切换（i18n 版本存 sections.i18n，缺译回落原文摘要）
+  const sumI = doc.sections && doc.sections.i18n && doc.sections.i18n[displayLang];
+  const sum = (sumI && sumI.summary) || (doc.sections && doc.sections.summary);
   $('summary').style.display = sum ? '' : 'none';
   if (sum) $('summary').innerHTML = '<b>摘要</b><br>' + esc(sum);
   const box = $('items'); box.innerHTML = '';
@@ -970,7 +1040,7 @@ function renderMinutes() {
     const div = document.createElement('div'); div.className = 'item';
     const sel = ['confirmed','discussing','proposed','disputed','withdrawn'].map(s => `<option value="${s}" ${s===it.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
     div.innerHTML = `<span class="chip">${KIND_LABEL[it.kind] || it.kind}</span><span class="chip ${it.status}">${STATUS_LABEL[it.status] || it.status}</span>${it.user_locked ? '<span class="chip">已锁定</span>' : ''}<br>
-      <span class="txt">${esc(it.text)}</span>
+      <span class="txt">${esc((it.i18n && it.i18n[displayLang] && it.i18n[displayLang].text) || it.text)}</span>
       <div class="meta">${it.owner_label ? '负责人：' + esc(it.owner_label) + ' · ' : ''}${it.due_at ? '截止：' + esc(String(it.due_at).slice(0,10)) + ' · ' : ''}${it.origin === 'user' ? '人工条目' : 'AI 整理'}${it.supersedes_id ? ' · 替代了先前一条' : ''}</div>
       <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
         <select data-act="status">${sel}</select>
@@ -1305,7 +1375,7 @@ function connectWS() {
         lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
         client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
-      finalsSinceViz += 1; finalsSinceForesight += 1;
+      finalsSinceViz += 1; finalsSinceForesight += 1; finalsSinceTranslate += 1;
       maybeFireViz();
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
