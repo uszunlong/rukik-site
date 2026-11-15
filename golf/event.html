@@ -363,6 +363,20 @@
   .manageCard .mtoggle{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:0;font:inherit;font-size:19px;font-weight:800;color:#123524;cursor:pointer;text-align:left} /* [LAYOUT-V2 20261114] 管理赛事合并：未展开只呈现一个入口标题条 */
   .manageCard a.mbtn{display:flex;align-items:center;justify-content:center;text-decoration:none}
   .manageCard .mbtn.go{background:#15803d;color:#fff;border-color:#15803d} /* [LAYOUT-V2 20261114] 管理本场＝统一主按钮样式（实心绿） */
+  /* [DUAL-BTN 20261114] 底部双按钮并排（用户 21:18 定版）：「管理赛事」（左）与「分享邀请」（右）由上下
+     两条改为同一行——两槽位同属 #dualActionSec flex 行（不换行），等宽等高、深蓝底＋金字＋金边
+     （令牌同 .dualcard.caddie）；任一槽位无内容（:empty）时不占位、另一侧自动占满整行；展开区
+     按钮去掉 140px 最小宽并允许换行，窄屏不溢出。本段只改布局/样式：renderManage/renderShareInvite
+     的权限判断、事件绑定、展开与分享行为零改动，可见性口径不变（无权限视角仍两槽皆空、整行不呈现）。 */
+  #dualActionSec{display:flex;gap:10px;align-items:stretch}
+  #dualActionSec>#manageSec,#dualActionSec>#casualSec{flex:1 1 0;min-width:0;display:flex}
+  #dualActionSec>#manageSec:empty,#dualActionSec>#casualSec:empty{display:none}
+  #dualActionSec .manageCard{flex:1;min-width:0;margin-top:14px;background:#10263C;border:1.5px solid rgba(201,162,39,.55);border-radius:14px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  #dualActionSec .manageCard .mtoggle{justify-content:center;gap:6px;color:#E3C878;font-size:17px;font-weight:700;text-align:center;white-space:nowrap;min-height:24px}
+  #dualActionSec .manageCard .mbtn{flex:1 1 120px;min-width:0}
+  #dualActionSec .manageCard .mmsg{color:#E3C878}
+  #dualActionSec #invMsg:empty{display:none}
+  #dualActionSec #invMsg .okmsg{color:#86efac;font-size:13.5px;line-height:1.6;margin:8px 0 0}
   #scoreSec .card{ background: linear-gradient(165deg, rgba(17,62,41,.66), rgba(7,30,20,.80)); border: 1px solid rgba(120,255,190,.13); -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); border-radius: 18px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
   #scoreSec .card h2{ font-size: 17px; margin: 0 0 10px; color: #f4faf5; }
   #scoreSec .card h3{ font-size: 15px; margin: 14px 0 8px; color: #f4faf5; }
@@ -438,8 +452,8 @@
   </div>
   <div id="partnerSec"></div>
   <div id="boardSec"></div>
-  <div id="casualSec"></div>
-  <div id="manageSec"></div>
+  <!-- [DUAL-BTN 20261114] 底部双按钮并排行：左 #manageSec（管理赛事）／右 #casualSec（分享邀请），布局见样式区同标记 -->
+  <div id="dualActionSec"><div id="manageSec"></div><div id="casualSec"></div></div>
 </div>
 <script>
 var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
