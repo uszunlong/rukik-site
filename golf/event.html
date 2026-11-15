@@ -25,7 +25,7 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:0;background:#081A2C;color:#F4F1EA}
-  .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px 40px} /* [INLINE-SCORE 20261114] 原 96px 底部留白系为已删除的底部固定条占位，一并收回 */
   .topbar{display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 2px 6px;font-weight:700;letter-spacing:.06em;color:#E3C878;font-size:13px} /* [顶栏安全区修复 2026-11-14] 品牌字与状态胶囊补 safe-area-inset-top（口径同本页 .glfs-bar/play 顶栏），全屏 WebView 下整体下移至状态栏下方，无 cover 环境 env=0 无副作用 */
   .pill{background:#16a34a;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;letter-spacing:0}
   .pill.pre{background:#64748b}.pill.post{background:#7c3aed}
@@ -103,10 +103,9 @@
   .feed img{width:100%;height:150px;object-fit:cover;display:block}
   .feed figcaption{padding:8px 10px;font-size:13px}
   .feed .m{color:#7a8a7d;font-size:12px}
-  .cta{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid #e3eae4;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
-  .cta a{display:block;max-width:760px;margin:0 auto;background:#14532d;color:#fff;text-align:center;border-radius:14px;padding:14px;font-size:16px;font-weight:700;text-decoration:none}
-  .cta a.live{background:#16a34a}.cta a.post{background:#7c3aed}
-  .cta a.orglink{background:#fff;color:#14532d;border:1.5px solid #14532d;margin-top:8px;padding:11px;font-size:15px}
+  /* [INLINE-SCORE 20261114] 底部固定按钮条（.cta：计分卡/主办方管理）样式整段删除：
+     网页版该条早已无生成代码（死样式），用户 19:17 定版页面底部不设固定条，
+     记分走内嵌记分模块、管理走「管理赛事」区块，不设替代入口。 */
   .funcrow{display:flex;gap:10px;flex-wrap:wrap}
   .funcrow a{flex:1;min-width:140px;text-align:center;background:#eef4ef;color:#14532d;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none}
   iframe.osm{width:100%;height:230px;border:0;border-radius:14px}
@@ -181,6 +180,7 @@
   .pcard img{max-width:100%;max-height:100%;object-fit:contain}
   .pclogo{height:84px;width:100%;display:flex;align-items:center;justify-content:center}
   .pcmono{width:56px;height:56px;border-radius:14px;background:#14532d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700}
+  .pcrukik{width:56px;height:56px;border-radius:14px;object-fit:cover}
   .pcname{font-size:13px;font-weight:600;text-align:center;line-height:1.3;word-break:break-word;overflow-wrap:anywhere}
   .pctag{font-size:10px;color:#16a34a;font-weight:700;line-height:1.2}
   .bhead{display:flex;align-items:center;gap:8px}
@@ -833,7 +833,12 @@ function renderHero() {
   renderHeroMedia();
   renderDual();
   renderManage();
-  renderShareInvite(); /* [UNIFY 20261114] 分享邀请固定模块位（排行榜与管理赛事之间）随动态层渲染 */
+  /* [SHARE-INVITE-FIX 20261114] renderShareInvite 定义在 ONEPAGE 的
+     <script type="module"> 作用域内、经典脚本不可见——原无守卫调用每次必抛
+     ReferenceError，连带其后 loadDynamic/applySnapshot 中的 renderPartners()
+     永不执行（合作伙伴区恒空、分享邀请赛前态恒缺，catch 静默重试后放弃）。
+     此处加 typeof 守卫止抛错；分享邀请改由 module 侧 paint() 全分支补调呈现。 */
+  if (typeof renderShareInvite === 'function') renderShareInvite(); /* [UNIFY 20261114] 分享邀请固定模块位（排行榜与管理赛事之间）随动态层渲染 */
   bindZ60Join();
 }
 /* [线Z60 2026-11-12] 「报名参加」一键加入：令牌现读 localStorage（与
@@ -869,6 +874,8 @@ function bindZ60Join() {
       if (note) note.textContent = j.already_member ? '您已在这场球局中。' : '报名成功！已为您加入本场球局，也已同步到您的「我的计划」。';
       loadDynamic();
       if (window.__evScoreReload) window.__evScoreReload(); /* [ONEPAGE 20261114] 记分模块同步落成员态 */
+      /* [REG-LAND 20261114] 报名成功直达逐洞记分模块（与签到/报名表单同口径） */
+      [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); });
     }).catch(function (err) {
       btn.disabled = false;
       var m = String(err && err.message || err);
@@ -1019,9 +1026,12 @@ var PMQ = { timer: null, pausedUntil: 0 };
 var ORGS_CUR = [];
 function orgCardHtml(o, i) {
   /* Z35：真实 Logo 原比例完整呈现；无 Logo 用品牌首字规范占位（不伪造 Logo）。名称恒显完整、不截断 */
+  /* [BRAND-FIX 20261114] 无 Logo 品牌统一用 Rukik 官方图占位（用户 19:52 定版）：
+     呈现层兜底——logo_url 保持 null 不回填，真 Logo 上传后自动走上方真实图分支；
+     名称＋角色照常显示。占位资产＝站内既有官方标志 /assets/apple-touch-icon.png。 */
   var logoHtml = o.logo_url
     ? '<img src="' + esc(o.logo_url) + '" alt="' + esc(o.name) + '">'
-    : '<div class="pcmono">' + esc((o.name || '').trim().slice(0, 1)) + '</div>';
+    : '<img class="pcrukik" src="https://rukik.com/assets/apple-touch-icon.png" alt="Rukik">';
   var inner = '<div class="pclogo">' + logoHtml + '</div>' +
     '<div class="pctag">' + esc(o.type || '合作伙伴') + '</div>' +
     '<div class="pcname">' + esc(o.name) + '</div>';
@@ -4196,7 +4206,7 @@ async function loadAll(useCachePaint) {
     var sessU = (S.session && S.session.user) || {};
     var jn = await casualJoin({ event_id: eventId, invite_code: linkCode, display_name: (sessU.user_metadata || {}).display_name || sessU.email || undefined });
     if (seq !== S.loadSeq) return;
-    if (jn && jn.ok) { loadAll(false); return; }
+    if (jn && jn.ok) { loadAll(false); /* [REG-LAND 20261114] 加入成功直达逐洞记分模块（同 paintRegister 口径） */ [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); }); return; }
     S.autoJoinErr = joinErrText(jn);
   }
   var rs = await Promise.all([
@@ -4247,6 +4257,12 @@ function organizerHint() {
 
 function paint() {
   var __ss = document.getElementById('statusSec'); if (__ss) __ss.innerHTML = ''; /* [UNIFY 20261114] 状态卡槽位每轮先清，记生态由 paintStatusSec 重建 */
+  /* [SHARE-INVITE-FIX 20261114] 分享邀请固定模块位全分支补调：经典脚本
+     renderHero 的调用因作用域不可见已失效（见该处注），原仅记生态 paint 尾部
+     调用 renderShareInvite——赛前/待分组/报名表单等状态下主办方看不到分享
+     邀请。此处在 paint 分发后统一补调（函数自带 staff＋published/in_progress
+     门控、幂等重建，非呈现态自动移除），与记生态既有尾部调用并存不冲突。 */
+  setTimeout(function () { try { renderShareInvite(); } catch (e) {} }, 0);
   if (!S.ev || !S.ev.event) { app.innerHTML = '<div class="skel">正在加载赛事信息…</div>'; return; }
   /* [线Z55] 实时状态未确认（S.fresh=false）前只出骨架：禁止用缓存/默认值
      画报名、等待、记分等状态模块（首屏错误中间态根因修复） */
@@ -4283,15 +4299,19 @@ function paint() {
   }
   var card = myCard();
   if (e.status === 'completed') return paintRecap(card);
-  if (e.status === 'in_progress') {
-    if (card) {
-      /* [线Z55] 记分卡实时加载失败且无可用数据：显式失败，禁止静默画空网格 */
-      if (S.cardLoadFail) { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); return; }
-      return paintScoring(card);
-    }
-    return paintNoCard();
+  /* [INLINE-SCORE 20261114] 用户 19:17 定版：已报名且记分卡已生成时，不再先落
+     状态卡——记分组件本体直接在模块位内嵌呈现。未分组/同组仅本人有卡＝
+     paintScoring 单人形态；分组发布后 loadGroup 命中同组 ≥2 张卡，paintScoring
+     内部分流 paintGroupScoring 多人共享形态。切换由服务端分组状态驱动：
+     loadAll 全量重拉（刷新/管理动作后 __evScoreReload）与 visibilitychange
+     回页重拉 loadGroup 都会重新判定，不停留在旧形态。 */
+  if (card && (e.status === 'in_progress' || e.status === 'published')) {
+    /* [线Z55] 记分卡实时加载失败且无可用数据：显式失败，禁止静默画空网格 */
+    if (S.cardLoadFail) { app.innerHTML = evMetaHtml() + errCardHtml('记分卡加载失败（网络异常，已自动重试多次）。您的成绩数据不会丢失，请重新加载。'); bindRetry(); return; }
+    return paintScoring(card);
   }
-  /* published / draft：未开赛 */
+  if (e.status === 'in_progress') return paintNoCard();
+  /* published / draft：未开赛且记分卡尚未生成（主办方未开启记分）——模块内门控态，既有形态不变 */
   if (S.pc && S.pc.group_no) return paintPreStart();
   return paintWaitingGroup();
 }
@@ -4358,7 +4378,7 @@ function paintRegister() {
     var btn = this; btn.disabled = true; errEl.textContent = '';
     var r = await golfApi('register', body, true);
     btn.disabled = false;
-    if (r.ok) { loadAll(false); }
+    if (r.ok) { loadAll(false); /* [REG-LAND 20261114] 报名成功直达逐洞记分（用户 19:51 重申）：重拉后落到内嵌记分模块锚点，与签到直达同口径（双时点滚动保重渲染完成） */ [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); }); }
     else {
       var m = r.error || '';
       errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : ('报名未成功：' + (m || '请稍后重试'));
@@ -4390,7 +4410,7 @@ function paintCasualJoin() {
     var btn = this; btn.disabled = true; errEl.textContent = '';
     var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name });
     btn.disabled = false;
-    if (jn && jn.ok) { loadAll(false); return; }
+    if (jn && jn.ok) { loadAll(false); /* [REG-LAND 20261114] 加入成功直达逐洞记分模块（同 paintRegister 口径） */ [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); }); return; }
     errEl.textContent = joinErrText(jn);
   });
 }
@@ -5146,7 +5166,7 @@ function toast(msg) {
    （event_update completed，[END-EVENT 20261114]）。原 maybeSessionBar 函数、两处 paint
    调用与 clearCasualBars 清场已一并移除；casualSec 现只承载「分享邀请」。 */
 
-function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模块位（排行榜与管理赛事之间，casualSec 唯一模块）：由原「邀请好友」卡合并改名（用户 2026-11-14 12:49 定名），快速球局与正式赛事同位同式；呈现口径＝邀请权限（organizer/admin 必见，与邀请卡显隐口径一致）＋赛事 published/in_progress（赛前即可邀请，不限记生态）；内容复用既有邀请机制——活动链接＋邀请码，分享 payload 与原邀请卡「分享」按钮同一生成路径（shareCourseName/shareTitleOf/shareDescOf 点击时现算）；快速球局另含邀请码重置/关闭加入（球局码机制专属操作，行为口径不变）。本函数按 EV 全权管理 #inviteBar 生命周期（paint 不再清场本卡），由 renderHero（动态层）与记分 paint 尾部共同调用、幂等重建 */
+function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模块位（排行榜与管理赛事之间，casualSec 唯一模块）：由原「邀请好友」卡合并改名（用户 2026-11-14 12:49 定名），快速球局与正式赛事同位同式；呈现口径＝邀请权限（organizer/admin 必见，与邀请卡显隐口径一致）＋赛事 published/in_progress（赛前即可邀请，不限记生态）；内容复用既有邀请机制——活动链接＋邀请码，分享 payload 与原邀请卡「分享」按钮同一生成路径（shareCourseName/shareTitleOf/shareDescOf 点击时现算）；[SHARE-DIRECT 20261114] 19:17 起标题行直达分享、展开层已删（详见函数内注）。本函数按 EV 全权管理 #inviteBar 生命周期（paint 不再清场本卡），由 renderHero（动态层）与记分 paint 尾部共同调用、幂等重建 */
   var sec = document.getElementById('casualSec');
   if (!sec) return;
   var old = document.getElementById('inviteBar');
@@ -5160,66 +5180,28 @@ function renderShareInvite() { /* [UNIFY 20261114] 「分享邀请」固定模�
   var bar = document.createElement('div');
   bar.className = 'card manageCard'; /* [INVITE-COLLAPSE 20261114] 与「管理赛事」同款横条：复用 .manageCard .mtoggle 样式 */
   bar.id = 'inviteBar';
-  /* [INVITE-COLLAPSE 20261114] 用户 15:53 定版：一行折叠式——默认收起只显标题条
-     （左「分享邀请」＋右向下箭头），不再默认显示说明文字/球局码/长链接/按钮；
-     点击展开现有操作（复制活动链接／分享／重置邀请码／关闭加入或开启加入，
-     两列两行），再点收起。操作与权限分流全部复用原实现（重置走原 confirm、
-     关闭/开启走 casual_joins_set），邀请/分享/加入核心逻辑零改动；原「分享邀请
-     正文对比度修复」项随改版自然消解，不再单列。 */
-  var invHead = '<button type="button" class="mtoggle" id="invToggleBar" aria-expanded="false"><span>分享邀请</span><span class="mchev">▾</span></button>';
-  if (e.kind === 'casual') {
-    var closed = !!((e.competition_config || {}).joins_closed);
-    bar.innerHTML = invHead +
-      '<div id="invBody" style="display:none">' +
-      (closed ? '<p class="muted"><b style="color:#b91c1c">加入已关闭</b>：新成员暂时不能凭码加入（已加入的球友不受影响）。</p>' : '') +
-      '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制活动链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
-      '<div class="btnrow"><button class="btn plain" id="invReset" type="button">重置邀请码</button><button class="btn plain" id="invToggle" type="button">' + (closed ? '开启加入' : '关闭加入') + '</button></div>' +
-      '<div id="invMsg"></div></div>';
-  } else {
-    bar.innerHTML = invHead +
-      '<div id="invBody" style="display:none">' +
-      '<div class="btnrow"><button class="btn" id="invCopy" type="button">复制活动链接</button><button class="btn plain" id="invShare" type="button">分享</button></div>' +
-      '<div id="invMsg"></div></div>';
-  }
+  /* [SHARE-DIRECT 20261114] 用户 19:17 定版（覆盖 15:53 折叠式）：「分享邀请」
+     不再展开——标题行即分享触发点，点击直接执行原展开层内层「分享」按钮的
+     行为（payload 点击时现算、navigator.share 优先、无 share 时复制邀请链接
+     并在 invMsg 提示）；展开层 #invBody 与内层「分享」按钮删除，箭头随之去除。
+     展开层原其余操作（复制活动链接／casual 的重置邀请码／关闭·开启加入）随
+     展开层一并失去本页入口，去向见本线终报盘点，不在此自创替代入口。 */
+  bar.innerHTML = '<button type="button" class="mtoggle" id="invShareBar"><span>分享邀请</span></button>' +
+    '<div id="invMsg"></div>';
   sec.appendChild(bar);
-  var itg = document.getElementById('invToggleBar');
-  var ibd = document.getElementById('invBody');
-  if (itg && ibd) itg.addEventListener('click', function () {
-    var open = ibd.style.display !== 'none';
-    ibd.style.display = open ? 'none' : '';
-    itg.setAttribute('aria-expanded', open ? 'false' : 'true');
-    var ch = itg.querySelector('.mchev'); if (ch) ch.textContent = open ? '▾' : '▴';
-  });
   var msg = document.getElementById('invMsg');
   function say(html) { if (msg) msg.innerHTML = html; }
-  document.getElementById('invCopy').addEventListener('click', function () {
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制。</p>'); }, function () { say('<p class="err">复制没成功，请稍后再试。</p>'); });
-    else say('<p class="err">当前浏览器不支持自动复制。</p>');
-  });
-  document.getElementById('invShare').addEventListener('click', function () {
-    /* [SHARE-FIX 2026-11-14] 与页面 applyShare 同一分享口径：标题跟随球场名（有球场＝shareTitleOf 动态标题；无球场才回落品牌定版），点击时用 shareCourseName/shareTitleOf/shareDescOf 现算 */
+  document.getElementById('invShareBar').addEventListener('click', function () {
+    /* 原内层「分享」按钮行为原样迁移（[SHARE-FIX 2026-11-14] 口径不变）：
+       与页面 applyShare 同一分享口径——标题跟随球场名（有球场＝shareTitleOf
+       动态标题；无球场才回落品牌定版），点击时用 shareCourseName/
+       shareTitleOf/shareDescOf 现算，url 为带邀请码凭据的 joinLink。 */
     var se = e;
     var scn = (typeof shareCourseName === 'function') ? shareCourseName(se) : '';
     var stitle = scn && typeof shareTitleOf === 'function' ? shareTitleOf(se, scn) : '';
     var sd = stitle ? { title: stitle, text: (typeof shareDescOf === 'function' ? shareDescOf(se.description, scn, se.kind) : ''), url: joinLink } : { title: 'RUKIK Golf · AI高尔夫大师', text: '一键入局，智享挥杆。智能组局、实时记分、实时球场地图，AI球童全程相伴，让每一杆都更精彩。无需下载 App，点击即可加入。', url: joinLink };
     if (navigator.share) navigator.share(sd).catch(function () {});
     else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinLink).then(function () { say('<p class="okmsg">邀请链接已复制，去粘贴发送吧。</p>'); });
-  });
-  var rst = document.getElementById('invReset');
-  if (rst) rst.addEventListener('click', async function () {
-    if (!window.confirm('重置邀请码后，旧邀请链接和旧球局码将立即失效。确定重置吗？')) return;
-    this.disabled = true;
-    var r = await golfApi('casual_invite_reset', { event_id: eventId }, true).catch(function () { return null; });
-    if (r && r.ok) { say('<p class="okmsg">已生成新邀请码，正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
-    else { this.disabled = false; say('<p class="err">重置没有成功，请稍后再试。</p>'); }
-  });
-  var tgl = document.getElementById('invToggle');
-  if (tgl) tgl.addEventListener('click', async function () {
-    this.disabled = true;
-    var closedNow = !!((e.competition_config || {}).joins_closed);
-    var r = await golfApi('casual_joins_set', { event_id: eventId, closed: !closedNow }, true).catch(function () { return null; });
-    if (r && r.ok) { say('<p class="okmsg">' + (!closedNow ? '已关闭加入。' : '已开启加入。') + '正在刷新…</p>'); setTimeout(function () { loadAll(false); }, 600); }
-    else { this.disabled = false; say('<p class="err">设置没有成功，请稍后再试。</p>'); }
   });
 }
 
