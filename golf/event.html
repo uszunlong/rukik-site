@@ -567,7 +567,7 @@ function callOnce(action, extra, timeoutMs) {
      由各 action 权限口径决定，本页不越权。 */
   if (inviteCodeParam && bodyObj.invite_code == null) bodyObj.invite_code = inviteCodeParam;
   return fetch(API, { method: 'POST', signal: ctrl.signal, headers: headers, body: JSON.stringify(bodyObj) })
-    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) { var er = new Error(j.error || ('HTTP ' + r.status)); er.status = r.status; throw er; } return j; }); })
+    .then(function (r) { clearTimeout(to); return r.json().then(function (j) { window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: r.ok }); if (!r.ok) { var er = new Error(j.error || ('HTTP ' + r.status)); er.status = r.status; er.serverMessage = j.message || ''; throw er; } /* [ALBUM-LIMIT-COPY 2026-11-15] 保留服务端可读文案供呈现层优先使用 */ return j; }); })
     .catch(function (e) { clearTimeout(to); window.__reqLog.push({ action: action, ms: Date.now() - t0, ok: false }); throw e; });
 }
 function dyn(action, extra, timeoutMs) {
@@ -3537,17 +3537,17 @@ document.addEventListener('click', function (e) {
       return;
     }
     btn.disabled = true; btn.textContent = '删除中…';
-    var done = 0, failed = 0;
+    var done = 0, failed = 0, failMsg = '';
     (function next() {
       if (!ids.length) {
-        msg.textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败请重试。') : ('已删除 ' + done + ' 张。');
+        msg.textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败' + (failMsg ? '：' + failMsg : '请重试。')) : ('已删除 ' + done + ' 张。');
         if (typeof window.loadWall === 'function') window.loadWall();
         loadMine();
         return;
       }
       var pid = ids.shift();
       lp({ action: 'photo_delete', photo_id: pid }).then(function (r2) {
-        if (r2.status === 200 && r2.data && r2.data.ok) done++; else failed++;
+        if (r2.status === 200 && r2.data && r2.data.ok) done++; else { failed++; if (r2.data && r2.data.message) failMsg = r2.data.message; }
         next();
       }).catch(function () { failed++; next(); });
     })();
@@ -3584,7 +3584,7 @@ document.addEventListener('click', function (e) {
       syncEv(d);
       afterChange(okMsg);
       return d;
-    }).catch(function (e) { renderList(); setMsg('操作失败：' + ((e && e.message) || '请稍后重试')); });
+    }).catch(function (e) { renderList(); setMsg('操作失败：' + ((e && (e.serverMessage || e.message)) || '请稍后重试')); });
   }
   function renderList() {
     var urls = rawList();
@@ -3949,7 +3949,7 @@ document.addEventListener('click', function (e) {
   function downloadPhoto(photo) {
     mylp({ action: 'photo_download', photo_id: photo.id }).then(function (d) {
       if (!d || !d.ok || !d.url) {
-        toast(d && d.error === 'download_restricted' ? '该照片已设置不可下载' : (d && d.error === 'forbidden' ? '无权下载这张照片' : '下载失败，请稍后重试'));
+        toast(d && d.error === 'download_restricted' ? '该照片已设置不可下载' : (d && d.error === 'forbidden' ? '无权下载这张照片' : (d && d.message ? d.message : '下载失败，请稍后重试')));
         return;
       }
       fetch(d.url).then(function (r) { return r.blob(); }).then(function (b) {
