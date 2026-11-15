@@ -313,6 +313,8 @@
   body.in-ws #col-ai{display:flex;flex-direction:column;overflow:hidden;padding:10px 14px}
   #fs-scroll{flex:1;min-height:0;overflow-y:auto}
   #foresight-list .item{background:#FBFDFC;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px}
+  /* [FORESIGHT-SUPERSEDE 2026-11-15] 被推翻的预见整卡弱化（仍可展开依据/恢复） */
+  #foresight-list .item.fs-superseded{opacity:.58;border-left-color:var(--line)}
   /* [WB-VISUAL-V1] 预见/状态色彩的浅色适配（深底荧光色→白底深色，语义不变） */
   body.in-ws .fs-part b.k{color:#0B8A5F}
   body.in-ws .fs-part b.a{color:#9A7B1E}
@@ -1160,24 +1162,35 @@ async function loadForesight() {
       const scenPart = (ep2) => { if (!ep2) return ''; const pp = []; if ((ep2.known_facts || []).length) pp.push('已知：' + ep2.known_facts.map((k) => esc(k.text)).join('；')); if ((ep2.assumptions || []).length) pp.push('假设：' + ep2.assumptions.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.possible_outcomes || []).length) pp.push('结果：' + ep2.possible_outcomes.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.uncertainties || []).length) pp.push('不确定：' + ep2.uncertainties.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); return pp.length ? `<div class="dim" style="margin-top:4px;font-size:12px">${pp.join('<br>')}</div>` : ''; };
       const scen = (f.scenarios || []).map((sc) => `<div class="fs-scen"><b>情景推演 · ${esc(sc.label || '')}</b><br>${esc(sc.summary || '')}${scenPart(sc.epistemic)}</div>`).join('');
       const dg = (f.downgrades || []).length ? `<div class="meta" style="color:var(--warn)">服务端校验：${f.downgrades.length} 条原标「已知事实」因无来源或确定性措辞已自动降级为推理假设。</div>` : '';
+      // [FORESIGHT-SUPERSEDE 2026-11-15] 被后续进展推翻的预见：专属 chip（不得误标「已忽略」）、整卡弱化，
+      // 推翻说明/时间/依据段/替代预见随「查看依据」展开；服务端 foresight_list 已带出 superseded_* 列、零接口改动
+      const isSup = f.status === 'superseded';
+      const supEv = isSup ? (f.superseded_evidence || {}) : null;
+      const supBy = isSup && f.superseded_by ? insights.find((x) => x.id === f.superseded_by) : null;
+      const supPart = isSup ? `<div class="fs-part"><b class="u">推翻说明</b>：${esc(supEv.reason || '后续进展已使该预见不再成立')}${f.superseded_at ? `（${esc(String(f.superseded_at).slice(0, 10))}）` : ''}${(supEv.segment_ids || []).length ? '<br>依据段：' + (supEv.segment_ids || []).map((id) => segLink(id)).filter(Boolean).join(' ') : ''}${supBy ? `<br>替代预见：${esc(supBy.title || '')}` : ''}</div>` : '';
+      const statusChip = f.status === 'accepted' ? '<span class="chip">已关注</span>'
+        : f.status === 'dismissed' ? '<span class="chip">已忽略</span>'
+        : isSup ? '<span class="chip" style="color:var(--dim)">已被后续进展推翻</span>' : '';
       // [TRANSLATE-P1] 预见标题/正文随展示语言切换（i18n 版本由翻译层补齐；缺译回落原文）
       const fi = f.i18n && f.i18n[displayLang];
       const fTitle = (fi && fi.title) || f.title;
       const fBody = (fi && fi.body) || f.body;
       // [WB-REDESIGN 2026-11-14] 卡面只留标题与正文；依据/情景/校验说明折叠进「查看依据」，无依据不给入口、不伪造引用
-      const hasBasis = parts.length > 0 || !!scen || !!dg;
-      const div = document.createElement('div'); div.className = 'item';
-      div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${f.status !== 'open' ? `<span class="chip">${f.status === 'accepted' ? '已关注' : '已忽略'}</span>` : ''}
+      const hasBasis = parts.length > 0 || !!scen || !!dg || isSup;
+      const div = document.createElement('div'); div.className = 'item' + (isSup ? ' fs-superseded' : '');
+      div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${statusChip}
         <br><b>${esc(fTitle)}</b><p style="margin:4px 0 0">${esc(fBody)}</p>
-        ${hasBasis ? `<div class="fs-details" style="display:none">${parts.join('')}${scen}${dg}</div>` : ''}
+        ${hasBasis ? `<div class="fs-details" style="display:none">${parts.join('')}${scen}${dg}${supPart}</div>` : ''}
         <div style="margin-top:6px;display:flex;gap:6px">
           ${hasBasis ? '<button class="ghost" data-fact="basis">查看依据</button>' : ''}
           ${f.status === 'open' ? '<button class="ghost" data-fact="ack">关注</button><button class="ghost" data-fact="dis">忽略</button>' : ''}
+          ${isSup ? '<button class="ghost" data-fact="restore">恢复</button>' : ''}
         </div>`;
       div.querySelectorAll('[data-fseg]').forEach((a) => { a.onclick = () => locateSegment(a.dataset.fseg); });
       const basisBtn = div.querySelector('[data-fact="basis"]'); if (basisBtn) basisBtn.onclick = () => { const d = div.querySelector('.fs-details'); const show = d.style.display === 'none'; d.style.display = show ? '' : 'none'; basisBtn.textContent = show ? '收起依据' : '查看依据'; };
       const ack = div.querySelector('[data-fact="ack"]'); if (ack) ack.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'accepted'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
       const dis = div.querySelector('[data-fact="dis"]'); if (dis) dis.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'dismissed'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
+      const rst = div.querySelector('[data-fact="restore"]'); if (rst) rst.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'open'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
       box.appendChild(div);
     }
   } catch (e) { box.innerHTML = '<span class="err">预见加载失败：' + esc(e.message) + '</span>'; }
