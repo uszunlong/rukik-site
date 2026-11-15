@@ -346,6 +346,27 @@ function noteAnalyzeFail(r) {
     if (t - lastAnalyzeNoteAt > 30000) { lastAnalyzeNoteAt = t; $('ws-err').textContent = '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。'; }
   }
 }
+// [VIZ-RT2 2026-11-14] 导图触发（final 到达与 5 秒定时复核共用）：≥2 新段（6 秒下限防抖）或
+// ≥1 新段且距上轮 >12 秒，先到先触发。只在 final 到达时评估会让单段内容（尤其话题收尾段）
+// 等到下一段才被处理，故加定时复核补齐。被服务端 throttled、或与段落库竞速返回
+// no_new_content 时保留待处理计数待下轮重试（竞速重试限一次，防空转）。
+let vizRetryUsed = false;
+function maybeFireViz() {
+  if (!vizUI || !cur || !cur.meeting) return;
+  if (!((finalsSinceViz >= 2 && Date.now() - lastVizAt > 6000) || (finalsSinceViz >= 1 && Date.now() - lastVizAt > 12000))) return;
+  lastVizAt = Date.now();
+  const fired = finalsSinceViz; finalsSinceViz = 0;
+  client.analyze(cur.meeting.id, false, 'viz').then(async (r) => {
+    if (r.ran) { vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); }
+    else {
+      noteAnalyzeFail(r);
+      if (r.reason === 'throttled') { lastVizAt -= 6000; finalsSinceViz += fired; }
+      else if (r.reason === 'no_new_content' && !vizRetryUsed) { vizRetryUsed = true; finalsSinceViz += fired; }
+    }
+  }).catch(() => {});
+}
+setInterval(() => { if (cur && cur.meeting && cur.meeting.status === 'live') maybeFireViz(); }, 5000);
+
 async function openMeeting(id, autostart = false) {
   const data = await client.getMeeting(id);
   cur = data;
@@ -700,12 +721,7 @@ async function startCapture() {
         client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
       finalsSinceViz += 1; finalsSinceForesight += 1;
-      // [VIZ-RT 2026-11-14] 导图触发提速：≥2 新段（6 秒下限防抖）或 ≥1 新段且距上轮 >12 秒，先到先触发；
-      // 服务端 viz 节流已同步降至 5 秒＋12 秒 interval 口径，目标说话→节点可见 ≤15 秒。
-      if (vizUI && ((finalsSinceViz >= 2 && Date.now() - lastVizAt > 6000) || (finalsSinceViz >= 1 && Date.now() - lastVizAt > 12000))) {
-        lastVizAt = Date.now(); finalsSinceViz = 0;
-        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastVizAt -= 6000; } }).catch(() => {});
-      }
+      maybeFireViz();
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
         client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); else noteAnalyzeFail(r); }).catch(() => {});
