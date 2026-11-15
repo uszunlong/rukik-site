@@ -2351,7 +2351,17 @@ function prefetchAround(h) {
     callRetry('course_geometry', { hole: n }).then(function (j) { geomCache[n] = j; }).catch(function () {});
   });
 }
-function setHole(n) { curHole = n; renderMap(); }
+function setHole(n) {
+  curHole = n; renderMap();
+  /* [HOLE-LINK3 20261115] 三方联动单一真源（用户 08:57 定版）：本页当前洞
+     只有一个写入口——地图侧一切切洞（全局图点选/逐洞图上下洞/全屏总览
+     点选，均经本函数）在此汇合后同步记分。记分模块是独立 module 作用域，
+     其当前洞 S.selHole 地图脚本不可直达，故由记分模块以
+     window.__evScoreSetHole 暴露唯一跟随入口（与 __evScoreReload 同式）。
+     防环：记分侧切洞经 syncTail 回到本函数时 S.selHole 已等于 n，跟随
+     入口相等守卫直接返回，不重复 paint；本函数被 syncTail 调用时同理。 */
+  try { if (typeof window.__evScoreSetHole === 'function') window.__evScoreSetHole(n); } catch (e) {}
+}
 function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
@@ -5333,6 +5343,10 @@ initAuth(function (s) {
   else paint();
 });
 window.__evScoreReload = function () { loadAll(false); }; /* 供赛事页加入/管理动作后同步刷新 */
+window.__evScoreSetHole = function (n) { /* [HOLE-LINK3 20261115] 地图侧切洞→记分跟随唯一入口（setHole 汇合点调用）：记分未就绪（S.selHole 尚未初始化）不动、目标洞与当前洞相同不重绘；否则与记分内切洞同路径——改 S.selHole 后 paint（组记分由 paint 内 gInitFor 守卫按新洞重初始化编辑值、单人由 paintScoring 按已存成绩回填），只切视图不触发任何保存/提交 */
+  if (S.selHole == null || S.selHole === n) return;
+  S.selHole = n; paint();
+};
 (function boot() {
   var s = getSessionSync();
   S.session = s;
