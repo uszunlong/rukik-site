@@ -77,6 +77,7 @@
   .seg .seg-tr-na{color:#8b979e;font-size:12px;opacity:.8;margin-top:2px}
   .seg:hover{background:var(--panel2)} .seg .tm{color:var(--dim);font-size:12px;margin-right:8px}
   .gap-note{padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(224,166,63,.13);border:1px dashed var(--warn);color:var(--warn);font-size:13px}
+  .gap-note.filled{background:rgba(66,214,160,.10);border-color:var(--acc);color:var(--acc)}
   .partial{color:var(--warn);font-style:italic}
   /* [PROVISIONAL-TRANSLATE 2026-11-15] 临时译文行：弱化灰字跟随 #partial，空时不占位 */
   .partial-tr{color:#8b979e;font-size:13px;line-height:1.5;padding:0 8px 4px}
@@ -903,51 +904,16 @@ $('m-lang').onchange = async () => {
 };
 
 let lastAnalyzeNoteAt = 0;
-// [QUALITY-NOTE-TRANSIENT 2026-11-15] 识别质量提示改瞬时呈现（用户亲定＋直播清除线
-// 同源定谳合并口径）：①失败路径边沿闪现——低质量回合边沿出现一次、约 5 秒后淡出
-// 隐藏，同回合持续不重弹；②成功即清——任一批次分析成功（r.ran）调用
-// resetQualityNote：除解闩外，若行内当前正是质量提示文案则立即清空撤下（不等 5 秒
-// 淡出），行内是其他提示时不碰；③解闩后下回合再转低质量可再提示一次。仅改呈现
-// 时序，质量判定与导图生成逻辑不动；同函数的另两态（分析不可用/写入失败）保持
-// 原 30 秒节流常驻。
-const QUALITY_NOTE_TEXT = '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。';
-let qualityNoteLatched = false;
-let qualityNoteHideTimer = 0;
-function resetQualityNote() {
-  qualityNoteLatched = false;
-  clearTimeout(qualityNoteHideTimer);
-  const el = $('ws-err');
-  if (el && el.textContent === QUALITY_NOTE_TEXT) {
-    el.textContent = '';
-    el.style.transition = ''; el.style.opacity = '';
-  }
-}
-function showQualityNoteOnce() {
-  if (qualityNoteLatched) return;
-  qualityNoteLatched = true;
-  const el = $('ws-err');
-  el.textContent = QUALITY_NOTE_TEXT;
-  el.style.transition = 'opacity .45s ease';
-  el.style.opacity = '1';
-  clearTimeout(qualityNoteHideTimer);
-  qualityNoteHideTimer = setTimeout(() => {
-    if (el.textContent !== QUALITY_NOTE_TEXT) { el.style.transition = ''; el.style.opacity = ''; return; }
-    el.style.opacity = '0';
-    setTimeout(() => {
-      if (el.textContent === QUALITY_NOTE_TEXT) el.textContent = '';
-      el.style.transition = ''; el.style.opacity = '';
-    }, 480);
-  }, 5000);
-}
 function noteAnalyzeFail(r) {
   // [VIZ-V1.0 2026-11-14] 四态如实呈现：分析执行失败/识别质量不足/结果写入失败分别给中文文案（30 秒节流防刷屏）
   const st = r && (r.status || r.reason);
   if (r && !r.ran && (st === 'model_unavailable' || st === 'analysis_failed' || st === 'quality_insufficient' || st === 'apply_failed')) {
-    if (st === 'quality_insufficient') { showQualityNoteOnce(); return; }
     const t = Date.now();
     if (t - lastAnalyzeNoteAt > 30000) {
       lastAnalyzeNoteAt = t;
-      $('ws-err').textContent = st === 'apply_failed'
+      $('ws-err').textContent = st === 'quality_insufficient'
+        ? '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。'
+        : st === 'apply_failed'
           ? '导图写入失败：字幕已保存，将在后续片段自动重试。'
           : '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。';
     }
@@ -964,7 +930,7 @@ function maybeFireViz() {
   lastVizAt = Date.now();
   const fired = finalsSinceViz; finalsSinceViz = 0;
   client.analyze(cur.meeting.id, false, 'viz').then(async (r) => {
-    if (r.ran) { resetQualityNote(); vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); fsNoteVizEvent(r); }
+    if (r.ran) { vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); fsNoteVizEvent(r); }
     else {
       noteAnalyzeFail(r);
       if (r.reason === 'throttled') { lastVizAt -= 6000; finalsSinceViz += fired; }
@@ -984,8 +950,8 @@ async function openMeeting(id, autostart = false) {
   await loadVizAndForesight();
   try { // 恢复补分析：有未处理片段（游标落后）时自动补跑，不依赖手动按钮
     const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
-    if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) { resetQualityNote(); await loadVizAndForesight(); } else noteAnalyzeFail(r); }).catch(() => {});
-    if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) { resetQualityNote(); await reloadMinutes(); } else noteAnalyzeFail(r); }).catch(() => {});
+    if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) await loadVizAndForesight(); else noteAnalyzeFail(r); }).catch(() => {});
+    if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); else noteAnalyzeFail(r); }).catch(() => {});
     // [TRANSLATE-P1] 译文补跑：游标落后时补齐（存量切换/重开会议的译文在此收敛）
     if (cur.meeting.translation_enabled && maxSeq > Number(cur.meeting.last_translated_seq || 0)) client.analyze(cur.meeting.id, false, 'translate').then(async (r) => { if (r && r.ran) { await loadTranslations(); renderSegments(); } }).catch(() => {});
   } catch { /* 补分析失败不挡页面 */ }
@@ -1180,7 +1146,7 @@ function renderSegments() {
       const bl = bilingualLine(s, base);
       const spk = s.speaker_label && s.speaker_label !== 'unknown' ? ` <span class="spk">· ${esc(s.speaker_label)}</span>` : '';
       const tr = bl.text != null ? `<div class="seg-tr">${esc(bl.text)}</div>` : '<div class="seg-tr-na">译文暂不可用</div>';
-      div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spk}<div>${esc(base)}</div>${tr}`;
+      div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spk}${nbSegIds.has(s.id) ? '<span class="chip">断网补录</span>' : ''}<div>${esc(base)}</div>${tr}`;
       box.appendChild(div);
       continue;
     }
@@ -1190,6 +1156,7 @@ function renderSegments() {
       if (s.user_locked && s.user_text) { body = s.user_text; chips = '<span class="chip">人工修订</span>'; }
       else if (ce) { body = ce.text; if (ce.source === 'user_locked') chips = '<span class="chip">人工修订</span>'; else if (ce.text !== s.text) chips = '<span class="chip">校订</span>'; }
     } else if (s.user_locked) chips = '<span class="chip">已锁定（人工修订）</span>';
+    if (nbSegIds.has(s.id)) chips += '<span class="chip">断网补录</span>'; // [NET-BUFFER]
     // [TRANSLATE-P1] 展示语言层：仅渲染层替换，cur.segments 原文数据不动、永不被译文覆盖
     const disp = segDisplay(s, body);
     body = disp.text; if (disp.chip) chips += disp.chip;
@@ -1258,7 +1225,7 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = true; $('ws-err').textContent = '';
   try {
     const r = await client.analyze(cur.meeting.id, true, 'viz');
-    if (r.ran) { resetQualityNote(); const n = await vizUI.syncNewPatches(); fsNoteVizEvent(r); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
+    if (r.ran) { const n = await vizUI.syncNewPatches(); fsNoteVizEvent(r); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
     else {
       // [VIZ-V1.0 2026-11-14] 四态中文文案，不再把英文原因码直显给用户
       const v = (r.results && r.results.viz) || r;
@@ -1631,6 +1598,77 @@ function rcDelayFor(failedCount) { return RC_DELAYS_MS[Math.min(Math.max(failedC
 function rcClock(t) { const d = new Date(t); return [d.getHours(), d.getMinutes(), d.getSeconds()].map((x) => String(x).padStart(2, '0')).join(':'); }
 function rcGapText(fromMs, toMs) { return '⚠ ' + rcClock(fromMs) + '–' + rcClock(toMs) + ' 连接中断，这段时间的声音未被记录。'; }
 
+// [NET-BUFFER 2026-11-15] 断网音频缓冲（用户直播会议亲测缺口根治）：录音音频一律先入
+// 单一 FIFO 队列再由泵发送——在线时泵即时排空（与原直发等价、顺序不变）；连接中断或
+// 未 ready 时队列自动成为页面内存环形缓冲（上限 NB_MAX_SEC=120 秒，16kHz PCM16 约
+// 3.84MB），只存内存、不落盘、不进任何存储，stopCapture/结束会议即整表清空（nbClear），
+// 录音默认不留存口径不变。重连 ready 后泵按原顺序先补发缓冲、再接实时流；超限丢最旧块
+// 并按墙钟记录丢失范围，缺口提示如实呈现。补发段归属：服务端按连接会话计 start_sec
+// （每连接从 0 起、与本端 nbSessSamples 同源），落库 seq 按 append 顺序递增——final 到达
+// 时 start_sec 落在补发样本窗内即归属补录，段 id 记入 nbSegIds，渲染层打「断网补录」标
+// （页面会话内有效，与既有缺口提示同为会话级呈现）。暂停期间 onaudioprocess 既有 live
+// 门拦截、不入队不计入；泵同样只在 live 时放行。
+const NB_SR = 16000;
+const NB_MAX_SEC = 120;
+const NB_MAX_SAMPLES = NB_SR * NB_MAX_SEC;
+let nbQueue = [];            // FIFO: {buf:ArrayBuffer, samples:int, at:epochMs}
+let nbQueuedSamples = 0;     // 队列内未发样本数
+let nbDropped = [];          // 本轮断开以来因超限丢弃的墙钟范围 [{from,to}]
+let nbSessSamples = 0;       // 当前连接已发样本数（与服务端 start_sec 同源）
+let nbBackfill = null;       // 当前连接补发窗 {samples, fromMs, toMs, dropped, noticeDiv, settled}
+let nbNoticeDone = false;    // 本轮断开的缺口提示是否已落（恢复对账或重连耗尽二选一，防重复）
+const nbSegIds = new Set();  // 已归属断网补录的段 id
+
+function nbClear() {
+  nbQueue = []; nbQueuedSamples = 0; nbDropped = [];
+  nbSessSamples = 0; nbBackfill = null; nbNoticeDone = false; nbSegIds.clear();
+}
+
+function nbEnqueue(buf, samples) {
+  nbQueue.push({ buf, samples, at: Date.now() });
+  nbQueuedSamples += samples;
+  while (nbQueuedSamples > NB_MAX_SAMPLES && nbQueue.length) {
+    const old = nbQueue.shift();
+    nbQueuedSamples -= old.samples;
+    const durMs = Math.round(old.samples * 1000 / NB_SR);
+    const last = nbDropped[nbDropped.length - 1];
+    // 丢弃块在音频流上必然连续：合并时按时长累加（突发入队时 at 相近、不能只按墙钟差推）
+    if (last && old.at - last.to < 1500) last.to = Math.max(last.to, old.at) + durMs;
+    else nbDropped.push({ from: old.at, to: old.at + durMs });
+  }
+}
+
+function nbNoticeText(bf, settled) {
+  const range = rcClock(bf.fromMs) + '–' + rcClock(bf.toMs);
+  if (bf.dropped && bf.dropped.length) {
+    const lost = bf.dropped.map((r) => rcClock(r.from) + '–' + rcClock(r.to)).join('、');
+    return '⚠ ' + range + ' 连接中断：其中 ' + lost + ' 超出 ' + NB_MAX_SEC + ' 秒缓冲上限未被记录，其余时段声音' + (settled ? '已补发转写（字幕中标「断网补录」）。' : '正在补发转写…');
+  }
+  return '⚠ ' + range + ' 连接中断，这段时间的声音' + (settled ? '已补发转写（字幕中标「断网补录」）。' : '已保存在本机，正在补发转写…');
+}
+
+function nbSettleBackfillNotice() {
+  if (!nbBackfill || nbBackfill.settled) return;
+  nbBackfill.settled = true;
+  if (nbBackfill.noticeDiv) {
+    nbBackfill.noticeDiv.textContent = nbNoticeText(nbBackfill, true);
+    nbBackfill.noticeDiv.classList.add('filled');
+  }
+}
+
+function nbPump() {
+  if (!ws || ws.readyState !== 1 || !wsReady) return;
+  if (!cur || !cur.meeting || cur.meeting.status !== 'live') return;
+  while (nbQueue.length) {
+    const c = nbQueue[0];
+    try { ws.send(c.buf); } catch { return; }
+    nbQueue.shift();
+    nbQueuedSamples -= c.samples;
+    nbSessSamples += c.samples;
+    if (nbBackfill && !nbBackfill.settled && nbSessSamples >= nbBackfill.samples) nbSettleBackfillNotice();
+  }
+}
+
 // 双键合并（client_ref 与 seq 任一同键即同一段）：服务端落库集合为准、同键以服务端行
 // 覆盖；本地独有段保留兜底（final 均为落库后下发，理论上不应存在）；结果按 seq 排序、双键不重复。
 function rcMergeSegments(localSegs, serverSegs) {
@@ -1661,12 +1699,13 @@ function rcMergeSegments(localSegs, serverSegs) {
   return out;
 }
 
-function rcAddGapNotice(fromMs, toMs) {
-  const box = $('gap-notices'); if (!box) return;
+function rcAddGapNotice(fromMs, toMs, text) {
+  const box = $('gap-notices'); if (!box) return null;
   const div = document.createElement('div');
   div.className = 'gap-note';
-  div.textContent = rcGapText(fromMs, toMs);
+  div.textContent = text || rcGapText(fromMs, toMs);
   box.appendChild(div);
+  return div;
 }
 
 function rcCancel() {
@@ -1679,6 +1718,8 @@ function rcScheduleNext() {
   if (!captureWanted || !cur || !cur.meeting) return;
   if (rcAttempts >= RC_MAX_ATTEMPTS) {
     $('ws-err').textContent = '多次重试失败，已停止自动重连，请刷新页面。'; setConn('err', '转写连接失败');
+    // [NET-BUFFER] 重连耗尽＝补发失败：按实情留「未被记录」缺口提示（缓冲随刷新/结束清空，不假装已补）
+    if (rcDownWasLive && rcDownAt != null && !nbNoticeDone) { nbNoticeDone = true; rcAddGapNotice(rcDownAt, Date.now()); }
     return;
   }
   const n = rcAttempts + 1;
@@ -1708,7 +1749,14 @@ async function rcOnRecovered() {
       renderSegments();
     }
   } catch { /* 对账失败不阻塞录音，后续 final 仍按原流程追加 */ }
-  if (wasLive && downAt != null) rcAddGapNotice(downAt, Date.now());
+  if (wasLive && downAt != null) {
+    // [NET-BUFFER] 有补发窗：缺口提示改报补录状态，补发完成由 nbSettleBackfillNotice 就地更新
+    if (nbBackfill && nbBackfill.fromMs === downAt) {
+      nbBackfill.noticeDiv = rcAddGapNotice(downAt, Date.now(), nbNoticeText(nbBackfill, nbBackfill.settled));
+      if (nbBackfill.noticeDiv && nbBackfill.settled) nbBackfill.noticeDiv.classList.add('filled');
+    } else rcAddGapNotice(downAt, Date.now());
+    nbNoticeDone = true;
+  }
   $('ws-err').textContent = '已恢复连接，录音继续。';
   setConn('on', '转写已连接');
   if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = '';
@@ -1720,7 +1768,7 @@ function rcHandleClose(ev, sock) {
   if (!captureWanted || !cur || !cur.meeting) return false;
   if (cur.meeting.status !== 'live' && cur.meeting.status !== 'paused') return false;
   if (!audio) return false; // 麦克风管线已停（如结束流程 stopMic 后）：不重连
-  if (rcDownAt == null) { rcDownAt = Date.now(); rcDownWasLive = cur.meeting.status === 'live'; }
+  if (rcDownAt == null) { rcDownAt = Date.now(); rcDownWasLive = cur.meeting.status === 'live'; nbNoticeDone = false; } // [NET-BUFFER] 新一轮断开：缺口提示未落
   if (cur.meeting.status === 'live') $('rec-ind').style.display = 'none';
   if (ev && ev.code === 4404) { $('ws-err').textContent = '会议归属校验未通过，已停止自动重连，请刷新页面。'; setConn('err', '转写已断开'); return true; }
   if (ev && ev.code === 4409) { $('ws-err').textContent = '会议当前不可录制，已停止自动重连。'; setConn('err', '转写已断开'); return true; }
@@ -1751,6 +1799,7 @@ function connectWS() {
     return;
   }
   wsReady = false;
+  nbSessSamples = 0; nbBackfill = null; // [NET-BUFFER] 新连接＝新会话采样时钟（与服务端 start_sec 同源），旧补发窗作废
   $('rec-ind').style.display = 'none';
   $('ws-err').textContent = rcDownAt != null ? '正在重连（第 ' + (rcAttempts + 1) + ' 次）：连接中…' : '正在连接转写服务（连接中/鉴权中）…';
   setConn('wait', rcDownAt != null ? '转写重连中' : '转写连接中');
@@ -1763,26 +1812,36 @@ function connectWS() {
       sock.__gotReady = true;
       if (rcWatchdog) { clearTimeout(rcWatchdog); rcWatchdog = null; }
       wsReady = true;
-      if (rcDownAt != null) { rcOnRecovered(); }
-      else { rcAttempts = 0; $('ws-err').textContent = '转写已连接，录音中。'; if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = ''; setConn('on', '转写已连接'); }
+      if (rcDownAt != null) {
+        // [NET-BUFFER] 恢复：队列未发样本即补发窗（FIFO 头部），先登记补发窗再对账、随即由泵按序补发
+        if (nbQueuedSamples > 0) {
+          nbBackfill = { samples: nbQueuedSamples, fromMs: rcDownAt, toMs: Date.now(), dropped: nbDropped.slice(), noticeDiv: null, settled: false };
+          nbDropped = [];
+        }
+        rcOnRecovered();
+        nbPump();
+      }
+      else { rcAttempts = 0; $('ws-err').textContent = '转写已连接，录音中。'; if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = ''; setConn('on', '转写已连接'); nbPump(); }
     }
     if (msg.type === 'meeting.state' && msg.status === 'ended' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'ended' }); }
     if (msg.type === 'meeting.state' && msg.status === 'end_incomplete' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'incomplete', pending: msg.pending, client_refs: msg.client_refs }); }
     if (msg.type === 'transcript.partial') { $('partial').textContent = msg.text; provOnPartial(msg); }
     if (msg.type === 'transcript.final') {
       $('partial').textContent = '';
+      // [NET-BUFFER] 补发归属：段起始采样落在当前连接补发窗内即断网补录（start_sec 与 nbSessSamples 同源）
+      if (nbBackfill && msg.segment && msg.segment.id && Math.round(Number(msg.segment.start_sec) * NB_SR) < nbBackfill.samples) nbSegIds.add(msg.segment.id);
       provOnFinal();
       cur.segments.push(msg.segment); renderSegments();
       finalsSinceAnalyze += 1;
       if (finalsSinceAnalyze >= 2 && Date.now() - lastAnalyzeAt > 25000) {
         lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
-        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) { resetQualityNote(); await reloadMinutes(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
+        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
       finalsSinceViz += 1; finalsSinceForesight += 1; finalsSinceTranslate += 1;
       maybeFireViz();
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
-        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) { resetQualityNote(); await loadForesight(); } else noteAnalyzeFail(r); }).catch(() => {});
+        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); else noteAnalyzeFail(r); }).catch(() => {});
       }
     }
     if (msg.type === 'error') { $('ws-err').textContent = '转写提示：' + msg.message; }
@@ -1826,21 +1885,24 @@ async function startCapture() {
       const ch = e.inputBuffer.getChannelData(0);
       let sum = 0; for (let i = 0; i < ch.length; i += 2) sum += ch[i] * ch[i];
       micLevel = Math.min(1, Math.sqrt(sum / Math.max(1, ch.length / 2)) * 2.5); micLevelAt = Date.now();
-      if (!ws || ws.readyState !== 1 || !wsReady || cur.meeting.status !== 'live') return;
+      if (cur.meeting.status !== 'live') return; // 暂停不入队（[NET-BUFFER] 暂停期间不缓冲计入）
       const ds = downsampleTo16k(ch, ctx.sampleRate);
-      ws.send(floatToPcm16(ds));
+      // [NET-BUFFER] 先入 FIFO 队列再由泵发送：在线即时排空（与原直发等价），断线自动转内存缓冲
+      nbEnqueue(floatToPcm16(ds), ds.length);
+      nbPump();
     };
     audio = { stream, ctx, proc };
   } catch (e) { $('ws-err').textContent = '无法使用麦克风：' + e.message; }
 }
 function suspendCapture() { /* 暂停时仅停发音频（onaudioprocess 按状态拦截），保留连接 */ }
-function resumeCapture() { /* 状态恢复 live 后 onaudioprocess 自动继续发送 */ }
+function resumeCapture() { nbPump(); /* [NET-BUFFER] 恢复 live 后泵重新放行：暂停期积压的补发在此续发 */ }
 function stopMic() {
   try { if (audio) { audio.proc.disconnect(); audio.ctx.close(); audio.stream.getTracks().forEach((t) => t.stop()); } } catch {}
   audio = null;
 }
 function stopCapture() {
   rcCancel(); // [WS-RECONNECT 2026-11-14] 主动停止：取消一切待执行的自动重连
+  nbClear(); // [NET-BUFFER] 停止/结束即清空内存缓冲（录音默认不留存：缓冲不落盘、会后不留）
   setConn('off', '转写未连接'); // [WB-REDESIGN 2026-11-14]
   stopMic();
   try { if (ws) ws.close(); } catch {}
