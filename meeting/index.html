@@ -903,14 +903,25 @@ $('m-lang').onchange = async () => {
 };
 
 let lastAnalyzeNoteAt = 0;
-// [QUALITY-NOTE-TRANSIENT 2026-11-15] 识别质量提示改瞬时呈现（用户亲定）：低质量回合
-// 边沿出现一次、约 5 秒后淡出隐藏，同回合持续不重弹；任一分析恢复执行（r.ran）即
-// 解闩（resetQualityNote），下回合再转低质量可再提示一次。仅改呈现时序，质量判定
-// 与导图生成逻辑不动；同函数的另两态（分析不可用/写入失败）保持原 30 秒节流常驻。
+// [QUALITY-NOTE-TRANSIENT 2026-11-15] 识别质量提示改瞬时呈现（用户亲定＋直播清除线
+// 同源定谳合并口径）：①失败路径边沿闪现——低质量回合边沿出现一次、约 5 秒后淡出
+// 隐藏，同回合持续不重弹；②成功即清——任一批次分析成功（r.ran）调用
+// resetQualityNote：除解闩外，若行内当前正是质量提示文案则立即清空撤下（不等 5 秒
+// 淡出），行内是其他提示时不碰；③解闩后下回合再转低质量可再提示一次。仅改呈现
+// 时序，质量判定与导图生成逻辑不动；同函数的另两态（分析不可用/写入失败）保持
+// 原 30 秒节流常驻。
 const QUALITY_NOTE_TEXT = '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。';
 let qualityNoteLatched = false;
 let qualityNoteHideTimer = 0;
-function resetQualityNote() { qualityNoteLatched = false; }
+function resetQualityNote() {
+  qualityNoteLatched = false;
+  clearTimeout(qualityNoteHideTimer);
+  const el = $('ws-err');
+  if (el && el.textContent === QUALITY_NOTE_TEXT) {
+    el.textContent = '';
+    el.style.transition = ''; el.style.opacity = '';
+  }
+}
 function showQualityNoteOnce() {
   if (qualityNoteLatched) return;
   qualityNoteLatched = true;
