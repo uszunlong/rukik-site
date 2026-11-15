@@ -82,7 +82,7 @@
   .partial-tr{color:#8b979e;font-size:13px;line-height:1.5;padding:0 8px 4px}
   .partial-tr:empty{display:none}
   .chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 8px;font-size:12px;margin-right:6px;color:var(--dim)}
-  .chip.confirmed{color:#7be3b8}.chip.discussing{color:#e8d28a}.chip.proposed{color:#9fc2ff}.chip.disputed{color:#f0a3a3}.chip.withdrawn{color:#77828f;text-decoration:line-through}
+  .chip.confirmed{color:#7be3b8}.chip.discussing{color:#e8d28a}.chip.proposed{color:#9fc2ff}.chip.disputed{color:#f0a3a3}.chip.withdrawn{color:#77828f;text-decoration:line-through}.chip.done{color:#9db8a6}
   .item{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--panel2)}
   .item .meta{font-size:12px;color:var(--dim);margin-top:4px}
   .item select{width:auto;padding:2px 6px;font-size:16px}
@@ -330,6 +330,7 @@
   body.in-ws .chip.proposed{color:#2F5FD0}
   body.in-ws .chip.disputed{color:#C93A3A}
   body.in-ws .chip.withdrawn{color:#94A3B8}
+  body.in-ws .chip.done{color:#5F7A68}
   body.in-ws .seg.latest{border-left-color:var(--acc);background:rgba(66,214,160,.07)}
   .fs-details{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
   #ask-block{flex:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
@@ -1365,7 +1366,7 @@ function fsNoteVizEvent(r) {
 $('btn-fs-scan').onclick = () => { $('ws-err').textContent = ''; runFsScan(false); };
 
 const KIND_LABEL = { decision: '决策', action: '行动项', question: '待确认', risk: '风险' };
-const STATUS_LABEL = { confirmed: '已确认', discussing: '讨论中', proposed: '建议', disputed: '存在争议', withdrawn: '已撤回' };
+const STATUS_LABEL = { confirmed: '已确认', discussing: '讨论中', proposed: '建议', disputed: '存在争议', withdrawn: '已撤回', done: '已完成' }; // [ACTION-REMINDER 2026-11-15] 新增 done 完成态
 
 function renderMinutes() {
   const { doc, items } = cur.minutes;
@@ -1379,7 +1380,7 @@ function renderMinutes() {
   if (!visible.length) box.innerHTML = '<p class="dim">暂无纪要条目。开会讨论后点「更新纪要」，或在下方手动添加。</p>';
   for (const it of visible) {
     const div = document.createElement('div'); div.className = 'item';
-    const sel = ['confirmed','discussing','proposed','disputed','withdrawn'].map(s => `<option value="${s}" ${s===it.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
+    const sel = ['confirmed','discussing','proposed','disputed','done','withdrawn'].map(s => `<option value="${s}" ${s===it.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
     div.innerHTML = `<span class="chip">${KIND_LABEL[it.kind] || it.kind}</span><span class="chip ${it.status}">${STATUS_LABEL[it.status] || it.status}</span>${it.user_locked ? '<span class="chip">已锁定</span>' : ''}<br>
       <span class="txt">${esc((it.i18n && it.i18n[displayLang] && it.i18n[displayLang].text) || it.text)}</span>
       <div class="meta">${it.owner_label ? '负责人：' + esc(it.owner_label) + ' · ' : ''}${it.due_at ? '截止：' + esc(String(it.due_at).slice(0,10)) + ' · ' : ''}${it.origin === 'user' ? '人工条目' : 'AI 整理'}${it.supersedes_id ? ' · 替代了先前一条' : ''}</div>
