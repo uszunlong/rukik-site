@@ -958,6 +958,31 @@ async function openMeeting(id, autostart = false) {
   if (cur.meeting.status === 'live' && !autostart) { /* 回到进行中的会议：可手动继续 */ $('ws-err').textContent = '会议进行中，点「暂停」旁的录音将自动恢复连接。'; startCapture(); }
 }
 
+// [TIMER-PAUSE-FIX 2026-11-15] 计时器分段累计：暂停时把当前段入账并冻结显示，继续时开新段
+// 从冻结值续计，与录音暂停/恢复严格一致（旧实现按 started_at 墙钟差算，暂停照样走表）。
+// 服务端未存暂停累计，状态只在页面内维护；首次打开某场会议时以墙钟初始化（live 从
+// started_at 起算、paused 冻结在打开时刻的墙钟已过时长），此后本页内的暂停/继续精确入账。
+let timerAccSec = 0, timerSegStartMs = null, timerForId = null, timerLastStatus = null;
+function timerSync(m) {
+  const startedMs = new Date(m.started_at).getTime();
+  if (timerForId !== m.id) {
+    timerForId = m.id;
+    timerAccSec = m.status === 'paused' ? Math.max(0, (Date.now() - startedMs) / 1000) : 0;
+    timerSegStartMs = m.status === 'paused' ? null : startedMs;
+    timerLastStatus = m.status;
+    return;
+  }
+  if (m.status === 'paused' && timerLastStatus === 'live') {
+    if (timerSegStartMs != null) { timerAccSec += (Date.now() - timerSegStartMs) / 1000; timerSegStartMs = null; }
+  } else if (m.status === 'live' && timerLastStatus === 'paused') {
+    timerSegStartMs = Date.now();
+  }
+  timerLastStatus = m.status;
+}
+function timerElapsedSec() {
+  return timerAccSec + (timerSegStartMs != null ? (Date.now() - timerSegStartMs) / 1000 : 0);
+}
+
 function renderMeeting() {
   if (cur.translations) indexTranslations(cur.translations); // [TRANSLATE-P1] get 响应自带译文，重开/刷新即按展示语言渲染
   const m = cur.meeting;
@@ -980,8 +1005,15 @@ function renderMeeting() {
   if (m.status === 'ended') setConn('off', '转写未连接');
   clearInterval(timerInt);
   if (m.started_at) {
-    const tick = () => { const end = m.ended_at ? new Date(m.ended_at).getTime() : Date.now(); $('m-timer').textContent = fmtT(Math.max(0, (end - new Date(m.started_at).getTime()) / 1000)); };
-    tick(); if (!m.ended_at) timerInt = setInterval(tick, 1000);
+    if (m.ended_at) {
+      // 已结束：静态显示总时长（ended_at - started_at），不走表（与旧口径一致）
+      $('m-timer').textContent = fmtT(Math.max(0, (new Date(m.ended_at).getTime() - new Date(m.started_at).getTime()) / 1000));
+    } else {
+      // [TIMER-PAUSE-FIX 2026-11-15] 分段累计：live 才走表，paused 只渲染冻结值不起 interval
+      timerSync(m);
+      const tick = () => { $('m-timer').textContent = fmtT(Math.max(0, timerElapsedSec())); };
+      tick(); if (m.status === 'live') timerInt = setInterval(tick, 1000);
+    }
   }
   renderSegments(); renderMinutes(); renderCorrBar(); fsAutoSync();
 }
