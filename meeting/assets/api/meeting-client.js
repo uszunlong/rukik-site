@@ -59,8 +59,9 @@ export class MeetingClient {
         return this.api('search', { q });
     }
     deleteMeeting(meetingId) { return this.api('delete', { meeting_id: meetingId }); }
-    analyze(meetingId, force = false, kind = 'minutes') {
-        return this.orchestrator('analyze', { meeting_id: meetingId, force, kind });
+    analyze(meetingId, force = false, kind = 'minutes', auto = false) {
+        // [AUTO-FORESIGHT 2026-11-14] auto=true 标记自动扫描（服务端单次落库上限 2 条，手动 3 条）
+        return this.orchestrator('analyze', { meeting_id: meetingId, force, kind, auto: !!auto });
     }
     // ---- 阶段 C：可视化图 ----
     vizGet(meetingId) { return this.api('viz_get', { meeting_id: meetingId }); }

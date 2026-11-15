@@ -55,6 +55,10 @@
   .replaybar{display:flex;gap:8px;align-items:center;margin-bottom:8px;background:var(--panel2);border:1px solid var(--warn);border-radius:10px;padding:6px 10px}
   .col h3{margin:2px 0 10px;font-size:14px;color:var(--dim);letter-spacing:.05em}
   .seg{padding:6px 8px;border-radius:8px;margin-bottom:4px}
+  /* [BILINGUAL-SUB 2026-11-14] 双语字幕：原文在上（正常字重）、译文在下（灰色小字），上下排版共享时间戳/发言者 */
+  .seg .spk{color:var(--dim);font-size:12px}
+  .seg .seg-tr{color:#8b979e;font-size:13px;line-height:1.5;margin-top:2px}
+  .seg .seg-tr-na{color:#8b979e;font-size:12px;opacity:.8;margin-top:2px}
   .seg:hover{background:var(--panel2)} .seg .tm{color:var(--dim);font-size:12px;margin-right:8px}
   .gap-note{padding:6px 8px;border-radius:8px;margin-bottom:4px;background:rgba(224,166,63,.13);border:1px dashed var(--warn);color:var(--warn);font-size:13px}
   .partial{color:var(--warn);font-style:italic}
@@ -421,6 +425,7 @@
         <div id="corr-bar" style="display:none;margin:2px 0 6px;font-size:12px">
           <button class="ghost" id="corr-view-orig">原文</button>
           <button class="ghost" id="corr-view-fixed">校订版</button>
+          <button class="ghost" id="corr-view-bi">双语字幕</button>
           <span class="dim" id="corr-status"></span>
         </div>
         <div id="segments"></div>
@@ -469,7 +474,7 @@
       <div class="card col" id="col-ai">
         <div id="fs-scroll">
         <h3>AI 预见 <span class="chip" style="color:var(--warn)">AI 推演 · 非会议事实</span></h3>
-        <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span></div>
+        <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span> <span class="dim" id="fs-auto-stat" style="font-size:12px"></span></div>
         <div id="foresight-list"><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
         </div>
         <div id="ask-block"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场与历史会议提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
@@ -578,9 +583,17 @@ async function setDisplayLang(l) {
 $('dl-zh').onclick = () => setDisplayLang('zh');
 $('dl-en').onclick = () => setDisplayLang('en');
 syncDispLangBtns();
+// 翻译按需运行：双语模式开启、或单语言展示语言与内容主导语言不一致时才需要译文
+function translateNeeded() {
+  if (corrView === 'bilingual') return true;
+  const last = cur && cur.segments && cur.segments.length ? cur.segments[cur.segments.length - 1] : null;
+  const dom = last ? (last.lang || detectLangPage(last.text)) : 'zh';
+  return dom !== 'unknown' && displayLang !== dom;
+}
 // 实时翻译节律：与导图同一 5 秒复核拍点，有新 final 且距上轮 >8 秒才触发（失败静默、原文呈现不受影响）
 function maybeFireTranslate() {
   if (!cur || !cur.meeting || !cur.meeting.translation_enabled) return;
+  if (!translateNeeded()) return;
   if (!(finalsSinceTranslate >= 1 && Date.now() - lastTranslateAt > 8000)) return;
   lastTranslateAt = Date.now(); finalsSinceTranslate = 0;
   client.analyze(cur.meeting.id, false, 'translate').then(async (r) => { if (r && r.ran) { await loadTranslations(); renderSegments(); } }).catch(() => {});
@@ -749,7 +762,7 @@ function maybeFireViz() {
   lastVizAt = Date.now();
   const fired = finalsSinceViz; finalsSinceViz = 0;
   client.analyze(cur.meeting.id, false, 'viz').then(async (r) => {
-    if (r.ran) { vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); }
+    if (r.ran) { vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); fsNoteVizEvent(r); }
     else {
       noteAnalyzeFail(r);
       if (r.reason === 'throttled') { lastVizAt -= 6000; finalsSinceViz += fired; }
@@ -804,13 +817,53 @@ function renderMeeting() {
     const tick = () => { const end = m.ended_at ? new Date(m.ended_at).getTime() : Date.now(); $('m-timer').textContent = fmtT(Math.max(0, (end - new Date(m.started_at).getTime()) / 1000)); };
     tick(); if (!m.ended_at) timerInt = setInterval(tick, 1000);
   }
-  renderSegments(); renderMinutes();
+  renderSegments(); renderMinutes(); renderCorrBar(); fsAutoSync();
 }
 
 // [TEXT-CORRECTION 2026-11-14] 会后文本校订：原文永不覆盖，校订版为独立版本层（transcript_corrections）；
 // 时间戳沿用原文段 start_sec；人工锁定段在校订版直接显示人工修订文本（服务端 source=user_locked）。
 let corrState = null; // {status, correction, map: Map<segment_id,{text,source}>}
-let corrView = 'original';
+// [BILINGUAL-SUB 2026-11-14] 字幕模式三档：original（原文）/ corrected（校订版）/ bilingual（双语字幕）。
+// 默认 original＝单语言体验（20:43 统一语言令的默认口径不变），双语为用户主动开启的可选模式；
+// 模式按用户独立保存（localStorage rukik.meeting.submode），不影响其他参会者。
+let corrView = (() => { try { const v = localStorage.getItem('rukik.meeting.submode'); if (v === 'corrected' || v === 'bilingual') return v; } catch { /* ignore */ } return 'original'; })();
+// 段生效文本（与服务端翻译源口径一致：人工锁定版 > 已完成校订版 > 原文）——双语上行与译文源哈希都以此为准
+function segBaseText(s) {
+  if (corrState && corrState.status === 'done') {
+    if (s.user_locked && s.user_text) return s.user_text;
+    const ce = corrState.map.get(s.id);
+    if (ce) return ce.text;
+  }
+  return s.user_locked && s.user_text ? s.user_text : s.text;
+}
+// 双语下行决策（纯函数，可测）：目标语言＝原语言的对侧（混合段按主导字系）；译文须状态可用、
+// 源哈希与生效文本一致、无 entity_mismatch，否则回落「译文暂不可用」（不编造、不拿过期译文冒充）。
+function bilingualLine(s, baseText) {
+  const lang = s.lang || detectLangPage(baseText);
+  let tgt;
+  if (lang === 'zh') tgt = 'en';
+  else if (lang === 'en') tgt = 'zh';
+  else if (lang === 'mixed') { const han = (String(baseText).match(/[㐀-鿿豈-﫿]/g) || []).length; const lw = (String(baseText).match(/[A-Za-z]/g) || []).length; tgt = han >= lw ? 'en' : 'zh'; }
+  else return { tgt: null, text: null };
+  const t = translationsBySeg.get(`${s.id}|${tgt}`);
+  if (!t || t.state === 'failed') return { tgt, text: null };
+  if (t.source_text_hash && t.source_text_hash !== fnv1aPage(baseText)) return { tgt, text: null };
+  if (t.quality_flag === 'entity_mismatch') return { tgt, text: null };
+  return { tgt, text: t.translated_text };
+}
+async function setSubMode(m) {
+  if (m !== 'original' && m !== 'corrected' && m !== 'bilingual') return;
+  corrView = m;
+  try { localStorage.setItem('rukik.meeting.submode', m); } catch { /* ignore */ }
+  renderCorrBar(); renderSegments();
+  // 切到双语：存量字幕一并补译（复用 P1 存量补译通道），补齐后自动重刷；切换本身不中断录音/ASR
+  if (m === 'bilingual' && cur && cur.meeting && cur.meeting.translation_enabled) {
+    try {
+      const r = await client.analyze(cur.meeting.id, true, 'translate');
+      if (r && r.ran) { await loadTranslations(); renderSegments(); }
+    } catch { /* 补译失败：各段显示「译文暂不可用」，原文不受影响 */ }
+  }
+}
 async function loadCorrection() {
   if (!cur || !cur.meeting) return;
   try {
@@ -823,19 +876,25 @@ async function triggerCorrection() {
   if (!cur || !cur.meeting || cur.meeting.status !== 'ended') return;
   try { await client.analyze(cur.meeting.id, true, 'correction'); } catch { /* 失败不挡页面，状态由 correction_get 如实呈现 */ }
   await loadCorrection();
+  // [BILINGUAL-SUB] 校订更新后同步刷新译文（服务端校订尾部已触发重译，此处回拉最新译文重刷）
+  await loadTranslations(); renderSegments();
 }
 function renderCorrBar() {
   const bar = $('corr-bar'); if (!bar || !cur || !cur.meeting) return;
-  const show = cur.meeting.status === 'ended' && corrState && corrState.status !== 'none';
-  bar.style.display = show ? '' : 'none';
-  if (!show) return;
-  const st = { running: '校订中…', done: `已校订（第 ${corrState.correction.version} 版）`, failed: '校订失败，原文不受影响' }[corrState.status] || '';
+  // [BILINGUAL-SUB] 模式条常驻（三档并列）；校订状态文案只在有校订层时出现
+  bar.style.display = '';
+  let st = '';
+  if (cur.meeting.status === 'ended' && corrState && corrState.status !== 'none') {
+    st = { running: '校订中…', done: `已校订（第 ${corrState.correction.version} 版）`, failed: '校订失败，原文不受影响' }[corrState.status] || '';
+  } else if (corrView === 'corrected') st = '暂无校订版（会议结束后生成）';
   $('corr-status').textContent = st;
   $('corr-view-orig').style.fontWeight = corrView === 'original' ? '700' : '';
   $('corr-view-fixed').style.fontWeight = corrView === 'corrected' ? '700' : '';
+  $('corr-view-bi').style.fontWeight = corrView === 'bilingual' ? '700' : '';
 }
-$('corr-view-orig').onclick = () => { corrView = 'original'; renderCorrBar(); renderSegments(); };
-$('corr-view-fixed').onclick = () => { corrView = 'corrected'; renderCorrBar(); renderSegments(); };
+$('corr-view-orig').onclick = () => setSubMode('original');
+$('corr-view-fixed').onclick = () => setSubMode('corrected');
+$('corr-view-bi').onclick = () => setSubMode('bilingual');
 async function editSegment(segId) {
   const s = (cur.segments || []).find((x) => x.id === segId);
   if (!s) return;
@@ -855,6 +914,17 @@ function renderSegments() {
   const useCorr = corrView === 'corrected' && corrState && corrState.status === 'done';
   for (const s of cur.segments) {
     const div = document.createElement('div'); div.className = 'seg'; div.dataset.seg = s.id;
+    // [BILINGUAL-SUB] 双语档：原文在上、译文在下，共享时间戳＋发言者；译文缺失/过期/待核对一律
+    // 显示「译文暂不可用」，不编造。导图不受此模式影响（导图仍按 displayLang 单语言整图显示）。
+    if (corrView === 'bilingual') {
+      const base = segBaseText(s);
+      const bl = bilingualLine(s, base);
+      const spk = s.speaker_label && s.speaker_label !== 'unknown' ? ` <span class="spk">· ${esc(s.speaker_label)}</span>` : '';
+      const tr = bl.text != null ? `<div class="seg-tr">${esc(bl.text)}</div>` : '<div class="seg-tr-na">译文暂不可用</div>';
+      div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spk}<div>${esc(base)}</div>${tr}`;
+      box.appendChild(div);
+      continue;
+    }
     let body = s.text, chips = '';
     if (useCorr) {
       const ce = corrState.map.get(s.id);
@@ -929,7 +999,7 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = true; $('ws-err').textContent = '';
   try {
     const r = await client.analyze(cur.meeting.id, true, 'viz');
-    if (r.ran) { const n = await vizUI.syncNewPatches(); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
+    if (r.ran) { const n = await vizUI.syncNewPatches(); fsNoteVizEvent(r); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
     else {
       // [VIZ-V1.0 2026-11-14] 四态中文文案，不再把英文原因码直显给用户
       const v = (r.results && r.results.viz) || r;
@@ -1013,15 +1083,76 @@ async function loadForesight() {
     }
   } catch (e) { box.innerHTML = '<span class="err">预见加载失败：' + esc(e.message) + '</span>'; }
 }
-$('btn-fs-scan').onclick = async () => {
-  $('btn-fs-scan').disabled = true; $('ws-err').textContent = '';
+// [AUTO-FORESIGHT 2026-11-14] 预见自动扫描（用户 22:36 定版）：默认开启、无设置页。
+// 约 3 分钟首检、其后每 3 分钟检查一次（检查≠生成）；轻量门控复用字幕/导图增量——无新段或
+// 导图无推进且新段太少时跳过模型调用（状态置「暂无新的重要预见」，连续零条正常）；导图长出
+// 决策/风险/待确认类节点可提前触发（2 分钟冷却）；自动与手动共用 runFsScan 单飞（同一时刻
+// 只跑一个，同一引擎/去重/存储）；暂停停查、恢复续查、结束停查；断线恢复只析未覆盖增量
+// （覆盖位 coveredSeq＋服务端 last_foresight_seq 游标双把守，不补跑历史）。
+const FS_AUTO = { running: false, startedAt: 0, lastCheckAt: 0, lastRunAt: 0, coveredSeq: 0, lastVizVersion: 0, eventDue: false };
+function fsSetStat(t) { const el = $('fs-auto-stat'); if (el) el.textContent = t ? '· ' + t : ''; }
+function fsAutoSync() {
+  if (!cur || !cur.meeting) return;
+  if (cur.meeting.status === 'live' && !FS_AUTO.startedAt) {
+    FS_AUTO.startedAt = Date.now();
+    FS_AUTO.coveredSeq = Number(cur.meeting.last_foresight_seq || 0);
+    if (vizUI) FS_AUTO.lastVizVersion = vizUI.store.graph.version || 0;
+    fsSetStat('自动预见已开启');
+  }
+  if (cur.meeting.status === 'ended') fsSetStat('');
+}
+// 纯决策（可测）：本拍是否发起自动扫描
+function fsAutoDecision(s) {
+  if (!s.live || s.running) return 'skip';
+  const periodicDue = s.startedAt > 0 && s.now - s.startedAt >= 180000 && s.now - s.lastCheckAt >= 180000;
+  const eventDue = s.eventDue && s.now - s.lastRunAt >= 120000;
+  if (!periodicDue && !eventDue) return 'skip';
+  if (!(s.maxSeq > s.coveredSeq)) return 'no_new';
+  if (!(s.vizAdvanced || s.newFinals >= 4)) return 'no_change';
+  return eventDue && !periodicDue ? 'run_event' : 'run_periodic';
+}
+async function runFsScan(auto) {
+  if (FS_AUTO.running || !cur || !cur.meeting) return;
+  FS_AUTO.running = true; FS_AUTO.lastRunAt = Date.now(); FS_AUTO.eventDue = false;
+  fsSetStat('正在分析');
+  $('btn-fs-scan').disabled = true;
   try {
-    const r = await client.analyze(cur.meeting.id, true, 'foresight');
-    if (r.ran) await loadForesight(); else $('ws-err').textContent = '未扫描：' + (r.reason || (r.results && r.results.foresight && r.results.foresight.reason) || '');
+    const r = await client.analyze(cur.meeting.id, !auto, 'foresight', auto);
+    if (r && r.ran) { await loadForesight(); fsSetStat(r.insights_added > 0 ? '自动预见已开启' : '暂无新的重要预见'); }
+    else { fsSetStat('暂无新的重要预见'); if (!auto && r) $('ws-err').textContent = '未扫描：' + (r.reason || ''); }
     lastForesightAt = Date.now(); finalsSinceForesight = 0;
-  } catch (e) { $('ws-err').textContent = '预见扫描失败：' + e.message; }
-  $('btn-fs-scan').disabled = false;
-};
+    FS_AUTO.coveredSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
+    if (vizUI) FS_AUTO.lastVizVersion = vizUI.store.graph.version || 0;
+    return r;
+  } catch (e) {
+    if (!auto) $('ws-err').textContent = '预见扫描失败：' + e.message;
+    fsSetStat('自动预见已开启');
+  } finally { FS_AUTO.running = false; $('btn-fs-scan').disabled = false; }
+}
+function fsAutoTick() {
+  if (!cur || !cur.meeting || !vizUI) return;
+  const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
+  const d = fsAutoDecision({
+    live: cur.meeting.status === 'live', running: FS_AUTO.running,
+    now: Date.now(), startedAt: FS_AUTO.startedAt, lastCheckAt: FS_AUTO.lastCheckAt, lastRunAt: FS_AUTO.lastRunAt,
+    eventDue: FS_AUTO.eventDue, maxSeq, coveredSeq: FS_AUTO.coveredSeq,
+    vizAdvanced: (vizUI.store.graph.version || 0) > FS_AUTO.lastVizVersion, newFinals: finalsSinceForesight,
+  });
+  if (d === 'skip') return;
+  FS_AUTO.lastCheckAt = Date.now();
+  if (d === 'no_new' || d === 'no_change') { fsSetStat('暂无新的重要预见'); return; }
+  runFsScan(true);
+}
+setInterval(fsAutoTick, 30000);
+// 导图事件：长出/深化决策、风险、待确认类节点 → 标记提前检查（冷却在决策函数内把守）
+function fsNoteVizEvent(r) {
+  if (!r || !r.ran || !vizUI) return;
+  const ids = new Set(r.affected_node_ids || []);
+  if (!ids.size) return;
+  const hot = (vizUI.store.graph.nodes || []).some((n) => ids.has(n.id) && (n.type === 'decision' || n.type === 'risk' || n.type === 'question'));
+  if (hot) FS_AUTO.eventDue = true;
+}
+$('btn-fs-scan').onclick = () => { $('ws-err').textContent = ''; runFsScan(false); };
 
 const KIND_LABEL = { decision: '决策', action: '行动项', question: '待确认', risk: '风险' };
 const STATUS_LABEL = { confirmed: '已确认', discussing: '讨论中', proposed: '建议', disputed: '存在争议', withdrawn: '已撤回' };
