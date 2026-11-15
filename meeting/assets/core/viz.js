@@ -42,6 +42,9 @@ export function applyVizPatch(graph, patch, nowIso) {
             // [VIZ-V1.0 + 多人规则 V1.0 2026-11-14] 与服务端 applyVizOps 对齐：决定状态/负责人/截止/贡献归属随补丁演进
             if (op.decision_state !== undefined)
                 cur.decision_state = op.decision_state;
+            // [BILINGUAL-EXT 2026-11-14] 语言版本文本缓存透传（展示层切换用，不改结构）
+            if (op.i18n !== undefined)
+                cur.i18n = op.i18n;
             if (op.owner_label !== undefined)
                 cur.owner_label = op.owner_label;
             if (op.due_text !== undefined)
@@ -153,6 +156,8 @@ export function applyVizPatch(graph, patch, nowIso) {
                 if (e.to === from.id)
                     e.to = into.id;
             }
+            if (!into.i18n && from.i18n)
+                into.i18n = from.i18n;
             for (let i = edges.length - 1; i >= 0; i--)
                 if (edges[i].from === edges[i].to)
                     edges.splice(i, 1);
