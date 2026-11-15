@@ -112,17 +112,8 @@ function $(id) { return document.getElementById(id); }
 async function lp(body) {
   var res = await fetch(LP, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + (session ? session.access_token : ANON) }, body: JSON.stringify(body) });
   var data = await res.json().catch(function () { return {}; });
-  if (!res.ok) { var e = new Error(data.error || ('HTTP ' + res.status)); e.code = data.error || ''; e.serverMessage = data.message || ''; e.limit = (typeof data.limit === 'number') ? data.limit : null; throw e; }
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
   return data;
-}
-// [ALBUM-LIMIT-COPY 2026-11-15] 相册错误呈现统一口径：优先服务端可读文案
-// （data.message，如「本场相册已达 N 张上限」）；无文案时按错误码映射定版
-// 文案；再无则回落错误码本身（与原有行为一致）。只改呈现，不改上传逻辑。
-function albErrText(e) {
-  if (!e) return '';
-  if (e.serverMessage) return e.serverMessage;
-  if (e.message === 'album_photo_limit_reached') return '本场相册已达' + (e.limit ? ' ' + e.limit + ' ' : '') + '张上限，升级专业档可不限量上传';
-  return e.message || '';
 }
 
 // [相册线 2026-11-12] 下载原图：先经服务端 photo_download 复核权限/限制，
@@ -167,6 +158,19 @@ async function loadAlbum() {
   var d = await lp({ action: 'photo_list', event_kind: 'golf', event_id: eventId(), limit: 100 });
   CLS = d.cls;
   $('roleMsg').textContent = '当前身份：' + ({ manager: '管理方', photographer: '摄影师', member: '参赛球员', visitor: '访客' }[CLS] || CLS);
+  if (d.retention_expired) {
+    // [ALBUM-RETENTION 2026-11-15] 保留态：服务端只下发官方海报条目，参与者
+    // 照片已隐藏保留（数据未删）；向管理方明示隐藏张数与恢复路径，不显示
+    // 成「尚未开通」或「暂无照片」；上传保持关闭（服务端同口径 403）。
+    $('albumCount').textContent = '相册已进入保留期：参与者照片共 ' + (d.hidden_photo_count || 0) + ' 张已隐藏保留（数据未删除），现仅可查看官方海报；授予专业档后照片可恢复显示。';
+    var rgate = $('albGate');
+    if (!rgate) { rgate = document.createElement('p'); rgate.id = 'albGate'; rgate.className = 'msg'; $('drop').parentNode.insertBefore(rgate, $('drop')); }
+    rgate.textContent = '保留期内上传已关闭。';
+    $('pickBtn').disabled = true; $('pickDirBtn').disabled = true;
+    $('drop').style.opacity = '.45'; $('drop').style.pointerEvents = 'none';
+    renderGrid(d.photos || []);
+    return;
+  }
   if (d.album_enabled === false) {
     $('albumCount').textContent = '本赛事尚未开通 Golf Live 相册：开通后才可上传与展示照片（赛事其他功能不受影响）。';
     $('grid').innerHTML = '';
@@ -270,7 +274,7 @@ $('batchDelBtn').onclick = async function () {
 function renderQueue() {
   $('queue').innerHTML = queue.map(function (it, i) {
     var cls = it.status === '失败' ? 'fail' : it.status === '完成' ? 'done' : '';
-    return '<div class="' + cls + '">' + (i + 1) + '. ' + it.name + ' — ' + it.status + (it.status === '失败' && it.error ? '：' + it.error : '') + (it.status === '失败' ? ' <button data-retry="' + i + '">重试</button>' : '') + '</div>';
+    return '<div class="' + cls + '">' + (i + 1) + '. ' + it.name + ' — ' + it.status + (it.status === '失败' ? ' <button data-retry="' + i + '">重试</button>' : '') + '</div>';
   }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('[data-retry]'), function (b) {
     b.onclick = function () { processItem(queue[Number(b.getAttribute('data-retry'))]); };
@@ -324,7 +328,7 @@ async function processItem(it) {
     it.status = '完成'; renderQueue();
     loadAlbum();
   } catch (e) {
-    it.status = '失败'; it.error = albErrText(e); renderQueue();
+    it.status = '失败'; it.error = e.message; renderQueue();
   }
 }
 var drop = $('drop');
@@ -369,7 +373,7 @@ function initPool() {
     if (ptoken) headers.Authorization = 'Bearer ' + ptoken;
     var res = await fetch(GAPI, { method: 'POST', headers: headers, body: JSON.stringify(body) });
     var d = await res.json().catch(function () { return {}; });
-    if (!res.ok) { var e = new Error(d.error || ('HTTP ' + res.status)); e.code = d.error || ''; e.serverMessage = d.message || ''; e.limit = (typeof d.limit === 'number') ? d.limit : null; throw e; }
+    if (!res.ok) throw new Error(d.error || ('HTTP ' + res.status));
     return d;
   }
   // 赛事名（best-effort，失败保持通用标题）
@@ -417,7 +421,11 @@ function initPool() {
       var d = await api({ action: 'wall_get', event_id: poolEventId, pool_limit: POOL.PAGE, pool_offset: POOL.offset });
       var wall = d.wall || {};
       if (!wall.album_enabled) {
-        $('poolMsg').textContent = '本赛事尚未开通 Golf Live 相册：开通后照片会在这里汇聚展示（赛事其他功能不受影响）。';
+        // [ALBUM-RETENTION 2026-11-15] 保留态与未开通分开提示：保留期参与者
+        // 照片隐藏保留（数据未删），不误报「尚未开通」。
+        $('poolMsg').textContent = wall.retention_expired
+          ? '本赛事相册已进入保留期：参与者照片共 ' + (wall.hidden_photo_count || 0) + ' 张已隐藏保留（数据未删除），现仅可查看赛事海报；授予专业档后照片可恢复显示。'
+          : '本赛事尚未开通 Golf Live 相册：开通后照片会在这里汇聚展示（赛事其他功能不受影响）。';
         POOL.hasMore = false;
         return;
       }
@@ -429,7 +437,7 @@ function initPool() {
       $('poolMsg').textContent = POOL.items.length ? ('共 ' + aliveItems().length + ' 张' + (POOL.hasMore ? '，继续下滑加载更多' : '')) : '暂无现场照片。';
       $('poolMore').classList.toggle('hidden', !POOL.hasMore);
     } catch (e) {
-      $('poolMsg').textContent = '照片加载失败：' + (albErrText(e) || e.message) + '（点「加载更多照片」重试）';
+      $('poolMsg').textContent = '照片加载失败：' + e.message + '（点「加载更多照片」重试）';
       $('poolMore').classList.remove('hidden');
     } finally { POOL.loading = false; }
   }
