@@ -3933,7 +3933,7 @@ document.addEventListener('visibilitychange', function () {
   function mylp(body) {
     var s = sess(), h = { 'Content-Type': 'application/json', apikey: ANON };
     if (s && s.access_token) h.Authorization = 'Bearer ' + s.access_token;
-    return fetch(LP_URL, { method: 'POST', headers: h, body: JSON.stringify(body) }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+    return fetch(LP_URL, { method: 'POST', headers: h, body: JSON.stringify(body) }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) { var e = new Error(d.error || ('HTTP ' + r.status)); e.code = d.error || ''; e.serverMessage = d.message || ''; e.limit = (typeof d.limit === 'number') ? d.limit : null; throw e; } return d; }); });
   }
   var fab = document.createElement('button'); fab.id = 'albFab'; fab.type = 'button'; fab.innerHTML = '📷 相册';
   var sheet = document.createElement('div'); sheet.id = 'albSheet';
@@ -3946,6 +3946,16 @@ document.addEventListener('visibilitychange', function () {
     + '<div class="alb-vbar"><button type="button" id="albVPrev">← 上一张</button><button type="button" class="alb-dl" id="albVDl">⬇ 下载原图</button><button type="button" class="alb-del" id="albVDel" style="display:none">删除</button><button type="button" id="albVNext">下一张 →</button></div>';
   document.body.appendChild(fab); document.body.appendChild(sheet); document.body.appendChild(view);
   function msg(t) { var m = document.getElementById('albMsg'); if (m) m.textContent = t || ''; }
+  // [ALBUM-LIMIT-COPY 2026-11-15] 相册错误呈现统一口径：优先服务端可读文案
+  // （d.message，如「本场相册已达 N 张上限」）；无文案时按错误码映射定版文案；
+  // 相册未开放沿用既有文案；都没有则返回空串、由调用方走原有兜底。只改呈现。
+  function albErrText(e) {
+    if (!e) return '';
+    if (e.message === 'album_not_open') return '🕙 共享相册尚未开放（开赛前 30 分钟开放）';
+    if (e.serverMessage) return e.serverMessage;
+    if (e.message === 'album_photo_limit_reached') return '本场相册已达' + (e.limit ? ' ' + e.limit + ' ' : '') + '张上限，升级专业档可不限量上传';
+    return '';
+  }
   function renderGrid() {
     var g = document.getElementById('albGrid');
     g.innerHTML = P.photos.length ? '' : '<div class="alb-empty">暂无照片，来上传第一张吧</div>';
@@ -4006,7 +4016,7 @@ document.addEventListener('visibilitychange', function () {
   });
   document.getElementById('albVDel').addEventListener('click', function () {
     var p = P.photos[P.idx]; if (!p) return;
-    mylp({ action: 'photo_delete', photo_id: p.id }).then(function () { view.classList.remove('show'); refresh(false); msg('已删除'); }).catch(function (e) { msg('删除失败：' + e.message); });
+    mylp({ action: 'photo_delete', photo_id: p.id }).then(function () { view.classList.remove('show'); refresh(false); msg('已删除'); }).catch(function (e) { msg('删除失败：' + (albErrText(e) || e.message)); });
   });
   fab.addEventListener('click', function () { sheet.classList.add('show'); refresh(false); });
   document.getElementById('albClose').addEventListener('click', function () { sheet.classList.remove('show'); });
@@ -4039,7 +4049,7 @@ document.addEventListener('visibilitychange', function () {
         var disp = await variant(f, 1600, 0.82);
         var dispUrl = disp ? await uploadOne(disp, 'jpg') : null;
         await mylp({ action: 'photo_register', event_kind: 'golf', event_id: window.eventId, url: orig, display_url: dispUrl, thumb_url: null, caption: '', consent_public: false, enhance: false, client_op_id: 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) });
-      } catch (e) { msg(e.message === 'album_not_open' ? '🕙 共享相册尚未开放（开赛前 30 分钟开放）' : '有一张上传失败：' + e.message); }
+      } catch (e) { var et = albErrText(e); msg(et || ('有一张上传失败：' + e.message)); }
     }
     msg(''); refresh(false);
   });
