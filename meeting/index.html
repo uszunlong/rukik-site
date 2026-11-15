@@ -235,6 +235,9 @@
   body.in-ws input,body.in-ws select,body.in-ws textarea{background:#fff}
   body.in-ws .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;padding:10px 16px}
   body.in-ws .grid{flex:1;min-height:0;align-items:stretch;gap:14px}
+  /* [WB-VISUAL-V1] 高度链补环：#view-ws 须为纵向 flex，.grid 的 flex:1/min-height:0 才生效
+     （基线缺此环，长会议下整页被内容撑长、画布无限增高；补后画布随视口拉高、纪要独立滚动——工作台令硬验收） */
+  body.in-ws #view-ws{flex:1;min-height:0;display:flex;flex-direction:column}
   body.in-ws .grid .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(15,45,35,.05);margin-bottom:0}
   body.in-ws .col{overflow-y:auto}
   body.in-ws .col h3{color:var(--txt);font-size:15px;letter-spacing:0}
