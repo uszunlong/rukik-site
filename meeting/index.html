@@ -96,14 +96,107 @@
     .ws-head-row #m-mode{display:none}
     .ws-head-row #rec-ind .rec-txt{display:none}
   }
+  /* [HOME-REDESIGN 2026-11-14] 首页改版：石墨黑＋薄荷青。仅作用于顶栏与首页区块；
+     工作台进入后 body.in-ws 隔离，工作台内部样式与逻辑不受本块影响。 */
+  body:not(.in-ws){background:#0a0e0d}
+  .top{gap:14px;margin-bottom:0;padding:4px 2px 6px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand-logo{width:26px;height:26px;flex:none}
+  .brand-name{font-size:19px;font-weight:700;letter-spacing:.14em;color:#f2f5f3}
+  .brand-sep{width:1px;height:20px;background:#2a322f;flex:none}
+  .brand-prod{font-size:16px;font-weight:600;color:#e8ecea;white-space:nowrap}
+  .brand-tag{font-size:12.5px;color:#8b968f;white-space:nowrap}
+  .beta-badge{font-size:12px;color:#cfd6d2;border:1px solid #39423e;border-radius:99px;padding:4px 12px;white-space:nowrap;background:rgba(255,255,255,.02)}
+  .user-menu-wrap{position:relative;flex:none}
+  .avatar-btn{display:flex;align-items:center;gap:5px;background:transparent;border:0;padding:2px;cursor:pointer}
+  .avatar-circle{width:34px;height:34px;border-radius:50%;background:#2a3230;display:flex;align-items:center;justify-content:center;color:#aeb8b3}
+  .avatar-chev{color:#8b968f;font-size:11px}
+  .user-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:90;background:#121716;border:1px solid #262d2a;border-radius:12px;padding:8px;min-width:216px;box-shadow:0 14px 34px rgba(0,0,0,.5);display:none}
+  .user-menu.open{display:block}
+  .user-menu .who-line{font-size:12.5px;color:#9aa69f;padding:6px 8px;word-break:break-all}
+  .user-menu #signout{width:100%;text-align:left;background:transparent;color:#e8ecea;border:1px solid #262d2a;border-radius:8px;padding:8px 10px;font-weight:500;cursor:pointer}
+  .hero{position:relative;padding:50px 6px 38px;overflow:hidden}
+  .hero-inner{position:relative;z-index:1}
+  .hero h2{font-size:37px;line-height:1.28;margin:0 0 14px;font-weight:700;color:#f4f7f5}
+  .hero-sub{font-size:16.5px;color:#9fb0a6;margin:0 0 30px;letter-spacing:.05em}
+  .btn-start{background:linear-gradient(135deg,#93f7cf,#4fe3a5);color:#052e1e;font-size:16.5px;font-weight:700;border-radius:12px;padding:14px 30px;box-shadow:0 8px 24px rgba(79,227,165,.20)}
+  .btn-start:disabled{opacity:.45;box-shadow:none;cursor:not-allowed}
+  .hero-note{display:flex;align-items:center;gap:7px;margin-top:18px;font-size:13px;color:#8b968f;flex-wrap:wrap}
+  .hero-wave{position:absolute;right:-8px;top:2px;width:57%;max-width:780px;height:calc(100% - 4px);z-index:0;pointer-events:none;opacity:.9}
+  @media (prefers-reduced-motion: no-preference){ .hero-wave .wave-drift{animation:waveDrift 11s ease-in-out infinite alternate} }
+  @keyframes waveDrift{from{transform:translateX(0)}to{transform:translateX(-16px)}}
+  .home-sec{padding:28px 6px 4px;border-top:1px solid #1e2422;margin-top:6px}
+  .home-sec-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .home-sec-head h3{font-size:23px;margin:0;color:#f2f5f3;font-weight:700}
+  .search-box{margin-left:auto;display:flex;align-items:center;gap:8px;background:#141918;border:1px solid #262d2a;border-radius:11px;padding:0 6px 0 13px;min-width:300px;color:#77837c}
+  .search-box input{background:transparent;border:0;padding:10px 0;font-size:16px;color:#e8ecea;width:auto;flex:1;min-width:0}
+  .search-box input:focus{outline:none}
+  .search-box:focus-within{border-color:#3d4a44}
+  .search-box #btn-search{background:transparent;color:#9fb0a6;border:0;padding:7px 9px;font-weight:500;cursor:pointer;flex:none}
+  #search-results .meeting-row{border-bottom:1px solid #1e2422}
+  .meeting-row{display:flex;align-items:center;justify-content:flex-start;gap:14px;padding:17px 6px;border:0;border-bottom:1px solid #1e2422;border-radius:0;margin:0;background:transparent;cursor:pointer}
+  .meeting-row:hover{background:rgba(255,255,255,.025)}
+  .mr-ico{color:#4fe3a5;flex:none;display:flex}
+  .mr-title{flex:1;min-width:0;font-size:15.5px;font-weight:600;color:#eef2f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mr-type{display:flex;align-items:center;gap:6px;color:#9aa69f;font-size:13.5px;flex:none}
+  .mr-sep{width:1px;height:18px;background:#262d2a;flex:none}
+  .mr-status{flex:none;font-size:12px;border-radius:7px;padding:3px 10px;background:#232a27;color:#c3ccc7}
+  .mr-status.live{background:rgba(79,227,165,.14);color:#5eeab8}
+  .mr-status.paused{background:rgba(224,166,63,.15);color:#e8c37a}
+  .mr-time{flex:none;color:#9aa69f;font-size:13.5px;white-space:nowrap}
+  .mr-chev{flex:none;color:#77837c;font-size:19px;line-height:1}
+  .home-foot{display:flex;align-items:center;gap:8px;padding:18px 6px 6px;margin-top:30px;border-top:1px solid #1e2422;color:#8b968f;font-size:13px}
+  .home-foot .foot-right{margin-left:auto}
+  .settings-toggle{display:flex;align-items:center;gap:7px;background:transparent;border:0;color:#c3ccc7;font-size:13.5px;padding:8px 6px;cursor:pointer}
+  #home-settings{padding:6px 6px 12px}
+  #home-settings .set-row{display:flex;gap:8px;margin-top:6px;max-width:660px}
+  #home-settings input{background:#101514;border:1px solid #262d2a}
+  @media (max-width:720px){
+    .brand-tag{display:none}
+    .top{flex-wrap:nowrap;gap:10px}
+    .brand{gap:8px}
+    .brand-logo{width:23px;height:23px}
+    .brand-name{font-size:17px;letter-spacing:.1em}
+    .brand-prod{font-size:15px}
+    .beta-badge{font-size:11px;padding:3px 9px}
+    .avatar-circle{width:31px;height:31px}
+    .hero{padding:34px 2px 28px}
+    .hero h2{font-size:26.5px}
+    .hero-sub{font-size:15px;margin-bottom:24px}
+    .btn-start{width:100%;padding:14px 20px}
+    .hero-wave{width:92%;opacity:.30;top:auto;bottom:-8px;height:72%}
+    .home-sec{padding-top:22px}
+    .home-sec-head{flex-direction:column;align-items:stretch;gap:12px}
+    .search-box{margin-left:0;min-width:0;width:100%}
+    .meeting-row{gap:10px;padding:15px 2px}
+    .mr-type .mr-type-txt{display:none}
+    .mr-time{font-size:12.5px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <h1>RUKIK AI 会议伴侣</h1><span class="tag">内部测试 · 让会议可视化，让未来可预见</span>
-    <span style="flex:1"></span><span id="who" class="tag"></span>
-    <button id="signout" class="ghost" style="display:none">退出登录</button>
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="brand-g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#3ddc97"/><stop offset="1" stop-color="#8ff5cd"/></linearGradient></defs><path d="M7 23.5C7 13.8 15.6 6.6 27 5.5c-.9 11.4-8.3 19.3-17.6 20.4-1.5.2-2.4-.7-2.4-2.4Z" fill="url(#brand-g)"/><path d="M7.5 23C11.5 16.8 16.8 11.6 23.5 7.6" stroke="#0a0e0d" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".45"/></svg>
+      <span class="brand-name">RUKIK</span>
+      <span class="brand-sep"></span>
+      <span class="brand-prod">AI 会议伴侣</span>
+      <span class="brand-tag">让会议可视化，让未来可预见</span>
+    </div>
+    <span style="flex:1"></span>
+    <span class="beta-badge">内部测试</span>
+    <span class="brand-sep"></span>
+    <div class="user-menu-wrap" id="user-menu-wrap" style="display:none">
+      <button class="avatar-btn" id="avatar-btn" aria-haspopup="true" aria-expanded="false" title="账号">
+        <span class="avatar-circle"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.2" r="3.6" fill="currentColor"/><path d="M4.8 19.4c1.2-3.2 3.9-4.8 7.2-4.8s6 1.6 7.2 4.8" fill="currentColor"/></svg></span>
+        <span class="avatar-chev">▾</span>
+      </button>
+      <div class="user-menu" id="user-menu">
+        <div class="who-line" id="who"></div>
+        <button id="signout" style="display:none">退出登录</button>
+      </div>
+    </div>
   </div>
 
   <!-- 登录 -->
@@ -118,24 +211,66 @@
 
   <!-- 首页 -->
   <div id="view-home" style="display:none">
-    <div class="card">
-      <button id="btn-new">＋ 开始新会议</button>
-      <span class="dim" style="margin-left:10px">打开即录：先确认录音同意，再开始实时转写与纪要。</span>
-      <span id="home-flag" class="err" style="margin-left:10px"></span>
+    <div class="hero">
+      <svg class="hero-wave" viewBox="0 0 760 260" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <g class="wave-drift" fill="none" stroke="#57e6a9" stroke-width="1.1">
+          <path d="M-10 118 C110 68 230 182 370 120 S620 58 770 108" opacity=".30"/>
+          <path d="M-10 123 C115 72 235 186 375 124 S625 62 770 113" opacity=".16"/>
+          <path d="M-10 128 C120 76 240 190 380 128 S630 66 770 118" opacity=".20"/>
+          <path d="M-10 133 C125 80 245 194 385 132 S635 70 770 123" opacity=".24"/>
+          <path d="M-10 138 C130 84 250 198 390 136 S640 74 770 128" opacity=".38"/>
+          <path d="M-10 143 C130 88 250 203 390 141 S640 78 770 133" opacity=".22"/>
+          <path d="M-10 148 C130 92 250 208 390 146 S640 82 770 138" opacity=".26"/>
+          <path d="M-10 153 C130 97 250 211 390 150 S640 88 770 143" opacity=".30"/>
+          <path d="M-10 158 C130 104 250 214 390 154 S640 94 770 148" opacity=".34"/>
+          <path d="M-10 163 C135 111 255 217 395 158 S645 99 770 153" opacity=".15"/>
+          <path d="M-10 168 C140 118 260 220 400 162 S650 104 770 158" opacity=".18"/>
+          <path d="M-10 178 C150 132 270 226 410 170 S660 116 770 168" opacity=".13"/>
+        </g>
+        <g stroke="rgba(126,240,192,.45)" stroke-width="1">
+          <path d="M560 52 L648 96 L712 40 M648 96 L690 150 L742 120 L712 40 M648 96 L600 128 L560 52 M690 150 L600 128" fill="none"/>
+        </g>
+        <g fill="#8ff5cd">
+          <circle cx="560" cy="52" r="3.2"/><circle cx="648" cy="96" r="3.2"/><circle cx="712" cy="40" r="3.2"/>
+          <circle cx="690" cy="150" r="3.2"/><circle cx="600" cy="128" r="3.2"/><circle cx="742" cy="120" r="3.2"/>
+        </g>
+      </svg>
+      <div class="hero-inner">
+        <h2>让每一次交流，形成清晰的思考。</h2>
+        <p class="hero-sub">实时转写 · 思维导图 · AI 预见</p>
+        <button id="btn-new" class="btn-start">＋ 开始新会议</button>
+        <div class="hero-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><circle cx="12" cy="8" r="1.15" fill="currentColor" stroke="none"/></svg>
+          <span>开始前，请确认参会者同意录音。</span>
+          <span id="home-flag" class="err"></span>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <h3 style="margin-top:0">搜索会议</h3>
-      <div style="display:flex;gap:8px"><input id="q" placeholder="搜索标题或发言内容…"><button id="btn-search" class="ghost">搜索</button></div>
-      <div id="search-results" style="margin-top:10px"></div>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0">我的会议</h3>
+    <div class="home-sec">
+      <div class="home-sec-head">
+        <h3>我的会议</h3>
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+          <input id="q" placeholder="搜索会议或发言内容">
+          <button id="btn-search">搜索</button>
+        </div>
+      </div>
+      <div id="search-results"></div>
       <div id="meeting-list"><span class="dim">加载中…</span></div>
     </div>
-    <div class="card">
-      <h3 style="margin-top:0">会议设置</h3>
+    <div class="home-foot">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+      <span>会议内容仅你可见</span>
+      <span class="foot-right">
+        <button class="settings-toggle" id="btn-settings" aria-expanded="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg>
+          <span>会议设置</span><span id="set-chev">⌄</span>
+        </button>
+      </span>
+    </div>
+    <div id="home-settings" style="display:none">
       <label class="dim">转写服务地址（ASR WebSocket）</label>
-      <div style="display:flex;gap:8px;margin-top:4px"><input id="asr-url"><button id="btn-asr" class="ghost">保存</button></div>
+      <div class="set-row"><input id="asr-url"><button id="btn-asr" class="ghost">保存</button></div>
       <p class="dim">录音与转写仅保存在你的账号下，默认私有；删除会议后其内容将不可再被检索。发言人分离在后续阶段提供；会议导图与 AI 预见已上线（内部测试）。</p>
     </div>
   </div>
@@ -311,6 +446,12 @@ async function enterHome() {
   await loadList();
 }
 
+// [HOME-REDESIGN 2026-11-14] 首页列表行：状态中文映射、本地时区时间、行内图标（仅首页列表用）
+const ST_TXT = { live: '进行中', paused: '已暂停', ended: '已结束' };
+const fmtDay = (iso) => { if (!iso) return ''; const d = new Date(iso); if (Number.isNaN(d.getTime())) return ''; const p = (n) => String(n).padStart(2, '0'); return `${d.getMonth() + 1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const ICO_WAVE = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8.5 7v10M13 4.5v15M17.5 7v10M21 10v4"/></svg>';
+const ICO_MIC = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
+const ICO_PEOPLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.8-3 2.9-4.5 5.5-4.5s4.7 1.5 5.5 4.5M16 5.6a3.2 3.2 0 0 1 0 5.9M17.8 15.3c1.5.6 2.4 1.9 2.8 4.2"/></svg>';
 async function loadList() {
   const box = $('meeting-list');
   try {
@@ -319,7 +460,7 @@ async function loadList() {
     box.innerHTML = '';
     for (const m of meetings) {
       const row = document.createElement('div'); row.className = 'meeting-row';
-      row.innerHTML = `<span><b>${esc(m.title)}</b> <span class="chip">${m.mode === 'speech' ? '演讲' : '会议'}</span><span class="chip ${m.status}">${esc(m.status)}</span></span><span class="dim">${esc((m.started_at || m.created_at || '').replace('T',' ').slice(0,16))}</span>`;
+      row.innerHTML = `<span class="mr-ico">${ICO_WAVE}</span><span class="mr-title">${esc(m.title)}</span><span class="mr-type">${m.mode === 'speech' ? ICO_MIC : ICO_PEOPLE}<span class="mr-type-txt">${m.mode === 'speech' ? '演讲' : '会议'}</span></span><span class="mr-sep"></span><span class="mr-status ${esc(m.status)}">${ST_TXT[m.status] || esc(m.status)}</span><span class="mr-time">${fmtDay(m.started_at || m.created_at)}</span><span class="mr-chev">›</span>`;
       row.onclick = () => openMeeting(m.id);
       box.appendChild(row);
     }
@@ -342,6 +483,7 @@ $('btn-search').onclick = async () => {
     }
   } catch (e) { box.innerHTML = '<span class="err">搜索失败：' + esc(e.message) + '</span>'; }
 };
+$('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-search').click(); }); // [HOME-REDESIGN 2026-11-14] 回车搜索：与搜索按钮同一逻辑
 $('btn-asr').onclick = () => { localStorage.setItem('meeting_asr_url', $('asr-url').value.trim()); alert('已保存'); };
 // [MEETING-HUB 2026-11-14] 问 RUKIK：直连统一中枢 family-chat（本人 JWT），
 // 中枢侧按 UID 授权检索本人会议记录（MEETING-HUB 预取腿）；本场标题只作
@@ -1023,6 +1165,32 @@ function stopCapture() {
 (async () => {
   await refreshSession();
   if (session) await enterHome(); else show('login');
+})();
+</script>
+<script>
+// [HOME-REDESIGN 2026-11-14] 首页顶栏头像菜单与「会议设置」折叠（仅首页区块；主脚本的登录/退出/保存逻辑不改动）
+(function () {
+  var wrap = document.getElementById('user-menu-wrap');
+  var menu = document.getElementById('user-menu');
+  var btn = document.getElementById('avatar-btn');
+  var who = document.getElementById('who');
+  function syncWrap() { if (wrap) wrap.style.display = who && who.textContent.trim() ? '' : 'none'; }
+  if (who && window.MutationObserver) new MutationObserver(syncWrap).observe(who, { childList: true, characterData: true, subtree: true });
+  syncWrap();
+  if (btn && menu) {
+    btn.addEventListener('click', function (e) { e.stopPropagation(); var open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+    document.addEventListener('click', function (e) { if (!e.target.closest('.user-menu-wrap')) { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
+    var so = document.getElementById('signout');
+    if (so) so.addEventListener('click', function () { menu.classList.remove('open'); if (wrap) wrap.style.display = 'none'; });
+  }
+  var sBtn = document.getElementById('btn-settings');
+  var sPanel = document.getElementById('home-settings');
+  if (sBtn && sPanel) sBtn.addEventListener('click', function () {
+    var showPanel = sPanel.style.display === 'none';
+    sPanel.style.display = showPanel ? '' : 'none';
+    sBtn.setAttribute('aria-expanded', showPanel ? 'true' : 'false');
+    var chev = document.getElementById('set-chev'); if (chev) chev.textContent = showPanel ? '⌃' : '⌄';
+  });
 })();
 </script>
 </body>
