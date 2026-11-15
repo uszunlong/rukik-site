@@ -4,14 +4,28 @@
 import { applyVizPatch } from './core/viz.js';
 
 export const TYPE_META = {
-  topic: { label: '主题', color: '#35c48d' },
-  decision: { label: '决策', color: '#e8d28a' },
-  action: { label: '行动', color: '#9fc2ff' },
-  risk: { label: '风险', color: '#e05d5d' },
-  question: { label: '待确认', color: '#c792ea' },
-  person: { label: '人物', color: '#7dd3fc' },
-  milestone: { label: '里程碑', color: '#e0a63f' },
+  topic: { label: '主题', color: '#0B8A5F' },
+  decision: { label: '决策', color: '#1E8A54' },
+  action: { label: '行动', color: '#2F5FD0' },
+  risk: { label: '风险', color: '#C93A3A' },
+  question: { label: '待确认', color: '#2F5FD0' },
+  person: { label: '人物', color: '#0E7C9C' },
+  milestone: { label: '里程碑', color: '#9A7B1E' },
 };
+// [VIZ-VISUAL-V1 2026-11-14] 语义小徽标（轻量化：小 pill 浅底＋符号，不整卡着色；决策绿✓/风险红⚠/问题蓝?）
+export const BADGE = {
+  topic: { bg: '#EEF4F1', fg: '#47635A', icon: '' },
+  decision: { bg: '#E7F6EE', fg: '#1E8A54', icon: '✓' },
+  risk: { bg: '#FDECEC', fg: '#C93A3A', icon: '⚠' },
+  question: { bg: '#E8F0FE', fg: '#2F5FD0', icon: '?' },
+  action: { bg: '#EAF1FE', fg: '#2F5FD0', icon: '▶' },
+  person: { bg: '#E6F7FB', fg: '#0E7C9C', icon: '●' },
+  milestone: { bg: '#FBF3DF', fg: '#9A7B1E', icon: '◆' },
+};
+// [VIZ-VISUAL-V1 2026-11-14] 一级分支色（节点左边框与 contains 边同色，克制使用）
+const BRANCHES = ['#3B82C4', '#8B6CC9', '#2FA36B', '#D97742', '#0E9C8C'];
+const NODE_WIDTHS = [308, 238, 218, 206]; // 按层级定宽（与语言无关→中英切换盒宽不变、中心不动）
+const summaryOf = (n) => { const d = String(n.detail || '').trim(); if (!d) return ''; const i = d.indexOf('。'); return i > 0 && i < 34 ? d.slice(0, i + 1) : (d.length > 40 ? d.slice(0, 40) + '…' : d); };
 const EDGE_LABEL = { depends_on: '依赖', blocks: '阻碍', contradicts: '矛盾', supports: '支持', owns: '负责', precedes: '先于' };
 // [TRANSLATE-P1 2026-11-14] 类型/关系标签的英文版（随展示语言切换；展示语言≠识别语言，与 ASR 无关）
 export const TYPE_META_EN = { topic: 'Topic', decision: 'Decision', action: 'Action', risk: 'Risk', question: 'Open', person: 'Person', milestone: 'Milestone' };
@@ -19,6 +33,69 @@ const EDGE_LABEL_EN = { depends_on: 'depends on', blocks: 'blocks', contradicts:
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const emptyGraph = (mid) => ({ meeting_id: mid, nodes: [], edges: [], version: 1, updated_by: 'ai', updated_at: '' });
+
+// ---------- [VIZ-VISUAL-V1 2026-11-14] 确定性 tidy 脑图布局（纯函数，只算位置不改图数据） ----------
+// 用途仅两处：①会议在本机首次打开（本地无任何已存位置）时的初始落位；②用户手动「整理布局」。
+// 实时生长走 placeIncremental；已有节点位置永不被本布局自动挪动（位置一经建立只由用户拖动或手动整理改变）。
+function buildTree(g) {
+  const kids = new Map(); const hasParent = new Set();
+  for (const e of g.edges || []) if (e.type === 'contains') { if (!kids.has(e.from)) kids.set(e.from, []); kids.get(e.from).push(e.to); hasParent.add(e.to); }
+  return { kids, roots: (g.nodes || []).filter((n) => !hasParent.has(n.id)).map((n) => n.id) };
+}
+function leafCount(id, kids, memo) { if (memo.has(id)) return memo.get(id); const c = kids.get(id) || []; const v = c.length ? c.reduce((a, k) => a + leafCount(k, kids, memo), 0) : 1; memo.set(id, v); return v; }
+function computeLayout(g) {
+  const { kids, roots } = buildTree(g);
+  const depth = new Map(); const branch = new Map();
+  const out = new Map();
+  if (!roots.length) return { positions: out, depth, branch };
+  const memo0 = new Map();
+  const rootId = roots.includes('root') ? 'root' : roots.slice().sort((a, b) => leafCount(b, kids, memo0) - leafCount(a, kids, memo0))[0];
+  const pos = new Map(); depth.set(rootId, 0);
+  const l1 = kids.get(rootId) || [];
+  const memo = new Map();
+  const subs = l1.map((id) => ({ id, w: leafCount(id, kids, memo) })).sort((a, b) => b.w - a.w);
+  const sides = { left: [], right: [] }; const load = { left: 0, right: 0 };
+  for (const s of subs) { const side = load.right <= load.left ? 'right' : 'left'; sides[side].push(s.id); load[side] += s.w; }
+  const sideOf = new Map([[rootId, 'c']]); for (const s of ['left', 'right']) for (const id of sides[s]) sideOf.set(id, s);
+  const DX = [0, 318, 580, 796];
+  const place = (id, side, cursor) => {
+    const c = kids.get(id) || [];
+    if (!c.length) { const y = cursor.v; cursor.v += 168; pos.set(id, { cx: side === 'c' ? 0 : (side === 'left' ? -1 : 1) * DX[Math.min(depth.get(id), 3)], cy: y }); return y; }
+    const ys = c.map((k) => { depth.set(k, depth.get(id) + 1); sideOf.set(k, side); return place(k, side, cursor); });
+    const y = ys.reduce((a, b) => a + b, 0) / ys.length;
+    pos.set(id, { cx: side === 'c' ? 0 : (side === 'left' ? -1 : 1) * DX[Math.min(depth.get(id), 3)], cy: y });
+    return y;
+  };
+  for (const s of ['left', 'right']) { const cursor = { v: 0 }; for (const id of sides[s]) { depth.set(id, 1); place(id, s, cursor); } }
+  for (const s of ['left', 'right']) {
+    const ids = [...pos.keys()].filter((id) => sideOf.get(id) === s); if (!ids.length) continue;
+    const ys = ids.map((id) => pos.get(id).cy); const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+    for (const id of ids) pos.get(id).cy -= mid;
+  }
+  pos.set(rootId, { cx: 0, cy: 0 });
+  // 深层链（depth≥3）向下弯折：落在父节点下方，减小横向跨度、提高画布利用率
+  const byParent = new Map();
+  for (const e of g.edges || []) if (e.type === 'contains' && (depth.get(e.to) || 0) >= 3) { if (!byParent.has(e.from)) byParent.set(e.from, []); byParent.get(e.from).push(e.to); }
+  for (const [pid, kids3] of byParent) { const pp = pos.get(pid); if (!pp) continue; kids3.forEach((kid, i) => { pos.set(kid, { cx: pp.cx + (i - (kids3.length - 1) / 2) * 236, cy: pp.cy + 238 }); }); }
+  // 孤儿节点（无 contains 归属或属其他根的子树）排底部
+  let ox = -300; for (const n of g.nodes) if (!pos.has(n.id)) { pos.set(n.id, { cx: ox, cy: 340 }); if (!depth.has(n.id)) depth.set(n.id, 2); ox += 260; }
+  l1.forEach((id, i) => { const walk = (x) => { branch.set(x, BRANCHES[i % BRANCHES.length]); (kids.get(x) || []).forEach(walk); }; walk(id); });
+  for (const n of g.nodes) { const p = pos.get(n.id); const w = NODE_WIDTHS[Math.min(depth.get(n.id) || 1, 3)]; out.set(n.id, { x: p.cx - w / 2, y: p.cy - 40 }); }
+  return { positions: out, depth, branch };
+}
+// 增量落位：新节点在父节点外侧找不重叠槽位，既有坐标一律不动
+function placeIncremental(posMap, id, parentId, depth) {
+  const p = posMap.get(parentId); if (!p) { posMap.set(id, { x: 0, y: 0 }); return; }
+  const pw = NODE_WIDTHS[Math.min(depth.get(parentId) || 1, 3)]; const w = NODE_WIDTHS[Math.min((depth.get(parentId) || 1) + 1, 3)];
+  const dir = p.x + pw / 2 >= 0 ? 1 : -1;
+  const boxes = [...posMap.entries()].map(([k, v]) => ({ id: k, x: v.x, y: v.y, w: NODE_WIDTHS[Math.min(depth.get(k) || 1, 3)], h: 120 }));
+  const cand = [];
+  for (const dy of [0, 132, -132, 264, -264, 396, -396]) cand.push({ x: p.x + dir * (pw / 2 + w / 2 + 76) - w / 2, y: p.y + dy });
+  for (const dy of [150, -150, 300]) cand.push({ x: p.x + dir * 40, y: p.y + dy });
+  const hit = (b) => boxes.some((o) => Math.abs(o.x - b.x) < (o.w + b.w) / 2 + 18 && Math.abs(o.y - b.y) < 128);
+  for (const c of cand) { const b = { ...c, w, h: 120 }; if (!hit(b)) { posMap.set(id, c); return; } }
+  posMap.set(id, cand[0]);
+}
 
 export function createVizUI(opts) {
   const { mount, client, getMeetingId, getSegments, onLocateSegment, onError } = opts;
@@ -34,6 +111,7 @@ export function createVizUI(opts) {
     mode: 'live', // live | replay
     replay: null, // { graph, offsetMs, totalMs, playing, speed, timer }
     autoFollow: true,
+    theme: 'light', // [VIZ-VISUAL-V1 2026-11-14] 双主题：工作台浅色默认 / 演讲模式深色星图（enterProjection 切换）
     followHold: false, // [STAGE 2026-11-14] 用户手动平移/缩放后暂停跟随（回正恢复）
     _progMove: false, // [STAGE 2026-11-14] 程序化移动标记：setCenter/fitView 不触发跟随暂停
     listeners: new Set(),
@@ -51,12 +129,9 @@ export function createVizUI(opts) {
   }
   function typeLabel(t) { const m = TYPE_META[t] || TYPE_META.topic; return curLang() === 'en' ? (TYPE_META_EN[t] || m.label) : m.label; }
   function edgeLabel(t) { return curLang() === 'en' ? (EDGE_LABEL_EN[t] || EDGE_LABEL[t]) : EDGE_LABEL[t]; }
-  const estTextW = (s) => { let w = 0; for (const ch of String(s || '')) w += /[㐀-鿿豈-﫿]/.test(ch) ? 13 : 7; return w; };
-  function nodeWidth(n) {
-    const labels = [n.label, n.i18n && n.i18n.zh && n.i18n.zh.label, n.i18n && n.i18n.en && n.i18n.en.label].filter(Boolean);
-    const w = Math.max(0, ...labels.map(estTextW)) + 28;
-    return Math.min(280, Math.max(120, Math.ceil(w)));
-  }
+  // [VIZ-VISUAL-V1 2026-11-14] 盒宽按层级定宽（NODE_WIDTHS，与文本/语言无关）：
+  // 中英切换只换文字、盒宽与位置均不变（P1 坐标差=0 机制由「位置与文本解耦＋定宽」继续保证）
+  function nodeWidth(n, depthMap) { return NODE_WIDTHS[Math.min((depthMap && depthMap.get(n.id)) || 1, 3)]; }
   // [STAGE 2026-11-14] 程序化视口移动统一走此包装，避免被误判为用户手动平移而暂停跟随
   function progMove(fn) {
     store._progMove = true;
@@ -75,50 +150,28 @@ export function createVizUI(opts) {
   function savePositions() {
     try { localStorage.setItem(posKey(), JSON.stringify(Object.fromEntries(store.positions))); } catch { /* ignore */ }
   }
-  // 为新节点落位：优先挂到 contains 父节点下方；无父则排到现有包围盒右侧
-  function placeNode(node, graphBefore, patchEdges) {
-    if (store.positions.has(node.id)) return;
+  // 为新节点落位（live 与回放共用同一规则、各自的位置表）：有 contains 父→父外侧避重叠槽位
+  // （placeIncremental，既有坐标不动）；无父→现有包围盒右侧（沿用旧回落）
+  function placeIntoMap(posMap, node, graphBefore, patchEdges) {
+    if (posMap.has(node.id)) return;
     const edges = [...(graphBefore.edges || []), ...(patchEdges || [])];
-    const parentEdge = edges.find((e) => e.type === 'contains' && e.to === node.id && store.positions.has(e.from));
+    const parentEdge = edges.find((e) => e.type === 'contains' && e.to === node.id && posMap.has(e.from));
     if (parentEdge) {
-      const p = store.positions.get(parentEdge.from);
-      const siblings = (graphBefore.nodes || []).filter((n) => n.id !== node.id && edges.some((e) => e.type === 'contains' && e.from === parentEdge.from && e.to === n.id && store.positions.has(n.id)));
-      const idx = siblings.length;
-      store.positions.set(node.id, { x: p.x + (idx % 3) * 240 - 240, y: p.y + 180 + Math.floor(idx / 3) * 150 });
+      const { depth } = computeLayout({ nodes: [...(graphBefore.nodes || []), node], edges });
+      placeIncremental(posMap, node.id, parentEdge.from, depth);
       return;
     }
-    if ((graphBefore.nodes || []).length === 0) { store.positions.set(node.id, { x: 0, y: 0 }); return; }
+    if ((graphBefore.nodes || []).length === 0) { posMap.set(node.id, { x: 0, y: 0 }); return; }
     let maxX = -Infinity; let minY = Infinity;
-    for (const n of graphBefore.nodes) { const p = store.positions.get(n.id); if (p) { maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); } }
+    for (const n of graphBefore.nodes) { const p = posMap.get(n.id); if (p) { maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); } }
     const count = (graphBefore.nodes || []).length;
-    store.positions.set(node.id, { x: (isFinite(maxX) ? maxX + 280 : 0), y: (isFinite(minY) ? minY : 0) + (count % 4) * 60 });
+    posMap.set(node.id, { x: (isFinite(maxX) ? maxX + 280 : 0), y: (isFinite(minY) ? minY : 0) + (count % 4) * 60 });
   }
-  // 用户主动整理：按 contains 树层级重排（用户触发，允许整体移动）
+  function placeNode(node, graphBefore, patchEdges) { placeIntoMap(store.positions, node, graphBefore, patchEdges); }
+  // 用户主动整理：确定性 tidy 脑图布局整体重排（用户触发，允许整体移动；自动流程永不调用）
   function tidyLayout() {
-    const g = store.graph;
-    const children = new Map();
-    const hasParent = new Set();
-    for (const e of g.edges) if (e.type === 'contains') {
-      if (!children.has(e.from)) children.set(e.from, []);
-      children.get(e.from).push(e.to); hasParent.add(e.to);
-    }
-    const roots = g.nodes.filter((n) => !hasParent.has(n.id));
-    let leafX = 0;
-    const pos = new Map();
-    const walk = (id, depth) => {
-      const kids = children.get(id) || [];
-      if (!kids.length) { const x = leafX; leafX += 250; pos.set(id, { x, y: depth * 190 }); return x; }
-      const xs = kids.map((k) => walk(k, depth + 1));
-      const x = xs.reduce((a, b) => a + b, 0) / xs.length;
-      pos.set(id, { x, y: depth * 190 });
-      return x;
-    };
-    for (const r of roots) walk(r.id, 0);
-    // 无 contains 关系的散节点排在底部
-    let sx = 0;
-    for (const n of g.nodes) if (!pos.has(n.id)) { pos.set(n.id, { x: sx, y: 4 * 190 }); sx += 250; }
-    const minX = Math.min(...[...pos.values()].map((p) => p.x), 0);
-    for (const [k, v] of pos) store.positions.set(k, { x: v.x - minX, y: v.y });
+    const { positions } = computeLayout(store.graph);
+    for (const [k, v] of positions) store.positions.set(k, v);
     savePositions(); emit();
     setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 500, padding: 0.15 })); }, 50);
   }
@@ -161,9 +214,17 @@ export function createVizUI(opts) {
   async function load() {
     const mid = getMeetingId();
     loadPositions();
+    const hadSaved = store.positions.size > 0; // [VIZ-VISUAL-V1] 本机已存位置＝既有布局，永不自动重排
     const { graph } = await client.vizGet(mid);
     const { patches } = await client.vizPatchesList(mid);
     store.graph = graph; store.patches = patches; store.selectedId = null; store.mode = 'live'; store.replay = null;
+    // [VIZ-VISUAL-V1 2026-11-14] 首次打开（本地无任何已存位置）才用 tidy 脑图布局整体落位并持久化；
+    // 已有已存位置时只为缺位节点增量落位，既有坐标一律不动（与预览线集成提示 §7.4 一致）
+    if (!hadSaved && graph.nodes.length) {
+      const { positions } = computeLayout(graph);
+      for (const [k, v] of positions) store.positions.set(k, v);
+      savePositions();
+    }
     for (const n of graph.nodes) if (!store.positions.has(n.id)) placeNode(n, { nodes: graph.nodes.filter((x) => x.id !== n.id), edges: graph.edges }, graph.edges);
     emit(); renderDetail();
     setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 400, padding: 0.15 })); }, 80);
@@ -194,15 +255,11 @@ export function createVizUI(opts) {
     const pos = new Map();
     for (const p of store.patches) {
       if (new Date(p.created_at).getTime() - t0 > offsetMs) break;
-      // 回放落位与 live 同规则，但在独立位置表上演算
+      // 回放落位与 live 同规则（placeIntoMap），但在独立位置表上演算
       const patchEdges = p.ops.filter((o) => o.op === 'add_edge').map((o) => o.edge);
       for (const op of p.ops) {
         if (op.op !== 'add_node' || pos.has(op.node.id)) continue;
-        const edges = [...(g.edges || []), ...patchEdges];
-        const pe = edges.find((e) => e.type === 'contains' && e.to === op.node.id && pos.has(e.from));
-        if (pe) { const pp = pos.get(pe.from); const sib = (g.nodes || []).filter((n) => edges.some((e) => e.type === 'contains' && e.from === pe.from && e.to === n.id && pos.has(n.id))).length; pos.set(op.node.id, { x: pp.x + (sib % 3) * 240 - 240, y: pp.y + 180 + Math.floor(sib / 3) * 150 }); }
-        else if ((g.nodes || []).length === 0) pos.set(op.node.id, { x: 0, y: 0 });
-        else { let maxX = -Infinity; for (const n of g.nodes) { const q = pos.get(n.id); if (q) maxX = Math.max(maxX, q.x); } pos.set(op.node.id, { x: isFinite(maxX) ? maxX + 280 : 0, y: 0 }); }
+        placeIntoMap(pos, op.node, g, patchEdges);
       }
       g = applyVizPatch(g, { base_version: p.base_version, ops: p.ops, actor: p.actor, created_at: p.created_at }, p.created_at).graph;
     }
@@ -389,6 +446,7 @@ export function createVizUI(opts) {
     wrapEl.classList.add('projecting');
     document.body.appendChild(wrapEl);
     wrapEl.classList.add('in-projection');
+    store.theme = 'dark'; emit(); // [VIZ-VISUAL-V1] 演讲模式切深色星图主题（同数据、只换渲染主题）
     projChip = document.createElement('button');
     projChip.className = 'viz-exit-chip';
     projChip.textContent = '✕ 退出演讲模式（Esc）';
@@ -405,6 +463,7 @@ export function createVizUI(opts) {
     if (!wrapEl.classList.contains('in-projection')) return;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     wrapEl.classList.remove('in-projection', 'projecting');
+    store.theme = 'light'; emit(); // [VIZ-VISUAL-V1] 退出演讲恢复工作台浅色主题
     mount.insertBefore(wrapEl, detailEl);
     if (projChip) { projChip.remove(); projChip = null; }
     if (stageTimer) { clearInterval(stageTimer); stageTimer = null; }
@@ -431,21 +490,40 @@ export function createVizUI(opts) {
 
   // ---------- React Flow 挂载 ----------
   function mountReact({ React, createRoot, ReactFlow, Background, Controls, Handle, Position }) {
+    // [VIZ-VISUAL-V1 2026-11-14] 新版节点渲染：标题＋一句摘要（钳制）、点选展开全文＋贡献；
+    // 语义只用小徽标（BADGE 浅底 pill）；中心节点绿渐变突出；一级分支色左边框；连线走左右侧 handle。
     const VizNode = ({ data, selected }) => {
       const n = data.viz;
-      const meta = TYPE_META[n.type] || TYPE_META.topic;
-      return React.createElement('div', {
-        className: 'viz-node' + (data.fresh ? ' viz-fresh' : '') + (data.deepened ? ' viz-deepen' : '') + (data.speakerDim ? ' viz-dim' : '') + (selected ? ' viz-selected' : ''),
-        // [TRANSLATE-P1] 盒宽＝双语包络宽度（data.width），两语言同宽→切换时盒与中心不动
-        style: { width: data.width },
-        // [WB-REDESIGN 2026-11-14] 边框改由 CSS 中性描边（类型色保留在标签上），选中/新节点以薄荷环与柔光区分
-      },
-        React.createElement(Handle, { type: 'target', position: Position.Top, style: { opacity: 0 } }),
-        React.createElement('div', { className: 'viz-node-tag', style: { color: meta.color } }, typeLabel(n.type) + (n.locked ? ' 🔒' : '') + (n.version > 1 ? ` · v${n.version}` : '')),
+      const lv = data.level || 1;
+      const bdg = BADGE[n.type] || BADGE.topic;
+      const style = { width: data.width };
+      if (lv === 0) style.background = 'linear-gradient(135deg,#12B981 0%,#0E9F6E 55%,#0B8A5F 100%)';
+      else if (data.branch) style.borderLeft = `3.5px solid ${data.branch}`;
+      const cls = 'viz-node lv' + lv + (data.fresh ? ' viz-fresh' : '') + (data.deepened ? ' viz-deepen' : '') + (data.speakerDim ? ' viz-dim' : '') + (selected ? ' viz-selected' : '');
+      const handles = [
+        React.createElement(Handle, { key: 'tl', type: 'target', id: 'tl', position: Position.Left, style: { opacity: 0 } }),
+        React.createElement(Handle, { key: 'sl', type: 'source', id: 'sl', position: Position.Left, style: { opacity: 0 } }),
+        React.createElement(Handle, { key: 'tr', type: 'target', id: 'tr', position: Position.Right, style: { opacity: 0 } }),
+        React.createElement(Handle, { key: 'sr', type: 'source', id: 'sr', position: Position.Right, style: { opacity: 0 } }),
+      ];
+      if (lv === 0) {
+        return React.createElement('div', { className: cls, style }, ...handles,
+          React.createElement('div', { style: { fontSize: 17, marginBottom: 2 } }, '🍃'),
+          React.createElement('div', { className: 'viz-node-label' }, data.dispLabel),
+          data.dispDetail ? React.createElement('div', { className: 'viz-node-detail clamp3' }, data.dispDetail) : null);
+      }
+      return React.createElement('div', { className: cls, style }, ...handles,
+        React.createElement('div', { className: 'viz-node-badgerow' },
+          React.createElement('span', { className: 'viz-node-tag', style: { background: bdg.bg, color: bdg.fg } }, (bdg.icon ? bdg.icon + ' ' : '') + typeLabel(n.type)),
+          n.locked ? React.createElement('span', { className: 'viz-node-lock' }, '🔒') : null,
+          n.version > 1 ? React.createElement('span', { className: 'viz-node-ver' }, 'v' + n.version) : null),
         React.createElement('div', { className: 'viz-node-label' }, data.dispLabel),
-        data.dispDetail ? React.createElement('div', { className: 'viz-node-detail' }, data.dispDetail) : null,
-        React.createElement(Handle, { type: 'source', position: Position.Bottom, style: { opacity: 0 } }),
-      );
+        selected
+          ? React.createElement(React.Fragment, null,
+              data.dispDetail ? React.createElement('div', { className: 'viz-node-detail full' }, data.dispDetail) : null,
+              (n.contributions || []).length ? React.createElement('div', { className: 'viz-node-contrib' },
+                n.contributions.map((c, i) => React.createElement('span', { key: i, style: { background: bdg.bg, color: bdg.fg } }, (c.speaker === 'unknown' ? '发言者待确认' : c.speaker) + ' · ' + (REL_LABEL[c.relation] || c.relation)))) : null)
+          : (data.dispSummary ? React.createElement('div', { className: 'viz-node-detail clamp2' }, data.dispSummary) : null));
     };
     const nodeTypes = { viz: VizNode };
     function App() {
@@ -457,23 +535,34 @@ export function createVizUI(opts) {
       }, []);
       const g = store.mode === 'replay' && store.replay ? store.replay.state.graph : store.graph;
       const posMap = store.mode === 'replay' && store.replay ? store.replay.state.positions : store.positions;
-      const rfNodes = g.nodes.map((n) => { const t = nodeText(n); const w = nodeWidth(n); return ({
+      // [VIZ-VISUAL-V1] 层级/分支色是图数据的纯函数（computeLayout 只读图、不触碰 positions）
+      const layout = computeLayout(g);
+      const rfNodes = g.nodes.map((n) => { const t = nodeText(n); const lv = layout.depth.has(n.id) ? layout.depth.get(n.id) : 1; return ({
         id: n.id, type: 'viz',
         position: posMap.get(n.id) || { x: 0, y: 0 },
-        data: { viz: n, dispLabel: t.label, dispDetail: t.detail, width: w, fresh: store.fresh.has(n.id), deepened: store.deepened.has(n.id), speakerDim: !!store.speakerFilter && !nodeSpeakers(n).has(store.speakerFilter) },
+        data: { viz: n, level: lv, branch: layout.branch.get(n.id) || '#2FA36B', dispLabel: t.label, dispDetail: t.detail, dispSummary: summaryOf({ detail: t.detail }), width: nodeWidth(n, layout.depth), fresh: store.fresh.has(n.id), deepened: store.deepened.has(n.id), speakerDim: !!store.speakerFilter && !nodeSpeakers(n).has(store.speakerFilter) },
         selected: store.selectedId === n.id,
         draggable: store.mode === 'live',
       }); });
-      const rfEdges = g.edges.map((e) => ({
-        id: e.id, source: e.from, target: e.to,
-        label: edgeLabel(e.type) || undefined,
-        animated: store.freshEdges.has(e.id),
-        style: { stroke: e.type === 'contradicts' || e.type === 'blocks' ? '#e05d5d' : e.type === 'depends_on' ? '#e0a63f' : '#3ba273', strokeWidth: 1.6 },
-        labelStyle: { fill: '#8b979e', fontSize: 11 },
-      }));
+      const rfEdges = g.edges.map((e) => {
+        const s = posMap.get(e.from); const t2 = posMap.get(e.to);
+        const rightward = !s || !t2 || (t2.x >= s.x);
+        const isContains = e.type === 'contains';
+        return {
+          id: e.id, source: e.from, target: e.to,
+          sourceHandle: rightward ? 'sr' : 'sl', targetHandle: rightward ? 'tl' : 'tr',
+          type: 'default',
+          label: isContains ? undefined : (edgeLabel(e.type) || undefined),
+          animated: store.freshEdges.has(e.id),
+          style: isContains ? { stroke: layout.branch.get(e.to) || '#2FA36B', strokeWidth: 2.1, opacity: .75 }
+                            : { stroke: e.type === 'contradicts' || e.type === 'blocks' ? '#E05D5D' : '#9DB4A8', strokeWidth: 1.4, strokeDasharray: '5 4' },
+          labelStyle: { fill: store.theme === 'dark' ? '#8FA5B5' : '#7A8B82', fontSize: 11 },
+          labelBgStyle: { fill: store.theme === 'dark' ? '#0A0F14' : '#F3F9F6' }, labelBgPadding: [4, 2], labelBgBorderRadius: 6,
+        };
+      });
       return React.createElement(ReactFlow, {
         nodes: rfNodes, edges: rfEdges, nodeTypes,
-        colorMode: 'dark', fitView: true, minZoom: 0.2, maxZoom: 2.2,
+        colorMode: store.theme, fitView: true, minZoom: 0.2, maxZoom: 2.2,
         panOnDrag: true, zoomOnPinch: true, zoomOnScroll: true, // [STAGE 2026-11-14] 拖动平移＋双指捏合缩放（RF 内置，显式声明防默认值漂移）
         // [STAGE 2026-11-14] 用户手动平移/缩放（非程序化移动）即暂停自动跟随，回正后恢复
         onMoveStart: () => { if (store._progMove) return; if (store.mode === 'live' && store.autoFollow && !store.followHold) { store.followHold = true; syncFollowChip(); if (opts.onFollowChange) opts.onFollowChange(); } },
@@ -484,7 +573,7 @@ export function createVizUI(opts) {
         onNodeDragStop: (_, node) => { store.positions.set(node.id, node.position); savePositions(); },
         onInit: (inst) => { store.rfApi = inst; },
         nodesDraggable: store.mode === 'live', nodesConnectable: false, elementsSelectable: true,
-      }, React.createElement(Background, { gap: 22, size: 1, color: '#20292f' }), React.createElement(Controls, { showInteractive: false }));
+      }, React.createElement(Background, { gap: 22, size: 1.1, color: store.theme === 'dark' ? '#1D2A35' : '#D5E3DB' }), React.createElement(Controls, { showInteractive: false }));
     }
     const root = createRoot(document.getElementById('viz-canvas'));
     root.render(React.createElement(App));
