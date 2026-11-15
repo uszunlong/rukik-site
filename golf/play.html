@@ -1334,6 +1334,12 @@ function paint() {
     return;
   }
   if (reg && reg.status === 'cancelled') {
+    /* [CANCELLED-REG 20261115] 报名取消是终态但不是死胡同：赛事仍开放报名
+       （published 未开赛）时与从未报名者一致、直接呈正常报名卡——register
+       服务端对 cancelled 行走 upsert 复活同一行（自助落 pending 待审核、
+       与首次报名同口径），不存在「已取消」类报错。已开赛/已结束/未发布
+       时保留原提示口径不变。 */
+    if (e.status === 'published') return paintRegister();
     app.innerHTML = evMetaHtml() + '<div class="card"><h2>报名已取消</h2><p class="muted">您在本场的报名已取消。如需重新报名，请联系主办方。</p>' + backToEventBtn() + '</div>';
     return;
   }
