@@ -3501,10 +3501,15 @@ document.addEventListener('click', function (e) {
       var isMgr = r.data.cls === 'manager';
       var photos = r.data.photos || [];
       var deletable = photos.filter(function (p) { return p.can_delete === true; });
-      if (!deletable.length) { msg.textContent = '暂无可删除的照片'; list.innerHTML = ''; pmSyncBar(); return; }
-      msg.textContent = isMgr
+      if (!deletable.length && !r.data.retention_expired) { msg.textContent = '暂无可删除的照片'; list.innerHTML = ''; pmSyncBar(); return; }
+      // [ALBUM-RETENTION 2026-11-15] 保留态明示：参与者照片已隐藏保留（数据
+      // 未删、授予专业档可恢复），下方仅列官方海报；不得显示成「暂无可删除
+      // 的照片」让主办方误以为照片已丢失。
+      msg.textContent = r.data.retention_expired
+        ? '相册已进入保留期：参与者照片共 ' + (r.data.hidden_photo_count || 0) + ' 张已隐藏保留（数据未删除），授予专业档后可恢复显示；官方海报仍可查看（海报请在海报管理中处理）。'
+        : (isMgr
         ? '你是本赛事管理方，可删除全场照片。勾选后批量删除，删除立即全端同步、无法恢复。'
-        : '只可删除你上传的照片（他人照片不可选）。勾选后批量删除，删除立即全端同步、无法恢复。';
+        : '只可删除你上传的照片（他人照片不可选）。勾选后批量删除，删除立即全端同步、无法恢复。');
       list.innerHTML = photos.map(function (p) {
         // [相册最终整改 2026-11-12] 可删性以服务端 can_delete 为准（官方海报
         // 不经照片删除通道：can_delete=false 并注明去向）；无「待审核」状态文案。
