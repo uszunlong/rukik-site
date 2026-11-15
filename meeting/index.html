@@ -601,6 +601,20 @@ $('btn-end').onclick = async () => {
     }
     await client.end(cur.meeting.id);
     const data = await client.getMeeting(cur.meeting.id); cur = data; renderMeeting();
+    // [VIZ-DRAIN 2026-11-14] 结束排空：viz 与 minutes 双游标必须追平总段数才算结束完成
+    //（旧流程结束时不做分析排空，尾段只追平纪要、导图停在倒数第二段）。排空失败不挡结束，打开会议另有补分析兜底。
+    try {
+      for (let i = 0; i < 4; i++) {
+        const d2 = await client.getMeeting(cur.meeting.id); cur = d2;
+        const mx = cur.segments.reduce((a, s) => Math.max(a, Number(s.seq) || 0), 0);
+        const needViz = mx > Number(cur.meeting.last_viz_seq || 0);
+        const needMin = mx > Number(cur.meeting.last_analyzed_seq || 0);
+        if (!needViz && !needMin) break;
+        if (needViz) { const r = await client.analyze(cur.meeting.id, true, 'viz'); if (r.ran && vizUI) { await vizUI.syncNewPatches(); updateVizStat(); } }
+        if (needMin) { const r = await client.analyze(cur.meeting.id, true, 'minutes'); if (r.ran) await reloadMinutes(); }
+      }
+      renderMeeting();
+    } catch { /* 排空失败不挡结束流程 */ }
   } catch (e) { $('ws-err').textContent = e.message; }
 };
 
@@ -652,9 +666,11 @@ async function startCapture() {
         client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
       finalsSinceViz += 1; finalsSinceForesight += 1;
-      if (vizUI && finalsSinceViz >= 2 && Date.now() - lastVizAt > 30000) {
+      // [VIZ-RT 2026-11-14] 导图触发提速：≥2 新段（6 秒下限防抖）或 ≥1 新段且距上轮 >12 秒，先到先触发；
+      // 服务端 viz 节流已同步降至 5 秒＋12 秒 interval 口径，目标说话→节点可见 ≤15 秒。
+      if (vizUI && ((finalsSinceViz >= 2 && Date.now() - lastVizAt > 6000) || (finalsSinceViz >= 1 && Date.now() - lastVizAt > 12000))) {
         lastVizAt = Date.now(); finalsSinceViz = 0;
-        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastVizAt -= 20000; } }).catch(() => {});
+        client.analyze(cur.meeting.id, false, 'viz').then(async (r) => { if (r.ran) { await vizUI.syncNewPatches(); updateVizStat(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastVizAt -= 6000; } }).catch(() => {});
       }
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
