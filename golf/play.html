@@ -3977,6 +3977,16 @@ document.addEventListener('visibilitychange', function () {
     return mylp({ action: 'photo_list', event_kind: 'golf', event_id: window.eventId, limit: 100 }).then(function (d) {
       if (!d || !d.ok) return;
       if (d.album_enabled === false) {
+        // [ALBUM-RETENTION 2026-11-15] 保留态：全身份保留相册入口，服务端只
+        // 下发官方海报条目、参与者照片隐藏保留；不摘除入口、不误报未开通。
+        // gate(d) 会按 upload_open=false 写 T-30 提示，故保留文案在其后覆写。
+        if (d.retention_expired) {
+          P.cls = d.cls || P.cls;
+          P.photos = (d.photos || []).filter(function (p) { return p.is_official || p.status === 'visible' || p.mine; });
+          renderGrid(); gate(d);
+          var an2 = document.getElementById('albNote'); if (an2) { an2.textContent = '📷 相册已进入保留期：仅可查看赛事海报，参与者照片已隐藏保留（数据未删除，授予专业档可恢复）。'; an2.classList.add('show'); }
+          return;
+        }
         // [ALBUM-MGR-VIS 2026-11-15] 未开通赛事不再对管理方/摄影师整块摘除入口：
         // 保留 FAB 与相册层并明示未开通（与 photos.html 文案同口径），普通成员/
         // 访客维持原自摘行为。根治在服务端建赛默认授予，此为呈现层兜底。
@@ -4059,6 +4069,9 @@ document.addEventListener('visibilitychange', function () {
   window.addEventListener('online', function () { if (P.booted) refresh(false); });
   mylp({ action: 'album_state', event_kind: 'golf', event_id: window.eventId }).then(function (d) {
     if (!d || !d.ok) { fab.remove(); sheet.remove(); view.remove(); return; }
+    // [ALBUM-RETENTION 2026-11-15] 保留态：全身份保留入口并拉取海报条目，
+    // 提示文案在 gate(d) 之后覆写（gate 会按 upload_open=false 写 T-30 提示）。
+    if (!d.album_enabled && d.retention_expired) { P.booted = true; P.cls = d.cls; gate(d); var bn2 = document.getElementById('albNote'); if (bn2) { bn2.textContent = '📷 相册已进入保留期：仅可查看赛事海报，参与者照片已隐藏保留（数据未删除，授予专业档可恢复）。'; bn2.classList.add('show'); } refresh(false); return; }
     if (!d.album_enabled && !(d.cls === 'manager' || d.cls === 'photographer')) { fab.remove(); sheet.remove(); view.remove(); return; }
     if (!d.album_enabled) { P.booted = true; P.cls = d.cls; gate(d); var bn = document.getElementById('albNote'); if (bn) { bn.textContent = '本赛事尚未开通 Golf Live 相册：开通后才可上传与展示照片（赛事其他功能不受影响）。'; bn.classList.add('show'); } return; }
     P.booted = true; gate(d); refresh(false);
