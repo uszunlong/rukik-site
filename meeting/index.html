@@ -645,7 +645,11 @@ let session = null;
 const client = new MeetingClient({
   baseUrl: CFG.SUPABASE_URL + '/functions/v1',
   anonKey: CFG.ANON_KEY,
-  getAccessToken: async () => session?.access_token ?? null,
+  // [TOKEN-REFRESH 2026-11-15] 每次调用前经 supabase-js 取当前会话：access_token 过期时
+  // getSession 会用 refresh token 自动续期。此前只用开机快照，约 1 小时后快照过期、全部
+  // 接口开始回 401 login_required（预见面板是首个可见受害者，其余失败被静默吞掉）。
+  // 刷新失败/无会话时沿用现有快照再试，语义与原实现一致。
+  getAccessToken: async () => { try { const { data } = await sb.auth.getSession(); if (data && data.session) session = data.session; } catch { /* 沿用现有快照 */ } return session?.access_token ?? null; },
 });
 let flagEnabled = false;
 let cur = null; // {meeting, minutes, segments}
@@ -678,6 +682,23 @@ function segDisplay(s, baseText) {
   return { text: t.translated_text, chip: t.state === 'provisional' ? '<span class="chip">译文·临时</span>' : '<span class="chip">译文</span>' };
 }
 function syncDispLangBtns() { const z = $('dl-zh'), e = $('dl-en'); if (z) z.style.fontWeight = displayLang === 'zh' ? '700' : ''; if (e) e.style.fontWeight = displayLang === 'en' ? '700' : ''; }
+// [LANG-SWITCH-NOTE 2026-11-15] 展示语言切换的如实反馈：切换目标与内容主导语言不同、
+// 且没有该语言译文可呈现时，明示原因（未开启翻译／正在补译），不再静默无反应——此前
+// 主账号会议因不在翻译灰度内恒无译文，点 English 只有按钮字重变化、页面看不出任何区别。
+// 切回主导语言或译文已就位时，只清本提示自己写下的那行，不碰共享提示行的其他内容。
+let lastLangNote = '';
+function langSwitchNote(l) {
+  const el = $('ws-err'); if (!el) return;
+  let dom = 'unknown', has = false;
+  if (cur && cur.segments && cur.segments.length) { const last = cur.segments[cur.segments.length - 1]; dom = last.lang || detectLangPage(last.text); }
+  if (dom !== 'unknown' && dom !== l) { for (const k of translationsBySeg.keys()) { if (k.endsWith('|' + l)) { has = true; break; } } }
+  if (dom === 'unknown' || dom === l || has) { if (lastLangNote && el.textContent === lastLangNote) el.textContent = ''; lastLangNote = ''; return; }
+  const langName = l === 'en' ? '英文' : '中文';
+  lastLangNote = (cur && cur.meeting && cur.meeting.translation_enabled)
+    ? `${langName}译文正在补译，完成后将自动按${langName}显示；当前先按原文显示。`
+    : `本场会议未开启翻译，暂无${langName}译文，已按原文显示。`;
+  el.textContent = lastLangNote;
+}
 async function setDisplayLang(l) {
   if (l !== 'zh' && l !== 'en') return;
   displayLang = l;
@@ -693,6 +714,7 @@ async function setDisplayLang(l) {
       if (r && r.ran) { await loadTranslations(); await loadVizAndForesight(); renderSegments(); renderMinutes(); }
     } catch { /* 补译失败保持原文呈现 */ }
   }
+  langSwitchNote(l); // [LANG-SWITCH-NOTE] 切换后仍无目标语言译文可呈现时明示原因
 }
 $('dl-zh').onclick = () => setDisplayLang('zh');
 $('dl-en').onclick = () => setDisplayLang('en');
@@ -1353,7 +1375,7 @@ async function loadForesight() {
       const rst = div.querySelector('[data-fact="restore"]'); if (rst) rst.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'open'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
       box.appendChild(div);
     }
-  } catch (e) { box.innerHTML = '<span class="err">预见加载失败：' + esc(e.message) + '</span>'; }
+  } catch (e) { $('fs-stat').textContent = ''; box.innerHTML = '<span class="err">预见加载失败：' + esc(e.message) + '</span>'; } // [TOKEN-REFRESH] 失败时同步清掉旧计数，避免「共 N 条」与加载失败并存的矛盾呈现
 }
 // [AUTO-FORESIGHT 2026-11-14] 预见自动扫描（用户 22:36 定版）：默认开启、无设置页。
 // 约 3 分钟首检、其后每 3 分钟检查一次（检查≠生成）；轻量门控复用字幕/导图增量——无新段或
