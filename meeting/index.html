@@ -394,6 +394,12 @@
             <button id="btn-delete" class="ghost menu-item" style="display:none;color:var(--bad)">删除会议</button>
             <button id="menu-signout" class="ghost menu-item">退出登录</button>
             <div class="ws-menu-info" id="m-info"></div>
+            <!-- [ASR-LANG 2026-11-14] 会议内改识别语言（ASR 输入语言，与展示语言分开）；分流在转写连接时判定，改动下一次连接生效 -->
+            <div class="ws-menu-info" id="m-lang-wrap" style="border-top:1px solid var(--line);padding-top:8px">
+              <label class="dim" for="m-lang">识别语言（语音转写的输入语言）</label>
+              <select id="m-lang" style="width:100%;margin-top:4px"><option value="auto">自动（暂按中文识别，英文会议请选 English）</option><option value="zh">中文</option><option value="en">English（英文识别）</option></select>
+              <div class="dim" id="m-lang-note" style="margin-top:4px">修改后在下一次转写连接时生效。</div>
+            </div>
           </div>
         </div>
       </div>
@@ -477,6 +483,9 @@
     <h3 style="margin-top:0">开始新会议</h3>
     <p><input id="new-title" placeholder="会议名称（可留空，稍后修改）"></p>
     <p><select id="new-mode"><option value="meeting">会议模式（多人讨论）</option><option value="speech">演讲（单人主讲）</option></select></p>
+    <!-- [ASR-LANG 2026-11-14] 识别语言＝ASR 输入语言（识别走哪个通道），与字幕/导图/纪要的展示语言是两个设置、互不代替；auto 暂无音频自动识别、如实标注 -->
+    <p><label class="dim" for="new-lang">识别语言（语音转写的输入语言）</label>
+    <select id="new-lang"><option value="auto">自动（暂按中文识别，英文会议请选 English）</option><option value="zh">中文</option><option value="en">English（英文识别）</option></select></p>
     <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="consent" style="width:auto;margin-top:3px">
       <span>我确认已向参会者告知本次会议将被录音并转写，且已取得适用的同意。录音开始后请让页面保持前台。</span></label>
     <p id="consent-err" class="err"></p>
@@ -621,7 +630,7 @@ $('btn-create').onclick = async () => {
   if (!$('consent').checked) { $('consent-err').textContent = '请先确认录音同意。'; return; }
   $('consent-err').textContent = '';
   try {
-    const { meeting } = await client.createMeeting($('new-title').value.trim() || undefined, $('new-mode').value);
+    const { meeting } = await client.createMeeting($('new-title').value.trim() || undefined, $('new-mode').value, $('new-lang').value);
     await client.consent(meeting.id);
     const { meeting: started } = await client.start(meeting.id);
     $('modal-consent').style.display = 'none';
@@ -640,6 +649,21 @@ $('btn-viz-more').onclick = (e) => { e.stopPropagation(); const m = $('viz-menu'
 document.addEventListener('click', (e) => { const m = $('viz-menu'); if (m && m.style.display !== 'none' && !e.target.closest('#viz-menu') && !e.target.closest('#btn-viz-more')) m.style.display = 'none'; });
 $('viz-menu').addEventListener('click', (e) => { if (e.target.closest('#btn-viz-grow')) $('viz-menu').style.display = 'none'; });
 $('menu-signout').onclick = () => { $('signout').click(); };
+// [ASR-LANG 2026-11-14] 识别语言改动：set_lang 落库并同步 cur.meeting.lang；分流在 ASR 连接时判定，
+// 对下一次连接（含自动重连）生效，当前连接不中断；选择器点击不触发菜单收起。
+$('m-lang-wrap').addEventListener('click', (e) => e.stopPropagation());
+$('m-lang').onchange = async () => {
+  if (!cur || !cur.meeting) return;
+  const v = $('m-lang').value;
+  try {
+    const { meeting } = await client.setLang(cur.meeting.id, v);
+    cur.meeting.lang = meeting.lang || v;
+    $('m-lang-note').textContent = '已保存，将在下一次转写连接时生效。';
+  } catch (e) {
+    $('m-lang-note').textContent = '保存失败：' + e.message;
+    $('m-lang').value = cur.meeting.lang || 'auto';
+  }
+};
 
 let lastAnalyzeNoteAt = 0;
 function noteAnalyzeFail(r) {
@@ -703,6 +727,9 @@ function renderMeeting() {
   $('m-mode').textContent = m.mode === 'speech' ? '单人演讲' : '会议模式';
   $('m-status').textContent = ({ live: '进行中', paused: '已暂停', ended: '已结束' })[m.status] || m.status;
   $('m-info').innerHTML = `会议 ID：${esc(m.id)}<br>创建：${esc((m.created_at||'').replace('T',' ').slice(0,19))}<br>时区：${esc(m.timezone)}`;
+  // [ASR-LANG 2026-11-14] 识别语言选择器与本场设置同步；已结束会议不可改（服务端 set_lang 同口径 409）
+  $('m-lang').value = m.lang || 'auto';
+  $('m-lang').disabled = m.status === 'ended';
   $('btn-delete').style.display = m.status === 'ended' ? '' : 'none';
   $('btn-end').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
   $('btn-pause').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
@@ -1239,7 +1266,9 @@ function connectWS() {
     ws = new WebSocket(asrUrl);
     ws.binaryType = 'arraybuffer';
     // [AUTH-FIRST-FRAME 2026-11-14] token 不再进 URL：连接后首帧发 auth 帧（服务端 V6.1 已公网验证）
-    ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'auth', token: session.access_token, meeting: cur.meeting.id })); } catch {} };
+    // [ASR-LANG 2026-11-14] 首帧带本场识别语言设置：服务端以会议记录（meetings.lang）为准，
+    // 记录为 auto 时首帧 lang 参与判定；此值只来自识别语言设置，绝不取展示语言。
+    ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'auth', token: session.access_token, meeting: cur.meeting.id, lang: cur.meeting.lang || 'auto' })); } catch {} };
   } catch (e) {
     $('ws-err').textContent = '转写服务连接失败：' + e.message;
     if (captureWanted && cur && cur.meeting && audio) {

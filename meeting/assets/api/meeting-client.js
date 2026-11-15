@@ -23,8 +23,12 @@ export class MeetingClient {
     api(action, payload) { return this.call('meeting-api', action, payload); }
     orchestrator(action, payload) { return this.call('meeting-orchestrator', action, payload); }
     flagStatus() { return this.api('flag_status'); }
-    createMeeting(title, mode) {
-        return this.api('create', { title, mode });
+    createMeeting(title, mode, lang) {
+        // [ASR-LANG 2026-11-14] lang = 识别语言（ASR 输入语言 auto/zh/en），与展示语言分开
+        return this.api('create', { title, mode, lang });
+    }
+    setLang(meetingId, lang) {
+        return this.api('set_lang', { meeting_id: meetingId, lang });
     }
     consent(meetingId) { return this.api('consent', { meeting_id: meetingId }); }
     start(meetingId) { return this.api('start', { meeting_id: meetingId }); }
