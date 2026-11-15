@@ -389,6 +389,11 @@
           <button type="button" id="pmPublishBtn">确认发布分组</button>
           <span id="pmSaveState" style="font-size:13px;color:#5c7260"></span>
         </p>
+        <!-- [PM-SAVE-UX 2026-11-15] 保存失败显著错误条＋重试（状态以服务端回执为准） -->
+        <div id="pmErrBar" style="display:none;background:#fdf1f0;border:1px solid #e0a8a2;border-radius:8px;padding:10px 12px;font-size:14px;margin:8px 0;color:#b03a2e">
+          <span id="pmErrText"></span>
+          <button type="button" id="pmRetryBtn" style="margin-left:10px">重试保存</button>
+        </div>
         <div id="pmImpact" style="display:none;background:#fdf1f0;border:1px solid #e0a8a2;border-radius:8px;padding:10px 12px;font-size:14px;margin:8px 0"></div>
         <p class="ok" id="pmMsg"></p>
         <!-- [ROSTER-V1] 分组增强：同组/不同组规则、资源提示、发布后通知球员 -->
@@ -2636,10 +2641,62 @@ if (token) init();
 </script>
 <script>
 // [线Z48] 分组管理面板逻辑（自包含：只依赖页面级 call/escapeHtml/currentEvent/currentRound 与服务端 grouping_* 动作）
-var pmState = { eventId: null, roundId: null, draftId: null, draftVersion: null, meta: { must_together: [], must_apart: [] }, maxSize: 4, groups: [], eligible: {}, eligibleList: [], selected: null, saveTimer: null, saving: false, seededFromPublished: false }; /* [ROSTER-V1] draftVersion/meta */
+var pmState = { eventId: null, roundId: null, draftId: null, draftVersion: null, meta: { must_together: [], must_apart: [] }, maxSize: 4, groups: [], eligible: {}, eligibleList: [], selected: null, saveTimer: null, saving: false, seededFromPublished: false, dirty: false, saveStatus: 'none', errKind: null, saveQueued: false }; /* [ROSTER-V1] draftVersion/meta；[PM-SAVE-UX] dirty/saveStatus/errKind/saveQueued */
 function pmEl(id) { return document.getElementById(id); }
 function pmMsg(t, isErr) { var m = pmEl('pmMsg'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : ''; } }
-function pmSaveState(t, isErr) { var m = pmEl('pmSaveState'); if (m) { m.textContent = t || ''; m.style.color = isErr ? '#b03a2e' : '#5c7260'; } }
+/* [PM-SAVE-UX 2026-11-15] 分组保存状态机（根治「排好了却没存上、界面看不出来」）：
+   状态只以服务端回执为准——保存请求成功且回读确认一致后才置 saved，禁止乐观本地标记。
+   五态显著呈现（徽标配色＋文案）：dirty 未保存修改／saving 保存中／error 保存失败
+   （含红色错误条＋重试按钮）／saved 草稿已保存／published 已发布；另 none 尚未分组、loading 加载中。 */
+function pmSetSaveStatus(status, detail) {
+  pmState.saveStatus = status;
+  var m = pmEl('pmSaveState'); if (!m) return;
+  var conf = {
+    none:      { t: '尚未分组', bg: '#eef1ee', fg: '#5c7260', bd: '#cfdccf' },
+    loading:   { t: '加载中…', bg: '#eef1ee', fg: '#5c7260', bd: '#cfdccf' },
+    dirty:     { t: '● 有未保存的修改（尚未存到服务器）', bg: '#fdf6e0', fg: '#8a6d1a', bd: '#e5cf8a' },
+    saving:    { t: '● 正在保存到服务器…', bg: '#e8eef7', fg: '#33506e', bd: '#b9c8de' },
+    error:     { t: '● 保存失败' + (detail ? '：' + detail : ''), bg: '#fdf1f0', fg: '#b03a2e', bd: '#e0a8a2' },
+    saved:     { t: '● 草稿已保存到服务器' + (detail || ''), bg: '#eef7ee', fg: '#2e6b34', bd: '#b9cdb2' },
+    published: { t: '● 已发布（球员端可见）' + (detail || ''), bg: '#e3f2e4', fg: '#1e5c26', bd: '#8fbf96' }
+  }[status] || { t: status, bg: '#eef1ee', fg: '#5c7260', bd: '#cfdccf' };
+  m.textContent = conf.t;
+  m.style.cssText = 'display:inline-block;font-size:14px;font-weight:600;border:1px solid ' + conf.bd + ';background:' + conf.bg + ';color:' + conf.fg + ';border-radius:999px;padding:3px 12px';
+  var bar = pmEl('pmErrBar');
+  if (bar) {
+    if (status === 'error') {
+      bar.style.display = 'block';
+      pmEl('pmErrText').textContent = pmState.errKind === 'load'
+        ? '分组数据载入失败：' + (detail || '未知错误') + '。当前面板内容不可信，请点「重新载入」。'
+        : '分组尚未保存到服务器：' + (detail || '未知错误') + '。页面上的排组只是本地显示，离开将丢失。';
+      pmEl('pmRetryBtn').textContent = pmState.errKind === 'save' ? '重试保存' : '重新载入';
+    } else bar.style.display = 'none';
+  }
+}
+/* [PM-SAVE-UX] PM 区块专用带超时 call：页面级 call() 无超时无 catch，请求挂起会让
+   saving 永远不复位、后续保存全部静默排队丢失；20 秒超时判失败、可重试。 */
+function pmCall(action, body) {
+  return Promise.race([
+    call(action, body),
+    new Promise(function (_, rej) { setTimeout(function () { rej(new Error('请求超时')); }, 20000); })
+  ]);
+}
+/* [PM-SAVE-UX] 草稿回读比对：只比结构字段（组序/成员序/出发洞/开球时间/组名/锁定），
+   服务端规整补的 name/source 等字段不参与，避免误判不一致。 */
+function pmGroupsEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    var x = a[i], y = b[i];
+    if ((x.name || null) !== (y.name || null)) return false;
+    if (!!x.locked !== !!y.locked) return false;
+    if ((x.start_hole != null ? Number(x.start_hole) : null) !== (y.start_hole != null ? Number(y.start_hole) : null)) return false;
+    if ((x.tee_time || null) !== (y.tee_time || null)) return false;
+    var xp = (x.players || []).map(function (p) { return p.player_id; }).join(',');
+    var yp = (y.players || []).map(function (p) { return p.player_id; }).join(',');
+    if (xp !== yp) return false;
+  }
+  return true;
+}
 function pmInfo(pid) { return pmState.eligible[pid] || { player_id: pid, name: pid.slice(0, 8), handicap_index: null, self_group: null }; }
 function pmGroupedSet() { var s = {}; pmState.groups.forEach(function (g) { g.players.forEach(function (p) { s[p.player_id] = true; }); }); return s; }
 function pmSetGroupsFromPayload(payload) {
@@ -2660,6 +2717,9 @@ function pmOpen() {
   if (!currentEvent) return;
   var panel = pmEl('pmPanel'); if (!panel) return;
   panel.style.display = 'block';
+  /* [PM-SAVE-UX] 打开（切换赛事）先清掉上一赛事待发保存定时器，防串场保存 */
+  if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; }
+  pmState.dirty = false; pmState.errKind = null;
   pmState.eventId = currentEvent.id;
   var rounds = (currentEvent.rounds && currentEvent.rounds.length) ? currentEvent.rounds : (currentRound ? [currentRound] : []);
   var sel = pmEl('pmRound');
@@ -2675,34 +2735,45 @@ function pmOpen() {
   pmLoad();
 }
 async function pmLoad() {
-  pmMsg(''); pmSaveState('加载中…'); pmEl('pmImpact').style.display = 'none'; pmEl('pmUnmatched').style.display = 'none';
-  var mg = await call('grouping_manage', { event_id: pmState.eventId });
-  var list = (mg && mg.eligible_players) || [];
-  pmState.eligibleList = list; pmState.eligible = {};
-  list.forEach(function (p) { pmState.eligible[p.player_id] = p; });
-  var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId });
-  pmState.seededFromPublished = false;
-  if (dg && dg.draft) {
-    pmState.draftId = dg.draft.id;
-    pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; /* [ROSTER-V1] 版本并发基线 */
-    if (dg.draft.payload && dg.draft.payload.group_size) { pmState.maxSize = dg.draft.payload.group_size; pmEl('pmMaxSize').value = pmState.maxSize; }
-    pmSetGroupsFromPayload(dg.draft.payload);
-    pmSaveState('已载入未发布草稿');
-  } else {
-    pmState.draftId = null;
-    var eg = await call('event_get', { event_id: pmState.eventId });
-    var prs = ((eg && eg.pairings) || []).filter(function (p) { return p.round_id === pmState.roundId; });
-    if (prs.length) {
-      prs.sort(function (a, b) { return a.group_no - b.group_no; });
-      pmState.groups = prs.map(function (p) { return { name: null, start_hole: p.start_hole != null ? p.start_hole : null, tee_time: p.tee_time || null, players: (p.golf_pairing_players || []).map(function (x) { return { player_id: x.player_id }; }) }; });
-      pmState.seededFromPublished = true;
-      pmSaveState('已载入已发布分组（修改后保存为新草稿，重新发布才生效）');
-    } else { pmState.groups = []; pmState.draftVersion = null; pmSaveState('尚未分组'); }
+  pmMsg(''); pmSetSaveStatus('loading'); pmEl('pmImpact').style.display = 'none'; pmEl('pmUnmatched').style.display = 'none';
+  try {
+    var mg = await pmCall('grouping_manage', { event_id: pmState.eventId });
+    if (!mg || mg.error) throw new Error((mg && mg.error) || '名单加载失败');
+    var list = (mg && mg.eligible_players) || [];
+    pmState.eligibleList = list; pmState.eligible = {};
+    list.forEach(function (p) { pmState.eligible[p.player_id] = p; });
+    var dg = await pmCall('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId });
+    /* [PM-SAVE-UX] draft_get 回错误不得当作「无草稿」：否则后续保存会把既有草稿覆盖清空 */
+    if (!dg || dg.error) throw new Error((dg && dg.error) || '草稿读取失败');
+    pmState.seededFromPublished = false;
+    pmState.dirty = false; pmState.errKind = null;
+    if (dg && dg.draft) {
+      pmState.draftId = dg.draft.id;
+      pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; /* [ROSTER-V1] 版本并发基线 */
+      if (dg.draft.payload && dg.draft.payload.group_size) { pmState.maxSize = dg.draft.payload.group_size; pmEl('pmMaxSize').value = pmState.maxSize; }
+      pmSetGroupsFromPayload(dg.draft.payload);
+      pmSetSaveStatus('saved', '（已载入未发布草稿）');
+    } else {
+      pmState.draftId = null;
+      var eg = await pmCall('event_get', { event_id: pmState.eventId });
+      var prs = ((eg && eg.pairings) || []).filter(function (p) { return p.round_id === pmState.roundId; });
+      if (prs.length) {
+        prs.sort(function (a, b) { return a.group_no - b.group_no; });
+        pmState.groups = prs.map(function (p) { return { name: null, start_hole: p.start_hole != null ? p.start_hole : null, tee_time: p.tee_time || null, players: (p.golf_pairing_players || []).map(function (x) { return { player_id: x.player_id }; }) }; });
+        pmState.seededFromPublished = true;
+        pmSetSaveStatus('published');
+        pmMsg('当前载入的是已发布分组；修改后会保存为新草稿，重新发布才生效。');
+      } else { pmState.groups = []; pmState.draftVersion = null; pmSetSaveStatus('none'); }
+    }
+    var cs = await pmCall('grouping_copy_sources', { event_id: pmState.eventId }).catch(function () { return null; });
+    var srcSel = pmEl('pmCopySrc');
+    srcSel.innerHTML = '<option value="">（选择历史赛事）</option>' + ((cs && cs.sources) || []).map(function (s) { return '<option value="' + s.event_id + '">' + escapeHtml(s.title || '') + '（' + escapeHtml(String(s.starts_at || '').slice(0, 10)) + '，' + s.groups + ' 组）</option>'; }).join('');
+    pmRender();
+  } catch (e) {
+    /* [PM-SAVE-UX] 载入失败显著呈现（原实现无 catch：请求一失败面板静默停在旧内容） */
+    pmState.errKind = 'load';
+    pmSetSaveStatus('error', (e && e.message) || '网络请求失败');
   }
-  var cs = await call('grouping_copy_sources', { event_id: pmState.eventId });
-  var srcSel = pmEl('pmCopySrc');
-  srcSel.innerHTML = '<option value="">（选择历史赛事）</option>' + ((cs && cs.sources) || []).map(function (s) { return '<option value="' + s.event_id + '">' + escapeHtml(s.title || '') + '（' + escapeHtml(String(s.starts_at || '').slice(0, 10)) + '，' + s.groups + ' 组）</option>'; }).join('');
-  pmRender();
 }
 function pmRender() { pmRenderGroups(); pmRenderPool(); pmRenderValid(); }
 function pmRenderGroups() {
@@ -2766,22 +2837,81 @@ function pmRenderValid() {
   el.style.color = (un > 0 || over > 0 || dup > 0) ? '#b03a2e' : '#3d7a44';
 }
 function pmAfterChange() { pmRender(); pmScheduleSave(); }
-function pmScheduleSave() { pmSaveState('待保存…'); if (pmState.saveTimer) clearTimeout(pmState.saveTimer); pmState.saveTimer = setTimeout(function () { pmSave(); }, 800); }
+function pmScheduleSave() {
+  /* [PM-SAVE-UX] 编辑即置 dirty＋显著未保存态；防抖 800ms 后保存（保存函数永不外抛） */
+  pmState.dirty = true;
+  if (pmState.saveStatus !== 'saving') pmSetSaveStatus('dirty');
+  if (pmState.saveTimer) clearTimeout(pmState.saveTimer);
+  pmState.saveTimer = setTimeout(function () { pmSave(); }, 800);
+}
 async function pmSave() {
-  if (pmState.saving) { pmScheduleSave(); return; }
-  pmState.saving = true; pmSaveState('保存中…');
+  /* [PM-SAVE-UX] 全捕获＋回读确认版：原实现只有 try/finally 无 catch——call() 一拒绝
+     （断网/网关异常/非 JSON 回执）异常就静默外抛，状态永远停在「保存中…」；
+     且发布前置保存不查结果。现在：任何失败都落 error 态＋错误条，返回 boolean。 */
+  if (pmState.saving) { pmState.saveQueued = true; return false; }
+  if (!pmState.dirty && pmState.draftId && pmState.saveStatus !== 'error') return true; /* 无待保存修改 */
+  pmState.saving = true; pmSetSaveStatus('saving');
+  var sent = null, fail = '', conflict = false;
   try {
     if (!pmState.draftId) {
-      var r0 = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: 'empty', group_size: pmState.maxSize });
-      if (!r0 || !r0.ok) { pmSaveState('保存失败：' + ((r0 && r0.error) || '建草稿失败'), true); return; }
+      var r0 = await pmCall('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: 'empty', group_size: pmState.maxSize });
+      if (!r0 || !r0.ok || !r0.draft) throw new Error((r0 && r0.error) || '建草稿失败');
       pmState.draftId = r0.draft.id;
       pmState.draftVersion = r0.draft.version != null ? r0.draft.version : 1; /* [ROSTER-V1] */
     }
-    var r = await call('grouping_draft_update', { event_id: pmState.eventId, draft_id: pmState.draftId, round_id: pmState.roundId, groups: pmSerialize(), max_group_size: pmState.maxSize, meta: pmState.meta, base_version: pmState.draftVersion }); /* [ROSTER-V1] base_version+meta */
-    if (r && r.ok) { pmState.seededFromPublished = false; if (r.draft && r.draft.version != null) pmState.draftVersion = r.draft.version; else if (pmState.draftVersion != null) pmState.draftVersion += 1; pmSaveState('草稿已自动保存 ' + new Date().toLocaleTimeString()); }
-    else if (r && (r.error === 'draft_version_conflict' || r.status === 409)) { pmSaveState('已被另一管理员更新，请刷新', true); pmMsg('草稿已被另一管理员更新，请刷新后重试。', true); }
-    else pmSaveState('保存失败：' + ((r && r.error) || '未知错误'), true);
-  } finally { pmState.saving = false; }
+    sent = pmSerialize();
+    var r = await pmCall('grouping_draft_update', { event_id: pmState.eventId, draft_id: pmState.draftId, round_id: pmState.roundId, groups: sent, max_group_size: pmState.maxSize, meta: pmState.meta, base_version: pmState.draftVersion }); /* [ROSTER-V1] base_version+meta */
+    if (r && r.ok) {
+      if (r.draft && r.draft.version != null) pmState.draftVersion = r.draft.version;
+      /* 回读确认：请求成功不等于落库与本地一致，回读比对通过才许显示「已保存」 */
+      var dg = await pmCall('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId });
+      var srv = (dg && dg.draft && dg.draft.id === pmState.draftId) ? dg.draft : null;
+      if (!srv) fail = '保存后回读不到草稿，请重试';
+      else if (!pmGroupsEqual(sent, (srv.payload || {}).groups || [])) fail = '保存后回读内容与页面不一致，请重试';
+      else if (srv.version != null) pmState.draftVersion = srv.version;
+    }
+    else if (r && r.error === 'draft_version_conflict') conflict = true;
+    else fail = (r && r.error) || '未知错误';
+  } catch (e) {
+    fail = '网络请求失败（' + ((e && e.message) || '连接中断') + '）';
+  }
+  pmState.saving = false;
+  if (conflict) {
+    /* 版本冲突先回读自愈：上次请求可能实际已落库只是回执丢失——回读与本地一致即按已保存处理 */
+    var healed = false;
+    try {
+      var dg2 = await pmCall('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId });
+      if (dg2 && dg2.draft && dg2.draft.id === pmState.draftId && pmGroupsEqual(pmSerialize(), (dg2.draft.payload || {}).groups || [])) {
+        pmState.draftVersion = dg2.draft.version != null ? dg2.draft.version : pmState.draftVersion;
+        healed = true;
+      }
+    } catch (e2) { /* 回读失败按冲突处理 */ }
+    if (healed) {
+      pmState.dirty = false; pmState.errKind = null; pmState.seededFromPublished = false;
+      pmSetSaveStatus('saved', ' ' + new Date().toLocaleTimeString());
+      if (pmState.saveQueued) { pmState.saveQueued = false; }
+      return true;
+    }
+    pmState.errKind = 'conflict';
+    pmSetSaveStatus('error', '草稿已被另一管理员更新，请重新载入后再编辑');
+    pmMsg('草稿已被另一管理员更新。为避免覆盖对方的修改，请点上方「重新载入」查看最新草稿。', true);
+    return false;
+  }
+  if (fail) {
+    pmState.errKind = 'save';
+    pmSetSaveStatus('error', fail);
+    return false;
+  }
+  pmState.seededFromPublished = false;
+  pmState.errKind = null;
+  if (JSON.stringify(pmSerialize()) !== JSON.stringify(sent)) {
+    /* 保存途中又有新编辑：保持 dirty 并再排一次保存，不许误报已保存 */
+    pmState.dirty = true; pmSetSaveStatus('dirty'); pmScheduleSave();
+  } else {
+    pmState.dirty = false; pmSetSaveStatus('saved', ' ' + new Date().toLocaleTimeString());
+  }
+  if (pmState.saveQueued) { pmState.saveQueued = false; if (pmState.dirty) pmScheduleSave(); }
+  return true;
 }
 function pmRemoveEverywhere(pid) { pmState.groups.forEach(function (g) { g.players = g.players.filter(function (p) { return p.player_id !== pid; }); }); }
 function pmAddToGroup(pid, gi) {
@@ -2791,29 +2921,35 @@ function pmAddToGroup(pid, gi) {
 }
 async function pmAuto() {
   pmMsg('');
-  var r = await call('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: pmEl('pmMethod').value, group_size: pmState.maxSize });
-  if (r && r.ok) { pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender(); if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); pmSaveState('已生成草稿（已保存）'); }
-  else pmMsg('生成失败：' + ((r && r.error) || '未知错误'), true);
+  try {
+    var r = await pmCall('grouping_generate_draft', { event_id: pmState.eventId, round_id: pmState.roundId, method: pmEl('pmMethod').value, group_size: pmState.maxSize });
+    if (r && r.ok) { pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmState.dirty = false; pmState.errKind = null; pmRender(); if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); pmSetSaveStatus('saved', '（自动生成）'); }
+    else pmMsg('生成失败：' + ((r && r.error) || '未知错误'), true);
+  } catch (e) { pmMsg('生成失败：网络请求未完成（' + ((e && e.message) || '连接中断') + '），请重试。', true); }
 }
 async function pmSmart() {
   pmMsg('');
-  var r = await call('grouping_smart_fill', { event_id: pmState.eventId, group_size: pmState.maxSize });
-  if (r && r.ok) { if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); var dg = await call('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId }); if (dg && dg.draft) { pmState.draftId = dg.draft.id; pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; pmSetGroupsFromPayload(dg.draft.payload); } pmRender(); pmSaveState('智能补组已生成草稿'); }
-  else pmMsg('智能补组失败：' + ((r && r.error) || '未知错误'), true);
+  try {
+    var r = await pmCall('grouping_smart_fill', { event_id: pmState.eventId, group_size: pmState.maxSize });
+    if (r && r.ok) { if (window.__rmResWarn) window.__rmResWarn(r.resource_warning); var dg = await pmCall('grouping_draft_get', { event_id: pmState.eventId, round_id: pmState.roundId }); if (dg && dg.draft) { pmState.draftId = dg.draft.id; pmState.draftVersion = dg.draft.version != null ? dg.draft.version : null; pmSetGroupsFromPayload(dg.draft.payload); pmState.dirty = false; pmState.errKind = null; pmSetSaveStatus('saved', '（智能补组）'); } pmRender(); }
+    else pmMsg('智能补组失败：' + ((r && r.error) || '未知错误'), true);
+  } catch (e) { pmMsg('智能补组失败：网络请求未完成（' + ((e && e.message) || '连接中断') + '），请重试。', true); }
 }
 async function pmCopy() {
   pmMsg(''); pmEl('pmCopyMsg').textContent = '';
   var src = pmEl('pmCopySrc').value;
   if (!src) { pmEl('pmCopyMsg').textContent = '先选择一场历史赛事'; return; }
-  var r = await call('grouping_copy_previous', { event_id: pmState.eventId, round_id: pmState.roundId, source_event_id: src });
-  if (r && r.ok) {
-    pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmRender();
-    pmEl('pmCopyMsg').textContent = '已复制：匹配 ' + r.matched + ' 人，未匹配 ' + (r.unmatched || []).length + ' 人';
-    var box = pmEl('pmUnmatched');
-    if ((r.unmatched || []).length) { box.style.display = 'block'; box.textContent = '以下球员在上一场有分组，但未报名本场或不符合分组资格，未能带入：' + r.unmatched.map(function (u) { return u.name || u.player_id; }).join('、'); }
-    else box.style.display = 'none';
-    pmSaveState('复制结果已存为草稿（已保存）');
-  } else pmMsg('复制失败：' + ((r && r.error) || '未知错误'), true);
+  try {
+    var r = await pmCall('grouping_copy_previous', { event_id: pmState.eventId, round_id: pmState.roundId, source_event_id: src });
+    if (r && r.ok) {
+      pmState.draftId = r.draft.id; pmState.draftVersion = r.draft.version != null ? r.draft.version : null; pmSetGroupsFromPayload(r.draft.payload); pmState.seededFromPublished = false; pmState.dirty = false; pmState.errKind = null; pmRender();
+      pmEl('pmCopyMsg').textContent = '已复制：匹配 ' + r.matched + ' 人，未匹配 ' + (r.unmatched || []).length + ' 人';
+      var box = pmEl('pmUnmatched');
+      if ((r.unmatched || []).length) { box.style.display = 'block'; box.textContent = '以下球员在上一场有分组，但未报名本场或不符合分组资格，未能带入：' + r.unmatched.map(function (u) { return u.name || u.player_id; }).join('、'); }
+      else box.style.display = 'none';
+      pmSetSaveStatus('saved', '（复制）');
+    } else pmMsg('复制失败：' + ((r && r.error) || '未知错误'), true);
+  } catch (e) { pmMsg('复制失败：网络请求未完成（' + ((e && e.message) || '连接中断') + '），请重试。', true); }
 }
 function pmShowImpact(impact, errText) {
   var box = pmEl('pmImpact'); box.style.display = 'block';
@@ -2837,17 +2973,50 @@ function pmShowImpact(impact, errText) {
 async function pmPublish(confirmed) {
   pmMsg('');
   if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; }
-  if (pmState.draftId || pmState.groups.length) await pmSave();
+  /* [PM-SAVE-UX] 发布前置校验：载入/冲突异常未处理完不许发布；有未保存修改必须先
+     保存成功（pmSave 返回 false 即停发并明示卡点），杜绝发布旧草稿或静默无反应。 */
+  if (pmState.saveStatus === 'error' && pmState.errKind !== 'save') { pmMsg('分组状态未确认（载入失败或版本冲突未处理），已停止发布。请先按上方红色提示处理。', true); return; }
+  if (pmState.dirty || pmState.draftId || pmState.groups.length) {
+    var okSave = await pmSave();
+    if (!okSave) {
+      pmMsg('草稿未能保存到服务器，已停止发布。请先按上方红色提示重试保存，保存成功后再发布。', true);
+      var stEl = pmEl('pmSaveState'); if (stEl) stEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
   if (!pmState.draftId) { pmMsg(pmState.seededFromPublished ? '当前显示的是已发布分组，没有新草稿需要发布。' : '没有可发布的草稿。', !pmState.seededFromPublished); return; }
   var body = { event_id: pmState.eventId, draft_id: pmState.draftId, base_version: pmState.draftVersion };
   if (confirmed) body.confirm_impact = true;
-  var r = await call('grouping_publish', body);
+  var r;
+  try { r = await pmCall('grouping_publish', body); }
+  catch (e) { pmMsg('发布失败：网络请求未完成（' + ((e && e.message) || '连接中断') + '），草稿仍在服务器，请重试发布。', true); return; }
   if (window.__rmResWarn) window.__rmResWarn(r && r.resource_warning);
   if (r && r.ok) { pmMsg('分组已发布，球员端（App／网页／球童）已同步为最新分组。'); pmEl('pmImpact').style.display = 'none'; var nb = document.getElementById('rmNotifyPubBtn'); if (nb) nb.style.display = ''; await pmLoad(); if (window.__rmRefresh) window.__rmRefresh(); }
   else if (r && (r.error === 'draft_version_conflict' || r.status === 409)) pmMsg('已被另一管理员更新，请刷新', true);
   else if (r && (r.needs_confirm || r.impact)) pmShowImpact(r.impact, r.error || '');
   else pmMsg('发布失败：' + ((r && r.error) || '未知错误'), true);
 }
+/* [PM-SAVE-UX] 未保存拦截：有未保存修改或正在保存时——
+   ① 关闭/刷新页面：beforeunload 原生拦截；
+   ② 切换赛事（.evt）/切换分类（.catcard）/返回首页（#catBack）：捕获阶段拦下，
+      用页面既有 uiConfirm 明示「分组尚未保存到服务器，离开将丢失」；确认离开视为
+      放弃未保存修改（dirty 清零后放行原点击），取消则留在面板；
+   ③ 面板内切换轮次（pmRound change）：同样确认，取消则还原下拉值。 */
+window.addEventListener('beforeunload', function (e) {
+  if (typeof pmState !== 'undefined' && pmState && (pmState.dirty || pmState.saving)) { e.preventDefault(); e.returnValue = ''; }
+});
+document.addEventListener('click', function (e) {
+  if (typeof pmState === 'undefined' || !pmState || (!pmState.dirty && !pmState.saving)) return;
+  var t = (e.target && e.target.closest) ? e.target.closest('.evt, .catcard, #catBack') : null;
+  if (!t) return;
+  e.preventDefault(); e.stopPropagation();
+  uiConfirm('分组尚未保存到服务器，离开将丢失未保存的修改。确定离开？').then(function (ok) {
+    if (!ok) return;
+    pmState.dirty = false;
+    if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; }
+    t.click();
+  });
+}, true);
 // 事件接线（容器内委托，面板整体搬移不丢行为）
 (function pmInit() {
   var groupsBox = pmEl('pmGroups'), poolBox = pmEl('pmPool');
@@ -2881,13 +3050,29 @@ async function pmPublish(confirmed) {
   poolBox.addEventListener('drop', function (e) { e.preventDefault(); try { var d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d && d.pid) { pmRemoveEverywhere(d.pid); pmAfterChange(); } } catch (err) {} });
   pmEl('pmSearch').addEventListener('input', pmRenderPool);
   pmEl('pmSort').addEventListener('change', pmRenderPool);
-  pmEl('pmRound').addEventListener('change', function () { pmState.roundId = pmEl('pmRound').value; pmLoad(); });
+  pmEl('pmRound').addEventListener('change', function () {
+    var next = pmEl('pmRound').value;
+    /* [PM-SAVE-UX] 未保存时切轮次先确认，取消还原下拉（原实现直接 pmLoad 覆盖本地修改） */
+    if (pmState.dirty || pmState.saving) {
+      uiConfirm('分组尚未保存到服务器，切换轮次将丢失未保存的修改。确定切换？').then(function (ok) {
+        if (ok) { pmState.dirty = false; if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; } pmState.roundId = next; pmLoad(); }
+        else pmEl('pmRound').value = pmState.roundId;
+      });
+      return;
+    }
+    pmState.roundId = next; pmLoad();
+  });
+  pmEl('pmRetryBtn').addEventListener('click', function () {
+    /* [PM-SAVE-UX] 错误条重试：保存失败→重试保存；载入失败/版本冲突→重新载入 */
+    if (pmState.errKind === 'load' || pmState.errKind === 'conflict') pmLoad();
+    else pmSave();
+  });
   pmEl('pmMaxSize').addEventListener('change', function () { pmState.maxSize = Math.min(8, Math.max(1, Number(pmEl('pmMaxSize').value || 4))); pmEl('pmMaxSize').value = pmState.maxSize; pmRender(); pmScheduleSave(); });
   pmEl('pmAutoBtn').addEventListener('click', pmAuto);
   pmEl('pmSmartBtn').addEventListener('click', pmSmart);
   pmEl('pmCopyBtn').addEventListener('click', pmCopy);
   pmEl('pmAddGroupBtn').addEventListener('click', function () { pmState.groups.push({ name: null, start_hole: null, tee_time: null, players: [] }); pmAfterChange(); });
-  pmEl('pmSaveBtn').addEventListener('click', function () { if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; } pmSave(); });
+  pmEl('pmSaveBtn').addEventListener('click', function () { if (pmState.saveTimer) { clearTimeout(pmState.saveTimer); pmState.saveTimer = null; } pmState.dirty = true; pmSave(); });
   pmEl('pmPublishBtn').addEventListener('click', function () { pmPublish(false); });
 })();
 
