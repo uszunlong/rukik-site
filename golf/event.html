@@ -1922,29 +1922,64 @@ function closeHdOverlay() { document.getElementById('hdOverlay').classList.add('
  * 单指拖动平移（放大后）、滚轮缩放；双击/触摸双击＝切换放大/复原
  * （放大态下与 play 的双击复原一致，1 倍时放大到点按处——任务口径增量）。
  * 切洞/切台时 #holeSvg 注入全新 SVG（无内联 transform）＝自动归零。 */
+/* [ZOOM-MATH-BEGIN] 逐洞图缩放变换纯函数——全端唯一口径：与 App HoleMap.tsx
+ * [ZOOM-MATH] 同名同义实现逐字对应（App 为 TS 版），防回归套件
+ * test-holemap-core.mjs 第 6 节机械提取两端实现、同输入比对。变换模型：
+ * screen(p) = origin + s·(p − origin) + t；网页 CSS 显式
+ * transform-origin:0 0 ⇒ origin＝(0,0)（App＝RN 默认视图中心，调用处传
+ * (w/2,h/2)）。统一规则只有一套：① scale ∈ [1, 4.5]；② 覆盖钳制——任意
+ * scale 下缩放后内容必须完整覆盖视口：tx ∈ [(s−1)(ox−w), (s−1)·ox]、
+ * ty ∈ [(s−1)(oy−h), (s−1)·oy]，s=1 时退化为 (0,0)，内容甩不出界、
+ * 不存在空白帧；③ 焦点不变：t1 = (f−o)·(1−k) + k·t0（k＝s1/s0），
+ * o＝0 时即本页既有 zoomAt 公式。 */
+var ZOOM_MIN = 1, ZOOM_MAX = 4.5;
+function zoomClampPan(s, tx, ty, w, h, ox, oy) {
+  if (!(s > 1) || !(w > 0) || !(h > 0)) return [0, 0];
+  var loX = (s - 1) * (ox - w), hiX = (s - 1) * ox;
+  var loY = (s - 1) * (oy - h), hiY = (s - 1) * oy;
+  return [Math.max(loX, Math.min(hiX, tx)), Math.max(loY, Math.min(hiY, ty))];
+}
+function zoomAtPoint(s0, tx0, ty0, s1, fx, fy, w, h, ox, oy) {
+  var ns = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, s1));
+  if (!(ns > 1)) return [1, 0, 0];
+  var k = ns / Math.max(1e-6, s0);
+  var nx = (fx - ox) * (1 - k) + k * tx0, ny = (fy - oy) * (1 - k) + k * ty0;
+  var c = zoomClampPan(ns, nx, ny, w, h, ox, oy);
+  return [ns, c[0], c[1]];
+}
+/* [ZOOM-MATH-END] */
 function holePz(box) {
   if (!box) return null;
   if (box._pz) return box._pz;
   var st = { s: 1, x: 0, y: 0 }, pts = {}, lastDist = 0, dragging = false;
   var lastTapT = 0, lastTapX = 0, lastTapY = 0, tapMoved = false;
   function svg() { return box.querySelector('svg'); }
+  var restTA = null;
   function apply(anim) {
     var el = svg(); if (!el) return;
     el.classList.toggle('pz-anim', !!anim);
+    /* [ZOOM-ROOTFIX 20261115] 滚动竞争：内联盒样式表 touch-action:pan-y 在
+     * 放大后会把单指纵拖判给页面滚动（pointercancel、图面纵移被抢）；放大
+     * 期间动态置 none、回 1 倍恢复样式表原值（全屏盒原值即 none 不受影响）。 */
+    if (restTA === null) restTA = window.getComputedStyle(box).touchAction || '';
+    box.style.touchAction = st.s > 1.01 ? 'none' : restTA;
     /* 静止态不保留 CSS transform（同 play 口径：防 iOS Safari 滚动丢栅格） */
     if (st.s === 1 && st.x === 0 && st.y === 0) { el.style.transform = ''; return; }
     el.style.transform = 'translate(' + st.x + 'px,' + st.y + 'px) scale(' + st.s + ')';
   }
   function clampPan() {
-    if (st.s === 1) { st.x = 0; st.y = 0; return; }
-    var r = box.getBoundingClientRect(), mx = r.width * 0.8 * st.s, my = r.height * 0.8 * st.s;
-    st.x = Math.max(-mx, Math.min(mx, st.x)); st.y = Math.max(-my, Math.min(my, st.y));
+    /* [ZOOM-ROOTFIX 20261115] 旧口径 mx=w·0.8·s 对称域与左上原点模型不匹配：
+     * s>1.25 时向右/向下即可整幅拖出（空白帧）。改走 [ZOOM-MATH] 覆盖钳制。 */
+    if (st.s <= 1) { st.s = 1; st.x = 0; st.y = 0; return; }
+    var r = box.getBoundingClientRect();
+    var c = zoomClampPan(st.s, st.x, st.y, r.width, r.height, 0, 0);
+    st.x = c[0]; st.y = c[1];
   }
   function zoomAt(cx, cy, ns, anim) {
-    ns = Math.max(1, Math.min(4.5, ns));
-    var k = ns / st.s;
-    st.x = cx - (cx - st.x) * k; st.y = cy - (cy - st.y) * k; st.s = ns;
-    clampPan(); apply(anim);
+    var r = box.getBoundingClientRect();
+    var z = zoomAtPoint(st.s, st.x, st.y, ns, cx, cy, r.width, r.height, 0, 0);
+    st.s = z[0]; st.x = z[1]; st.y = z[2];
+    apply(anim);
   }
   function reset(anim) { st = { s: 1, x: 0, y: 0 }; apply(anim); }
   function toggleAt(cx, cy) {
@@ -1979,7 +2014,7 @@ function holePz(box) {
   function endPt(e) {
     var wasTap = dragging && !!pts[e.pointerId] && !tapMoved && Object.keys(pts).length === 1;
     delete pts[e.pointerId];
-    if (!Object.keys(pts).length) { dragging = false; lastDist = 0; }
+    if (!Object.keys(pts).length) { dragging = false; lastDist = 0; clampPan(); apply(true); /* 手势结束回弹钳制（与 App onEnd 同口径，已合法为空操作） */ }
     if (wasTap && e.pointerType && e.pointerType !== 'mouse') {
       var now = Date.now();
       if (now - lastTapT < 350 && Math.hypot(e.clientX - lastTapX, e.clientY - lastTapY) < 40) {
@@ -1990,7 +2025,7 @@ function holePz(box) {
     }
   }
   box.addEventListener('pointerup', endPt);
-  box.addEventListener('pointercancel', function (e) { delete pts[e.pointerId]; if (!Object.keys(pts).length) { dragging = false; lastDist = 0; } });
+  box.addEventListener('pointercancel', function (e) { delete pts[e.pointerId]; if (!Object.keys(pts).length) { dragging = false; lastDist = 0; clampPan(); apply(true); } });
   box.addEventListener('wheel', function (e) {
     if (!svg()) return;
     e.preventDefault();
