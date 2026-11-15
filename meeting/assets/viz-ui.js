@@ -49,7 +49,9 @@ function computeLayout(g) {
   const out = new Map();
   if (!roots.length) return { positions: out, depth, branch };
   const memo0 = new Map();
-  const rootId = roots.includes('root') ? 'root' : roots.slice().sort((a, b) => leafCount(b, kids, memo0) - leafCount(a, kids, memo0))[0];
+  // 中心节点选取：id 为 'root' 且确有子树的才是真中心；若 'root' 只是无子节点的孤儿（如标题占位节点），
+  // 改选叶子数最大的树根作中心，其余孤儿落底部行（实测 313fce30 图：真树根为主题节点、'root' 无子节点）
+  const rootId = (roots.includes('root') && (kids.get('root') || []).length) ? 'root' : roots.slice().sort((a, b) => leafCount(b, kids, memo0) - leafCount(a, kids, memo0))[0];
   const pos = new Map(); depth.set(rootId, 0);
   const l1 = kids.get(rootId) || [];
   const memo = new Map();
@@ -494,7 +496,7 @@ export function createVizUI(opts) {
     // 语义只用小徽标（BADGE 浅底 pill）；中心节点绿渐变突出；一级分支色左边框；连线走左右侧 handle。
     const VizNode = ({ data, selected }) => {
       const n = data.viz;
-      const lv = data.level || 1;
+      const lv = (typeof data.level === 'number') ? data.level : 1;
       const bdg = BADGE[n.type] || BADGE.topic;
       const style = { width: data.width };
       if (lv === 0) style.background = 'linear-gradient(135deg,#12B981 0%,#0E9F6E 55%,#0B8A5F 100%)';
