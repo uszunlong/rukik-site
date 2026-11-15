@@ -4527,7 +4527,7 @@ function paintPreStart() {
     (pc.course_name ? '<p class="meta">球场：' + esc(pc.course_name) + (pc.course_address ? '（' + esc(pc.course_address) + '）' : '') + '</p>' : '') +
     (pc.weather_line ? '<p class="muted">' + esc(pc.weather_line) + '</p>' : '') +
     myStatusHtml() +
-    '<h3>比赛准备</h3><p class="muted">请提前到达出发洞附近等候；开赛后本页会自动切换为记分模式。记分与 App 共用同一张记分卡，断网时成绩先保存在本机、恢复网络后自动同步。</p>' +
+    '<h3>比赛准备</h3><p class="muted">请提前到达出发洞附近等候；开赛后本页会自动切换为记分模式。记分与 App 共用同一张记分卡。</p>' + /* [WEB-CLEANUP 20261114] 删除常驻断网说明句（与 App 同口径）；离线队列/自动同步/冲突核对机制不变，状态仍由同步条与失败提示按需呈现 */
     backToEventBtn() + '</div>';
   bindMyStatus();
 }
@@ -4911,7 +4911,7 @@ function paintScoring(card) {
   if (locked && sel) {
     html += '<div class="editor"><div class="edlabel">第 ' + sel.hole + ' 洞 · Par ' + sel.par + ' · ' + (sel.strokes == null ? '未录入' : sel.strokes + ' 杆') + '</div></div>';
   }
-  if (S.preview) html += '<div class="preview"><span class="t">下一洞</span><br>' + S.preview + '</div>';
+  /* [WEB-CLEANUP 20261114] 「下一洞」提示卡已删除（与 App 同口径）：记分卡后直接衔接球场地图；S.preview 数据不再渲染（previewText 保留备查），地图内部逐洞导航不受影响 */
   /* 确认流（与 App/服务端同一流程） */
   if (!locked) {
     if ((sc.status === 'in_progress' || sc.status === 'not_started' || sc.status === 'disputed') && sc.thru >= holes.length && holes.length) {
