@@ -1698,7 +1698,7 @@ function paintGroupScoring(card) {
     '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
     rows +
     (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
-    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（18 洞）') + '</button></div>' +
+    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（' + (g.holes || []).length + ' 洞）') + '</button></div>' + /* [TOTALHOLES-FIX 20261114] 总数＝g.holes 长度（与下方矩阵同源，原写死 18 洞） */
     matrix + certHtml +
     backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
@@ -2502,9 +2502,21 @@ function mapGeom(hole) {
   geomInflight[key] = p;
   return p;
 }
+/* [TOTALHOLES-FIX 20261114] 与 event.html evTotalHoles 同口径：赛事配置 holes
+   （golf_events.holes）＞记分卡 holes 定义（单人/同组）＞course_preview 记分卡
+   holes；严禁几何洞位推导。未加载返回 0（调用方回落旧界、绝不作显示默认）。 */
+function playTotalHoles() {
+  var ev = (S.ev && S.ev.event) || null;
+  if (ev && ev.holes) return Number(ev.holes) || 0;
+  if (S.cardData && S.cardData.holes && S.cardData.holes.length) return S.cardData.holes.length;
+  if (S.group && S.group.holes && S.group.holes.length) return S.group.holes.length;
+  var pv = (S.ev && S.ev.course_preview) || null;
+  if (pv && pv.holes && pv.holes.length) return pv.holes.length;
+  return 0;
+}
 function prefetchPlayGeom(h) {
   [h - 1, h + 1].forEach(function (n) {
-    if (n < 1 || n > 18 || geomCache[n]) return;
+    if (n < 1 || n > (playTotalHoles() || 18) || geomCache[n]) return; /* [TOTALHOLES-FIX 20261114] 预取上界＝赛事总洞数 */
     mapGeom(n).then(function (j) { geomCache[n] = j; }).catch(function () {});
   });
 }
