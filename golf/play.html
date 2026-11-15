@@ -1585,7 +1585,17 @@ function effStrokes(cardId, h) {
    ×18 洞矩阵（服务端唯一数据源）；整组提交逐人走同一 op_id 幂等/
    409/审计/celebration 口径；未填不提交、不当 0 杆；断网整组条目逐人
    入既有本机队列、回放逐人对账。 */
+/* [WHITECARD-FIX 20261114] 个人卡 pairing 判定：score_get_card 返回的记分卡行（select=*）带
+   pairing_id——null＝已确认个人卡（不存在同组名单）；undefined＝尚无法判定（照常走接口判定）。 */
+function cardPairingId(card) {
+  if (!card) return undefined;
+  if (card.pairing_id !== undefined) return card.pairing_id;
+  var sc = S.cardData && S.cardData.scorecard;
+  if (sc && sc.id === card.id && sc.pairing_id !== undefined) return sc.pairing_id;
+  return undefined;
+}
 async function loadGroup(card, keepEdits) {
+  if (cardPairingId(card) === null) { S.grpFail = false; S.group = null; return null; } /* [WHITECARD-FIX 20261114] 无 pairing 的个人卡根本没有同组名单可加载：跳过接口、不置失败标记（此前个人卡误走 score_get_group 业务错误→被 Z78 口径误报为加载失败横幅） */
   var r = await golfApi('score_get_group', { scorecard_id: card.id }, true).catch(function () { return null; });
   if (!r || !r.ok || !r.data) { S.grpFail = true; S.group = null; return null; } /* [线Z78] 请求失败/超时：标记失败待提示，禁止静默伪装成单人形态 */
   S.grpFail = false; /* 请求已成功到达：以下为「确实没有同组」的正常单人形态，不出失败提示 */
@@ -1606,6 +1616,7 @@ async function loadGroup(card, keepEdits) {
 /* [线Z78] 同组记分加载失败提示：单人记分照常可用，重试成功即切回同组视图 */
 function grpFailHtml() {
   if (!S.grpFail || S.group) return '';
+  var __mc = myCard(); if (__mc && cardPairingId(__mc) === null) return ''; /* [WHITECARD-FIX 20261114] 个人卡永不显同组加载失败横幅（双保险：仅确有分组且真实加载失败时才显示） */
   return '<div class="syncbar bad">同组记分暂时没加载出来（网络异常），您仍可先记自己的分。<div class="btnrow"><button class="btn plain" type="button" id="grpRetryBtn">重试</button></div></div>';
 }
 async function grpRetry(card) { await loadGroup(card, false); paint(); }

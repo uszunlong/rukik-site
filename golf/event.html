@@ -4516,12 +4516,14 @@ function bindMyStatus() {
   });
 }
 
-function paintStatusSec() { /* [UNIFY 20261114] 报名状态卡统一槽位：记生态下状态卡（费用行＋签到）渲染于记分模块之外的 #statusSec（记分区上方），两类赛事同位同规——未签到且 registered、赛事 published/in_progress 时呈现签到（签到窗由服务端把关），签后随服务端状态整体消失、刷新不复活 */
+function paintStatusSec() { /* [UNIFY 20261114] 原：记生态下状态卡（费用行＋签到）渲染于记分模块之外的 #statusSec（记分区上方），两类赛事同位同规。
+     [WHITECARD-FIX 20261114] 用户 2026-11-14 23:25/23:29 亲令整删：#statusSec 不在 #scoreSec 深绿卡
+     作用域内、.card 为白底而费用行 .meta 为浅字，呈白底白字不可读的白色卡片；且「签到完直接消失」
+     为既定规矩——费用提示行、白色容器与「我已到场 · 签到」pill 整块删除、此槽位不再渲染任何内容。
+     记生态下本槽位原为签到的唯一呈现，随卡一并删除（赛前态状态卡内的签到仍由 myStatusHtml 呈现、未动）。
+     调用点（记生态 paint 尾部两处）保留为空操作，避免改动其他线标记。 */
   var el = document.getElementById('statusSec');
-  if (!el) return;
-  var h = myStatusHtml();
-  el.innerHTML = h ? '<div class="card">' + h + '</div>' : '';
-  if (h) bindMyStatus();
+  if (el) el.innerHTML = '';
 }
 
 function paintWaitingGroup() {
@@ -4609,7 +4611,17 @@ function effStrokes(cardId, h) {
   return h.strokes;
 }
 
+/* [WHITECARD-FIX 20261114] 个人卡 pairing 判定：score_get_card 返回的记分卡行（select=*）带
+   pairing_id——null＝已确认个人卡（不存在同组名单）；undefined＝尚无法判定（照常走接口判定）。 */
+function cardPairingId(card) {
+  if (!card) return undefined;
+  if (card.pairing_id !== undefined) return card.pairing_id;
+  var sc = S.cardData && S.cardData.scorecard;
+  if (sc && sc.id === card.id && sc.pairing_id !== undefined) return sc.pairing_id;
+  return undefined;
+}
 async function loadGroup(card, keepEdits) {
+  if (cardPairingId(card) === null) { S.grpFail = false; S.group = null; return null; } /* [WHITECARD-FIX 20261114] 无 pairing 的个人卡根本没有同组名单可加载：跳过接口、不置失败标记（此前个人卡误走 score_get_group 业务错误→被 Z78 口径误报为加载失败横幅） */
   var r = await golfApi('score_get_group', { scorecard_id: card.id }, true).catch(function () { return null; });
   if (!r || !r.ok || !r.data) { S.grpFail = true; S.group = null; return null; } /* [线Z78] 请求失败/超时：标记失败待提示，禁止静默伪装成单人形态 */
   S.grpFail = false; /* 请求已成功到达：以下为「确实没有同组」的正常单人形态，不出失败提示 */
@@ -4630,6 +4642,7 @@ async function loadGroup(card, keepEdits) {
 
 function grpFailHtml() {
   if (!S.grpFail || S.group) return '';
+  var __mc = myCard(); if (__mc && cardPairingId(__mc) === null) return ''; /* [WHITECARD-FIX 20261114] 个人卡永不显同组加载失败横幅（双保险：仅确有分组且真实加载失败时才显示） */
   return '<div class="syncbar bad">同组记分暂时没加载出来（网络异常），您仍可先记自己的分。<div class="btnrow"><button class="btn plain" type="button" id="grpRetryBtn">重试</button></div></div>';
 }
 
