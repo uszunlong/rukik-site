@@ -26,10 +26,20 @@
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
   .grid{display:grid;grid-template-columns:20% 1fr 25%;gap:12px;align-items:start}
   .center-col{min-width:0}
-  .viz-canvas{height:440px;position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .viz-canvas{height:54vh;min-height:440px;max-height:680px;position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .viz-wrap.in-projection{position:fixed;inset:0;z-index:60;background:#05080f}
-  .viz-wrap.in-projection .viz-canvas{height:100vh;border:0;border-radius:0}
+  .viz-wrap.in-projection .viz-canvas{height:100dvh;border:0;border-radius:0}
   .viz-exit-chip{position:absolute;top:14px;right:14px;z-index:70;background:rgba(17,26,46,.85);color:var(--txt);border:1px solid var(--line)}
+  /* [STAGE 2026-11-14] 演讲模式顶部极简提示行：仅标题＋录音状态，只在投影态显示 */
+  .viz-stage-bar{position:absolute;top:0;left:0;right:0;z-index:65;display:none;align-items:center;gap:10px;padding:12px 20px;pointer-events:none;background:linear-gradient(rgba(5,8,15,.72),transparent)}
+  .viz-wrap.in-projection .viz-stage-bar{display:flex}
+  .viz-stage-title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}
+  .viz-stage-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);white-space:nowrap}
+  .viz-stage-dot{width:9px;height:9px;border-radius:50%;background:#77828f;flex:none}
+  .viz-stage-dot.live{background:var(--bad);animation:blink 1.2s infinite}
+  .viz-stage-dot.paused{background:var(--warn)}
+  /* [STAGE 2026-11-14] 跟随被用户手动平移暂停时，画布右下角回正入口 */
+  .viz-follow-chip{position:absolute;right:12px;bottom:12px;z-index:65;background:rgba(17,26,46,.88);color:var(--txt);border:1px solid var(--acc);font-size:12px;padding:6px 10px}
   .viz-node{background:#101c33;border:1.6px solid var(--acc);border-radius:12px;padding:8px 12px;min-width:150px;max-width:230px;color:var(--txt);box-shadow:0 4px 18px rgba(0,0,0,.35)}
   .viz-node-tag{font-size:11px;letter-spacing:.04em}
   .viz-node-label{font-size:14px;font-weight:600;line-height:1.35}
@@ -55,6 +65,19 @@
   .rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--bad);margin-right:6px;animation:blink 1.2s infinite}
   @keyframes blink{50%{opacity:.25}}
   .tabs{display:none;gap:8px;margin-bottom:10px}
+  /* [STAGE 2026-11-14] 工作台紧凑顶栏：标题/模式/状态/时长/录音/核心操作一行收齐，管理类操作进「更多」菜单 */
+  body.in-ws .top{display:none}
+  .ws-head{padding:8px 10px}
+  .ws-head-row{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+  .ws-head-row #m-title{flex:1;min-width:56px;width:auto;font-weight:700;padding:6px 8px}
+  .ws-head-row #btn-back{flex:none;padding:6px 10px}
+  .ws-head-row .chip{flex:none}
+  .ws-head-row #m-timer{flex:none;white-space:nowrap}
+  .ws-head-row #rec-ind{flex:none;white-space:nowrap;font-size:12px}
+  .ws-head-row #btn-pause,.ws-head-row #btn-end,.ws-head-row #btn-more{flex:none;padding:7px 10px}
+  .ws-menu-wrap{position:relative;flex:none}
+  .ws-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:80;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;min-width:160px;flex-direction:column;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .ws-menu .menu-item{text-align:left;width:100%;font-weight:500}
   .meeting-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel2);cursor:pointer}
   .err{color:var(--bad)} .ok{color:var(--acc)} .dim{color:var(--dim)}
   .modal{position:fixed;inset:0;background:rgba(3,6,12,.7);display:flex;align-items:center;justify-content:center;z-index:9}
@@ -64,7 +87,13 @@
     .center-col{display:contents}
     .tabs{display:flex}
     .col{display:none}.col.active{display:block}
-    .viz-canvas{height:52vh}
+    /* [STAGE 2026-11-14] 移动端导图画布优先：扣紧凑顶栏/标签/工具条后吃满剩余视口高度 */
+    .viz-canvas{height:calc(100dvh - 208px);min-height:340px;max-height:none}
+    #col-viz h3 .viz-h3-note{display:none}
+    .viz-toolbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+    .viz-toolbar>*{flex:none}
+    .ws-head-row #m-mode{display:none}
+    .ws-head-row #rec-ind .rec-txt{display:none}
   }
 </style>
 </head>
@@ -112,18 +141,23 @@
 
   <!-- 工作台 -->
   <div id="view-ws" style="display:none">
-    <div class="card">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button id="btn-back" class="ghost">← 我的会议</button>
-        <input id="m-title" style="width:280px;font-weight:700">
+    <div class="card ws-head">
+      <div class="ws-head-row">
+        <button id="btn-back" class="ghost" title="我的会议">←</button>
+        <input id="m-title">
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
         <span id="m-timer" class="tag"></span>
-        <span style="flex:1"></span>
-        <span id="rec-ind" style="display:none"><span class="rec-dot"></span>录音中</span>
+        <span id="rec-ind" style="display:none"><span class="rec-dot"></span><span class="rec-txt">录音中</span></span>
         <button id="btn-pause" class="ghost">暂停</button>
-        <button id="btn-analyze" class="ghost">更新纪要</button>
         <button id="btn-end" class="danger">结束会议</button>
-        <button id="btn-delete" class="ghost" style="display:none;color:var(--bad)">删除会议</button>
+        <div class="ws-menu-wrap">
+          <button id="btn-more" class="ghost">⋯ 更多</button>
+          <div id="ws-menu" class="ws-menu" style="display:none">
+            <button id="btn-analyze" class="ghost menu-item">更新纪要</button>
+            <button id="btn-delete" class="ghost menu-item" style="display:none;color:var(--bad)">删除会议</button>
+            <button id="menu-signout" class="ghost menu-item">退出登录</button>
+          </div>
+        </div>
       </div>
       <p id="ws-err" class="err" style="margin:6px 0 0"></p>
     </div>
@@ -138,13 +172,13 @@
       </div>
       <div class="center-col">
       <div class="card col" id="col-viz">
-        <h3>会议导图 · 实时生长 <span style="font-weight:400">（点节点可回溯来源发言；可拖动、锁定、编辑，AI 不覆盖锁定与人工修改）</span></h3>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+        <h3>会议导图 · 实时生长 <span class="viz-h3-note" style="font-weight:400">（点节点可回溯来源发言；可拖动、锁定、编辑，AI 不覆盖锁定与人工修改）</span></h3>
+        <div class="viz-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
           <button class="ghost" id="btn-viz-grow">✦ 立即生长</button>
           <button class="ghost" id="btn-viz-tidy">整理布局</button>
           <button class="ghost" id="btn-viz-follow">自动跟随：开</button>
           <button class="ghost" id="btn-viz-replay">▶ 回放形成过程</button>
-          <button class="ghost" id="btn-viz-project">⛶ 全屏投影</button>
+          <button class="ghost" id="btn-viz-project">⛶ 演讲模式</button>
           <span class="chip" id="viz-stat">节点 0 · 连线 0</span>
         </div>
         <div class="replaybar" id="viz-replaybar" style="display:none">
@@ -192,7 +226,7 @@
   <div class="box">
     <h3 style="margin-top:0">开始新会议</h3>
     <p><input id="new-title" placeholder="会议名称（可留空，稍后修改）"></p>
-    <p><select id="new-mode"><option value="meeting">会议模式（多人讨论）</option><option value="speech">演讲模式（单人）</option></select></p>
+    <p><select id="new-mode"><option value="meeting">会议模式（多人讨论）</option><option value="speech">演讲（单人主讲）</option></select></p>
     <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="consent" style="width:auto;margin-top:3px">
       <span>我确认已向参会者告知本次会议将被录音并转写，且已取得适用的同意。录音开始后请让页面保持前台。</span></label>
     <p id="consent-err" class="err"></p>
@@ -239,6 +273,7 @@ let vizUI = null, lastVizAt = 0, finalsSinceViz = 0, lastForesightAt = 0, finals
 function show(view) {
   for (const v of ['login','home','ws']) $('view-'+v).style.display = v === view ? '' : 'none';
   $('signout').style.display = view === 'login' ? 'none' : '';
+  document.body.classList.toggle('in-ws', view === 'ws'); // [STAGE 2026-11-14] 工作台内隐藏全局顶栏，纵向空间让给画布
 }
 
 async function refreshSession() {
@@ -339,6 +374,12 @@ $('btn-create').onclick = async () => {
 
 $('btn-back').onclick = async () => { stopCapture(); if (endReconcileTimer) { clearInterval(endReconcileTimer); endReconcileTimer = null; } if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
 
+// [STAGE 2026-11-14] 「更多」菜单：更新纪要/删除会议/退出登录收纳于此，点外部或选中项后自动收起
+$('btn-more').onclick = (e) => { e.stopPropagation(); const m = $('ws-menu'); m.style.display = m.style.display === 'none' ? 'flex' : 'none'; };
+document.addEventListener('click', (e) => { const m = $('ws-menu'); if (m && m.style.display !== 'none' && !e.target.closest('.ws-menu-wrap')) m.style.display = 'none'; });
+$('ws-menu').addEventListener('click', () => { $('ws-menu').style.display = 'none'; });
+$('menu-signout').onclick = () => { $('signout').click(); };
+
 let lastAnalyzeNoteAt = 0;
 function noteAnalyzeFail(r) {
   if (r && !r.ran && r.reason === 'model_unavailable') {
@@ -385,7 +426,7 @@ async function openMeeting(id, autostart = false) {
 function renderMeeting() {
   const m = cur.meeting;
   $('m-title').value = m.title;
-  $('m-mode').textContent = m.mode === 'speech' ? '演讲模式' : '会议模式';
+  $('m-mode').textContent = m.mode === 'speech' ? '单人演讲' : '会议模式';
   $('m-status').textContent = m.status;
   $('m-info').innerHTML = `会议 ID：${esc(m.id)}<br>创建：${esc((m.created_at||'').replace('T',' ').slice(0,19))}<br>时区：${esc(m.timezone)}`;
   $('btn-delete').style.display = m.status === 'ended' ? '' : 'none';
@@ -435,6 +476,8 @@ async function loadVizAndForesight() {
       onLocateSegment: locateSegment,
       onError: (m) => { $('ws-err').textContent = m; },
       onReplayChange: syncReplayBar,
+      onFollowChange: syncFollowBtn, // [STAGE 2026-11-14] 跟随被手动平移暂停/恢复时同步按钮文案
+      getStageInfo: () => ({ title: (cur && cur.meeting && cur.meeting.title) || '未命名会议', status: cur && cur.meeting ? cur.meeting.status : '', recording: !!(cur && cur.meeting && cur.meeting.status === 'live' && wsReady) }), // [STAGE 2026-11-14] 演讲模式极简提示行数据源
     });
     vizUI.store.listeners.add(updateVizStat);
     try {
@@ -442,7 +485,7 @@ async function loadVizAndForesight() {
       vizUI.attach(bits);
     } catch (e) { $('viz-mount').innerHTML = '<p class="err">导图画布组件加载失败：' + esc(e.message) + '（纪要与字幕不受影响）</p>'; }
   }
-  try { await vizUI.load(); updateVizStat(); } catch (e) { $('ws-err').textContent = '导图加载失败：' + e.message; }
+  try { await vizUI.load(); updateVizStat(); syncFollowBtn(); } catch (e) { $('ws-err').textContent = '导图加载失败：' + e.message; }
   await loadForesight();
 }
 
@@ -466,10 +509,17 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = false;
 };
 $('btn-viz-tidy').onclick = () => vizUI && vizUI.tidyLayout();
+// [STAGE 2026-11-14] 跟随三态：开／关／被用户手动平移暂停——暂停时点按回正并恢复跟随
+function syncFollowBtn() {
+  if (!vizUI) return;
+  const s = vizUI.store;
+  $('btn-viz-follow').textContent = !s.autoFollow ? '自动跟随：关' : s.followHold ? '回正并跟随' : '自动跟随：开';
+}
 $('btn-viz-follow').onclick = () => {
   if (!vizUI) return;
-  vizUI.setAutoFollow(!vizUI.store.autoFollow);
-  $('btn-viz-follow').textContent = '自动跟随：' + (vizUI.store.autoFollow ? '开' : '关');
+  if (vizUI.store.followHold) vizUI.resumeFollow();
+  else vizUI.setAutoFollow(!vizUI.store.autoFollow);
+  syncFollowBtn();
 };
 $('btn-viz-replay').onclick = () => { if (vizUI) { try { vizUI.startReplay(); } catch (e) { $('ws-err').textContent = e.message; } } };
 $('rp-exit').onclick = () => vizUI && vizUI.stopReplay();

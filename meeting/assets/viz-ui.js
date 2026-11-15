@@ -29,11 +29,18 @@ export function createVizUI(opts) {
     mode: 'live', // live | replay
     replay: null, // { graph, offsetMs, totalMs, playing, speed, timer }
     autoFollow: true,
+    followHold: false, // [STAGE 2026-11-14] 用户手动平移/缩放后暂停跟随（回正恢复）
+    _progMove: false, // [STAGE 2026-11-14] 程序化移动标记：setCenter/fitView 不触发跟随暂停
     listeners: new Set(),
     rfApi: null,
     version: 0,
   };
   const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); };
+  // [STAGE 2026-11-14] 程序化视口移动统一走此包装，避免被误判为用户手动平移而暂停跟随
+  function progMove(fn) {
+    store._progMove = true;
+    try { fn(); } finally { setTimeout(() => { store._progMove = false; }, 900); }
+  }
 
   // ---------- 位置：增量落位（已有节点不挪窝） ----------
   const posKey = () => 'vizpos:' + getMeetingId();
@@ -92,7 +99,7 @@ export function createVizUI(opts) {
     const minX = Math.min(...[...pos.values()].map((p) => p.x), 0);
     for (const [k, v] of pos) store.positions.set(k, { x: v.x - minX, y: v.y });
     savePositions(); emit();
-    setTimeout(() => store.rfApi && store.rfApi.fitView({ duration: 500, padding: 0.15 }), 50);
+    setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 500, padding: 0.15 })); }, 50);
   }
 
   // ---------- 补丁应用（live） ----------
@@ -110,9 +117,10 @@ export function createVizUI(opts) {
     setTimeout(() => {
       const added = patch.ops.filter((o) => o.op === 'add_node').map((o) => o.node.id);
       store.fresh.clear(); store.freshEdges.clear(); emit();
-      if (store.autoFollow && added.length && store.rfApi) {
+      // [STAGE 2026-11-14] 跟随生效（开＋未被用户手动平移暂停）时才平滑移入新节点，并保持用户当前缩放
+      if (store.autoFollow && !store.followHold && added.length && store.rfApi) {
         const p = store.positions.get(added[added.length - 1]);
-        if (p) store.rfApi.setCenter(p.x + 90, p.y + 30, { zoom: 1.05, duration: 650 });
+        if (p) progMove(() => store.rfApi.setCenter(p.x + 90, p.y + 30, { zoom: store.rfApi.getZoom(), duration: 650 }));
       }
     }, 750);
     return res;
@@ -126,7 +134,7 @@ export function createVizUI(opts) {
     store.graph = graph; store.patches = patches; store.selectedId = null; store.mode = 'live'; store.replay = null;
     for (const n of graph.nodes) if (!store.positions.has(n.id)) placeNode(n, { nodes: graph.nodes.filter((x) => x.id !== n.id), edges: graph.edges }, graph.edges);
     emit(); renderDetail();
-    setTimeout(() => store.rfApi && store.rfApi.fitView({ duration: 400, padding: 0.15 }), 80);
+    setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 400, padding: 0.15 })); }, 80);
   }
 
   // 拉取新补丁并逐条动画应用（生长过程可见）；返回新增条数
@@ -199,7 +207,7 @@ export function createVizUI(opts) {
     if (store.replay && store.replay.timer) clearInterval(store.replay.timer);
     store.mode = 'live'; store.replay = null; emit(); renderDetail();
     if (opts.onReplayChange) opts.onReplayChange(null);
-    setTimeout(() => store.rfApi && store.rfApi.fitView({ duration: 400, padding: 0.15 }), 60);
+    setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 400, padding: 0.15 })); }, 60);
   }
 
   // ---------- 节点详情抽屉 ----------
@@ -262,44 +270,84 @@ export function createVizUI(opts) {
     return res;
   }
 
-  // ---------- 投影模式 ----------
+  // ---------- 演讲模式（纯净大屏）与跟随回正 ----------
   mount.innerHTML = '';
   const wrapEl = document.createElement('div');
   wrapEl.className = 'viz-wrap';
   wrapEl.innerHTML = `<div class="viz-canvas" id="viz-canvas"></div>`;
   mount.appendChild(wrapEl);
   mount.appendChild(detailEl);
+  // [STAGE 2026-11-14] 跟随暂停提示 chip：用户手动平移/缩放后出现，点按回正并恢复跟随
+  const followChip = document.createElement('button');
+  followChip.className = 'viz-follow-chip';
+  followChip.textContent = '已暂停跟随 · 回正';
+  followChip.style.display = 'none';
+  followChip.onclick = () => resumeFollow();
+  wrapEl.appendChild(followChip);
+  function syncFollowChip() { followChip.style.display = store.followHold && store.autoFollow ? '' : 'none'; }
+  function resumeFollow() {
+    store.followHold = false;
+    syncFollowChip();
+    if (opts.onFollowChange) opts.onFollowChange();
+    if (!store.rfApi) return;
+    const nodes = store.graph.nodes;
+    const last = nodes[nodes.length - 1];
+    const p = last && store.positions.get(last.id);
+    if (p) progMove(() => store.rfApi.setCenter(p.x + 90, p.y + 30, { zoom: Math.max(store.rfApi.getZoom(), 0.85), duration: 600 }));
+    else progMove(() => store.rfApi.fitView({ duration: 500, padding: 0.15 }));
+  }
+  // [STAGE 2026-11-14] 演讲模式极简提示行：只留会议标题＋录音状态，数据由页面 getStageInfo 提供、投影中每 2 秒刷新
+  const stageBar = document.createElement('div');
+  stageBar.className = 'viz-stage-bar';
+  stageBar.innerHTML = '<span class="viz-stage-title"></span><span class="viz-stage-status"><span class="viz-stage-dot"></span><span class="viz-stage-stxt"></span></span>';
+  wrapEl.appendChild(stageBar);
+  let stageTimer = null;
+  function refreshStageBar() {
+    const info = (opts.getStageInfo && opts.getStageInfo()) || {};
+    stageBar.querySelector('.viz-stage-title').textContent = info.title || '';
+    stageBar.querySelector('.viz-stage-dot').className = 'viz-stage-dot' + (info.status === 'live' ? ' live' : info.status === 'paused' ? ' paused' : '');
+    stageBar.querySelector('.viz-stage-stxt').textContent = info.status === 'live' ? (info.recording ? '录音中' : '进行中') : info.status === 'paused' ? '已暂停' : info.status === 'ended' ? '已结束' : '';
+  }
   let projChip = null;
   function enterProjection() {
+    if (wrapEl.classList.contains('in-projection')) return;
     wrapEl.classList.add('projecting');
     document.body.appendChild(wrapEl);
     wrapEl.classList.add('in-projection');
     projChip = document.createElement('button');
     projChip.className = 'viz-exit-chip';
-    projChip.textContent = '✕ 退出投影（Esc）';
+    projChip.textContent = '✕ 退出演讲模式（Esc）';
     projChip.onclick = exitProjection;
     wrapEl.appendChild(projChip);
+    refreshStageBar();
+    if (stageTimer) clearInterval(stageTimer);
+    stageTimer = setInterval(refreshStageBar, 2000);
     const goFs = () => { if (wrapEl.requestFullscreen) wrapEl.requestFullscreen().catch(() => {}); };
     goFs();
-    setTimeout(() => store.rfApi && store.rfApi.fitView({ duration: 500, padding: 0.1 }), 120);
+    setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 500, padding: 0.1 })); }, 120);
   }
   function exitProjection() {
+    if (!wrapEl.classList.contains('in-projection')) return;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     wrapEl.classList.remove('in-projection', 'projecting');
     mount.insertBefore(wrapEl, detailEl);
     if (projChip) { projChip.remove(); projChip = null; }
-    setTimeout(() => store.rfApi && store.rfApi.fitView({ duration: 400, padding: 0.15 }), 100);
+    if (stageTimer) { clearInterval(stageTimer); stageTimer = null; }
+    setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 400, padding: 0.15 })); }, 100);
   }
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && wrapEl.classList.contains('in-projection')) exitProjection();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && wrapEl.classList.contains('in-projection')) exitProjection();
   });
 
   return {
     store, load, syncNewPatches, setGraph, userPatch, tidyLayout,
     startReplay, seekReplay, playReplay, stopReplay,
-    enterProjection, exitProjection, renderDetail,
+    enterProjection, exitProjection, renderDetail, resumeFollow,
     select(id) { store.selectedId = id; emit(); renderDetail(); },
-    setAutoFollow(v) { store.autoFollow = v; },
+    setAutoFollow(v) { store.autoFollow = v; if (v) { store.followHold = false; syncFollowChip(); } if (opts.onFollowChange) opts.onFollowChange(); },
     _mountReact: null, // 由页面模块在 import React Flow 后调用 attachReact
     attach(reactBits) { mountReact(reactBits); },
   };
@@ -347,6 +395,10 @@ export function createVizUI(opts) {
       return React.createElement(ReactFlow, {
         nodes: rfNodes, edges: rfEdges, nodeTypes,
         colorMode: 'dark', fitView: true, minZoom: 0.2, maxZoom: 2.2,
+        panOnDrag: true, zoomOnPinch: true, zoomOnScroll: true, // [STAGE 2026-11-14] 拖动平移＋双指捏合缩放（RF 内置，显式声明防默认值漂移）
+        // [STAGE 2026-11-14] 用户手动平移/缩放（非程序化移动）即暂停自动跟随，回正后恢复
+        onMoveStart: () => { if (store._progMove) return; if (store.mode === 'live' && store.autoFollow && !store.followHold) { store.followHold = true; syncFollowChip(); if (opts.onFollowChange) opts.onFollowChange(); } },
+        onMoveEnd: () => { store._progMove = false; },
         proOptions: { hideAttribution: false },
         onNodeClick: (_, node) => { store.selectedId = node.id; emit(); renderDetail(); },
         onPaneClick: () => { store.selectedId = null; emit(); renderDetail(); },
