@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-15T08:57:57Z",
+ "generated_at": "2026-11-15T20:55:40Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -91,6 +91,30 @@
    ],
    "specialties": [],
    "tagline": "",
+   "article_count": 0
+  },
+  {
+   "id": "3beea179-1452-4cca-b235-df7388a32251",
+   "name": "Michael liu",
+   "title": "专业人士",
+   "avatar": "",
+   "slug": "michael-liu",
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": null,
+   "profession": "other",
+   "profession_name": "专业人士",
+   "city": null,
+   "regions": [
+    "US"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [
+    "商业地产、国际贸易、新能源"
+   ],
+   "tagline": "专注国际贸易、商业地产",
    "article_count": 0
   }
  ],
