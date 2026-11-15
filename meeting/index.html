@@ -40,11 +40,27 @@
   .viz-stage-dot.paused{background:var(--warn)}
   /* [STAGE 2026-11-14] 跟随被用户手动平移暂停时，画布右下角回正入口 */
   .viz-follow-chip{position:absolute;right:12px;bottom:12px;z-index:65;background:rgba(17,26,46,.88);color:var(--txt);border:1px solid var(--acc);font-size:12px;padding:6px 10px}
-  .viz-node{background:#101c33;border:1.6px solid var(--acc);border-radius:12px;padding:8px 12px;min-width:150px;max-width:230px;color:var(--txt);box-shadow:0 4px 18px rgba(0,0,0,.35)}
-  .viz-node-tag{font-size:11px;letter-spacing:.04em}
-  .viz-node-label{font-size:14px;font-weight:600;line-height:1.35}
-  .viz-node-detail{font-size:12px;color:var(--dim);margin-top:2px;line-height:1.35}
-  .viz-selected{box-shadow:0 0 0 2px #fff3,0 4px 18px rgba(0,0,0,.4)}
+  /* [VIZ-VISUAL-V1 2026-11-14] 导图节点新版视觉：浅色默认（白卡＋细绿边＋柔和阴影）；演讲模式深色在 [WB-VISUAL-V1] 块内以 .in-projection 覆盖 */
+  .viz-node{background:#fff;border:1px solid #DCE8E1;border-radius:14px;padding:9px 13px 10px;color:#14231B;box-shadow:0 6px 20px rgba(16,60,40,.10);position:relative;transition:box-shadow .25s}
+  .viz-node.lv0{padding:16px 20px 14px;text-align:center;color:#fff;border:0}
+  .viz-node.lv0 .viz-node-label{font-size:19px;font-weight:800}
+  .viz-node.lv0 .viz-node-detail{color:rgba(255,255,255,.88);font-size:12.5px}
+  .viz-node.lv1 .viz-node-label{font-size:15px}
+  .viz-node.lv2 .viz-node-label,.viz-node.lv3 .viz-node-label{font-size:13.5px}
+  .viz-node-badgerow{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+  .viz-node-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;border-radius:99px;padding:1px 8px;letter-spacing:.02em}
+  .viz-node-lock{font-size:10.5px}
+  .viz-node-ver{font-size:10.5px;color:#94A3B8}
+  .viz-node-label{font-size:14px;font-weight:650;line-height:1.35}
+  .viz-node-detail{font-size:12px;color:#5B6B62;margin-top:3px;line-height:1.5}
+  .viz-node.lv1 .viz-node-detail{font-size:12px}
+  .viz-node.lv2 .viz-node-detail,.viz-node.lv3 .viz-node-detail{font-size:11.5px}
+  .viz-node-detail.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .viz-node-detail.clamp3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .viz-node-detail.full{line-height:1.6}
+  .viz-node-contrib{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+  .viz-node-contrib span{font-size:10.5px;border-radius:99px;padding:1px 8px}
+  .viz-selected{box-shadow:0 0 0 2px #42D6A0,0 6px 20px rgba(16,60,40,.10)}
   @keyframes vizpop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
   .viz-fresh{animation:vizpop .55s ease-out}
   .viz-detail{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);display:none}
@@ -212,46 +228,59 @@
     .mr-time{font-size:12.5px}
   }
 
-/* [WB-REDESIGN 2026-11-14] 工作台石墨黑＋薄荷青主题与三栏布局（作用域 body.in-ws，不影响首页/登录） */
-  body.in-ws{--bg:#0a0d0f;--panel:#10151a;--panel2:#0b0f12;--line:#222a30;--txt:#edf3f0;--dim:#8b979e;--acc:#45d69e;--chip:#182027;background:var(--bg)}
+/* [WB-REDESIGN 2026-11-14] 工作台主题与三栏布局（作用域 body.in-ws，不影响首页/登录） */
+/* [WB-VISUAL-V1 2026-11-14] 视觉升级定版：石墨黑→白色科技风（令牌 #F8FAFC/#FFFFFF/#111827/#64748B/主色 #42D6A0、
+   三栏独立白色卡片、画布极浅底）；布局力学（flex 拉高画布＋纪要独立滚动）与全部功能规则不变。 */
+  body.in-ws{--bg:#F8FAFC;--panel:#FFFFFF;--panel2:#F3F9F6;--line:#E5EDF3;--txt:#111827;--dim:#64748B;--acc:#42D6A0;--warn:#B7791F;--bad:#E5484D;--chip:#F1F5F9;background:var(--bg)}
+  body.in-ws input,body.in-ws select,body.in-ws textarea{background:#fff}
   body.in-ws .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;padding:10px 16px}
-  body.in-ws .grid{flex:1;min-height:0;align-items:stretch;gap:0}
-  body.in-ws .grid .card{background:transparent;border:0;border-radius:0;margin-bottom:0}
+  body.in-ws .grid{flex:1;min-height:0;align-items:stretch;gap:14px}
+  body.in-ws .grid .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(15,45,35,.05);margin-bottom:0}
   body.in-ws .col{overflow-y:auto}
   body.in-ws .col h3{color:var(--txt);font-size:15px;letter-spacing:0}
-  body.in-ws #col-transcript{padding:4px 14px 4px 2px}
-  body.in-ws .center-col{display:flex;flex-direction:column;gap:0;min-height:0;overflow:hidden;border-left:1px solid var(--line);border-right:1px solid var(--line);padding:0 14px}
-  body.in-ws #col-viz{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:4px 0}
-  body.in-ws #col-minutes{flex:0 1 auto;max-height:42%;overflow-y:auto;border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+  body.in-ws #col-transcript{padding:10px 14px}
+  body.in-ws .center-col{display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;padding:0}
+  body.in-ws #col-viz{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:10px 14px}
+  body.in-ws #col-minutes{flex:0 1 auto;max-height:42%;overflow-y:auto;padding:10px 14px}
   body.in-ws #viz-mount{flex:1;min-height:0;display:flex;flex-direction:column}
   body.in-ws .viz-wrap:not(.in-projection){position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
-  body.in-ws .viz-canvas{flex:1;min-height:0;height:auto;max-height:none;background:var(--panel2);border-color:var(--line)}
-  body.in-ws .viz-detail{flex:none}
-  body.in-ws .viz-node{background:#12181d;border:1px solid #39434b;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
-  body.in-ws .viz-selected{box-shadow:0 0 0 2px rgba(69,214,158,.65),0 4px 16px rgba(0,0,0,.4)}
-  @keyframes vizglow{0%{box-shadow:0 0 0 0 rgba(69,214,158,.5)}100%{box-shadow:0 0 0 16px rgba(69,214,158,0)}}
-  body.in-ws .viz-fresh{animation:vizglow .85s ease-out}
-  /* [VIZ-V1.0 2026-11-14] 观点深化：已有节点被更新/合并/移动时轻微高亮（区别于新节点的分支展开柔光） */
-  @keyframes vizdeepen{0%{box-shadow:0 0 0 0 rgba(69,214,158,.55)}100%{box-shadow:0 0 0 9px rgba(69,214,158,0)}}
+  body.in-ws .viz-canvas{flex:1;min-height:0;height:auto;max-height:none;background:#F3F9F6;border-color:var(--line);border-radius:14px}
+  body.in-ws .viz-detail{flex:none;background:#FBFDFC}
+  /* [VIZ-VISUAL-V1] 导图深色星图主题只在演讲模式（.in-projection）生效；工作台用浅色默认（见基础 .viz-node） */
+  .viz-wrap.in-projection .viz-canvas{background:#0A0F14}
+  .viz-wrap.in-projection .viz-node{background:#131D28;border-color:#2B3D4E;color:#EAF3EE;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+  .viz-wrap.in-projection .viz-node-detail{color:#97A9B5}
+  .viz-wrap.in-projection .viz-node.lv0 .viz-node-detail{color:rgba(255,255,255,.88)}
+  .viz-wrap.in-projection .viz-selected{box-shadow:0 0 0 2px #42D6A0,0 8px 26px rgba(0,0,0,.5)}
+  body.in-ws .viz-follow-chip{background:#F2FBF7;color:#0B8A5F;border-color:#BDEEDD}
+  .viz-wrap.in-projection .viz-follow-chip{background:rgba(17,26,46,.88);color:#EAF3EE;border-color:var(--acc)}
+  /* [VIZ-V1.0 2026-11-14] 观点深化：已有节点被更新/合并/移动时轻微高亮（新节点走基础 vizpop 生长动画） */
+  @keyframes vizdeepen{0%{box-shadow:0 0 0 0 rgba(66,214,160,.55)}100%{box-shadow:0 0 0 9px rgba(66,214,160,0)}}
   body.in-ws .viz-deepen{animation:vizdeepen 1.4s ease-out}
   .viz-node{transition:opacity .3s}
   .viz-dim{opacity:.25}
   /* [多人规则 V1.0 2026-11-14] 观点贡献视图：按发言者筛选高亮 */
-  .viz-speaker-bar{position:absolute;left:12px;bottom:12px;z-index:65;display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:70%;background:rgba(10,14,17,.82);border:1px solid var(--line);border-radius:99px;padding:5px 10px}
+  .viz-speaker-bar{position:absolute;left:12px;bottom:12px;z-index:65;display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:70%;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:99px;padding:5px 10px;box-shadow:0 2px 8px rgba(15,45,35,.07)}
+  .viz-wrap.in-projection .viz-speaker-bar{background:rgba(10,14,17,.85)}
+  .viz-wrap.in-projection .viz-speaker-chip{color:#EAF3EE;border-color:#2B3D4E}
+  .viz-wrap.in-projection .viz-speaker-title,.viz-wrap.in-projection .viz-speaker-hint{color:#97A9B5}
   .viz-speaker-title{font-size:12px;color:var(--dim);white-space:nowrap}
   .viz-speaker-chip{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:99px;font-size:12px;padding:3px 10px;cursor:pointer;white-space:nowrap}
   .viz-speaker-chip.active{border-color:var(--acc);color:var(--acc)}
   .viz-speaker-hint{font-size:12px;color:var(--dim);white-space:nowrap}
   .viz-empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:14px;line-height:1.7;padding:24px;text-align:center;pointer-events:none;z-index:4}
-  body.in-ws .react-flow__controls{box-shadow:0 2px 10px rgba(0,0,0,.4)}
-  body.in-ws .react-flow__controls-button{background:#141a1f;border-bottom:1px solid #222a30;fill:#cfd8dc;color:#cfd8dc}
-  body.in-ws .react-flow__attribution{background:transparent;color:#5b6a72}
+  body.in-ws .react-flow__controls{box-shadow:0 2px 8px rgba(15,45,35,.08);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  body.in-ws .react-flow__controls-button{background:#fff;border-bottom:1px solid var(--line);fill:#334155;color:#334155}
+  body.in-ws .react-flow__attribution{background:transparent;color:#94A3B8}
+  .viz-wrap.in-projection .react-flow__controls-button{background:#141a1f;border-bottom-color:#222a30;fill:#cfd8dc;color:#cfd8dc}
   body.in-ws .viz-toolbar .ghost{border-radius:99px;padding:5px 12px;font-size:13px;white-space:nowrap}
   .viz-menu-stat{font-size:12px;color:var(--dim);padding:6px 8px;border-top:1px solid var(--line)}
   .viz-menu-hint{font-size:12px;color:var(--dim);padding:6px 8px;max-width:230px;line-height:1.55;border-top:1px solid var(--line)}
   /* 顶栏一行化：去卡片盒、品牌、标题文字态、连接状态、真实电平声波 */
-  body.in-ws .ws-head{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 2px;margin-bottom:10px}
+  body.in-ws .ws-head{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(15,45,35,.04);padding:8px 12px;margin-bottom:12px}
+  body.in-ws .ws-menu{box-shadow:0 16px 38px rgba(23,54,40,.13)}
   .ws-brand{display:flex;align-items:center;gap:7px;flex:none;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+  .ws-brand .brand-logo{width:27px;height:27px;border-radius:7px}
   .ws-brand .brand-sub{color:var(--dim);font-weight:500;font-size:13px;border-left:1px solid var(--line);padding-left:8px}
   #m-title-view{flex:0 1 auto;max-width:32%;min-width:40px;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;padding:6px 4px}
   body.in-ws #m-title{display:none}
@@ -264,8 +293,8 @@
   #mic-wave{display:none;align-items:flex-end;gap:2.5px;height:18px;flex:none;padding:0 2px}
   #mic-wave i{display:block;width:3px;height:16px;border-radius:2px;background:var(--acc);transform:scaleY(.15);transform-origin:bottom}
   body.in-ws #m-timer{font-variant-numeric:tabular-nums;color:var(--txt);font-size:13px}
-  body.in-ws #btn-pause{border-color:var(--acc);color:var(--acc)}
-  body.in-ws #btn-end{background:transparent;color:var(--bad);border:1px solid rgba(224,93,93,.55)}
+  body.in-ws #btn-pause{border-color:var(--acc);color:#0B8A5F}
+  body.in-ws #btn-end{background:transparent;color:var(--bad);border:1px solid rgba(229,72,77,.5)}
   .ws-menu-info{font-size:12px;color:var(--dim);padding:6px 8px;border-top:1px solid var(--line);line-height:1.55;word-break:break-all}
   /* 字幕：时间戳弱化独立行、最新句薄荷细线、临时转写区分、跟随开关 */
   body.in-ws #col-transcript .seg .tm{display:block;margin:0 0 2px;font-size:11px;opacity:.7}
@@ -273,14 +302,26 @@
   body.in-ws #partial{color:var(--dim);border-left:2px solid var(--acc);padding-left:8px}
   body.in-ws #partial:empty{display:none}
   body.in-ws #partial:not(:empty)::before{content:'正在转写 · ';color:var(--acc);font-style:normal}
-  body.in-ws #follow{appearance:none;-webkit-appearance:none;width:36px !important;height:20px !important;border-radius:99px;background:#2a343b;border:1px solid var(--line);position:relative;cursor:pointer;vertical-align:-5px;transition:background .2s;padding:0}
-  body.in-ws #follow::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#aeb9be;transition:left .2s,background .2s}
+  body.in-ws #follow{appearance:none;-webkit-appearance:none;width:36px !important;height:20px !important;border-radius:99px;background:#D8E2DC;border:1px solid var(--line);position:relative;cursor:pointer;vertical-align:-5px;transition:background .2s;padding:0}
+  body.in-ws #follow::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,45,35,.25);transition:left .2s,background .2s}
   body.in-ws #follow:checked{background:var(--acc)}
-  body.in-ws #follow:checked::after{left:18px;background:#06251a}
+  body.in-ws #follow:checked::after{left:18px;background:#fff}
   /* 右栏：预见滚动区＋问 RUKIK 固定底部 */
-  body.in-ws #col-ai{display:flex;flex-direction:column;overflow:hidden;padding:4px 2px 4px 14px}
+  body.in-ws #col-ai{display:flex;flex-direction:column;overflow:hidden;padding:10px 14px}
   #fs-scroll{flex:1;min-height:0;overflow-y:auto}
-  #foresight-list .item{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px}
+  #foresight-list .item{background:#FBFDFC;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px}
+  /* [WB-VISUAL-V1] 预见/状态色彩的浅色适配（深底荧光色→白底深色，语义不变） */
+  body.in-ws .fs-part b.k{color:#0B8A5F}
+  body.in-ws .fs-part b.a{color:#9A7B1E}
+  body.in-ws .fs-part b.o{color:#2F5FD0}
+  body.in-ws .fs-part b.u{color:#7C5CD6}
+  body.in-ws .fs-scen{background:rgba(183,121,31,.06)}
+  body.in-ws .chip.confirmed{color:#0B8A5F}
+  body.in-ws .chip.discussing{color:#9A7B1E}
+  body.in-ws .chip.proposed{color:#2F5FD0}
+  body.in-ws .chip.disputed{color:#C93A3A}
+  body.in-ws .chip.withdrawn{color:#94A3B8}
+  body.in-ws .seg.latest{border-left-color:var(--acc);background:rgba(66,214,160,.07)}
   .fs-details{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
   #ask-block{flex:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
   #ask-block b{font-size:15px}
@@ -435,7 +476,7 @@
     <div class="card ws-head">
       <div class="ws-head-row">
         <button id="btn-back" class="ghost" title="我的会议">←</button>
-        <span class="ws-brand"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c8 0 16-8 16-16-8 0-16 8-16 16z" fill="#45d69e"/><path d="M4 20c2-6 6-10 12-12" stroke="#0a0d0f" stroke-width="1.6" fill="none"/></svg><span>RUKIK</span><span class="brand-sub">AI 会议伴侣</span></span>
+        <span class="ws-brand"><img class="brand-logo" src="./assets/seal.png" alt="RUKIK"><span>RUKIK</span><span class="brand-sub">AI 会议伴侣</span></span>
         <span id="m-title-view" title="点击修改标题"></span>
         <input id="m-title">
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
