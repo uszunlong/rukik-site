@@ -1999,11 +1999,29 @@ function evHolePzWire(box) {
   box.classList.toggle('haspz', has);
   if (has) holePz(box);
 }
+/* [TOTALHOLES-FIX 20261114] 赛事总洞数统一口径（与服务端 event.holes ?? holes.length
+   同序）：①赛事配置 holes（event_get 下发的 golf_events.holes，与逐洞记分/排行榜
+   同一字段）②本场记分卡 holes 定义（单人 S.cardData／同组 S.group）③球场记分卡
+   预览 holes（course_preview，与记分卡同源生成、与 holeData 同表）。严禁使用地图
+   几何洞位数量推导总数。数据未加载齐时返回 0：摘要不带总数、绝不默认 18。 */
+function evTotalHoles() {
+  var ev = (EV && EV.event) || (S.ev && S.ev.event) || null;
+  if (ev && ev.holes) return Number(ev.holes) || 0;
+  if (S.cardData && S.cardData.holes && S.cardData.holes.length) return S.cardData.holes.length;
+  if (S.group && S.group.holes && S.group.holes.length) return S.group.holes.length;
+  if (PREVIEW) {
+    var by = PREVIEW.holes_by_tee || {};
+    var list = by[curTee] || PREVIEW.holes || [];
+    if (list.length) return list.length;
+  }
+  return 0;
+}
 function renderMap() {
   var el = document.getElementById('mapSec');
   if (!PREVIEW || !PREVIEW.name) { el.innerHTML = '<div class="card"><h2>球场地图</h2><div class="empty">本场活动尚未关联球场；选定球场后，球场地图（全局图＋逐洞洞图）将自动生成，无需另行配置。</div></div>'; var gs0 = document.getElementById('glSec'); if (gs0) gs0.innerHTML = ''; return; }
   var comp = PREVIEW.completeness || {};
   var h = holeData();
+  var totH = evTotalHoles(); /* [TOTALHOLES-FIX 20261114] 本场总洞数（统一口径，未知=0） */
   var suspect = h ? suspectNote(h.hole) : '';
   var teeCur = (PREVIEW.tees || []).filter(function (t) { return t.id === curTee; })[0] || null;
   var teeName = teeCur ? teeCur.name : '';
@@ -2022,14 +2040,14 @@ function renderMap() {
   /* [A6] 控件只剩上一洞/下一洞/全屏三件；洞号摘要改静态信息行；
      发球台选择移入球洞信息区（与 Par/码数同区，见 holeinfo 上方 teeBar） */
   el.innerHTML = '<div class="card"><h2>球场地图</h2>' +
-    '<div class="mapsum"><span class="ms-t">第 ' + curHole + ' 洞 / 18' + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span></div>' +
+    '<div class="mapsum"><span class="ms-t">第 ' + curHole + ' 洞' + (totH ? ' / ' + totH : '') + (h ? ' · Par ' + h.par + (h.yards != null ? ' · ' + h.yards + ' 码' : '') : '') + '</span></div>' + /* [TOTALHOLES-FIX 20261114] 总数动态（原写死 18，9 洞赛事显错） */
     teeBar +
     '<div class="holebar"><button type="button" id="prevHole">← 上一洞</button><button type="button" id="nextHole">下一洞 →</button><button type="button" class="hdlink" id="hdOpen">⛶ 全屏</button></div>' +
     '<div id="holeSvg" style="margin-top:10px"><div class="skl"></div></div>' +
     '<div id="mapAssetsBox"></div>' +
     '<div class="holeinfo">' + (h ? ('Par ' + h.par + ' · 标准杆指数 ' + (h.stroke_index != null ? h.stroke_index : '—') + ' · 距离 ' + (h.yards != null ? h.yards + ' 码' : '—（该发球台暂无逐洞码数）') + (suspect ? '<span class="suspect">码数待核实：' + esc(suspect) + '</span>' : '')) : '本洞记分卡资料暂缺') + '</div></div>';
-  el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : 18); });
-  el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < 18 ? curHole + 1 : 1); });
+  el.querySelector('#prevHole').addEventListener('click', function () { setHole(curHole > 1 ? curHole - 1 : (totH || 18)); }); /* [TOTALHOLES-FIX 20261114] 回绕界＝赛事总洞数（未知时沿用旧界） */
+  el.querySelector('#nextHole').addEventListener('click', function () { setHole(curHole < (totH || 18) ? curHole + 1 : 1); });
   var hdBtn = el.querySelector('#hdOpen');
   if (hdBtn) hdBtn.addEventListener('click', openHdOverlay);
   var tbBtn = el.querySelector('#teeBar'), tpBox = el.querySelector('#teePick');
@@ -2279,7 +2297,7 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape') glEv
 
 function prefetchAround(h) {
   [h - 1, h + 1].forEach(function (n) {
-    if (n < 1 || n > 18 || geomCache[n]) return;
+    if (n < 1 || n > (evTotalHoles() || 18) || geomCache[n]) return; /* [TOTALHOLES-FIX 20261114] 预取上界＝赛事总洞数 */
     callRetry('course_geometry', { hole: n }).then(function (j) { geomCache[n] = j; }).catch(function () {});
   });
 }
@@ -4708,7 +4726,7 @@ function paintGroupScoring(card) {
     '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
     rows +
     (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
-    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（18 洞）') + '</button></div>' +
+    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（' + (g.holes || []).length + ' 洞）') + '</button></div>' + /* [TOTALHOLES-FIX 20261114] 总数＝g.holes 长度（与下方矩阵同源，原写死 18 洞） */
     matrix + certHtml +
     backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
