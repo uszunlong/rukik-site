@@ -168,6 +168,11 @@
     <div class="grid">
       <div class="card col active" id="col-transcript">
         <h3>实时字幕 <label class="dim" style="float:right;font-weight:400"><input type="checkbox" id="follow" checked style="width:auto"> 自动跟随</label></h3>
+        <div id="corr-bar" style="display:none;margin:2px 0 6px;font-size:12px">
+          <button class="ghost" id="corr-view-orig">原文</button>
+          <button class="ghost" id="corr-view-fixed">校订版</button>
+          <span class="dim" id="corr-status"></span>
+        </div>
         <div id="segments"></div>
         <div id="partial" class="seg partial"></div>
         <div id="gap-notices"></div>
@@ -422,6 +427,7 @@ async function openMeeting(id, autostart = false) {
     if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) await loadVizAndForesight(); else noteAnalyzeFail(r); }).catch(() => {});
     if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); else noteAnalyzeFail(r); }).catch(() => {});
   } catch { /* 补分析失败不挡页面 */ }
+  if (cur.meeting.status === 'ended') { loadCorrection(); triggerCorrection(); } // [TEXT-CORRECTION 2026-11-14] 打开已结束会议：先显示已有校订，再幂等触发（未校订或人工锁定有变更才真跑）
   if ((cur.meeting.status === 'live') && autostart) startCapture();
   if (cur.meeting.status === 'live' && !autostart) { /* 回到进行中的会议：可手动继续 */ $('ws-err').textContent = '会议进行中，点「暂停」旁的录音将自动恢复连接。'; startCapture(); }
 }
@@ -445,11 +451,64 @@ function renderMeeting() {
   renderSegments(); renderMinutes();
 }
 
+// [TEXT-CORRECTION 2026-11-14] 会后文本校订：原文永不覆盖，校订版为独立版本层（transcript_corrections）；
+// 时间戳沿用原文段 start_sec；人工锁定段在校订版直接显示人工修订文本（服务端 source=user_locked）。
+let corrState = null; // {status, correction, map: Map<segment_id,{text,source}>}
+let corrView = 'original';
+async function loadCorrection() {
+  if (!cur || !cur.meeting) return;
+  try {
+    const r = await client.api('correction_get', { meeting_id: cur.meeting.id });
+    corrState = { status: r.status, correction: r.correction, map: new Map((r.segments || []).map((s) => [s.segment_id, { text: s.corrected_text, source: s.source }])) };
+  } catch { corrState = null; }
+  renderCorrBar(); renderSegments();
+}
+async function triggerCorrection() {
+  if (!cur || !cur.meeting || cur.meeting.status !== 'ended') return;
+  try { await client.analyze(cur.meeting.id, true, 'correction'); } catch { /* 失败不挡页面，状态由 correction_get 如实呈现 */ }
+  await loadCorrection();
+}
+function renderCorrBar() {
+  const bar = $('corr-bar'); if (!bar || !cur || !cur.meeting) return;
+  const show = cur.meeting.status === 'ended' && corrState && corrState.status !== 'none';
+  bar.style.display = show ? '' : 'none';
+  if (!show) return;
+  const st = { running: '校订中…', done: `已校订（第 ${corrState.correction.version} 版）`, failed: '校订失败，原文不受影响' }[corrState.status] || '';
+  $('corr-status').textContent = st;
+  $('corr-view-orig').style.fontWeight = corrView === 'original' ? '700' : '';
+  $('corr-view-fixed').style.fontWeight = corrView === 'corrected' ? '700' : '';
+}
+$('corr-view-orig').onclick = () => { corrView = 'original'; renderCorrBar(); renderSegments(); };
+$('corr-view-fixed').onclick = () => { corrView = 'corrected'; renderCorrBar(); renderSegments(); };
+async function editSegment(segId) {
+  const s = (cur.segments || []).find((x) => x.id === segId);
+  if (!s) return;
+  const t = prompt('修订这一段字幕（保存后锁定为人工版，AI 校订不会覆盖）：', s.user_locked && s.user_text ? s.user_text : s.text);
+  if (t == null || !t.trim()) return;
+  try {
+    await client.api('transcript_segment_user_edit', { meeting_id: cur.meeting.id, segment_id: segId, text: t.trim() });
+    cur = await client.getMeeting(cur.meeting.id);
+    if (cur.meeting.status === 'ended') triggerCorrection(); else { renderMeeting(); }
+  } catch (e) { $('ws-err').textContent = '修订保存失败：' + e.message; }
+}
 function renderSegments() {
   const box = $('segments'); box.innerHTML = '';
+  const useCorr = corrView === 'corrected' && corrState && corrState.status === 'done';
   for (const s of cur.segments) {
     const div = document.createElement('div'); div.className = 'seg'; div.dataset.seg = s.id;
-    div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${esc(s.text)}`;
+    let body = s.text, chips = '';
+    if (useCorr) {
+      const ce = corrState.map.get(s.id);
+      if (s.user_locked && s.user_text) { body = s.user_text; chips = '<span class="chip">人工修订</span>'; }
+      else if (ce) { body = ce.text; if (ce.source === 'user_locked') chips = '<span class="chip">人工修订</span>'; else if (ce.text !== s.text) chips = '<span class="chip">校订</span>'; }
+    } else if (s.user_locked) chips = '<span class="chip">已锁定（人工修订）</span>';
+    div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${esc(body)}${chips}`;
+    if (corrView === 'original') {
+      const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '改';
+      b.style.cssText = 'font-size:11px;padding:0 4px;margin-left:4px';
+      b.onclick = () => editSegment(s.id);
+      div.appendChild(b);
+    }
     box.appendChild(div);
   }
   if ($('follow').checked) box.scrollTop = box.scrollHeight;
@@ -689,6 +748,7 @@ $('btn-end').onclick = async () => {
       }
       renderMeeting();
     } catch { /* 排空失败不挡结束流程 */ }
+    triggerCorrection(); // [TEXT-CORRECTION 2026-11-14] 会议已 ended：自动跑一次会后文本校订（服务端指纹幂等，失败不挡结束流程）
     startEndReconcile();
   } catch (e) { $('ws-err').textContent = e.message; }
 };
