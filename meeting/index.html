@@ -904,16 +904,51 @@ $('m-lang').onchange = async () => {
 };
 
 let lastAnalyzeNoteAt = 0;
+// [QUALITY-NOTE-TRANSIENT 2026-11-15] 识别质量提示改瞬时呈现（用户亲定＋直播清除线
+// 同源定谳合并口径）：①失败路径边沿闪现——低质量回合边沿出现一次、约 5 秒后淡出
+// 隐藏，同回合持续不重弹；②成功即清——任一批次分析成功（r.ran）调用
+// resetQualityNote：除解闩外，若行内当前正是质量提示文案则立即清空撤下（不等 5 秒
+// 淡出），行内是其他提示时不碰；③解闩后下回合再转低质量可再提示一次。仅改呈现
+// 时序，质量判定与导图生成逻辑不动；同函数的另两态（分析不可用/写入失败）保持
+// 原 30 秒节流常驻。
+const QUALITY_NOTE_TEXT = '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。';
+let qualityNoteLatched = false;
+let qualityNoteHideTimer = 0;
+function resetQualityNote() {
+  qualityNoteLatched = false;
+  clearTimeout(qualityNoteHideTimer);
+  const el = $('ws-err');
+  if (el && el.textContent === QUALITY_NOTE_TEXT) {
+    el.textContent = '';
+    el.style.transition = ''; el.style.opacity = '';
+  }
+}
+function showQualityNoteOnce() {
+  if (qualityNoteLatched) return;
+  qualityNoteLatched = true;
+  const el = $('ws-err');
+  el.textContent = QUALITY_NOTE_TEXT;
+  el.style.transition = 'opacity .45s ease';
+  el.style.opacity = '1';
+  clearTimeout(qualityNoteHideTimer);
+  qualityNoteHideTimer = setTimeout(() => {
+    if (el.textContent !== QUALITY_NOTE_TEXT) { el.style.transition = ''; el.style.opacity = ''; return; }
+    el.style.opacity = '0';
+    setTimeout(() => {
+      if (el.textContent === QUALITY_NOTE_TEXT) el.textContent = '';
+      el.style.transition = ''; el.style.opacity = '';
+    }, 480);
+  }, 5000);
+}
 function noteAnalyzeFail(r) {
   // [VIZ-V1.0 2026-11-14] 四态如实呈现：分析执行失败/识别质量不足/结果写入失败分别给中文文案（30 秒节流防刷屏）
   const st = r && (r.status || r.reason);
   if (r && !r.ran && (st === 'model_unavailable' || st === 'analysis_failed' || st === 'quality_insufficient' || st === 'apply_failed')) {
+    if (st === 'quality_insufficient') { showQualityNoteOnce(); return; }
     const t = Date.now();
     if (t - lastAnalyzeNoteAt > 30000) {
       lastAnalyzeNoteAt = t;
-      $('ws-err').textContent = st === 'quality_insufficient'
-        ? '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。'
-        : st === 'apply_failed'
+      $('ws-err').textContent = st === 'apply_failed'
           ? '导图写入失败：字幕已保存，将在后续片段自动重试。'
           : '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。';
     }
@@ -930,7 +965,7 @@ function maybeFireViz() {
   lastVizAt = Date.now();
   const fired = finalsSinceViz; finalsSinceViz = 0;
   client.analyze(cur.meeting.id, false, 'viz').then(async (r) => {
-    if (r.ran) { vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); fsNoteVizEvent(r); }
+    if (r.ran) { resetQualityNote(); vizRetryUsed = false; await vizUI.syncNewPatches(); updateVizStat(); fsNoteVizEvent(r); }
     else {
       noteAnalyzeFail(r);
       if (r.reason === 'throttled') { lastVizAt -= 6000; finalsSinceViz += fired; }
@@ -950,8 +985,8 @@ async function openMeeting(id, autostart = false) {
   await loadVizAndForesight();
   try { // 恢复补分析：有未处理片段（游标落后）时自动补跑，不依赖手动按钮
     const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
-    if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) await loadVizAndForesight(); else noteAnalyzeFail(r); }).catch(() => {});
-    if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); else noteAnalyzeFail(r); }).catch(() => {});
+    if (maxSeq > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'viz').then(async (r) => { if (r.ran) { resetQualityNote(); await loadVizAndForesight(); } else noteAnalyzeFail(r); }).catch(() => {});
+    if (maxSeq > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, cur.meeting.status !== 'live', 'minutes').then(async (r) => { if (r.ran) { resetQualityNote(); await reloadMinutes(); } else noteAnalyzeFail(r); }).catch(() => {});
     // [TRANSLATE-P1] 译文补跑：游标落后时补齐（存量切换/重开会议的译文在此收敛）
     if (cur.meeting.translation_enabled && maxSeq > Number(cur.meeting.last_translated_seq || 0)) client.analyze(cur.meeting.id, false, 'translate').then(async (r) => { if (r && r.ran) { await loadTranslations(); renderSegments(); } }).catch(() => {});
   } catch { /* 补分析失败不挡页面 */ }
@@ -1225,7 +1260,7 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = true; $('ws-err').textContent = '';
   try {
     const r = await client.analyze(cur.meeting.id, true, 'viz');
-    if (r.ran) { const n = await vizUI.syncNewPatches(); fsNoteVizEvent(r); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
+    if (r.ran) { resetQualityNote(); const n = await vizUI.syncNewPatches(); fsNoteVizEvent(r); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
     else {
       // [VIZ-V1.0 2026-11-14] 四态中文文案，不再把英文原因码直显给用户
       const v = (r.results && r.results.viz) || r;
@@ -1835,13 +1870,13 @@ function connectWS() {
       finalsSinceAnalyze += 1;
       if (finalsSinceAnalyze >= 2 && Date.now() - lastAnalyzeAt > 25000) {
         lastAnalyzeAt = Date.now(); finalsSinceAnalyze = 0;
-        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) await reloadMinutes(); else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
+        client.analyze(cur.meeting.id).then(async (r) => { if (r.ran) { resetQualityNote(); await reloadMinutes(); } else { noteAnalyzeFail(r); if (r.reason === 'throttled') lastAnalyzeAt -= 20000; } }).catch(() => {});
       }
       finalsSinceViz += 1; finalsSinceForesight += 1; finalsSinceTranslate += 1;
       maybeFireViz();
       if (finalsSinceForesight >= 6 && Date.now() - lastForesightAt > 120000) {
         lastForesightAt = Date.now(); finalsSinceForesight = 0;
-        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) await loadForesight(); else noteAnalyzeFail(r); }).catch(() => {});
+        client.analyze(cur.meeting.id, false, 'foresight').then(async (r) => { if (r.ran) { resetQualityNote(); await loadForesight(); } else noteAnalyzeFail(r); }).catch(() => {});
       }
     }
     if (msg.type === 'error') { $('ws-err').textContent = '转写提示：' + msg.message; }
