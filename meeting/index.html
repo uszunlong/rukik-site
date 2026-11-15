@@ -352,6 +352,9 @@
     .ws-conn .conn-txt{display:none}
     body.in-ws #m-status{display:none}
     #m-title-view{max-width:38%}
+    /* [WB-VISUAL-V1] 窄屏顶栏防横向溢出：收紧间距/内边距与标题宽度（实测 390px 时「···更多」按钮右界超宽 13px） */
+    body.in-ws .ws-head{gap:6px;padding:8px 10px}
+    body.in-ws #m-title-view{max-width:30%}
   }
 </style>
 </head>
