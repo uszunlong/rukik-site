@@ -85,9 +85,9 @@
   @media (max-width: 420px) { .holegrid { gap: 6px; } }
   .hole { border: 1.5px solid rgba(160,220,185,.20); background: linear-gradient(165deg, rgba(255,255,255,.055), rgba(255,255,255,.02)); border-radius: 13px; padding: 7px 2px 6px; text-align: center; cursor: pointer; position: relative; min-height: 60px; color: #eaf4ec; font-family: inherit; }
   .hole .hn { font-size: 11.5px; color: #a9c4b1; }
-  .hole .hp { font-size: 10.5px; color: #7d9a89; }
+  .hole .hp { font-size: 10.5px; color: #a9c4b1; } /* [SCORECARD-P0 20261114] 对比度 4.55→7.44 */
   .hole .hs { font-size: 18px; font-weight: 700; line-height: 1.25; color: #fff; }
-  .hole .hs.none { color: #5f7a6a; font-weight: 400; }
+  .hole .hs.none { color: #9db8a7; font-weight: 400; } /* [SCORECARD-P0 20261114] 对比度 2.97→6.53 */
   .hole:has(.dot.saved) { background: linear-gradient(165deg, rgba(34,197,94,.16), rgba(34,197,94,.05)); border-color: rgba(74,222,128,.35); }
   .hole.sel { border-color: #2ee06f; background: linear-gradient(165deg, rgba(24,110,64,.55), rgba(10,52,32,.6)); box-shadow: 0 0 0 1.5px rgba(46,224,111,.8), 0 0 16px rgba(46,224,111,.35); }
   .hole.sel .hn { color: #b9f4cd; }
@@ -1496,10 +1496,18 @@ function bindMyStatus() {
 }
 
 function paintWaitingGroup() {
+  // [SCORECARD-P0 20261114] 出卡条件＝报名确认、与分组无关（用户 21:13 定谳，
+  // 与 golf-api v141 报名即建卡＋打开懒建同口径）：个人赛制无卡只是建卡
+  // 短暂态，文案改记分卡准备中；队卡赛制（scramble/alternate_shot）记分
+  // 单位为队卡、随分组生成，保留等待分组口径。
+  var teamFmt = ['scramble', 'alternate_shot'].indexOf((S.ev.event || {}).format) >= 0;
   app.innerHTML = evMetaHtml() +
     '<div class="card"><h2>✅ 报名成功</h2>' +
-    '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
-    '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>' +
+    (teamFmt
+      ? '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>等待主办方分组</b>。</p>' +
+        '<p class="muted">分组完成后，这里会显示您的组别与开球时间；比赛开始后可直接在本页记分，无需下载 App。</p>'
+      : '<p class="meta">球员：' + esc((S.ev.my_player || {}).display_name || '') + '<br>状态：已报名，<b>记分卡正在准备中</b>。</p>' +
+        '<p class="muted">记分卡准备好后，这里会直接显示您的单人记分卡；分组发布后将自动切换为同组共享记分，成绩保留。可直接在本页记分，无需下载 App。</p>') +
     organizerHint() + myStatusHtml() +
     backToEventBtn() + '</div>';
   bindMyStatus();
@@ -1527,7 +1535,9 @@ function paintNoCard() {
     '<div class="card"><h2>比赛进行中</h2>' +
     (grouped
       ? '<p class="muted">您在第 ' + esc(S.pc.group_no) + ' 组。本场的记分卡尚未生成——主办方开启记分后，本页会出现逐洞记分入口。请稍后刷新查看。</p>'
-      : '<p class="muted">已开赛 · 您尚未分组，暂时无法记分。请联系主办方安排分组。</p>') +
+      : (['scramble', 'alternate_shot'].indexOf((S.ev.event || {}).format) >= 0
+        ? '<p class="muted">已开赛 · 您尚未分组，暂时无法记分。请联系主办方安排分组。</p>'
+        : '<p class="muted">已开赛 · 您的记分卡正在准备中，请稍后刷新本页；无需等待分组即可记分。</p>')) +
     organizerHint() + myStatusHtml() +
     backToEventBtn() + '</div>';
   bindMyStatus();
