@@ -337,7 +337,7 @@ $('btn-create').onclick = async () => {
   } catch (e) { $('consent-err').textContent = '创建失败：' + e.message; }
 };
 
-$('btn-back').onclick = async () => { stopCapture(); if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
+$('btn-back').onclick = async () => { stopCapture(); if (endReconcileTimer) { clearInterval(endReconcileTimer); endReconcileTimer = null; } if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
 
 let lastAnalyzeNoteAt = 0;
 function noteAnalyzeFail(r) {
@@ -592,8 +592,8 @@ $('btn-end').onclick = async () => {
       sendCtl({ type: 'end' });
       const res = await wait;
       if (res.outcome === 'incomplete') { $('ws-err').textContent = '尾段有 ' + (res.pending ?? '若干') + ' 段转写未能保存成功，会议尚未结束。请检查网络后，再次点「结束会议」重试。'; return; }
-      if (res.outcome === 'timeout') { $('ws-err').textContent = '尾段仍在保存中，请稍候重试结束。'; return; }
-      if (res.outcome !== 'ended') { $('ws-err').textContent = '转写连接已断开，无法确认尾段保存结果。已保存到服务器的字幕会保留；请刷新页面后重试结束。'; return; }
+      if (res.outcome === 'timeout') { $('ws-err').textContent = '尾段仍在保存中，请稍候重试结束。'; startEndReconcile(); return; }
+      if (res.outcome !== 'ended') { $('ws-err').textContent = '转写连接已断开，无法确认尾段保存结果。已保存到服务器的字幕会保留；请刷新页面后重试结束。'; startEndReconcile(); return; }
       try { ws.close(); } catch {}
       ws = null; wsReady = false;
     } else {
@@ -615,6 +615,7 @@ $('btn-end').onclick = async () => {
       }
       renderMeeting();
     } catch { /* 排空失败不挡结束流程 */ }
+    startEndReconcile();
   } catch (e) { $('ws-err').textContent = e.message; }
 };
 
@@ -623,6 +624,39 @@ function waitMeetingEnded(timeoutMs) {
     const timer = setTimeout(() => { endWaiter = null; resolve({ outcome: 'timeout' }); }, timeoutMs);
     endWaiter = (res) => { clearTimeout(timer); endWaiter = null; resolve(res); };
   });
+}
+
+// [END-RECONCILE 2026-11-14] 结束提示以服务端真实状态对账收尾：meetings.status=ended＋字幕段数
+// 稳定＋viz/minutes 双游标追平，三者齐备才把「正在保存尾段转写…」转为完成态并自动消失；
+// 未追平前保持保存中提示、必要时补跑分析，绝不假报完成。对账最长约 2 分钟，超时保留原提示。
+let endReconcileTimer = null;
+function startEndReconcile() {
+  if (!cur || !cur.meeting) return;
+  if (endReconcileTimer) clearInterval(endReconcileTimer);
+  let tries = 0, lastMaxSeq = -1;
+  const step = async () => {
+    tries++;
+    try {
+      const d = await client.getMeeting(cur.meeting.id); cur = d;
+      const mx = cur.segments.reduce((a, s) => Math.max(a, Number(s.seq) || 0), 0);
+      const stable = mx === lastMaxSeq; lastMaxSeq = mx;
+      const caughtUp = mx <= Number(cur.meeting.last_viz_seq || 0) && mx <= Number(cur.meeting.last_analyzed_seq || 0);
+      if (cur.meeting.status === 'ended' && stable && caughtUp) {
+        clearInterval(endReconcileTimer); endReconcileTimer = null;
+        renderMeeting();
+        $('ws-err').textContent = '尾段转写已保存完成，导图与纪要已更新。';
+        setTimeout(() => { if ($('ws-err').textContent === '尾段转写已保存完成，导图与纪要已更新。') $('ws-err').textContent = ''; }, 5000);
+        return;
+      }
+      if (cur.meeting.status === 'ended' && !caughtUp) {
+        if (mx > Number(cur.meeting.last_viz_seq || 0)) client.analyze(cur.meeting.id, true, 'viz').then(async (r) => { if (r.ran && vizUI) { await vizUI.syncNewPatches(); updateVizStat(); } }).catch(() => {});
+        if (mx > Number(cur.meeting.last_analyzed_seq || 0)) client.analyze(cur.meeting.id, true, 'minutes').then(async (r) => { if (r.ran) await reloadMinutes(); }).catch(() => {});
+      }
+    } catch { /* 对账读取失败不改提示，下轮重试 */ }
+    if (tries >= 40) { clearInterval(endReconcileTimer); endReconcileTimer = null; }
+  };
+  endReconcileTimer = setInterval(step, 3000);
+  step();
 }
 
 $('btn-delete').onclick = async () => {
