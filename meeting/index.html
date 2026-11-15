@@ -961,15 +961,39 @@ async function openMeeting(id, autostart = false) {
 
 // [TIMER-PAUSE-FIX 2026-11-15] 计时器分段累计：暂停时把当前段入账并冻结显示，继续时开新段
 // 从冻结值续计，与录音暂停/恢复严格一致（旧实现按 started_at 墙钟差算，暂停照样走表）。
-// 服务端未存暂停累计，状态只在页面内维护；首次打开某场会议时以墙钟初始化（live 从
-// started_at 起算、paused 冻结在打开时刻的墙钟已过时长），此后本页内的暂停/继续精确入账。
+// [TIMER-SERVER-PAUSE 2026-11-15] 服务端已落暂停账（meetings.timer_*，meeting-api 在
+// start/pause/resume/end 四个时点以服务端时钟入账并随回执返回）：会议带 timer_version>=1
+// 时以服务端账为权威——首次打开/账指纹变化即按服务端累计＋段起点重新锚定，关页重开精确
+// 恢复；本地分段逻辑保留作断网兜底（本地翻转先按本地入账，恢复联网同步后以服务端账覆盖
+// 对齐）。无服务端账的存量会议（timer_version=0/字段缺失）沿用旧口径：首次打开以墙钟
+// 初始化（live 从 started_at 起算、paused 冻结在打开时刻的墙钟已过时长）。
 let timerAccSec = 0, timerSegStartMs = null, timerForId = null, timerLastStatus = null;
+let timerSrvKey = null;
+function timerSrvOf(m) {
+  if (m.timer_version == null || Number(m.timer_version) < 1) return null;
+  return {
+    acc: Number(m.timer_accumulated_ms || 0) / 1000,
+    seg: m.timer_segment_started_at ? new Date(m.timer_segment_started_at).getTime() : null,
+    key: String(m.timer_accumulated_ms || 0) + '|' + String(m.timer_segment_started_at || ''),
+  };
+}
 function timerSync(m) {
   const startedMs = new Date(m.started_at).getTime();
+  const srv = timerSrvOf(m);
   if (timerForId !== m.id) {
     timerForId = m.id;
-    timerAccSec = m.status === 'paused' ? Math.max(0, (Date.now() - startedMs) / 1000) : 0;
-    timerSegStartMs = m.status === 'paused' ? null : startedMs;
+    if (srv) { timerAccSec = srv.acc; timerSegStartMs = srv.seg; timerSrvKey = srv.key; }
+    else {
+      timerSrvKey = null;
+      timerAccSec = m.status === 'paused' ? Math.max(0, (Date.now() - startedMs) / 1000) : 0;
+      timerSegStartMs = m.status === 'paused' ? null : startedMs;
+    }
+    timerLastStatus = m.status;
+    return;
+  }
+  if (srv && srv.key !== timerSrvKey) {
+    // 服务端账有新落账（四个时点的同步回执或重开/刷新对齐）：以服务端为准重新锚定
+    timerAccSec = srv.acc; timerSegStartMs = srv.seg; timerSrvKey = srv.key;
     timerLastStatus = m.status;
     return;
   }
@@ -1442,8 +1466,9 @@ $('btn-analyze').onclick = async () => {
 
 $('btn-pause').onclick = async () => {
   try {
-    if (cur.meeting.status === 'live') { sendCtl({ type: 'pause' }); await client.pause(cur.meeting.id); cur.meeting.status = 'paused'; suspendCapture(); }
-    else if (cur.meeting.status === 'paused') { await client.resume(cur.meeting.id); cur.meeting.status = 'live'; sendCtl({ type: 'resume' }); resumeCapture(); }
+    // [TIMER-SERVER-PAUSE 2026-11-15] 同步回执里的服务端暂停账并入 cur.meeting，renderMeeting 时以服务端为准对齐
+    if (cur.meeting.status === 'live') { sendCtl({ type: 'pause' }); const r = await client.pause(cur.meeting.id); if (r && r.meeting) cur.meeting = { ...cur.meeting, ...r.meeting }; else cur.meeting.status = 'paused'; suspendCapture(); }
+    else if (cur.meeting.status === 'paused') { const r = await client.resume(cur.meeting.id); if (r && r.meeting) cur.meeting = { ...cur.meeting, ...r.meeting }; else cur.meeting.status = 'live'; sendCtl({ type: 'resume' }); resumeCapture(); }
     renderMeeting();
   } catch (e) { $('ws-err').textContent = e.message; }
 };
