@@ -125,12 +125,11 @@
       <div class="wzsteps" id="wzStepsBar"></div>
 
       <div id="wzStep1">
-        <div class="wzTpl on" data-t="blank"><b>空白样板</b><span>从零填写赛事名、球场、时间等差异项，其余用平台默认设置。</span></div>
         <div class="wzTpl" data-t="clone"><b>复制我的一场往届赛事</b><span>赛制、费用、人数、合作伙伴、海报与关怀设置全带过来，只改球场、日期、时间等差异项；报名、分组、成绩不会复制。</span>
           <select id="wzSrcSel" style="margin-top:8px"></select>
           <span id="wzSrcMsg"></span>
         </div>
-        <div class="wzTpl" data-t="preset"><b>邀请赛预设</b><span>BD Max 同款结构：团体比杆（每队取 6 位最佳汇总）、线下收款、Shotgun 统一开球。只带结构，不含任何真实赛事数据。</span></div>
+        <div class="wzTpl on" data-t="preset"><b>邀请赛预设</b><span>BD Max 同款结构：团体比杆（每队取 6 位最佳汇总）、线下收款、Shotgun 统一开球。只带结构，不含任何真实赛事数据。</span></div>
         <p style="margin-top:12px"><button id="wzTo2" type="button">下一步：填差异项</button>
         <button class="ghost" id="wzCancel1" type="button">取消</button></p>
       </div>
@@ -1929,7 +1928,7 @@ document.getElementById('createBtn').onclick = function () {
 /* [线Z67] 发布新赛事向导：三步（选样板 → 差异项＋海报识别 → 预览发布）。
    克隆走服务端 event_clone_template（严格白名单）；海报识别走 poster_extract
    只回草稿、本页确认后才随创建提交，识别结果不静默落库。 */
-var WZ = { template: 'blank', srcId: null, srcRow: null, posterFile: null, posterDataUrl: null, createdId: null, busy: false };
+var WZ = { template: 'preset', srcId: null, srcRow: null, posterFile: null, posterDataUrl: null, createdId: null, busy: false };
 function wzEl(id) { return document.getElementById(id); }
 function wzTag(id, text) { var t = wzEl('tag-' + id); if (t) { t.textContent = text; t.style.display = text ? 'inline-block' : 'none'; } }
 function wzSteps(n) {
@@ -1950,7 +1949,7 @@ wzEl('wzOpenBtn').onclick = function () {
     wzEl('wzSrcSel').innerHTML = list.length ? list.map(function (e) {
       return '<option value="' + e.id + '">' + escapeHtml(e.title) + '（' + e.status + (e.starts_at ? ' · ' + String(e.starts_at).slice(0, 10) : '') + '）</option>';
     }).join('') : '<option value="">（暂无可复制的往届赛事）</option>';
-    wzEl('wzSrcMsg').textContent = list.length ? '' : '您还没有主办过的正式赛事，可先用空白样板或邀请赛预设。';
+    wzEl('wzSrcMsg').textContent = list.length ? '' : '您还没有主办过的正式赛事，可先用邀请赛预设创建。';
   });
   call('course_list', {}).then(function (d) {
     wzEl('wzCourse').innerHTML = (d.courses || []).map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; }).join('');
@@ -2143,7 +2142,7 @@ wzEl('wzTo3').onclick = function () {
   if (errs.length) { wzEl('wzStep2Err').textContent = errs.join('；'); return; }
   wzEl('wzStep2Err').textContent = '';
   var cname = wzEl('wzCourse').options[wzEl('wzCourse').selectedIndex] ? wzEl('wzCourse').options[wzEl('wzCourse').selectedIndex].textContent : '';
-  var tplName = WZ.template === 'clone' ? '复制往届赛事' : WZ.template === 'preset' ? '邀请赛预设' : '空白样板';
+  var tplName = WZ.template === 'clone' ? '复制往届赛事' : '邀请赛预设';
   wzEl('wzSummary').innerHTML =
     '样板：' + tplName + '<br>赛事名称：<b>' + escapeHtml(wzEl('wzTitle').value) + '</b><br>' +
     '球场：' + escapeHtml(cname) + '<br>时间：' + wzEl('wzDate').value + ' ' + wzEl('wzTime').value + ' 开球<br>' +
@@ -2173,10 +2172,18 @@ wzEl('wzCreateBtn').onclick = function () {
   var p;
   if (WZ.template === 'clone') {
     p = call('event_clone_template', { source_event_id: WZ.srcId, overrides: base });
-  } else if (WZ.template === 'preset') {
-    p = call('event_create', Object.assign({}, base, { format: 'team_stroke', start_mode: 'shotgun', competition_config: { mode: 'formal' }, tiebreak_config: { count_best: 6, team_metric: 'gross' } }));
   } else {
-    p = call('event_create', Object.assign({}, base, { format: wzEl('wzFormat').value }));
+    // [模板简化 2026-11-15] 邀请赛预设为唯一默认入口：预设值只是第 2 步初始值，
+    // 创建一律以第 2 步实际填写为准；仅团体比杆时带预设结构（Shotgun／取 6 位
+    // 最佳汇总），改成其他赛制即与原空白样板同口径（仅 format，其余平台默认）。
+    var wzFmt = wzEl('wzFormat').value;
+    var wzExtra = { format: wzFmt };
+    if (wzFmt === 'team_stroke') {
+      wzExtra.start_mode = 'shotgun';
+      wzExtra.competition_config = { mode: 'formal' };
+      wzExtra.tiebreak_config = { count_best: 6, team_metric: 'gross' };
+    }
+    p = call('event_create', Object.assign({}, base, wzExtra));
   }
   p.then(function (d) {
     if (!d || !d.event) { WZ.busy = false; wzEl('wzCreateMsg').textContent = '生成失败：' + ((d && (d.message || d.error)) || '未知错误'); return; }
