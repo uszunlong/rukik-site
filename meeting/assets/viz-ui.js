@@ -25,6 +25,8 @@ export function createVizUI(opts) {
     positions: new Map(),
     fresh: new Set(),
     freshEdges: new Set(),
+    deepened: new Set(), // [VIZ-V1.0 2026-11-14] 观点深化高亮（更新/合并/移动命中的已有节点）
+    speakerFilter: null, // [多人规则 V1.0 2026-11-14] 观点贡献视图当前筛选的发言者（null=不过滤）
     selectedId: null,
     mode: 'live', // live | replay
     replay: null, // { graph, offsetMs, totalMs, playing, speed, timer }
@@ -35,7 +37,7 @@ export function createVizUI(opts) {
     rfApi: null,
     version: 0,
   };
-  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); };
+  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); renderSpeakerBar(); };
   // [STAGE 2026-11-14] 程序化视口移动统一走此包装，避免被误判为用户手动平移而暂停跟随
   function progMove(fn) {
     store._progMove = true;
@@ -113,6 +115,17 @@ export function createVizUI(opts) {
       if (op.op === 'add_node') store.fresh.add(op.node.id);
       if (op.op === 'add_edge') store.freshEdges.add(op.edge.id);
     }
+    // [VIZ-V1.0 2026-11-14] 两种视觉效果之二：补丁不含新增节点/边、只有更新/合并/移动时，
+    // 受影响的已有节点走「深化」轻微高亮（与新节点的分支展开柔光区分）
+    const hasAdd = patch.ops.some((o) => o.op === 'add_node' || o.op === 'add_edge');
+    if (!hasAdd) {
+      for (const op of patch.ops) {
+        if (op.op === 'update_node' && op.node_id) store.deepened.add(op.node_id);
+        if (op.op === 'merge_node' && op.into_node_id) store.deepened.add(op.into_node_id);
+        if (op.op === 'move_node' && op.node_id) store.deepened.add(op.node_id);
+      }
+      if (store.deepened.size) setTimeout(() => { store.deepened.clear(); emit(); }, 1500);
+    }
     emit(); renderDetail();
     setTimeout(() => {
       const added = patch.ops.filter((o) => o.op === 'add_node').map((o) => o.node.id);
@@ -157,6 +170,8 @@ export function createVizUI(opts) {
   function replayStateAt(offsetMs) {
     const t0 = new Date(store.patches[0].created_at).getTime();
     let g = emptyGraph(getMeetingId());
+    // [VIZ-V1.0 2026-11-14] 回放起点版本与首个补丁的 base_version 对齐（新会议首个补丁是 base=0 的 init_root）
+    g.version = Number(store.patches[0].base_version) || 0;
     const pos = new Map();
     for (const p of store.patches) {
       if (new Date(p.created_at).getTime() - t0 > offsetMs) break;
@@ -308,6 +323,40 @@ export function createVizUI(opts) {
   stageBar.className = 'viz-stage-bar';
   stageBar.innerHTML = '<span class="viz-stage-title"></span><span class="viz-stage-status"><span class="viz-stage-dot"></span><span class="viz-stage-stxt"></span></span>';
   wrapEl.appendChild(stageBar);
+  // [多人规则 V1.0 2026-11-14] 观点贡献视图：按发言者高亮其提出/支持/反对/补充的节点。
+  // 归属数据来自节点 contributions；只有 unknown 时只呈现「发言者待确认」一组，如实不冒名。
+  const speakerBar = document.createElement('div');
+  speakerBar.className = 'viz-speaker-bar';
+  speakerBar.style.display = 'none';
+  wrapEl.appendChild(speakerBar);
+  const REL_LABEL = { propose: '提出', support: '支持', oppose: '反对', supplement: '补充' };
+  function nodeSpeakers(n) { return new Set((Array.isArray(n.contributions) ? n.contributions : []).map((c) => c.speaker)); }
+  function renderSpeakerBar() {
+    if (!speakerBar) return;
+    const speakers = [...new Set(store.graph.nodes.flatMap((n) => [...nodeSpeakers(n)]))];
+    if (!speakers.length) { speakerBar.style.display = 'none'; if (store.speakerFilter) store.speakerFilter = null; return; }
+    if (store.speakerFilter && !speakers.includes(store.speakerFilter)) store.speakerFilter = null;
+    speakerBar.style.display = '';
+    speakerBar.innerHTML = '';
+    const title = document.createElement('span');
+    title.className = 'viz-speaker-title';
+    title.textContent = '观点贡献：';
+    speakerBar.appendChild(title);
+    for (const sp of speakers) {
+      const chip = document.createElement('button');
+      chip.className = 'viz-speaker-chip' + (store.speakerFilter === sp ? ' active' : '');
+      chip.textContent = sp === 'unknown' ? '发言者待确认' : sp;
+      chip.onclick = () => { store.speakerFilter = store.speakerFilter === sp ? null : sp; emit(); };
+      speakerBar.appendChild(chip);
+    }
+    if (store.speakerFilter) {
+      const rels = [...new Set(store.graph.nodes.filter((n) => nodeSpeakers(n).has(store.speakerFilter)).flatMap((n) => (n.contributions || []).filter((c) => c.speaker === store.speakerFilter).map((c) => REL_LABEL[c.relation] || c.relation)))];
+      const hint = document.createElement('span');
+      hint.className = 'viz-speaker-hint';
+      hint.textContent = rels.length ? `已高亮其${rels.join('/')}的节点` : '';
+      speakerBar.appendChild(hint);
+    }
+  }
   let stageTimer = null;
   function refreshStageBar() {
     const info = (opts.getStageInfo && opts.getStageInfo()) || {};
@@ -365,7 +414,7 @@ export function createVizUI(opts) {
       const n = data.viz;
       const meta = TYPE_META[n.type] || TYPE_META.topic;
       return React.createElement('div', {
-        className: 'viz-node' + (data.fresh ? ' viz-fresh' : '') + (selected ? ' viz-selected' : ''),
+        className: 'viz-node' + (data.fresh ? ' viz-fresh' : '') + (data.deepened ? ' viz-deepen' : '') + (data.speakerDim ? ' viz-dim' : '') + (selected ? ' viz-selected' : ''),
         // [WB-REDESIGN 2026-11-14] 边框改由 CSS 中性描边（类型色保留在标签上），选中/新节点以薄荷环与柔光区分
       },
         React.createElement(Handle, { type: 'target', position: Position.Top, style: { opacity: 0 } }),
@@ -388,7 +437,7 @@ export function createVizUI(opts) {
       const rfNodes = g.nodes.map((n) => ({
         id: n.id, type: 'viz',
         position: posMap.get(n.id) || { x: 0, y: 0 },
-        data: { viz: n, fresh: store.fresh.has(n.id) },
+        data: { viz: n, fresh: store.fresh.has(n.id), deepened: store.deepened.has(n.id), speakerDim: !!store.speakerFilter && !nodeSpeakers(n).has(store.speakerFilter) },
         selected: store.selectedId === n.id,
         draggable: store.mode === 'live',
       }));

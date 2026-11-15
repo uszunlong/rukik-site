@@ -192,6 +192,17 @@
   body.in-ws .viz-selected{box-shadow:0 0 0 2px rgba(69,214,158,.65),0 4px 16px rgba(0,0,0,.4)}
   @keyframes vizglow{0%{box-shadow:0 0 0 0 rgba(69,214,158,.5)}100%{box-shadow:0 0 0 16px rgba(69,214,158,0)}}
   body.in-ws .viz-fresh{animation:vizglow .85s ease-out}
+  /* [VIZ-V1.0 2026-11-14] 观点深化：已有节点被更新/合并/移动时轻微高亮（区别于新节点的分支展开柔光） */
+  @keyframes vizdeepen{0%{box-shadow:0 0 0 0 rgba(69,214,158,.55)}100%{box-shadow:0 0 0 9px rgba(69,214,158,0)}}
+  body.in-ws .viz-deepen{animation:vizdeepen 1.4s ease-out}
+  .viz-node{transition:opacity .3s}
+  .viz-dim{opacity:.25}
+  /* [多人规则 V1.0 2026-11-14] 观点贡献视图：按发言者筛选高亮 */
+  .viz-speaker-bar{position:absolute;left:12px;bottom:12px;z-index:65;display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:70%;background:rgba(10,14,17,.82);border:1px solid var(--line);border-radius:99px;padding:5px 10px}
+  .viz-speaker-title{font-size:12px;color:var(--dim);white-space:nowrap}
+  .viz-speaker-chip{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:99px;font-size:12px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+  .viz-speaker-chip.active{border-color:var(--acc);color:var(--acc)}
+  .viz-speaker-hint{font-size:12px;color:var(--dim);white-space:nowrap}
   .viz-empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:14px;line-height:1.7;padding:24px;text-align:center;pointer-events:none;z-index:4}
   body.in-ws .react-flow__controls{box-shadow:0 2px 10px rgba(0,0,0,.4)}
   body.in-ws .react-flow__controls-button{background:#141a1f;border-bottom:1px solid #222a30;fill:#cfd8dc;color:#cfd8dc}
@@ -632,9 +643,18 @@ $('menu-signout').onclick = () => { $('signout').click(); };
 
 let lastAnalyzeNoteAt = 0;
 function noteAnalyzeFail(r) {
-  if (r && !r.ran && r.reason === 'model_unavailable') {
+  // [VIZ-V1.0 2026-11-14] 四态如实呈现：分析执行失败/识别质量不足/结果写入失败分别给中文文案（30 秒节流防刷屏）
+  const st = r && (r.status || r.reason);
+  if (r && !r.ran && (st === 'model_unavailable' || st === 'analysis_failed' || st === 'quality_insufficient' || st === 'apply_failed')) {
     const t = Date.now();
-    if (t - lastAnalyzeNoteAt > 30000) { lastAnalyzeNoteAt = t; $('ws-err').textContent = '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。'; }
+    if (t - lastAnalyzeNoteAt > 30000) {
+      lastAnalyzeNoteAt = t;
+      $('ws-err').textContent = st === 'quality_insufficient'
+        ? '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复生长。'
+        : st === 'apply_failed'
+          ? '导图写入失败：字幕已保存，将在后续片段自动重试。'
+          : '分析暂时不可用（模型服务异常）：字幕已保存，导图与纪要会在后续片段自动重试。';
+    }
   }
 }
 // [VIZ-RT2 2026-11-14] 导图触发（final 到达与 5 秒定时复核共用）：≥2 新段（6 秒下限防抖）或
@@ -652,7 +672,7 @@ function maybeFireViz() {
     else {
       noteAnalyzeFail(r);
       if (r.reason === 'throttled') { lastVizAt -= 6000; finalsSinceViz += fired; }
-      else if (r.reason === 'no_new_content' && !vizRetryUsed) { vizRetryUsed = true; finalsSinceViz += fired; }
+      else if ((r.reason === 'no_new_content' || r.reason === 'no_new_segments') && !vizRetryUsed) { vizRetryUsed = true; finalsSinceViz += fired; }
     }
   }).catch(() => {});
 }
@@ -818,8 +838,25 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = true; $('ws-err').textContent = '';
   try {
     const r = await client.analyze(cur.meeting.id, true, 'viz');
-    if (r.ran) { const n = await vizUI.syncNewPatches(); if (!n) $('ws-err').textContent = '本轮没有新的图增量。'; }
-    else $('ws-err').textContent = '未生长：' + (r.reason || (r.results && r.results.viz && r.results.viz.reason) || '');
+    if (r.ran) { const n = await vizUI.syncNewPatches(); if (!n) $('ws-err').textContent = r.status === 'no_change' ? '已分析：本轮没有新语义。' : '本轮没有新的图增量。'; }
+    else {
+      // [VIZ-V1.0 2026-11-14] 四态中文文案，不再把英文原因码直显给用户
+      const v = (r.results && r.results.viz) || r;
+      const st = v.status || v.reason || '';
+      const map = {
+        no_new_segments: '暂无新字幕可分析，先说几句再试。',
+        no_change: '已分析：本轮没有新语义。',
+        quality_insufficient: '识别质量不足：这一段字幕过于模糊，暂未生成节点；说清楚些或靠近麦克风后会自动恢复。',
+        analysis_failed: '分析执行失败，请稍后重试。',
+        model_unavailable: '分析执行失败，请稍后重试。',
+        bad_model_output: '分析执行失败，请稍后重试。',
+        apply_failed: '导图写入失败，请稍后重试。',
+        deferred: '分析排队中，请稍候再试。',
+        throttled: '分析排队中，请稍候再试。',
+        budget_exhausted: '今日分析额度已用完。',
+      };
+      $('ws-err').textContent = map[st] || ('未生长：' + (v.reason || ''));
+    }
     lastVizAt = Date.now(); finalsSinceViz = 0; updateVizStat();
   } catch (e) { $('ws-err').textContent = '导图生长失败：' + e.message; }
   $('btn-viz-grow').disabled = false;
