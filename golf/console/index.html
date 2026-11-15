@@ -1710,11 +1710,19 @@ function renderRegList(regs, teams, pairings) {
     }
     if (r.status === 'registered') actBtns += ' <button class="ghost ci-in" data-id="' + r.id + '" type="button">标记签到</button>';
     if (r.status === 'checked_in') actBtns += ' <button class="ghost ci-out" data-id="' + r.id + '" type="button">取消签到</button>';
+    /* [REG-CONTACT 20261115] 报名联系方式（球员报名时自填、落 registration.profile
+       的 phone/wechat/email 平键）：有哪项显示哪项，供主办方后台联系管理。 */
+    var prof = r.profile || {};
+    var cParts = [];
+    if (prof.phone) cParts.push('电话 ' + prof.phone);
+    if (prof.wechat) cParts.push('微信 ' + prof.wechat);
+    if (prof.email) cParts.push('邮箱 ' + prof.email);
+    var contactSeg = cParts.length ? ' · <span style="color:#33523d">联系：' + escapeHtml(cParts.join(' · ')) + '</span>' : '';
     return '<div style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px"><b>' + escapeHtml(p.display_name || '（未命名）') + '</b>' +
       ' <span style="color:' + stColor + '">' + (REG_STATUS_TXT[r.status] || r.status) + '</span>' +
       '<span style="color:#5c7260"> · 球队：' + escapeHtml(r.team_id ? (teamName[r.team_id] || '—') : '—') +
       ' · 分组：' + (groupOf[r.player_id] ? '第 ' + groupOf[r.player_id] + ' 组' : '未分组') +
-      (p.org_name ? ' · ' + escapeHtml(p.org_name) : '') + (p.division ? ' · ' + escapeHtml(p.division) : '') + '</span>' + paySeg + actBtns + '</div>';
+      (p.org_name ? ' · ' + escapeHtml(p.org_name) : '') + (p.division ? ' · ' + escapeHtml(p.division) : '') + '</span>' + contactSeg + paySeg + actBtns + '</div>';
   }).join('');
   Array.prototype.forEach.call(box.querySelectorAll('.rv-ok'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'approve'); }; });
   Array.prototype.forEach.call(box.querySelectorAll('.rv-no'), function (b) { b.onclick = function () { reviewReg(b.getAttribute('data-id'), 'reject'); }; });
@@ -2304,13 +2312,14 @@ function buildRegsCsv(d) {
   var regs = (d && d.registrations) || [];
   var teamName = {};
   ((d && d.teams) || []).forEach(function (t) { teamName[t.id] = t.name; });
-  var rows = [['姓名', '报名状态', '付款状态', '签到状态', '队伍', '单位', '组别', '报名时间']];
+  var rows = [['姓名', '报名状态', '付款状态', '签到状态', '队伍', '单位', '联系电话', '联系微信', '联系邮箱', '组别', '报名时间']];
   regs.forEach(function (r) {
     var p = r.golf_players || {};
+    var prof = r.profile || {}; // [REG-CONTACT 20261115] 报名联系方式导出（球员自填、主办方管理用）
     var pay = r.payment_status ? (PAY_STATUS_TXT[r.payment_status] || r.payment_status) : (r.fee_status ? (FEE_STATUS_TXT[r.fee_status] || r.fee_status) : '');
     var checked = (r.checked_in_at || r.status === 'checked_in') ? '已签到' : '未签到';
     rows.push([p.display_name || '（未命名）', (typeof REG_STATUS_TXT !== 'undefined' && REG_STATUS_TXT[r.status]) || r.status || '', pay, checked,
-      r.team_id ? (teamName[r.team_id] || '') : '', p.org_name || '', p.division || '', r.registered_at ? String(r.registered_at).slice(0, 19).replace('T', ' ') : '']);
+      r.team_id ? (teamName[r.team_id] || '') : '', p.org_name || '', prof.phone || '', prof.wechat || '', prof.email || '', p.division || '', r.registered_at ? String(r.registered_at).slice(0, 19).replace('T', ' ') : '']);
   });
   return rows;
 }

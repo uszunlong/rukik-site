@@ -4468,10 +4468,14 @@ function paintRegister() {
     '<div class="card"><h2>报名参加</h2>' +
     (fee > 0 ? '<p class="muted">本场费用：$' + (fee / 100).toFixed(fee % 100 ? 2 : 0) + ' / 人（线下收款：报名先在此登记，缴费按主办方通知办理；主办方确认收款后，正式分组资格生效）。</p>' : '<p class="muted">本场免费报名。</p>') +
     '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="regName" type="text" autocomplete="name" placeholder="您的姓名"></div>' +
-    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="regInvite" type="text" placeholder="主办方提供的邀请码" value="' + esc(linkCode || '') + '"></div>' : '') +
+    /* [REG-CONTACT 20261115] 邀请码可见字段已删（用户 11-15 亲令）：invite_only
+       校验不取消，码只从链接参数 linkCode 静默带入提交（见提交 handler）；组别
+       字段同删（历史报名行的组别数据不动，仅停止收集）。 */
     '<div class="fld"><label>差点指数（选填）</label><input id="regHcp" type="number" step="0.1" min="-10" max="54" placeholder="如 18.5，没有可留空"></div>' +
-    '<div class="fld"><label>组别（选填）</label><input id="regDiv" type="text" placeholder="如 男子组 / 女子组"></div>' +
     '<div class="fld"><label>单位 / 机构（选填）</label><input id="regOrg" type="text" placeholder="公司或社团名称"></div>' +
+    '<div class="fld"><label>联系方式（电话 / 微信 / 邮箱，至少填一项，方便主办方联系您）</label><input id="regPhone" type="tel" autocomplete="tel" placeholder="电话"></div>' +
+    '<div class="fld"><input id="regWechat" type="text" autocomplete="off" placeholder="微信号"></div>' +
+    '<div class="fld"><input id="regEmail" type="email" autocomplete="email" placeholder="邮箱"></div>' +
     '<div class="err" id="regErr"></div>' +
     '<div class="btnrow"><button class="btn" id="regBtn">提交报名</button></div>' +
     backToEventBtn() + '</div>';
@@ -4480,17 +4484,26 @@ function paintRegister() {
     var errEl = document.getElementById('regErr');
     if (!name) { errEl.textContent = '请填写姓名。'; return; }
     var body = { event_id: eventId, display_name: name, source: 'web' }; // 报名来源：迁移 0697 已给 golf_registrations_source_check 补 'web' 值（线 K），网页报名直用 web
-    var inv = document.getElementById('regInvite'); if (inv && inv.value.trim()) body.invite_code = inv.value.trim();
+    if (linkCode) body.invite_code = linkCode; // [REG-CONTACT 20261115] 码只从链接参数静默带入；无码时服务端按 invite_only 原口径拒绝
     var hcp = (document.getElementById('regHcp').value || '').trim(); if (hcp !== '') body.handicap_index = Number(hcp);
-    var div = (document.getElementById('regDiv').value || '').trim(); if (div) body.division = div;
     var org = (document.getElementById('regOrg').value || '').trim(); if (org) body.org_name = org;
+    /* [REG-CONTACT 20261115] 联系方式三选一：全空拦截、格式轻校验（不过度拦截） */
+    var cp = (document.getElementById('regPhone').value || '').trim();
+    var cw = (document.getElementById('regWechat').value || '').trim();
+    var ce = (document.getElementById('regEmail').value || '').trim();
+    if (!cp && !cw && !ce) { errEl.textContent = '请至少填写一项联系方式（电话、微信或邮箱），方便主办方联系您。'; return; }
+    if (ce && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ce)) { errEl.textContent = '邮箱格式不太对，请检查一下。'; return; }
+    if (cp && cp.replace(/\D/g, '').length < 7) { errEl.textContent = '电话号码位数不太对，请检查一下。'; return; }
+    if (cp) body.contact_phone = cp;
+    if (cw) body.contact_wechat = cw;
+    if (ce) body.contact_email = ce;
     var btn = this; btn.disabled = true; errEl.textContent = '';
     var r = await golfApi('register', body, true);
     btn.disabled = false;
     if (r.ok) { loadAll(false); /* [REG-LAND 20261114] 报名成功直达逐洞记分（用户 19:51 重申）：重拉后落到内嵌记分模块锚点，与签到直达同口径（双时点滚动保重渲染完成） */ [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); }); }
     else {
       var m = r.error || '';
-      errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : ('报名未成功：' + (m || '请稍后重试'));
+      errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : m === 'invalid contact email' ? '邮箱格式不太对，请检查一下。' : m === 'invalid contact phone' ? '电话号码位数不太对，请检查一下。' : ('报名未成功：' + (m || '请稍后重试'));
     }
   });
   if (S.autoJoinErr) { var re0 = document.getElementById('regErr'); if (re0) re0.textContent = S.autoJoinErr; }
@@ -4504,7 +4517,10 @@ function paintCasualJoin() {
     '<div class="card"><h2>加入这场球局</h2>' +
     '<p class="muted">确认姓名即可加入本局一起记分（与 RUKIK App 同一账号）。</p>' +
     '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="cjName" type="text" autocomplete="name" placeholder="您的姓名" value="' + esc(preName) + '"></div>' +
-    (e.visibility === 'invite_only' ? '<div class="fld"><label>邀请码（必填）</label><input id="cjInvite" type="text" placeholder="组织者提供的球局码" value="' + esc(linkCode || '') + '"></div>' : '') +
+    /* [REG-CONTACT 20261115] 邀请码可见字段已删：码只从链接参数 linkCode 静默带入（见提交 handler），与正式报名同口径 */
+    '<div class="fld"><label>联系方式（电话 / 微信 / 邮箱，至少填一项，方便组织者联系您）</label><input id="cjPhone" type="tel" autocomplete="tel" placeholder="电话"></div>' +
+    '<div class="fld"><input id="cjWechat" type="text" autocomplete="off" placeholder="微信号"></div>' +
+    '<div class="fld"><input id="cjEmail" type="email" autocomplete="email" placeholder="邮箱"></div>' +
     '<div class="err" id="cjErr"></div>' +
     '<div class="btnrow"><button class="btn" id="cjBtn" type="button">加入球局</button></div>' +
     backToEventBtn() + '</div>';
@@ -4513,11 +4529,16 @@ function paintCasualJoin() {
     var errEl = document.getElementById('cjErr');
     var name = (document.getElementById('cjName').value || '').trim();
     if (!name) { errEl.textContent = '请填写姓名。'; return; }
-    var inv = document.getElementById('cjInvite');
-    var code = inv ? normCode(inv.value) : linkCode;
-    if (e.visibility === 'invite_only' && !code) { errEl.textContent = '请输入邀请码。'; return; }
+    var code = linkCode; // [REG-CONTACT 20261115] 码只从链接参数静默带入；无码时服务端按 invite_only 原口径拒绝
+    /* [REG-CONTACT 20261115] 联系方式三选一：全空拦截、格式轻校验 */
+    var cp = (document.getElementById('cjPhone').value || '').trim();
+    var cw = (document.getElementById('cjWechat').value || '').trim();
+    var ce = (document.getElementById('cjEmail').value || '').trim();
+    if (!cp && !cw && !ce) { errEl.textContent = '请至少填写一项联系方式（电话、微信或邮箱），方便组织者联系您。'; return; }
+    if (ce && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ce)) { errEl.textContent = '邮箱格式不太对，请检查一下。'; return; }
+    if (cp && cp.replace(/\D/g, '').length < 7) { errEl.textContent = '电话号码位数不太对，请检查一下。'; return; }
     var btn = this; btn.disabled = true; errEl.textContent = '';
-    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name });
+    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name, contact_phone: cp || undefined, contact_wechat: cw || undefined, contact_email: ce || undefined });
     btn.disabled = false;
     if (jn && jn.ok) { loadAll(false); /* [REG-LAND 20261114] 加入成功直达逐洞记分模块（同 paintRegister 口径） */ [600, 1600].forEach(function (ms) { setTimeout(function () { var sc = document.getElementById('scoreSec'); if (sc) sc.scrollIntoView(); }, ms); }); return; }
     errEl.textContent = joinErrText(jn);
