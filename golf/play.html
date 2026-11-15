@@ -73,6 +73,9 @@
   .fld { margin-top: 12px; }
   .fld label { display: block; font-size: 13px; color: #9db8a7; margin-bottom: 6px; }
   .fld input { width: 100%; border: 1px solid rgba(160,220,185,.28); border-radius: 12px; padding: 12px 14px; font-size: 16px; outline: none; background: rgba(3,18,12,.55); color: #f2f8f3; min-height: 44px; }
+  .ctypes{display:flex;gap:8px;margin-bottom:8px}
+  .ctype{flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(160,220,185,.35);background:transparent;color:#cfe6d4;font-size:15px;cursor:pointer}
+  .ctype.on{background:linear-gradient(135deg,#0d8a4a,#0a6e3c);color:#fff;border-color:rgba(120,255,190,.25);font-weight:700}
   /* 发起球局表单里带内联浅色样式的发球台下拉（JS 内联样式不动，用 CSS 层覆盖） */
   #hmTee { background: rgba(3,18,12,.55) !important; border-color: rgba(160,220,185,.28) !important; color: #f2f8f3 !important; }
   /* 记分 */
@@ -320,6 +323,9 @@ function joinErrText(jn) {
   if (m === 'joins closed by organizer') return '组织者已关闭这场球局的加入，可直接联系组织者。';
   if (m === 'round already finished' || (jn && jn.status === 409)) return '这场球局已经结束了。';
   if (m === 'round cancelled') return '这场球局已取消。';
+  if (m === 'invalid contact email') return '邮箱格式不太对，请检查一下。';
+  if (m === 'invalid contact phone') return '电话号码格式不太对，请检查一下。';
+  if (m === 'invalid contact wechat') return '微信号格式不太对，请检查一下。';
   if (m === 'network') return '网络异常，请稍后重试。';
   return '加入未成功：' + (m || '请稍后重试');
 }
@@ -1404,6 +1410,42 @@ function paintGuest() {
   });
 }
 
+/* [REG-CONTACT-V2 20261115] 联系方式三选一组件（用户 14:09 最终规格）：微信｜电话｜
+   邮箱单选、只显对应一框、默认微信不预填、切换保留各框已填内容；提交以类型＋值
+   （contact_type/contact_value）上送，服务端落 profile.contact={type,value} 并镜像平键。 */
+function wireContact(prefix) {
+  var box = document.getElementById(prefix + 'CTypes'); if (!box) return;
+  var inputs = { wechat: document.getElementById(prefix + 'CWechat'), phone: document.getElementById(prefix + 'CPhone'), email: document.getElementById(prefix + 'CEmail') };
+  box.querySelectorAll('.ctype').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      box.querySelectorAll('.ctype').forEach(function (b) { b.classList.toggle('on', b === btn); });
+      var t = btn.getAttribute('data-ct');
+      Object.keys(inputs).forEach(function (k) { if (inputs[k]) inputs[k].style.display = (k === t) ? '' : 'none'; });
+    });
+  });
+}
+function readContact(prefix, errEl) {
+  var box = document.getElementById(prefix + 'CTypes');
+  var on = box ? box.querySelector('.ctype.on') : null;
+  var type = on ? on.getAttribute('data-ct') : 'wechat';
+  var cap = type.charAt(0).toUpperCase() + type.slice(1);
+  var input = document.getElementById(prefix + 'C' + cap);
+  var value = input ? (input.value || '').trim() : '';
+  var names = { wechat: '微信号', phone: '电话号码', email: '邮箱' };
+  if (!value) { errEl.textContent = '请填写您的' + names[type] + '（联系方式必填，方便主办方联系您；也可切换为其他方式）。'; return null; }
+  if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { errEl.textContent = '邮箱格式不太对，请检查一下。'; return null; }
+  if (type === 'phone') { var d = value.replace(/\D/g, '').length; if (!/^\+?[0-9\s\-()]+$/.test(value) || d < 7 || d > 15) { errEl.textContent = '电话号码格式不太对，请检查一下（可带 +国际区号）。'; return null; } }
+  if (type === 'wechat' && !/^[A-Za-z][A-Za-z0-9_-]{5,19}$/.test(value) && !/^[0-9]{6,15}$/.test(value)) { errEl.textContent = '微信号格式不太对：需为 6–20 位字母/数字（字母开头），或您绑定的手机号。'; return null; }
+  return { type: type, value: value };
+}
+function contactFldHtml(prefix, who) {
+  return '<div class="fld"><label>联系方式（必填，选一种填写，方便' + who + '联系您）</label>' +
+    '<div class="ctypes" id="' + prefix + 'CTypes"><button type="button" class="ctype on" data-ct="wechat">微信</button><button type="button" class="ctype" data-ct="phone">电话</button><button type="button" class="ctype" data-ct="email">邮箱</button></div>' +
+    '<input id="' + prefix + 'CWechat" type="text" autocomplete="off" placeholder="微信号">' +
+    '<input id="' + prefix + 'CPhone" type="tel" autocomplete="tel" placeholder="电话（可带 +国际区号）" style="display:none">' +
+    '<input id="' + prefix + 'CEmail" type="email" autocomplete="email" placeholder="邮箱" style="display:none"></div>';
+}
+
 function paintRegister() {
   var e = S.ev.event;
   /* [邀请码根治 20261112] casual 球局不走正式报名（正式 register 对 casual 只落
@@ -1419,12 +1461,11 @@ function paintRegister() {
        字段同删（历史报名行的组别数据不动，仅停止收集）。 */
     '<div class="fld"><label>差点指数（选填）</label><input id="regHcp" type="number" step="0.1" min="-10" max="54" placeholder="如 18.5，没有可留空"></div>' +
     '<div class="fld"><label>单位 / 机构（选填）</label><input id="regOrg" type="text" placeholder="公司或社团名称"></div>' +
-    '<div class="fld"><label>联系方式（电话 / 微信 / 邮箱，至少填一项，方便主办方联系您）</label><input id="regPhone" type="tel" autocomplete="tel" placeholder="电话"></div>' +
-    '<div class="fld"><input id="regWechat" type="text" autocomplete="off" placeholder="微信号"></div>' +
-    '<div class="fld"><input id="regEmail" type="email" autocomplete="email" placeholder="邮箱"></div>' +
+    contactFldHtml('reg', '主办方') +
     '<div class="err" id="regErr"></div>' +
     '<div class="btnrow"><button class="btn" id="regBtn">提交报名</button></div>' +
     backToEventBtn() + '</div>';
+  wireContact('reg');
   document.getElementById('regBtn').addEventListener('click', async function () {
     var name = (document.getElementById('regName').value || '').trim();
     var errEl = document.getElementById('regErr');
@@ -1433,23 +1474,16 @@ function paintRegister() {
     if (linkCode) body.invite_code = linkCode; // [REG-CONTACT 20261115] 码只从链接参数静默带入；无码时服务端按 invite_only 原口径拒绝
     var hcp = (document.getElementById('regHcp').value || '').trim(); if (hcp !== '') body.handicap_index = Number(hcp);
     var org = (document.getElementById('regOrg').value || '').trim(); if (org) body.org_name = org;
-    /* [REG-CONTACT 20261115] 联系方式三选一：全空拦截、格式轻校验（不过度拦截） */
-    var cp = (document.getElementById('regPhone').value || '').trim();
-    var cw = (document.getElementById('regWechat').value || '').trim();
-    var ce = (document.getElementById('regEmail').value || '').trim();
-    if (!cp && !cw && !ce) { errEl.textContent = '请至少填写一项联系方式（电话、微信或邮箱），方便主办方联系您。'; return; }
-    if (ce && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ce)) { errEl.textContent = '邮箱格式不太对，请检查一下。'; return; }
-    if (cp && cp.replace(/\D/g, '').length < 7) { errEl.textContent = '电话号码位数不太对，请检查一下。'; return; }
-    if (cp) body.contact_phone = cp;
-    if (cw) body.contact_wechat = cw;
-    if (ce) body.contact_email = ce;
+    /* [REG-CONTACT-V2 20261115] 联系方式三选一：当前选中类型未填拦截、按类型轻校验 */
+    var contact = readContact('reg', errEl); if (!contact) return;
+    body.contact_type = contact.type; body.contact_value = contact.value;
     var btn = this; btn.disabled = true; errEl.textContent = '';
     var r = await golfApi('register', body, true);
     btn.disabled = false;
     if (r.ok) { loadAll(false); }
     else {
       var m = r.error || '';
-      errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : m === 'invalid contact email' ? '邮箱格式不太对，请检查一下。' : m === 'invalid contact phone' ? '电话号码位数不太对，请检查一下。' : ('报名未成功：' + (m || '请稍后重试'));
+      errEl.textContent = m === 'registration closed' ? '报名已截止。' : m === 'invalid invite code' ? '邀请码不正确，请向主办方确认。' : m === 'invalid contact email' ? '邮箱格式不太对，请检查一下。' : m === 'invalid contact phone' ? '电话号码格式不太对，请检查一下。' : m === 'invalid contact wechat' ? '微信号格式不太对，请检查一下。' : ('报名未成功：' + (m || '请稍后重试'));
     }
   });
   if (S.autoJoinErr) { var re0 = document.getElementById('regErr'); if (re0) re0.textContent = S.autoJoinErr; }
@@ -1466,27 +1500,21 @@ function paintCasualJoin() {
     '<p class="muted">确认姓名即可加入本局一起记分（与 RUKIK App 同一账号）。</p>' +
     '<div class="fld"><label>姓名（必填，将显示在成绩榜上）</label><input id="cjName" type="text" autocomplete="name" placeholder="您的姓名" value="' + esc(preName) + '"></div>' +
     /* [REG-CONTACT 20261115] 邀请码可见字段已删：码只从链接参数 linkCode 静默带入（见提交 handler），与正式报名同口径 */
-    '<div class="fld"><label>联系方式（电话 / 微信 / 邮箱，至少填一项，方便组织者联系您）</label><input id="cjPhone" type="tel" autocomplete="tel" placeholder="电话"></div>' +
-    '<div class="fld"><input id="cjWechat" type="text" autocomplete="off" placeholder="微信号"></div>' +
-    '<div class="fld"><input id="cjEmail" type="email" autocomplete="email" placeholder="邮箱"></div>' +
+    contactFldHtml('cj', '组织者') +
     '<div class="err" id="cjErr"></div>' +
     '<div class="btnrow"><button class="btn" id="cjBtn" type="button">加入球局</button></div>' +
     backToEventBtn() + '</div>';
+  wireContact('cj');
   if (S.autoJoinErr) { var ce0 = document.getElementById('cjErr'); if (ce0) ce0.textContent = S.autoJoinErr; }
   document.getElementById('cjBtn').addEventListener('click', async function () {
     var errEl = document.getElementById('cjErr');
     var name = (document.getElementById('cjName').value || '').trim();
     if (!name) { errEl.textContent = '请填写姓名。'; return; }
     var code = linkCode; // [REG-CONTACT 20261115] 码只从链接参数静默带入；无码时服务端按 invite_only 原口径拒绝
-    /* [REG-CONTACT 20261115] 联系方式三选一：全空拦截、格式轻校验 */
-    var cp = (document.getElementById('cjPhone').value || '').trim();
-    var cw = (document.getElementById('cjWechat').value || '').trim();
-    var ce = (document.getElementById('cjEmail').value || '').trim();
-    if (!cp && !cw && !ce) { errEl.textContent = '请至少填写一项联系方式（电话、微信或邮箱），方便组织者联系您。'; return; }
-    if (ce && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ce)) { errEl.textContent = '邮箱格式不太对，请检查一下。'; return; }
-    if (cp && cp.replace(/\D/g, '').length < 7) { errEl.textContent = '电话号码位数不太对，请检查一下。'; return; }
+    /* [REG-CONTACT-V2 20261115] 联系方式三选一：当前选中类型未填拦截、按类型轻校验 */
+    var contact = readContact('cj', errEl); if (!contact) return;
     var btn = this; btn.disabled = true; errEl.textContent = '';
-    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name, contact_phone: cp || undefined, contact_wechat: cw || undefined, contact_email: ce || undefined });
+    var jn = await casualJoin({ event_id: eventId, invite_code: code || undefined, display_name: name, contact_type: contact.type, contact_value: contact.value });
     btn.disabled = false;
     if (jn && jn.ok) { loadAll(false); return; }
     errEl.textContent = joinErrText(jn);

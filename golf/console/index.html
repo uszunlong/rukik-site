@@ -1710,13 +1710,18 @@ function renderRegList(regs, teams, pairings) {
     }
     if (r.status === 'registered') actBtns += ' <button class="ghost ci-in" data-id="' + r.id + '" type="button">标记签到</button>';
     if (r.status === 'checked_in') actBtns += ' <button class="ghost ci-out" data-id="' + r.id + '" type="button">取消签到</button>';
-    /* [REG-CONTACT 20261115] 报名联系方式（球员报名时自填、落 registration.profile
-       的 phone/wechat/email 平键）：有哪项显示哪项，供主办方后台联系管理。 */
+    /* [REG-CONTACT 20261115] 报名联系方式（球员报名时自填、落 registration.profile）：
+       [REG-CONTACT-V2 20261115] 规范形态为类型＋值 profile.contact={type,value} 优先
+       呈现（明确类型），平键 phone/wechat/email 为镜像兜底；有哪项显示哪项。 */
     var prof = r.profile || {};
     var cParts = [];
-    if (prof.phone) cParts.push('电话 ' + prof.phone);
-    if (prof.wechat) cParts.push('微信 ' + prof.wechat);
-    if (prof.email) cParts.push('邮箱 ' + prof.email);
+    var CT_LBL = { phone: '电话', wechat: '微信', email: '邮箱' };
+    if (prof.contact && prof.contact.type && prof.contact.value) cParts.push(CT_LBL[prof.contact.type] + ' ' + prof.contact.value);
+    else {
+      if (prof.phone) cParts.push('电话 ' + prof.phone);
+      if (prof.wechat) cParts.push('微信 ' + prof.wechat);
+      if (prof.email) cParts.push('邮箱 ' + prof.email);
+    }
     var contactSeg = cParts.length ? ' · <span style="color:#33523d">联系：' + escapeHtml(cParts.join(' · ')) + '</span>' : '';
     return '<div style="padding:8px 0;border-bottom:1px solid #e5eee1;font-size:14px"><b>' + escapeHtml(p.display_name || '（未命名）') + '</b>' +
       ' <span style="color:' + stColor + '">' + (REG_STATUS_TXT[r.status] || r.status) + '</span>' +
@@ -2315,7 +2320,8 @@ function buildRegsCsv(d) {
   var rows = [['姓名', '报名状态', '付款状态', '签到状态', '队伍', '单位', '联系电话', '联系微信', '联系邮箱', '组别', '报名时间']];
   regs.forEach(function (r) {
     var p = r.golf_players || {};
-    var prof = r.profile || {}; // [REG-CONTACT 20261115] 报名联系方式导出（球员自填、主办方管理用）
+    var prof = r.profile || {}; // [REG-CONTACT 20261115] 报名联系方式导出（球员自填、主办方管理用）；[REG-CONTACT-V2 20261115] 类型＋值 profile.contact 优先回填其类型列
+    if (prof.contact && prof.contact.type && prof.contact.value && !prof[prof.contact.type]) prof = Object.assign({}, prof, { [prof.contact.type]: prof.contact.value });
     var pay = r.payment_status ? (PAY_STATUS_TXT[r.payment_status] || r.payment_status) : (r.fee_status ? (FEE_STATUS_TXT[r.fee_status] || r.fee_status) : '');
     var checked = (r.checked_in_at || r.status === 'checked_in') ? '已签到' : '未签到';
     rows.push([p.display_name || '（未命名）', (typeof REG_STATUS_TXT !== 'undefined' && REG_STATUS_TXT[r.status]) || r.status || '', pay, checked,
