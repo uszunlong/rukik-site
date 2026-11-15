@@ -749,8 +749,10 @@ async function startCapture() {
   if (!session) return;
   const asrUrl = localStorage.getItem('meeting_asr_url') || CFG.DEFAULT_ASR_WS;
   try {
-    ws = new WebSocket(`${asrUrl}?meeting=${encodeURIComponent(cur.meeting.id)}&token=${encodeURIComponent(session.access_token)}`);
+    ws = new WebSocket(asrUrl);
     ws.binaryType = 'arraybuffer';
+    // [AUTH-FIRST-FRAME 2026-11-14] token 不再进 URL：连接后首帧发 auth 帧（服务端 V6.1 已公网验证）
+    ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'auth', token: session.access_token, meeting: cur.meeting.id })); } catch {} };
   } catch (e) { $('ws-err').textContent = '转写服务连接失败：' + e.message; return; }
   wsReady = false;
   $('rec-ind').style.display = 'none';
