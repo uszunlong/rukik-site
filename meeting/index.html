@@ -172,6 +172,91 @@
     .mr-type .mr-type-txt{display:none}
     .mr-time{font-size:12.5px}
   }
+
+  /* [WB-REDESIGN 2026-11-14] 工作台石墨黑＋薄荷青主题与三栏布局（作用域 body.in-ws，不影响首页/登录） */
+  body.in-ws{--bg:#0a0d0f;--panel:#10151a;--panel2:#0b0f12;--line:#222a30;--txt:#edf3f0;--dim:#8b979e;--acc:#45d69e;--chip:#182027;background:var(--bg)}
+  body.in-ws .wrap{max-width:none;height:100dvh;display:flex;flex-direction:column;padding:10px 16px}
+  body.in-ws .grid{flex:1;min-height:0;align-items:stretch;gap:0}
+  body.in-ws .grid .card{background:transparent;border:0;border-radius:0;margin-bottom:0}
+  body.in-ws .col{overflow-y:auto}
+  body.in-ws .col h3{color:var(--txt);font-size:15px;letter-spacing:0}
+  body.in-ws #col-transcript{padding:4px 14px 4px 2px}
+  body.in-ws .center-col{display:flex;flex-direction:column;gap:0;min-height:0;overflow:hidden;border-left:1px solid var(--line);border-right:1px solid var(--line);padding:0 14px}
+  body.in-ws #col-viz{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:4px 0}
+  body.in-ws #col-minutes{flex:0 1 auto;max-height:42%;overflow-y:auto;border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+  body.in-ws #viz-mount{flex:1;min-height:0;display:flex;flex-direction:column}
+  body.in-ws .viz-wrap:not(.in-projection){position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+  body.in-ws .viz-canvas{flex:1;min-height:0;height:auto;max-height:none;background:var(--panel2);border-color:var(--line)}
+  body.in-ws .viz-detail{flex:none}
+  body.in-ws .viz-node{background:#12181d;border:1px solid #39434b;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+  body.in-ws .viz-selected{box-shadow:0 0 0 2px rgba(69,214,158,.65),0 4px 16px rgba(0,0,0,.4)}
+  @keyframes vizglow{0%{box-shadow:0 0 0 0 rgba(69,214,158,.5)}100%{box-shadow:0 0 0 16px rgba(69,214,158,0)}}
+  body.in-ws .viz-fresh{animation:vizglow .85s ease-out}
+  .viz-empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:14px;line-height:1.7;padding:24px;text-align:center;pointer-events:none;z-index:4}
+  body.in-ws .react-flow__controls{box-shadow:0 2px 10px rgba(0,0,0,.4)}
+  body.in-ws .react-flow__controls-button{background:#141a1f;border-bottom:1px solid #222a30;fill:#cfd8dc;color:#cfd8dc}
+  body.in-ws .react-flow__attribution{background:transparent;color:#5b6a72}
+  body.in-ws .viz-toolbar .ghost{border-radius:99px;padding:5px 12px;font-size:13px;white-space:nowrap}
+  .viz-menu-stat{font-size:12px;color:var(--dim);padding:6px 8px;border-top:1px solid var(--line)}
+  .viz-menu-hint{font-size:12px;color:var(--dim);padding:6px 8px;max-width:230px;line-height:1.55;border-top:1px solid var(--line)}
+  /* 顶栏一行化：去卡片盒、品牌、标题文字态、连接状态、真实电平声波 */
+  body.in-ws .ws-head{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 2px;margin-bottom:10px}
+  .ws-brand{display:flex;align-items:center;gap:7px;flex:none;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+  .ws-brand .brand-sub{color:var(--dim);font-weight:500;font-size:13px;border-left:1px solid var(--line);padding-left:8px}
+  #m-title-view{flex:0 1 auto;max-width:32%;min-width:40px;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;padding:6px 4px}
+  body.in-ws #m-title{display:none}
+  body.in-ws #m-title.editing{display:block;flex:0 1 32%}
+  .ws-conn{display:flex;align-items:center;gap:6px;flex:none;font-size:12.5px;color:var(--dim);white-space:nowrap}
+  .ws-conn .conn-dot{width:8px;height:8px;border-radius:50%;background:#5b6a72;flex:none}
+  .ws-conn[data-state="on"] .conn-dot{background:var(--acc);box-shadow:0 0 6px rgba(69,214,158,.8)}
+  .ws-conn[data-state="wait"] .conn-dot{background:var(--warn);animation:blink 1.2s infinite}
+  .ws-conn[data-state="err"] .conn-dot{background:var(--bad)}
+  #mic-wave{display:none;align-items:flex-end;gap:2.5px;height:18px;flex:none;padding:0 2px}
+  #mic-wave i{display:block;width:3px;height:16px;border-radius:2px;background:var(--acc);transform:scaleY(.15);transform-origin:bottom}
+  body.in-ws #m-timer{font-variant-numeric:tabular-nums;color:var(--txt);font-size:13px}
+  body.in-ws #btn-pause{border-color:var(--acc);color:var(--acc)}
+  body.in-ws #btn-end{background:transparent;color:var(--bad);border:1px solid rgba(224,93,93,.55)}
+  .ws-menu-info{font-size:12px;color:var(--dim);padding:6px 8px;border-top:1px solid var(--line);line-height:1.55;word-break:break-all}
+  /* 字幕：时间戳弱化独立行、最新句薄荷细线、临时转写区分、跟随开关 */
+  body.in-ws #col-transcript .seg .tm{display:block;margin:0 0 2px;font-size:11px;opacity:.7}
+  body.in-ws .seg.latest{border-left:2px solid var(--acc);background:rgba(69,214,158,.06)}
+  body.in-ws #partial{color:var(--dim);border-left:2px solid var(--acc);padding-left:8px}
+  body.in-ws #partial:empty{display:none}
+  body.in-ws #partial:not(:empty)::before{content:'正在转写 · ';color:var(--acc);font-style:normal}
+  body.in-ws #follow{appearance:none;-webkit-appearance:none;width:36px !important;height:20px !important;border-radius:99px;background:#2a343b;border:1px solid var(--line);position:relative;cursor:pointer;vertical-align:-5px;transition:background .2s;padding:0}
+  body.in-ws #follow::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#aeb9be;transition:left .2s,background .2s}
+  body.in-ws #follow:checked{background:var(--acc)}
+  body.in-ws #follow:checked::after{left:18px;background:#06251a}
+  /* 右栏：预见滚动区＋问 RUKIK 固定底部 */
+  body.in-ws #col-ai{display:flex;flex-direction:column;overflow:hidden;padding:4px 2px 4px 14px}
+  #fs-scroll{flex:1;min-height:0;overflow-y:auto}
+  #foresight-list .item{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px}
+  .fs-details{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+  #ask-block{flex:none;border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+  #ask-block b{font-size:15px}
+  @media (max-width:900px){
+    body.in-ws .wrap{height:auto;display:block;padding:10px}
+    body.in-ws .grid{flex:none}
+    body.in-ws .col{overflow:visible}
+    body.in-ws .center-col{display:contents;border:0;padding:0}
+    body.in-ws #col-viz{display:none}
+    body.in-ws #col-viz.active{display:block;overflow:visible}
+    body.in-ws #col-minutes{max-height:none;border-top:0;margin-top:0}
+    body.in-ws #viz-mount{display:block}
+    body.in-ws .viz-wrap:not(.in-projection){display:block}
+    body.in-ws .viz-canvas{height:calc(100dvh - 208px);min-height:340px;max-height:none}
+    body.in-ws #col-ai{display:none}
+    body.in-ws #col-ai.active{display:flex}
+    #fs-scroll{overflow:visible}
+    #col-ai.ask-only #fs-scroll{display:none}
+    #col-ai.ask-only{justify-content:flex-end}
+    body.in-ws .tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+    body.in-ws .tabs button{flex:none;white-space:nowrap;padding:7px 11px;font-size:13px}
+    .ws-brand{display:none}
+    .ws-conn .conn-txt{display:none}
+    body.in-ws #m-status{display:none}
+    #m-title-view{max-width:38%}
+  }
 </style>
 </head>
 <body>
@@ -280,10 +365,15 @@
     <div class="card ws-head">
       <div class="ws-head-row">
         <button id="btn-back" class="ghost" title="我的会议">←</button>
+        <span class="ws-brand"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c8 0 16-8 16-16-8 0-16 8-16 16z" fill="#45d69e"/><path d="M4 20c2-6 6-10 12-12" stroke="#0a0d0f" stroke-width="1.6" fill="none"/></svg><span>RUKIK</span><span class="brand-sub">AI 会议伴侣</span></span>
+        <span id="m-title-view" title="点击修改标题"></span>
         <input id="m-title">
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
-        <span id="m-timer" class="tag"></span>
+        <span id="ws-conn" class="ws-conn" data-state="off"><span class="conn-dot"></span><span class="conn-txt">转写未连接</span></span>
+        <span style="flex:1"></span>
         <span id="rec-ind" style="display:none"><span class="rec-dot"></span><span class="rec-txt">录音中</span></span>
+        <span id="m-timer" class="tag"></span>
+        <span id="mic-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
         <button id="btn-pause" class="ghost">暂停</button>
         <button id="btn-end" class="danger">结束会议</button>
         <div class="ws-menu-wrap">
@@ -292,13 +382,14 @@
             <button id="btn-analyze" class="ghost menu-item">更新纪要</button>
             <button id="btn-delete" class="ghost menu-item" style="display:none;color:var(--bad)">删除会议</button>
             <button id="menu-signout" class="ghost menu-item">退出登录</button>
+            <div class="ws-menu-info" id="m-info"></div>
           </div>
         </div>
       </div>
       <p id="ws-err" class="err" style="margin:6px 0 0"></p>
     </div>
     <div class="tabs">
-      <button data-tab="0" class="ghost">实时字幕</button><button data-tab="1" class="ghost">会议导图</button><button data-tab="2" class="ghost">会议纪要</button><button data-tab="3" class="ghost">AI 预见</button>
+      <button data-tab="0" class="ghost">字幕</button><button data-tab="1" class="ghost">导图</button><button data-tab="2" class="ghost">纪要</button><button data-tab="3" class="ghost">预见</button><button data-tab="4" class="ghost">问 RUKIK</button>
     </div>
     <div class="grid">
       <div class="card col active" id="col-transcript">
@@ -314,14 +405,20 @@
       </div>
       <div class="center-col">
       <div class="card col" id="col-viz">
-        <h3>会议导图 · 实时生长 <span class="viz-h3-note" style="font-weight:400">（点节点可回溯来源发言；可拖动、锁定、编辑，AI 不覆盖锁定与人工修改）</span></h3>
+        <h3>会议导图 <span class="viz-h3-note" style="font-weight:400">· 实时生长</span></h3>
         <div class="viz-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-          <button class="ghost" id="btn-viz-grow">✦ 立即生长</button>
           <button class="ghost" id="btn-viz-tidy">整理布局</button>
           <button class="ghost" id="btn-viz-follow">自动跟随：开</button>
-          <button class="ghost" id="btn-viz-replay">▶ 回放形成过程</button>
+          <button class="ghost" id="btn-viz-replay">▶ 回放</button>
           <button class="ghost" id="btn-viz-project">⛶ 演讲模式</button>
-          <span class="chip" id="viz-stat">节点 0 · 连线 0</span>
+          <div class="ws-menu-wrap">
+            <button class="ghost" id="btn-viz-more">···</button>
+            <div id="viz-menu" class="ws-menu" style="display:none">
+              <button class="ghost menu-item" id="btn-viz-grow">✦ 立即生长</button>
+              <div class="viz-menu-stat" id="viz-stat">节点 0 · 连线 0</div>
+              <div class="viz-menu-hint">点节点可回溯来源发言；可拖动、锁定、编辑，AI 不覆盖锁定与人工修改。</div>
+            </div>
+          </div>
         </div>
         <div class="replaybar" id="viz-replaybar" style="display:none">
           <button class="ghost" id="rp-play">▶ 播放</button>
@@ -346,18 +443,18 @@
       </div>
       </div>
       <div class="card col" id="col-ai">
+        <div id="fs-scroll">
         <h3>AI 预见 <span class="chip" style="color:var(--warn)">AI 推演 · 非会议事实</span></h3>
         <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span></div>
         <div id="foresight-list"><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
-        <h3 style="margin-top:16px">AI 思考</h3>
-        <div class="item"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场会议与你的历史会议记录提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
+        </div>
+        <div id="ask-block"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场与历史会议提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
           <div style="display:flex;gap:8px;margin-top:8px">
             <input id="ask-q" placeholder="例如：上次会议关于 X 决定了什么？" style="flex:1;min-width:120px">
             <button id="btn-ask">提问</button>
           </div>
           <div id="ask-a" class="dim" style="margin-top:8px;white-space:pre-wrap"></div>
         </div>
-        <div class="item"><b>会议信息</b><p class="dim" id="m-info" style="margin:6px 0 0"></p></div>
       </div>
     </div>
   </div>
@@ -527,6 +624,10 @@ $('btn-back').onclick = async () => { stopCapture(); if (endReconcileTimer) { cl
 $('btn-more').onclick = (e) => { e.stopPropagation(); const m = $('ws-menu'); m.style.display = m.style.display === 'none' ? 'flex' : 'none'; };
 document.addEventListener('click', (e) => { const m = $('ws-menu'); if (m && m.style.display !== 'none' && !e.target.closest('.ws-menu-wrap')) m.style.display = 'none'; });
 $('ws-menu').addEventListener('click', () => { $('ws-menu').style.display = 'none'; });
+// [WB-REDESIGN 2026-11-14] 导图工具栏「更多」菜单（立即生长/图统计/操作说明收纳于此）
+$('btn-viz-more').onclick = (e) => { e.stopPropagation(); const m = $('viz-menu'); m.style.display = m.style.display === 'none' ? 'flex' : 'none'; };
+document.addEventListener('click', (e) => { const m = $('viz-menu'); if (m && m.style.display !== 'none' && !e.target.closest('#viz-menu') && !e.target.closest('#btn-viz-more')) m.style.display = 'none'; });
+$('viz-menu').addEventListener('click', (e) => { if (e.target.closest('#btn-viz-grow')) $('viz-menu').style.display = 'none'; });
 $('menu-signout').onclick = () => { $('signout').click(); };
 
 let lastAnalyzeNoteAt = 0;
@@ -563,6 +664,7 @@ async function openMeeting(id, autostart = false) {
   const gn = $('gap-notices'); if (gn) gn.innerHTML = ''; // [WS-RECONNECT 2026-11-14] 缺口提示按会议隔离，进新会议清空
   show('ws');
   renderMeeting();
+  if (window.matchMedia('(max-width:900px)').matches) { const tb = document.querySelectorAll('.tabs button')[1]; if (tb) tb.click(); } // [WB-REDESIGN 2026-11-14] 手机默认展示导图
   await loadVizAndForesight();
   try { // 恢复补分析：有未处理片段（游标落后）时自动补跑，不依赖手动按钮
     const maxSeq = cur.segments.reduce((mx, s) => Math.max(mx, Number(s.seq) || 0), 0);
@@ -577,17 +679,22 @@ async function openMeeting(id, autostart = false) {
 function renderMeeting() {
   const m = cur.meeting;
   $('m-title').value = m.title;
+  $('m-title-view').textContent = m.title; // [WB-REDESIGN 2026-11-14] 标题默认文字呈现，点击才进编辑态
   $('m-mode').textContent = m.mode === 'speech' ? '单人演讲' : '会议模式';
-  $('m-status').textContent = m.status;
+  $('m-status').textContent = ({ live: '进行中', paused: '已暂停', ended: '已结束' })[m.status] || m.status;
   $('m-info').innerHTML = `会议 ID：${esc(m.id)}<br>创建：${esc((m.created_at||'').replace('T',' ').slice(0,19))}<br>时区：${esc(m.timezone)}`;
   $('btn-delete').style.display = m.status === 'ended' ? '' : 'none';
   $('btn-end').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
   $('btn-pause').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
   $('btn-pause').textContent = m.status === 'paused' ? '继续' : '暂停';
   $('rec-ind').style.display = m.status === 'live' ? '' : 'none';
+  // [WB-REDESIGN 2026-11-14] 连接状态与声波只在可录制状态出现；连接中/已连接由 WS 事件实时驱动（setConn）
+  $('ws-conn').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
+  $('mic-wave').style.display = (m.status === 'live' || m.status === 'paused') ? 'flex' : 'none';
+  if (m.status === 'ended') setConn('off', '转写未连接');
   clearInterval(timerInt);
   if (m.started_at) {
-    const tick = () => { const end = m.ended_at ? new Date(m.ended_at).getTime() : Date.now(); $('m-timer').textContent = '时长 ' + fmtT(Math.max(0, (end - new Date(m.started_at).getTime()) / 1000)); };
+    const tick = () => { const end = m.ended_at ? new Date(m.ended_at).getTime() : Date.now(); $('m-timer').textContent = fmtT(Math.max(0, (end - new Date(m.started_at).getTime()) / 1000)); };
     tick(); if (!m.ended_at) timerInt = setInterval(tick, 1000);
   }
   renderSegments(); renderMinutes();
@@ -633,6 +740,9 @@ async function editSegment(segId) {
     if (cur.meeting.status === 'ended') triggerCorrection(); else { renderMeeting(); }
   } catch (e) { $('ws-err').textContent = '修订保存失败：' + e.message; }
 }
+let followHold = false; // [WB-REDESIGN 2026-11-14] 用户上翻字幕时暂停自动跟随，回到接近底部自动恢复
+$('col-transcript').addEventListener('scroll', (e) => { const p = e.target; followHold = (p.scrollHeight - p.scrollTop - p.clientHeight) > 60; });
+
 function renderSegments() {
   const box = $('segments'); box.innerHTML = '';
   const useCorr = corrView === 'corrected' && corrState && corrState.status === 'done';
@@ -653,8 +763,10 @@ function renderSegments() {
     }
     box.appendChild(div);
   }
-  if ($('follow').checked) box.scrollTop = box.scrollHeight;
-  const panel = $('col-transcript'); panel.scrollTop = panel.scrollHeight;
+  // [WB-REDESIGN 2026-11-14] 最新一段以薄荷细线突出；自动跟随开启且用户未上翻时才滚动
+  const kids = box.children; if (kids.length) kids[kids.length - 1].classList.add('latest');
+  const panel = $('col-transcript');
+  if ($('follow').checked && !followHold) { box.scrollTop = box.scrollHeight; panel.scrollTop = panel.scrollHeight; }
 }
 
 function locateSegment(id) {
@@ -751,13 +863,18 @@ async function loadForesight() {
       const scenPart = (ep2) => { if (!ep2) return ''; const pp = []; if ((ep2.known_facts || []).length) pp.push('已知：' + ep2.known_facts.map((k) => esc(k.text)).join('；')); if ((ep2.assumptions || []).length) pp.push('假设：' + ep2.assumptions.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.possible_outcomes || []).length) pp.push('结果：' + ep2.possible_outcomes.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); if ((ep2.uncertainties || []).length) pp.push('不确定：' + ep2.uncertainties.map((a) => esc(typeof a === 'string' ? a : a.text)).join('；')); return pp.length ? `<div class="dim" style="margin-top:4px;font-size:12px">${pp.join('<br>')}</div>` : ''; };
       const scen = (f.scenarios || []).map((sc) => `<div class="fs-scen"><b>情景推演 · ${esc(sc.label || '')}</b><br>${esc(sc.summary || '')}${scenPart(sc.epistemic)}</div>`).join('');
       const dg = (f.downgrades || []).length ? `<div class="meta" style="color:var(--warn)">服务端校验：${f.downgrades.length} 条原标「已知事实」因无来源或确定性措辞已自动降级为推理假设。</div>` : '';
+      // [WB-REDESIGN 2026-11-14] 卡面只留标题与正文；依据/情景/校验说明折叠进「查看依据」，无依据不给入口、不伪造引用
+      const hasBasis = parts.length > 0 || !!scen || !!dg;
       const div = document.createElement('div'); div.className = 'item';
       div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${f.status !== 'open' ? `<span class="chip">${f.status === 'accepted' ? '已关注' : '已忽略'}</span>` : ''}
-        <br><b>${esc(f.title)}</b><p style="margin:4px 0 0">${esc(f.body)}</p>${parts.join('')}${scen}${dg}
+        <br><b>${esc(f.title)}</b><p style="margin:4px 0 0">${esc(f.body)}</p>
+        ${hasBasis ? `<div class="fs-details" style="display:none">${parts.join('')}${scen}${dg}</div>` : ''}
         <div style="margin-top:6px;display:flex;gap:6px">
+          ${hasBasis ? '<button class="ghost" data-fact="basis">查看依据</button>' : ''}
           ${f.status === 'open' ? '<button class="ghost" data-fact="ack">关注</button><button class="ghost" data-fact="dis">忽略</button>' : ''}
         </div>`;
       div.querySelectorAll('[data-fseg]').forEach((a) => { a.onclick = () => locateSegment(a.dataset.fseg); });
+      const basisBtn = div.querySelector('[data-fact="basis"]'); if (basisBtn) basisBtn.onclick = () => { const d = div.querySelector('.fs-details'); const show = d.style.display === 'none'; d.style.display = show ? '' : 'none'; basisBtn.textContent = show ? '收起依据' : '查看依据'; };
       const ack = div.querySelector('[data-fact="ack"]'); if (ack) ack.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'accepted'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
       const dis = div.querySelector('[data-fact="dis"]'); if (dis) dis.onclick = async () => { try { await client.foresightSetStatus(cur.meeting.id, f.id, 'dismissed'); await loadForesight(); } catch (e) { $('ws-err').textContent = e.message; } };
       box.appendChild(div);
@@ -828,8 +945,13 @@ $('btn-add-item').onclick = async () => {
 
 $('m-title').onchange = async () => {
   const t = $('m-title').value.trim(); if (!t || t === cur.meeting.title) return;
-  try { await client.rename(cur.meeting.id, t); cur.meeting.title = t; } catch (e) { $('ws-err').textContent = e.message; }
+  try { await client.rename(cur.meeting.id, t); cur.meeting.title = t; $('m-title-view').textContent = t; } catch (e) { $('ws-err').textContent = e.message; }
 };
+
+// [WB-REDESIGN 2026-11-14] 标题文字态 <-> 编辑态切换（保存走原 m-title onchange 重命名路径）
+$('m-title-view').onclick = () => { const inp = $('m-title'); inp.classList.add('editing'); $('m-title-view').style.display = 'none'; inp.focus(); inp.select(); };
+$('m-title').addEventListener('blur', () => { $('m-title').classList.remove('editing'); $('m-title-view').style.display = ''; });
+$('m-title').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('m-title').blur(); });
 
 $('btn-analyze').onclick = async () => {
   $('btn-analyze').disabled = true; $('ws-err').textContent = '';
@@ -942,8 +1064,12 @@ $('btn-delete').onclick = async () => {
 
 document.querySelectorAll('.tabs button').forEach((b) => {
   b.onclick = () => {
-    document.querySelectorAll('.col').forEach((c) => c.classList.remove('active'));
-    document.querySelectorAll('.col')[Number(b.dataset.tab)].classList.add('active');
+    const cols = document.querySelectorAll('.col');
+    cols.forEach((c) => c.classList.remove('active'));
+    // [WB-REDESIGN 2026-11-14] 「问 RUKIK」标签复用右栏、只显问答区；切标签只切呈现，不碰录音/连接/内容
+    if (b.dataset.tab === '4') { $('col-ai').classList.add('active', 'ask-only'); return; }
+    $('col-ai').classList.remove('ask-only');
+    cols[Number(b.dataset.tab)].classList.add('active');
   };
 });
 
@@ -1016,11 +1142,11 @@ function rcCancel() {
 function rcScheduleNext() {
   if (!captureWanted || !cur || !cur.meeting) return;
   if (rcAttempts >= RC_MAX_ATTEMPTS) {
-    $('ws-err').textContent = '多次重试失败，已停止自动重连，请刷新页面。';
+    $('ws-err').textContent = '多次重试失败，已停止自动重连，请刷新页面。'; setConn('err', '转写连接失败');
     return;
   }
   const n = rcAttempts + 1;
-  $('ws-err').textContent = '连接中断，正在重连（第 ' + n + ' 次）…';
+  $('ws-err').textContent = '连接中断，正在重连（第 ' + n + ' 次）…'; setConn('wait', '转写重连中');
   if (rcTimer) clearTimeout(rcTimer);
   rcTimer = setTimeout(() => { rcTimer = null; rcTryConnect(); }, rcDelayFor(rcAttempts));
 }
@@ -1048,6 +1174,7 @@ async function rcOnRecovered() {
   } catch { /* 对账失败不阻塞录音，后续 final 仍按原流程追加 */ }
   if (wasLive && downAt != null) rcAddGapNotice(downAt, Date.now());
   $('ws-err').textContent = '已恢复连接，录音继续。';
+  setConn('on', '转写已连接');
   if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = '';
 }
 
@@ -1059,12 +1186,15 @@ function rcHandleClose(ev, sock) {
   if (!audio) return false; // 麦克风管线已停（如结束流程 stopMic 后）：不重连
   if (rcDownAt == null) { rcDownAt = Date.now(); rcDownWasLive = cur.meeting.status === 'live'; }
   if (cur.meeting.status === 'live') $('rec-ind').style.display = 'none';
-  if (ev && ev.code === 4404) { $('ws-err').textContent = '会议归属校验未通过，已停止自动重连，请刷新页面。'; return true; }
-  if (ev && ev.code === 4409) { $('ws-err').textContent = '会议当前不可录制，已停止自动重连。'; return true; }
+  if (ev && ev.code === 4404) { $('ws-err').textContent = '会议归属校验未通过，已停止自动重连，请刷新页面。'; setConn('err', '转写已断开'); return true; }
+  if (ev && ev.code === 4409) { $('ws-err').textContent = '会议当前不可录制，已停止自动重连。'; setConn('err', '转写已断开'); return true; }
   if (!sock.__gotReady) rcAttempts++;
   rcScheduleNext();
   return true;
 }
+
+// [WB-REDESIGN 2026-11-14] 顶栏转写连接状态：on 已连接（薄荷）/ wait 连接或重连中 / err 真实失败 / off 未连接
+function setConn(state, txt) { const el = $('ws-conn'); if (!el) return; el.dataset.state = state; const t = el.querySelector('.conn-txt'); if (t) t.textContent = txt; }
 
 function connectWS() {
   const asrUrl = localStorage.getItem('meeting_asr_url') || CFG.DEFAULT_ASR_WS;
@@ -1085,6 +1215,7 @@ function connectWS() {
   wsReady = false;
   $('rec-ind').style.display = 'none';
   $('ws-err').textContent = rcDownAt != null ? '正在重连（第 ' + (rcAttempts + 1) + ' 次）：连接中…' : '正在连接转写服务（连接中/鉴权中）…';
+  setConn('wait', rcDownAt != null ? '转写重连中' : '转写连接中');
   const sock = ws; // onclose 身份守卫：旧连接迟到的关闭事件不得动新会话的状态
   if (rcWatchdog) clearTimeout(rcWatchdog);
   rcWatchdog = setTimeout(() => { rcWatchdog = null; if (ws === sock && !sock.__gotReady) { try { sock.close(); } catch {} } }, RC_READY_TIMEOUT_MS);
@@ -1095,7 +1226,7 @@ function connectWS() {
       if (rcWatchdog) { clearTimeout(rcWatchdog); rcWatchdog = null; }
       wsReady = true;
       if (rcDownAt != null) { rcOnRecovered(); }
-      else { rcAttempts = 0; $('ws-err').textContent = '转写已连接，录音中。'; if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = ''; }
+      else { rcAttempts = 0; $('ws-err').textContent = '转写已连接，录音中。'; if (cur && cur.meeting.status === 'live') $('rec-ind').style.display = ''; setConn('on', '转写已连接'); }
     }
     if (msg.type === 'meeting.state' && msg.status === 'ended' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'ended' }); }
     if (msg.type === 'meeting.state' && msg.status === 'end_incomplete' && endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'incomplete', pending: msg.pending, client_refs: msg.client_refs }); }
@@ -1124,10 +1255,20 @@ function connectWS() {
     const wasEnding = !!endWaiter;
     if (endWaiter) { const w = endWaiter; endWaiter = null; w({ outcome: 'closed', code: ev.code }); }
     if (!wasEnding && rcHandleClose(ev, sock)) return; // [WS-RECONNECT 2026-11-14] 非主动断开由自动重连接管
-    if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存到服务器的字幕会保留；断开期间的声音不会被记录。刷新页面后将从服务器记录的最新进度继续，不会从头重记。';
+    if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存到服务器的字幕会保留；断开期间的声音不会被记录。刷新页面后将从服务器记录的最新进度继续，不会从头重记。'; setConn('err', '转写已断开');
   };
   ws.onerror = () => { $('ws-err').textContent = '转写服务连接失败（内部测试需 ASR 服务可达）。纪要与历史功能不受影响。'; };
 }
+
+let micLevel = 0, micLevelAt = 0, micSmooth = 0; // [WB-REDESIGN 2026-11-14] 顶栏声波电平：只来自麦克风真实输入，无输入/未录音回落静止
+setInterval(() => {
+  const w = $('mic-wave'); if (!w || w.style.display === 'none') return;
+  const fresh = Date.now() - micLevelAt < 350 && cur && cur.meeting && cur.meeting.status === 'live' && !!audio;
+  const target = fresh ? micLevel : 0;
+  micSmooth += (target - micSmooth) * (target > micSmooth ? 0.6 : 0.25);
+  const f = [0.55, 0.95, 0.7, 1, 0.6];
+  for (let i = 0; i < w.children.length; i++) w.children[i].style.transform = 'scaleY(' + Math.max(0.15, Math.min(1, micSmooth * f[i % f.length] + 0.08)).toFixed(3) + ')';
+}, 110);
 
 async function startCapture() {
   if (!session) return;
@@ -1142,8 +1283,12 @@ async function startCapture() {
     const proc = ctx.createScriptProcessor(4096, 1, 1);
     src.connect(proc); proc.connect(ctx.destination);
     proc.onaudioprocess = (e) => {
+      // [WB-REDESIGN 2026-11-14] 真实电平采样（先于发送门：重连期间亦如实反映麦克风输入，顶栏声波据此驱动）
+      const ch = e.inputBuffer.getChannelData(0);
+      let sum = 0; for (let i = 0; i < ch.length; i += 2) sum += ch[i] * ch[i];
+      micLevel = Math.min(1, Math.sqrt(sum / Math.max(1, ch.length / 2)) * 2.5); micLevelAt = Date.now();
       if (!ws || ws.readyState !== 1 || !wsReady || cur.meeting.status !== 'live') return;
-      const ds = downsampleTo16k(e.inputBuffer.getChannelData(0), ctx.sampleRate);
+      const ds = downsampleTo16k(ch, ctx.sampleRate);
       ws.send(floatToPcm16(ds));
     };
     audio = { stream, ctx, proc };
@@ -1157,6 +1302,7 @@ function stopMic() {
 }
 function stopCapture() {
   rcCancel(); // [WS-RECONNECT 2026-11-14] 主动停止：取消一切待执行的自动重连
+  setConn('off', '转写未连接'); // [WB-REDESIGN 2026-11-14]
   stopMic();
   try { if (ws) ws.close(); } catch {}
   ws = null; wsReady = false;

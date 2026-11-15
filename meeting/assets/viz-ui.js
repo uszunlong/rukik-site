@@ -35,7 +35,7 @@ export function createVizUI(opts) {
     rfApi: null,
     version: 0,
   };
-  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); };
+  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); };
   // [STAGE 2026-11-14] 程序化视口移动统一走此包装，避免被误判为用户手动平移而暂停跟随
   function progMove(fn) {
     store._progMove = true;
@@ -277,6 +277,13 @@ export function createVizUI(opts) {
   wrapEl.innerHTML = `<div class="viz-canvas" id="viz-canvas"></div>`;
   mount.appendChild(wrapEl);
   mount.appendChild(detailEl);
+  // [WB-REDESIGN 2026-11-14] 空图等待提示：无有效内容时只显示简洁文案，不生成假节点
+  const emptyHint = document.createElement('div');
+  emptyHint.className = 'viz-empty-hint';
+  emptyHint.textContent = '导图会在这里实时生长——开始发言后，观点、决策与依据将逐步成图。';
+  emptyHint.style.display = 'none';
+  wrapEl.appendChild(emptyHint);
+  function syncEmptyHint() { emptyHint.style.display = (store.mode === 'live' && store.graph.nodes.length === 0) ? '' : 'none'; }
   // [STAGE 2026-11-14] 跟随暂停提示 chip：用户手动平移/缩放后出现，点按回正并恢复跟随
   const followChip = document.createElement('button');
   followChip.className = 'viz-follow-chip';
@@ -359,7 +366,7 @@ export function createVizUI(opts) {
       const meta = TYPE_META[n.type] || TYPE_META.topic;
       return React.createElement('div', {
         className: 'viz-node' + (data.fresh ? ' viz-fresh' : '') + (selected ? ' viz-selected' : ''),
-        style: { borderColor: meta.color },
+        // [WB-REDESIGN 2026-11-14] 边框改由 CSS 中性描边（类型色保留在标签上），选中/新节点以薄荷环与柔光区分
       },
         React.createElement(Handle, { type: 'target', position: Position.Top, style: { opacity: 0 } }),
         React.createElement('div', { className: 'viz-node-tag', style: { color: meta.color } }, meta.label + (n.locked ? ' 🔒' : '') + (n.version > 1 ? ` · v${n.version}` : '')),
@@ -389,8 +396,8 @@ export function createVizUI(opts) {
         id: e.id, source: e.from, target: e.to,
         label: EDGE_LABEL[e.type] || undefined,
         animated: store.freshEdges.has(e.id),
-        style: { stroke: e.type === 'contradicts' || e.type === 'blocks' ? '#e05d5d' : e.type === 'depends_on' ? '#e0a63f' : '#3d5a80', strokeWidth: 1.6 },
-        labelStyle: { fill: '#93a4bd', fontSize: 11 },
+        style: { stroke: e.type === 'contradicts' || e.type === 'blocks' ? '#e05d5d' : e.type === 'depends_on' ? '#e0a63f' : '#3ba273', strokeWidth: 1.6 },
+        labelStyle: { fill: '#8b979e', fontSize: 11 },
       }));
       return React.createElement(ReactFlow, {
         nodes: rfNodes, edges: rfEdges, nodeTypes,
@@ -405,7 +412,7 @@ export function createVizUI(opts) {
         onNodeDragStop: (_, node) => { store.positions.set(node.id, node.position); savePositions(); },
         onInit: (inst) => { store.rfApi = inst; },
         nodesDraggable: store.mode === 'live', nodesConnectable: false, elementsSelectable: true,
-      }, React.createElement(Background, { gap: 22, size: 1, color: '#22304d' }), React.createElement(Controls, { showInteractive: false }));
+      }, React.createElement(Background, { gap: 22, size: 1, color: '#20292f' }), React.createElement(Controls, { showInteractive: false }));
     }
     const root = createRoot(document.getElementById('viz-canvas'));
     root.render(React.createElement(App));
