@@ -3077,6 +3077,11 @@ function selectOverviewHole(n) {
   var el = document.querySelector('.hole[data-hole="' + n + '"]');
   if (el) el.click();
   else { S.selHole = n; if (typeof paint === 'function') paint(); }
+  /* [HOLE-LINK3 20261115] 兜底直达 syncMap：paint 分发到游客/无卡/待分组等
+   * 非记生态时不经 syncTail，S.selHole 已改但逐洞图不跟随（全局图点选在
+   * 这些状态下表现为无反应）。syncMap 有同洞守卫（mapHoleShown===target
+   * 时只同步高亮、不重绘 SVG、不重置 pz 缩放），记生态下重复调用无副作用。 */
+  try { syncMap(); } catch (e) {}
 }
 function ovLocate() {
   if (!ovMap || !navigator.geolocation) return;
