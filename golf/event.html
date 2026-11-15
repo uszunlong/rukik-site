@@ -2664,7 +2664,7 @@ function renderLive() {
     '<div class="wallbar">' +
     /* [A12] 左下角「管理照片」入口：仅有照片权限者可见（参赛成员/摄影师/管理方，
        与 live-photo sceneAccess 的客户端信号对齐；动作仍由服务端复核） */
-    (EV && (EV.my_registration || EV.my_player || EV.my_role) ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') +
+    (EV && (EV.my_registration || EV.my_player || EV.my_role) ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
     '<span class="wb-t">🔴 Golf Live · ' + ((WALL.stats && WALL.stats.photos) || feed.length) + ' 张照片</span></div>' +
     (function () { var pl = postersOf(); PALB.list = pl; return pl.length ? '<button type="button" class="palIco" id="palIco" aria-label="查看赛事海报">🏞</button>' : ''; })() + '</div>';
   var box = document.getElementById('carBox');
@@ -2672,6 +2672,7 @@ function renderLive() {
   if (pcB) pcB.addEventListener('click', function () { openPal(0); });
   var pmB = document.getElementById('pmOpenBtn');
   if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
+  if (typeof bindPcBtn === 'function') bindPcBtn(document);
   Array.prototype.forEach.call(box.querySelectorAll('img'), function (img) {
     img.addEventListener('error', function () {
       var fig = img.parentNode, track = document.getElementById('carTrack');
@@ -3777,7 +3778,7 @@ document.addEventListener('click', function (e) {
         return '<figure class="palSlide" data-ai="' + i + '"><img src="' + esc(albSlideSrc(it)) + '" alt="' + (it.is_official ? '赛事海报' : '赛事照片') + '"></figure>';
       }).join('') + '</div>' +
       (ALB.items.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + ALB.items.length + '</div><div class="palDots" id="palDots">' + ALB.items.map(function (it, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
-      '<div class="wallbar">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') +
+      '<div class="wallbar">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
       '<span class="wb-t">🔴 Golf Live · ' + ALB.count + ' 张照片</span></div></div>';
     var palBox = document.getElementById('palBox');
     Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
@@ -3808,6 +3809,7 @@ document.addEventListener('click', function (e) {
     palBox.addEventListener('touchstart', function () { palNoteManual(); }, { passive: true });
     var pmB = document.getElementById('pmOpenBtn');
     if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
+    if (typeof bindPcBtn === 'function') bindPcBtn(box);
     palGo(PALB.idx);
     palStart();
     return true;
@@ -3835,7 +3837,7 @@ document.addEventListener('click', function (e) {
     }
     box.innerHTML = '<div class="albGridWrap">' +
       '<div class="albGridBar"><span class="albGridT">🔴 Golf Live · ' + ALB.count + ' 张照片</span>' +
-      '<span class="albGridActs">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') +
+      '<span class="albGridActs">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
       '<button type="button" class="albBack" id="albBackBtn">‹ 返回轮播</button></span></div>' +
       '<div class="albGrid">' + cells + '</div>' +
       (shown < ALB.items.length ? '<button type="button" class="albMore" id="albMoreBtn">加载更多照片（已显示 ' + shown + ' / ' + ALB.items.length + '）</button>' : '') +
@@ -3846,6 +3848,7 @@ document.addEventListener('click', function (e) {
     if (more) more.addEventListener('click', function () { ALB.gridShown += 9; renderAlbumGrid(); });
     var pmB = document.getElementById('pmOpenBtn');
     if (pmB) pmB.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); });
+    if (typeof bindPcBtn === 'function') bindPcBtn(box);
     Array.prototype.forEach.call(box.querySelectorAll('.albCell'), function (fig) {
       var i = Number(fig.getAttribute('data-gi'));
       var it = ALB.items[i];

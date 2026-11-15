@@ -92,6 +92,9 @@
     <h3 style="margin:18px 0 10px">当前赛事相册 <span class="note" id="albumCount"></span></h3>
     <div id="batchBar" style="margin:0 0 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button type="button" id="batchModeBtn" class="ghost">🗑 批量删除</button>
+      <button type="button" id="posterUpBtn" class="ghost" style="display:none">🖼 上传新海报</button>
+      <input type="file" id="posterFileInput" accept="image/*" class="hidden">
+      <span class="note" id="posterMsg"></span>
       <span class="note" id="batchInfo"></span>
       <button type="button" id="batchDelBtn" style="display:none">删除所选</button>
       <button type="button" id="batchCancelBtn" class="ghost" style="display:none">取消</button>
@@ -115,6 +118,16 @@ async function lp(body) {
   if (!res.ok) { var e = new Error(data.error || ('HTTP ' + res.status)); e.code = data.error || ''; e.serverMessage = data.message || ''; e.limit = (typeof data.limit === 'number') ? data.limit : null; throw e; }
   return data;
 }
+// [POSTER-WALL-FIX 2026-11-15] 海报管理走 golf-api（poster_* 动作，海报真源
+// golf_events.poster_urls/cover_url）；照片管理仍走 live-photo，两条通道分工不变。
+var GA = SUPA + '/functions/v1/golf-api';
+async function ga(body) {
+  var res = await fetch(GA, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + (session ? session.access_token : ANON) }, body: JSON.stringify(body) });
+  var data = await res.json().catch(function () { return {}; });
+  if (!res.ok || data.error) { var e = new Error(data.message || data.error || ('HTTP ' + res.status)); e.serverMessage = data.message || ''; throw e; }
+  return data;
+}
+
 // [ALBUM-LIMIT-COPY 2026-11-15] 相册错误呈现统一口径：优先服务端可读文案
 // （data.message，如「本场相册已达 N 张上限」）；无文案时按错误码映射定版
 // 文案；再无则回落错误码本身（与原有行为一致）。只改呈现，不改上传逻辑。
@@ -166,6 +179,7 @@ async function loadAlbum() {
   if (!eventId()) return;
   var d = await lp({ action: 'photo_list', event_kind: 'golf', event_id: eventId(), limit: 100 });
   CLS = d.cls;
+  $('posterUpBtn').style.display = CLS === 'manager' ? '' : 'none';
   $('roleMsg').textContent = '当前身份：' + ({ manager: '管理方', photographer: '摄影师', member: '参赛球员', visitor: '访客' }[CLS] || CLS);
   if (d.retention_expired) {
     // [ALBUM-RETENTION 2026-11-15] 保留态：服务端只下发官方海报条目，参与者
@@ -216,6 +230,7 @@ function renderGrid(photos) {
         // 合规处置（非审核流程）：visible 可下架、已下架可恢复展示；无「审核通过」
         ops += p.status === 'hidden' ? '<button data-op="unhide" data-id="' + p.id + '">恢复展示</button>' : '<button data-op="hide" data-id="' + p.id + '">下架</button>';
         ops += '<button data-op="remove" data-id="' + p.id + '">删除</button>';
+        ops += '<button data-op="setposter" data-id="' + p.id + '">设为海报</button>';
       }
       if (session && p.uploader_id === session.user_id) ops += '<button data-op="remove" data-id="' + p.id + '">删除我的</button>';
       ops += '<button data-op="download" data-id="' + p.id + '">下载原图</button>';
@@ -230,6 +245,12 @@ function renderGrid(photos) {
       var id = btn.getAttribute('data-id'), op = btn.getAttribute('data-op');
       try {
         if (op === 'download') { await albDownload(id); return; }
+        if (op === 'setposter') {
+          btn.disabled = true;
+          await ga({ action: 'poster_add_from_photo', event_id: eventId(), photo_id: id });
+          alert('已设为海报：该图已成为赛事封面，并加入海报列表；赛事页顶部与相册官方海报已同步更换。');
+          loadAlbum(); return;
+        }
         if (op === 'dlposter') { var it = (LAST_PHOTOS || []).filter(function (x) { return x.id === id; })[0]; if (it) window.open(it.url, '_blank'); return; }
         if (op === 'remove') await lp({ action: 'photo_delete', photo_id: id });
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
@@ -254,6 +275,24 @@ function batchSync() {
   $('batchCancelBtn').style.display = BATCH.on ? '' : 'none';
   $('batchModeBtn').style.display = BATCH.on ? 'none' : '';
 }
+// [POSTER-WALL-FIX 2026-11-15] 上传新海报：poster_add 签名直传 → 设为封面。
+$('posterUpBtn').onclick = function () { $('posterFileInput').click(); };
+$('posterFileInput').onchange = async function () {
+  var f = $('posterFileInput').files && $('posterFileInput').files[0];
+  $('posterFileInput').value = '';
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { $('posterMsg').textContent = '海报图片不能超过 5MB'; return; }
+  $('posterMsg').textContent = '海报上传中…';
+  try {
+    var ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+    var d = await ga({ action: 'poster_add', event_id: eventId(), ext: ext });
+    var put = await fetch(d.signed_url, { method: 'PUT', headers: { 'Content-Type': f.type || 'image/jpeg' }, body: f });
+    if (!put.ok) throw new Error('海报文件上传失败（HTTP ' + put.status + '）');
+    await ga({ action: 'poster_set_cover', event_id: eventId(), url: d.public_url });
+    $('posterMsg').textContent = '海报已更换：赛事页顶部与相册官方海报已同步。';
+    loadAlbum();
+  } catch (e) { $('posterMsg').textContent = '海报更换失败：' + (albErrText(e) || e.message); }
+};
 $('batchModeBtn').onclick = function () { BATCH.on = true; BATCH.sel = {}; renderGrid(LAST_PHOTOS); batchSync(); };
 $('batchCancelBtn').onclick = function () { BATCH.on = false; BATCH.sel = {}; renderGrid(LAST_PHOTOS); batchSync(); };
 $('grid').addEventListener('change', function (e) {
