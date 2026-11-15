@@ -112,8 +112,17 @@ function $(id) { return document.getElementById(id); }
 async function lp(body) {
   var res = await fetch(LP, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + (session ? session.access_token : ANON) }, body: JSON.stringify(body) });
   var data = await res.json().catch(function () { return {}; });
-  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  if (!res.ok) { var e = new Error(data.error || ('HTTP ' + res.status)); e.code = data.error || ''; e.serverMessage = data.message || ''; e.limit = (typeof data.limit === 'number') ? data.limit : null; throw e; }
   return data;
+}
+// [ALBUM-LIMIT-COPY 2026-11-15] 相册错误呈现统一口径：优先服务端可读文案
+// （data.message，如「本场相册已达 N 张上限」）；无文案时按错误码映射定版
+// 文案；再无则回落错误码本身（与原有行为一致）。只改呈现，不改上传逻辑。
+function albErrText(e) {
+  if (!e) return '';
+  if (e.serverMessage) return e.serverMessage;
+  if (e.message === 'album_photo_limit_reached') return '本场相册已达' + (e.limit ? ' ' + e.limit + ' ' : '') + '张上限，升级专业档可不限量上传';
+  return e.message || '';
 }
 
 // [相册线 2026-11-12] 下载原图：先经服务端 photo_download 复核权限/限制，
@@ -226,7 +235,7 @@ function renderGrid(photos) {
         else if (op === 'enhance') await lp({ action: 'photo_enhance', photo_id: id });
         else await lp({ action: 'photo_moderate', photo_id: id, op: op === 'pin' ? (btn.textContent === '置顶' ? 'pin' : 'unpin') : op });
         loadAlbum();
-      } catch (e) { alert('操作失败：' + e.message); }
+      } catch (e) { alert('操作失败：' + (albErrText(e) || e.message)); }
     };
   });
 }
@@ -259,14 +268,14 @@ $('batchDelBtn').onclick = async function () {
   var btn = $('batchDelBtn');
   if (btn.textContent !== '确认删除 ' + ids.length + ' 张？') { btn.textContent = '确认删除 ' + ids.length + ' 张？'; return; }
   btn.disabled = true; btn.textContent = '删除中…';
-  var done = 0, failed = 0;
+  var done = 0, failed = 0, failMsg = '';
   for (var i = 0; i < ids.length; i++) {
-    try { var r = await lp({ action: 'photo_delete', photo_id: ids[i] }); if (r && r.ok) done++; else failed++; }
-    catch (e) { failed++; }
+    try { var r = await lp({ action: 'photo_delete', photo_id: ids[i] }); if (r && r.ok) done++; else { failed++; if (r && r.message) failMsg = r.message; } }
+    catch (e) { failed++; var em = albErrText(e); if (em) failMsg = em; }
   }
   BATCH.on = false; BATCH.sel = {};
   btn.disabled = false;
-  $('batchInfo').textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败请重试。') : ('已删除 ' + done + ' 张。');
+  $('batchInfo').textContent = failed ? ('已删除 ' + done + ' 张，' + failed + ' 张失败' + (failMsg ? '：' + failMsg : '请重试。')) : ('已删除 ' + done + ' 张。');
   loadAlbum();
 };
 
@@ -274,7 +283,7 @@ $('batchDelBtn').onclick = async function () {
 function renderQueue() {
   $('queue').innerHTML = queue.map(function (it, i) {
     var cls = it.status === '失败' ? 'fail' : it.status === '完成' ? 'done' : '';
-    return '<div class="' + cls + '">' + (i + 1) + '. ' + it.name + ' — ' + it.status + (it.status === '失败' ? ' <button data-retry="' + i + '">重试</button>' : '') + '</div>';
+    return '<div class="' + cls + '">' + (i + 1) + '. ' + it.name + ' — ' + it.status + (it.status === '失败' && it.error ? '：' + it.error : '') + (it.status === '失败' ? ' <button data-retry="' + i + '">重试</button>' : '') + '</div>';
   }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('[data-retry]'), function (b) {
     b.onclick = function () { processItem(queue[Number(b.getAttribute('data-retry'))]); };
@@ -328,7 +337,7 @@ async function processItem(it) {
     it.status = '完成'; renderQueue();
     loadAlbum();
   } catch (e) {
-    it.status = '失败'; it.error = e.message; renderQueue();
+    it.status = '失败'; it.error = albErrText(e); renderQueue();
   }
 }
 var drop = $('drop');
@@ -373,7 +382,7 @@ function initPool() {
     if (ptoken) headers.Authorization = 'Bearer ' + ptoken;
     var res = await fetch(GAPI, { method: 'POST', headers: headers, body: JSON.stringify(body) });
     var d = await res.json().catch(function () { return {}; });
-    if (!res.ok) throw new Error(d.error || ('HTTP ' + res.status));
+    if (!res.ok) { var e = new Error(d.error || ('HTTP ' + res.status)); e.code = d.error || ''; e.serverMessage = d.message || ''; e.limit = (typeof d.limit === 'number') ? d.limit : null; throw e; }
     return d;
   }
   // 赛事名（best-effort，失败保持通用标题）
@@ -437,7 +446,7 @@ function initPool() {
       $('poolMsg').textContent = POOL.items.length ? ('共 ' + aliveItems().length + ' 张' + (POOL.hasMore ? '，继续下滑加载更多' : '')) : '暂无现场照片。';
       $('poolMore').classList.toggle('hidden', !POOL.hasMore);
     } catch (e) {
-      $('poolMsg').textContent = '照片加载失败：' + e.message + '（点「加载更多照片」重试）';
+      $('poolMsg').textContent = '照片加载失败：' + (albErrText(e) || e.message) + '（点「加载更多照片」重试）';
       $('poolMore').classList.remove('hidden');
     } finally { POOL.loading = false; }
   }
