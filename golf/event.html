@@ -392,7 +392,7 @@
   #scoreSec .btn.plain{ background: rgba(255,255,255,.05); color: #cfeedd; border: 1px solid rgba(160,220,185,.35); font-weight: 600; box-shadow: none; }
   #scoreSec .btn.gold{ background: linear-gradient(135deg, #d9b96a, #b58a58); color: #241a05; border-color: rgba(255,235,190,.4); }
   #scoreSec .btnrow{ display: flex; gap: 10px; margin-top: 12px; }
-  #scoreSec .btnrow .btn{ flex: 1; }
+  #scoreSec .btnrow .btn{ flex: 1; display: flex; align-items: center; justify-content: center; line-height: 1.35; } /* [OVERVIEW-BTN-2LINE 20261115] btnrow 内按钮内容双向居中：总览按钮两行标签与同排按钮等高居中 */
   #scoreSec .err{ color: #fda4a4; font-size: 14px; line-height: 1.7; }
   #scoreSec .okmsg{ color: #4ade80; font-size: 14px; line-height: 1.7; }
   #scoreSec .fld label{ display: block; font-size: 13px; color: #9db8a7; margin-bottom: 6px; }
@@ -2351,17 +2351,7 @@ function prefetchAround(h) {
     callRetry('course_geometry', { hole: n }).then(function (j) { geomCache[n] = j; }).catch(function () {});
   });
 }
-function setHole(n) {
-  curHole = n; renderMap();
-  /* [HOLE-LINK3 20261115] 三方联动单一真源（用户 08:57 定版）：本页当前洞
-     只有一个写入口——地图侧一切切洞（全局图点选/逐洞图上下洞/全屏总览
-     点选，均经本函数）在此汇合后同步记分。记分模块是独立 module 作用域，
-     其当前洞 S.selHole 地图脚本不可直达，故由记分模块以
-     window.__evScoreSetHole 暴露唯一跟随入口（与 __evScoreReload 同式）。
-     防环：记分侧切洞经 syncTail 回到本函数时 S.selHole 已等于 n，跟随
-     入口相等守卫直接返回，不重复 paint；本函数被 syncTail 调用时同理。 */
-  try { if (typeof window.__evScoreSetHole === 'function') window.__evScoreSetHole(n); } catch (e) {}
-}
+function setHole(n) { curHole = n; renderMap(); }
 function loadHoleSvg() {
   var box = document.getElementById('holeSvg');
   if (!box) return;
@@ -4804,7 +4794,7 @@ function paintGroupScoring(card) {
     '<p class="muted" style="margin-top:8px">同组共享记分卡：任一球员可代记全组，未填显示「待记录」、不会当作 0 杆。</p>' +
     rows +
     (lockedG ? '' : '<div class="btnrow"><button class="btn" id="gSave"' + (S.gSaving ? ' disabled' : '') + '>' + (S.gSaving ? '保存中…' : '保存全组本洞成绩') + '</button></div>') +
-    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览（' + (g.holes || []).length + ' 洞）') + '</button></div>' + /* [TOTALHOLES-FIX 20261114] 总数＝g.holes 长度（与下方矩阵同源，原写死 18 洞） */
+    '<div class="btnrow"><button class="btn plain" id="gPrev">上一洞</button><button class="btn plain" id="gNext">下一洞</button><button class="btn plain" id="gMx">' + (S.gMatrix ? '收起总览' : '全组总览<br>（' + (g.holes || []).length + '洞）') + '</button></div>' + /* [TOTALHOLES-FIX 20261114] 总数＝g.holes 长度（与下方矩阵同源，原写死 18 洞） */
     matrix + certHtml +
     backToEventBtn('返回赛事页') + '</div>';
   app.innerHTML = html;
@@ -5343,10 +5333,6 @@ initAuth(function (s) {
   else paint();
 });
 window.__evScoreReload = function () { loadAll(false); }; /* 供赛事页加入/管理动作后同步刷新 */
-window.__evScoreSetHole = function (n) { /* [HOLE-LINK3 20261115] 地图侧切洞→记分跟随唯一入口（setHole 汇合点调用）：记分未就绪（S.selHole 尚未初始化）不动、目标洞与当前洞相同不重绘；否则与记分内切洞同路径——改 S.selHole 后 paint（组记分由 paint 内 gInitFor 守卫按新洞重初始化编辑值、单人由 paintScoring 按已存成绩回填），只切视图不触发任何保存/提交 */
-  if (S.selHole == null || S.selHole === n) return;
-  S.selHole = n; paint();
-};
 (function boot() {
   var s = getSessionSync();
   S.session = s;
