@@ -136,6 +136,7 @@
   .wallbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;box-sizing:border-box;padding:7px 12px;background:linear-gradient(180deg,rgba(6,24,14,0),rgba(6,24,14,.82) 38%,rgba(6,24,14,.92))}
   .wallbar .wb-t{font-size:13px;font-weight:600;color:#e8f5ea}
   .pmBtn{background:#1d7a3d;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+  .pmBtnHero{position:absolute;right:10px;bottom:10px;z-index:6}
   #pmSheet{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;justify-content:flex-end}
   #pmSheet.hidden{display:none}
   #pmSheet .pm-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
@@ -696,6 +697,14 @@ function closePal() { document.getElementById('palOverlay').classList.add('hidde
 var DEFCOV_SVG = '<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="z65g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#052a1a"/><stop offset=".45" stop-color="#0d5c37"/><stop offset="1" stop-color="#03160d"/></linearGradient><radialGradient id="z65r" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd682" stop-opacity=".20"/><stop offset="1" stop-color="#ffd682" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="url(#z65g)"/><ellipse cx="980" cy="-60" rx="620" ry="340" fill="url(#z65r)"/><path d="M0 700 Q 800 640 1600 690 L1600 900 L0 900 Z" fill="#0a462a" opacity=".55"/><path d="M0 762 Q 800 700 1600 748 L1600 900 L0 900 Z" fill="#0e6038" opacity=".5"/><path d="M0 826 Q 800 766 1600 812 L1600 900 L0 900 Z" fill="#14804a" opacity=".45"/><circle cx="1215" cy="400" r="205" fill="none" stroke="#d8b25a" stroke-width="5"/><line x1="1225" y1="282" x2="1225" y2="518" stroke="#f5f5f0" stroke-width="7"/><polygon points="1225,282 1353,318 1225,354" fill="#2ecc71"/><ellipse cx="1225" cy="508" rx="32" ry="9" fill="#02120a"/><circle cx="1157" cy="509" r="13" fill="#fafaf6"/><line x1="90" y1="618" x2="330" y2="618" stroke="#d8b25a" stroke-width="4"/></svg>';
 function isEventStaff() { return !!(EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')); }
 function pcBtnHtml() { return isEventStaff() ? '<button type="button" class="pcBtn" data-pcopen>\u{1F5BC} 管理封面</button>' : ''; }
+/* [ALBUM-MGR-VIS 2026-11-15] 管理照片入口呈现与服务端闸分离：统一相册集合为空
+   （未开通/未开放/0 张照片）而回退海报形态时，有相册管理权限者（与统一相册
+   Hero 同口径：my_registration/my_player/my_role 任一成立）仍须看得到入口；
+   点击只打开现行管理菜单，上传/删除仍由 live-photo 服务端逐项复核（含
+   album_not_enabled 与 T-30 门），呈现放行不等于服务端开放。 */
+function canManageAlbum() { return !!(EV && (EV.my_registration || EV.my_player || EV.my_role)); }
+function pmBtnHtml() { return canManageAlbum() ? '<button type="button" class="pmBtn pmBtnHero" data-pmopen>📷 管理照片</button>' : ''; }
+function bindPmBtn(scope) { var b = scope && scope.querySelector('[data-pmopen]'); if (b) b.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); }); }
 function bindPcBtn(scope) { var b = scope && scope.querySelector('[data-pcopen]'); if (b) b.addEventListener('click', function () { if (window.openPcSheet) window.openPcSheet(); }); }
 function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片墙就绪后 renderLive 把 #heroMedia 换成照片墙
   var box = document.getElementById('heroMedia');
@@ -710,15 +719,15 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
       '<div class="scrim"></div><div class="tx"><div class="brand">RUKIK GOLF</div>' +
       '<div class="cname">' + esc(cN) + '</div>' +
       ((EV.course && EV.course.name && EV.event.title !== cN) ? '<div class="ttl">' + esc(EV.event.title) + '</div>' : '') +
-      '</div>' + pcBtnHtml() + '</div>';
-    bindPcBtn(box);
+      '</div>' + pcBtnHtml() + pmBtnHtml() + '</div>';
+    bindPcBtn(box); bindPmBtn(box);
     return;
   }
   box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
     list.map(function (u, i) { return '<figure class="palSlide" data-pi="' + i + '"><img src="' + esc(u) + '" alt="赛事海报"></figure>'; }).join('') +
     '</div>' +
     (list.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + list.length + '</div><div class="palDots" id="palDots">' + list.map(function (u, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
-    pcBtnHtml() + '</div>';
+    pcBtnHtml() + pmBtnHtml() + '</div>';
   var palBox = document.getElementById('palBox');
   Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
     var u = list[Number(fig.getAttribute('data-pi'))];
@@ -743,7 +752,7 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   palBox.addEventListener('touchstart', function () { palNoteManual(); }, { passive: true });
   palGo(PALB.idx);
   palStart();
-  bindPcBtn(box);
+  bindPcBtn(box); bindPmBtn(box);
 }
 /* [VIEWER-FIX 2026-11-14] 根因：本 IIFE 原在经典脚本解析期执行，而 #palOverlay 的
    静态 HTML 位于该脚本之后，getElementById 恒为 null 直接 return——✕/上一张/下一张/
@@ -1182,7 +1191,13 @@ function makeProjector(geoms, frame) {
   const sx = (FW - 2 * PAD) / Math.max(1e-9, (x1 - x0) * kx);
   const sy = (FH - 2 * PAD) / Math.max(1e-9, y1 - y0);
   const sc = Math.min(sx, sy);
-  return p => [PAD + (p[0] - x0) * kx * sc, FH - PAD - (p[1] - y0) * sc];
+  /* [MAPCORE-UNIFY 网页回退居中20261115] 与 App holeMapGeom makeProjector 同改法：
+   * 原左下锚定（PAD 固定左边距/底边距）改两轴居中——限制轴边距恒为 PAD、
+   * 非限制轴自动放大，sc 计算不变、不拉伸。本函数仅 computeFit 返回 null
+   * （可取景锚点 <2 个）时回退触发，fit 正常路径不经此处、输出不变。 */
+  const ox = (FW - (x1 - x0) * kx * sc) / 2;
+  const oy = (FH - (y1 - y0) * sc) / 2;
+  return p => [ox + (p[0] - x0) * kx * sc, FH - oy - (p[1] - y0) * sc];
 }
 /* [地图打磨20261112] 单洞取景 v2（缺陷：球道只占舞台一小条/一角）：
  * 旧版对全部要素（含 rough/cartpath 的环境范围）做不变缩放取景且左下锚定，
