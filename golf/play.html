@@ -262,7 +262,7 @@
       <div class="cd-sub2">赛事智能球童</div>
       <div class="cdcarectl" id="cdCareCtlP"></div>
       <div class="cdcare" id="cdCare"></div>
-      <div class="cdmsgs" id="cdMsgs" hidden></div>
+      <div class="cdmsgs" id="cdMsgs" data-i18n-skip hidden></div>
       <div class="cd-chips" id="cdChips"></div>
       <div class="cd-inrow">
         <textarea id="cdInput" rows="1" placeholder="问球童：规则、球场、我的成绩……"></textarea>
@@ -3444,7 +3444,7 @@ function paintHome() {
   var html = '<div class="card brandcard"><h2 style="font-size:20px">RUKIK Golf</h2>' +
     '<p class="muted">一页完成记分、问球童、看球场。和好友一起打球，每一场都值得记住。</p><p class="muted" style="margin-top:6px"><a href="/golf/" style="color:#E3C878;text-decoration:none">RUKIK Golf 首页 · 快速球局</a></p></div>' +
     '<div id="hmJoinBox"></div>' +
-    '<div id="hmRounds"></div>' +
+    '<div id="hmRounds" data-i18n-skip></div>' +
     '<div class="card"><h2>开始一局</h2>' +
     '<button class="entry main" id="hmCreate" type="button"><span class="etx">发起球局<small>选球场 · 邀请好友 · 共同记分</small></span></button>' +
     '<button class="entry" id="hmJoin" type="button"><span class="etx">加入球局<small>输入球局码，或打开好友分享的链接</small></span></button>' +
@@ -3613,18 +3613,18 @@ function hmShowCreate() {
   hmCourse = null; hmTees = []; hmPicks = []; hmMateIndex = {};
   panel.innerHTML = '<div style="margin-top:14px;border-top:1px dashed #e3ddd2;padding-top:14px">' +
     '<div class="fld" style="margin-top:0"><label>选择球场</label><input id="hmQ" type="text" placeholder="输入球场名搜索（如 Friendly Hills）" autocomplete="off"></div>' +
-    '<div id="hmResults"></div>' +
+    '<div id="hmResults" data-i18n-skip></div>' +
     '<div id="hmPick"></div>' +
     '<div class="fld"><label>发球台</label><select id="hmTee" style="width:100%;border:1px solid #e3ddd2;border-radius:12px;padding:12px 14px;font-size:16px;background:#fff;min-height:44px"><option value="">先选球场</option></select></div>' +
     '<div class="fld"><label>开球日期</label><input id="hmDate" type="date"></div>' +
     '<div class="fld"><label>开球时间</label><input id="hmTime" type="time"></div>' +
     '<div class="fld"><label>添加球友（可跳过）</label>' +
-    '<div id="hmMates"><p class="muted">正在读取你的球友…</p></div>' +
+    '<div id="hmMates" data-i18n-skip><p class="muted">正在读取你的球友…</p></div>' +
     '<div class="btnrow"><button class="btn plain" id="hmLastGroup" type="button">带入上次阵容</button></div>' +
     '<div id="hmLastMsg"></div>' +
     '<div class="rk-row" style="margin-top:10px"><input id="hmMateQ" type="text" placeholder="搜索其他球友（姓名）" autocomplete="off"><button type="button" id="hmMateSearch" class="plain">搜索</button></div>' +
-    '<div id="hmMateResults"></div>' +
-    '<div id="hmPicks"></div>' +
+    '<div id="hmMateResults" data-i18n-skip></div>' +
+    '<div id="hmPicks" data-i18n-skip></div>' +
     '<p class="muted">选中的只是拟邀请名单：创建后向对方发出邀请，<b>对方确认后才进组</b>，不会替任何人报名。</p></div>' +
     '<p class="muted">赛制默认普通比杆 · 18 洞。可以预约未来的球局：选好日期与开球时间再创建。创建后把链接发给好友，大家打开就能一起记分。</p>' +
     '<div class="err" id="hmErr"></div>' +
@@ -3999,7 +3999,7 @@ document.addEventListener('visibilitychange', function () {
   var sheet = document.createElement('div'); sheet.id = 'albSheet';
   sheet.innerHTML = '<div class="alb-hd"><b>📷 共享相册</b><span class="alb-msg" id="albMsg"></span><button type="button" id="albClose">关闭</button></div>'
     + '<div class="alb-up" id="albUp"><label for="albFile">＋ 上传照片</label><input type="file" id="albFile" accept="image/*" multiple style="display:none"></div>'
-    + '<p class="alb-note" id="albNote"></p><div id="albGrid"></div>';
+    + '<p class="alb-note" id="albNote"></p><div id="albGrid" data-i18n-skip></div>';
   var view = document.createElement('div'); view.id = 'albView';
   view.innerHTML = '<div class="alb-vhd"><span id="albVCnt"></span><button type="button" id="albVClose">关闭</button></div>'
     + '<div class="alb-vimg"><img id="albVImg" alt="赛事照片"></div>'
@@ -4191,5 +4191,6 @@ function rkDeleteEventFlow(eventId, title, onDone) {
   });
 }
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
