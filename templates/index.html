@@ -933,7 +933,8 @@
       '<div><div style="font-size:24px;font-weight:800">' + e.follows + '</div><div style="font-size:12px;color:' + tk.muted + '">关注者</div></div></div></div>' +
       '<div style="padding:22px 30px;display:grid;grid-template-columns:1fr 300px;gap:18px"><div class="card"><b>精选观点 / 最新文章</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">发布后此处是您真实文章的轮播与网格（当前已发布 ' + e.articles + ' 篇），封面、标题、摘要均来自您的文章数据。</p></div>' +
       '<div class="card"><b>AI 专家助理</b><p style="color:' + tk.muted + ';font-size:14px;line-height:1.8">由您本人训练的分身在此接待访客，回答标注 AI 生成，只引用您的公开内容。</p><div style="background:' + tk.accent + ';color:' + (tk.accent_ink || '#191204') + ';font-weight:700;text-align:center;border-radius:999px;padding:11px">向 TA 的 AI 助理提问</div></div></div>' +
-      '</body></html>';
+      '<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
+</body></html>';
   }
   function openPreview(t) {
     pvTpl = t; $('pvTitle').textContent = '模板预览 · ' + t.name + '（' + state.expertPub.name + '）';
@@ -960,5 +961,6 @@
   sb.auth.getSession().then(function (r) { if (r.data.session) boot(); });
 })();
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
