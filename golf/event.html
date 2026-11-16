@@ -820,32 +820,18 @@ function renderHero() {
   /* [Z53 防复发小修] 状态被误置 in_progress 但开赛时间在未来时，hero 报名区
      按 pre 态渲染（四态照旧）；其余 live 区块维持现行（只动 act 一处判定） */
   var heroPre = st === 'pre' || (e.status === 'in_progress' && e.starts_at && new Date(e.starts_at).getTime() > Date.now());
-  /* 第一区下方仅时间/地点；赛前报名按钮只给未报名者，已报名不重复显示（线P/Z1 口径收进双卡状态行） */
+  /* [DUP-REG-BTN 根治 2026-11-16] 报名/状态 CTA 单一真源＝记分模块报名状态卡
+     （#scoreSec 内 paint() 分发：paintRegister/paintCasualJoin/各状态卡）。hero 区
+     不再渲染任何报名/状态按钮：旧实现在此按 EV.my_registration 另画「立即报名」
+     锚点（正式赛事，及 pending/候补/未通过三个状态锚点）与 z60JoinBtn 一键加入
+     （快速球局），与模块状态卡的「报名参加」双真源并存——已登录未报名者恒见
+     双按钮（2026-11-16 用户录屏实证）；且快照层 EV 无 my_registration，
+     applySnapshot 必然先画「立即报名」（已报名者亦然）、与动态层到达时序竞态。
+     收敛后 hero 只呈封面/标题/时间地点/赛事详情；未登录/未报名/已取消可重报/
+     待审核/候补/未通过/已报名各状态一律由模块状态卡唯一呈现（快速球局关闭
+     加入由模块提交时服务端拒绝文案兜底，joinErrText 已覆盖）。bindZ60Join
+     定义保留、无按钮时自动空转；playHref 仍供他处带凭据透传。 */
   var act = '';
-  var myReg = EV.my_registration;
-  var playUrl = playHref(); /* [403修复20261112] 带凭据透传，见 playHref 注 */
-  if (heroPre) {
-    /* [ONEPAGE 20261114] 报名/状态落点改本页记分区锚点（记分模块已内嵌，模块内即报名与状态卡） */
-    if (!myReg) act = '<a class="signup" href="#scoreSec">立即报名</a>';
-    else if (myReg.status === 'pending') act = '<a class="signup alt" href="#scoreSec">报名审核中 · 查看进度</a>';
-    else if (myReg.status === 'waitlisted') act = '<a class="signup alt" href="#scoreSec">候补中 · 查看进度</a>';
-    else if (myReg.status === 'rejected') act = '<a class="signup alt" href="#scoreSec">报名未通过 · 查看详情</a>';
-  }
-  /* [线Z60 2026-11-12] 快速球局（kind=casual）分享落地主流程，覆盖上方正式
-     赛事口径：成员→「计分卡」直达记分；非成员→醒目「报名参加」，登录后一键
-     加入同一 round（casual_join 按 event_id＋邀请码校验，与手输码同一语义、
-     同一幂等）；组织者关闭加入/球局结束时如实呈现状态、不伪造可报名。 */
-  if (e.kind === 'casual' && e.status !== 'completed' && e.status !== 'cancelled') {
-    var joined = myReg && (myReg.status === 'registered' || myReg.status === 'checked_in');
-    if (joined) {
-      act = ''; /* [ONEPAGE 20261114] 删除顶部横向「计分卡」按钮：记分已内嵌本页记分区 */
-    } else if (!myReg) {
-      var joinsClosed = !!((e.competition_config || {}).joins_closed);
-      if (joinsClosed) act = '<div class="signup alt">本场球局已关闭加入</div>';
-      else if (token) act = '<button type="button" class="signup" id="z60JoinBtn" style="border:none;cursor:pointer;font:inherit;width:100%">报名参加</button><div id="z60JoinNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
-      else act = '<button type="button" class="signup" id="z60JoinBtn" style="border:none;cursor:pointer;font:inherit;width:100%">登录后报名参加</button><div id="z60LoginMount"></div><div id="z60JoinNote" style="text-align:center;font-size:13px;margin-top:6px"></div>';
-    }
-  }
   document.getElementById('heroSec').innerHTML =
     '<div class="hero" id="heroMedia"></div>' +
     '<h1>' + esc(e.title) + '</h1>' +
