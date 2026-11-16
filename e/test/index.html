@@ -294,8 +294,8 @@
         <div class="avatar-wrap"><span class="avatar-fallback">T</span></div>
         <div class="hero-main">
           <h1>Test</h1>
-          <div class="hero-role">律师</div>
-          <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span></div><div class="honor-row"><span class="honor-badge">🏯 RUKIK 修行荣誉 · 九霄封神榜 <b>问道真人</b> · 初窥大道</span><span class="honor-xp">传道修为 0</span></div><div class="hero-meta"><span>📍 美国</span><span>🌐 中文</span><span>💼 律师</span></div>
+          <div class="hero-role" data-title-en="Lawyer">律师</div>
+          <div class="badges"><span class="badge badge-verified">✓ Rukik Verified · 身份已核验</span></div><div class="honor-row"><span class="honor-badge">🏯 <span>RUKIK 修行荣誉</span> · <span>九霄封神榜</span> <b>问道真人</b> · <span>初窥大道</span></span><span class="honor-xp"><span>传道修为</span> 0</span></div><div class="hero-meta"><span>📍 <span>美国</span></span><span>🌐 <span>中文</span></span><span data-i18n-skip>💼 律师</span></div>
         </div>
       </div>
     <div class="stats-panel">
@@ -328,19 +328,19 @@
       <div class="side-col">
     <aside class="side-card rv">
       <h3>◆ 专业领域</h3>
-      <div class="chips"><span class="chip">律师</span></div>
+      <div class="chips" data-i18n-skip><span class="chip">律师</span></div>
       
     </aside>
     <aside class="side-card ai-card rv">
       <div class="ai-orb"></div>
       <h3>Test的 AI 助理</h3>
-      <p class="ai-txt">这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。</p>
+      <p class="ai-txt" data-i18n-skip>这是我本人训练的专业 AI 助理，装着我的经验、判断和说话方式。它 24 小时在线：您先把问题问它，能答的它当场答，需要我本人的，它会转给我跟进。</p>
       <p class="ai-txt" style="margin-top:8px">基于专家公开内容 · 回答标注 AI 生成</p>
       <button type="button" class="ai-go" data-goview="ask">向 TA 的 AI 助理提问</button>
     </aside>
     <aside class="side-card rv">
       <h3>关于 Test</h3>
-      <p class="ai-txt"></p>
+      <p class="ai-txt" data-i18n-skip></p>
       
       <button type="button" class="more-link" data-goview="about" style="padding:0;margin-top:8px">查看完整介绍 →</button>
     </aside></div>
@@ -391,7 +391,7 @@
     </div>
     <div class="auth-msg" id="authBarMsg"></div>
     <div id="chatBox" hidden>
-      <div class="msgs" id="chatMsgs"></div>
+      <div class="msgs" id="chatMsgs" data-i18n-skip></div>
       <div class="chat-row"><input id="chatInput" type="text" placeholder="输入你的问题…" maxlength="2000"><button id="chatSend" type="button">发送</button></div>
       <div class="chat-note">🤖 回答由 Test 本人训练的 AI 分身生成，可能不完整；重要决定请再和本人确认。回答中引用的公开文章会标注出处。</div>
       <div class="dl">聊得顺心，可以在 Rukik App 里随时接着聊：还为你持续记住上下文，也能约 Test 本人一对一答疑。<br><a class="btn" id="chatDownload" href="https://apps.apple.com/us/app/rukik/id6824554988">下载 Rukik App</a></div>
@@ -402,8 +402,8 @@
   <section data-view-panel="about" hidden><div style="max-width:860px">
     <div class="card">
       <h2>关于 Test</h2>
-      <div class="about-txt"><p>Test，律师。更多介绍正在完善中。</p></div>
-      <div style="margin-top:14px"><div class="kv"><span class="k">姓名</span><span>Test</span></div><div class="kv"><span class="k">专业身份</span><span>律师</span></div><div class="kv"><span class="k">服务地区</span><span>美国</span></div><div class="kv"><span class="k">服务语言</span><span>中文</span></div></div>
+      <div class="about-txt" data-i18n-skip><p>Test，律师。更多介绍正在完善中。</p></div>
+      <div style="margin-top:14px"><div class="kv"><span class="k">姓名</span><span>Test</span></div><div class="kv"><span class="k">专业身份</span><span>律师</span></div><div class="kv"><span class="k">服务地区</span><span><span>美国</span></span></div><div class="kv"><span class="k">服务语言</span><span><span>中文</span></span></div></div>
       
       <div class="hero-actions" style="margin-top:18px">
         <button type="button" class="act act-gold" data-goview="ask">向 TA 提问</button>
@@ -411,7 +411,7 @@
       </div>
     </div></div></section>
   <p class="foot">© 2026 Test · 本页由 Rukik 生成并托管：https://rukik.com/e/test/<br>
-  AI 生成内容仅供信息参考，不构成专业意见 · <a href="https://rukik.com/experts/">更多 Rukik 专家</a> · <a href="/templates/">管理我的独立站</a></p>
+  <span>AI 生成内容仅供信息参考，不构成专业意见</span> · <a href="https://rukik.com/experts/">更多 Rukik 专家</a> · <a href="/templates/">管理我的独立站</a></p>
 </div>
 
 <script>
@@ -1134,5 +1134,6 @@
 </script>
 
 <script src="/assets/wxshare.js?v=20261111a"></script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
