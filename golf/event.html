@@ -3714,7 +3714,8 @@ document.addEventListener('click', function (e) {
     /* [PHOTO-MGR-MERGE 2026-11-15] 合并面板：打开时照片区复位到菜单态、封面区呈现 */
     var pmOptsEl = document.getElementById('pmOpts'); if (pmOptsEl) pmOptsEl.classList.remove('hidden');
     var pmDelEl = document.getElementById('pmDelView'); if (pmDelEl) pmDelEl.classList.add('hidden');
-    var staffSec = document.getElementById('pcStaffSec'); if (staffSec) staffSec.classList.remove('hidden');
+    var staffSec = document.getElementById('pcStaffSec');
+    if (staffSec) { var st2 = false; try { st2 = typeof isEventStaff === 'function' && isEventStaff(); } catch (e) {} staffSec.classList.toggle('hidden', !st2); }
     renderList();
     setMsg('');
     sheet.classList.remove('hidden');
