@@ -736,7 +736,7 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
     bindPcBtn(box);
     return;
   }
-  box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
+  box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack" data-i18n-skip>' +
     list.map(function (u, i) { return '<figure class="palSlide" data-pi="' + i + '"><img src="' + esc(u) + '" alt="赛事海报"></figure>'; }).join('') +
     '</div>' +
     (list.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + list.length + '</div><div class="palDots" id="palDots">' + list.map(function (u, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
@@ -2674,7 +2674,7 @@ function renderLive() {
   CAR.idx = 0;
   if (keepId) for (var ki = 0; ki < feed.length; ki++) if (feed[ki].id === keepId) { CAR.idx = ki; break; }
   media.innerHTML =
-    '<div class="car" id="carBox"><div class="carTrack" id="carTrack">' +
+    '<div class="car" id="carBox"><div class="carTrack" id="carTrack" data-i18n-skip>' +
     feed.map(function (f, i) {
       var src = esc(f.thumb_url || f.url);
       return '<figure class="carSlide"><img data-ci="' + i + '" data-src="' + src + '"' + (i < 3 ? ' src="' + src + '"' : '') + ' alt=""></figure>';
@@ -3046,8 +3046,8 @@ if (!eventId) {
   <div class="org-panel">
     <button type="button" class="oclose" onclick="closeOrgSheet()" aria-label="关闭">✕</button>
     <span class="orole" id="orgRole"></span>
-    <h3 id="orgName"></h3>
-    <div class="ointro" id="orgIntro"></div>
+    <h3 id="orgName" data-i18n-skip></h3>
+    <div class="ointro" id="orgIntro" data-i18n-skip></div>
     <a class="oweb" id="orgWeb" href="#" target="_blank" rel="noopener">访问网站 →</a>
   </div>
 </div>
@@ -3070,7 +3070,7 @@ if (!eventId) {
     <div class="cd-head">
       <div class="cd-ttl">
         <div class="cd-name">RUKIK Golf AI球童<span class="cd-badge">平台官方 AI</span></div>
-        <div class="cd-sub" id="cdEvName">本场赛事</div>
+        <div class="cd-sub" id="cdEvName" data-i18n-skip>本场赛事</div>
         <div class="cd-care" id="cdCareCtl"></div>
       </div>
       <button type="button" id="cdClose" aria-label="关闭">✕</button>
@@ -3081,7 +3081,7 @@ if (!eventId) {
         <div class="cd-ld">AI 球童需要读取您在本场赛事的真实成绩与分组信息，因此需要登录。与 RUKIK App 同一账号（手机号或邮箱），同一 UID。</div>
         <div id="cdLoginMount"></div>
       </div>
-      <div id="cdMsgs"></div>
+      <div id="cdMsgs" data-i18n-skip></div>
       <div class="cd-chips" id="cdChips"></div>
     </div>
     <div class="cd-foot hidden" id="cdComposer">
@@ -3117,7 +3117,7 @@ if (!eventId) {
     <div id="pmDelView" class="hidden">
       <div class="pm-msg" id="pmMsg"></div>
       <div id="pmLoginMount"></div>
-      <div class="pm-list" id="pmList"></div>
+      <div class="pm-list" id="pmList" data-i18n-skip></div>
       <div class="pm-delbar hidden" id="pmDelBar">
         <span class="pm-msg" id="pmSelCount" style="padding:0">已选择 0 张</span>
         <button type="button" class="pm-delsel" id="pmDelSel" disabled>删除所选</button>
@@ -3126,7 +3126,7 @@ if (!eventId) {
     <div id="pcStaffSec" class="hidden">
       <div class="pm-ttl" style="font-size:15px;padding:12px 0 2px">封面与海报</div>
       <div class="pm-msg" id="pcMsg"></div>
-      <div class="pm-list" id="pcList"></div>
+      <div class="pm-list" id="pcList" data-i18n-skip></div>
       <div style="padding-top:10px">
         <label class="pc-up" for="pcFile">＋ 添加海报<small>PNG / JPG / WebP · 单张 ≤5MB · 最多 9 张；排序即展示序，封面单独设定</small></label>
         <input type="file" id="pcFile" accept="image/png,image/jpeg,image/webp" style="display:none">
@@ -5472,5 +5472,6 @@ document.addEventListener('visibilitychange', function () {
   if (!S.group && S.session) { var vc = myCard(); if (vc) loadGroup(vc, false).then(function (g) { if (g) paint(); }); }
 });
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
