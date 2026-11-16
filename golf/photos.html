@@ -57,7 +57,7 @@
   <div class="sub">摄影师只管拍，RUKIK 负责美，球员随时看。手机与网页共用同一赛事相册。</div>
 
   <div id="poolSec" class="hidden">
-    <div class="pgrid" id="poolGrid"></div>
+    <div class="pgrid" id="poolGrid" data-i18n-skip></div>
     <div id="poolSentinel"></div>
     <button class="moreBtn hidden" id="poolMore" type="button">加载更多照片</button>
     <p class="note" id="poolMsg" style="text-align:center;margin-top:12px"></p>
@@ -88,7 +88,7 @@
       <label class="note"><input type="checkbox" id="enhanceChk" checked> 上传后自动调色（曝光/白平衡/对比度/色彩，保留原图）</label>
       <!-- [权限 V2 2026-11-12] 单张可见范围取消：上传即共享至本赛事相册，对有权访问者可见，无「授权公开展示」选项 -->
     </div>
-    <div class="q" id="queue"></div>
+    <div class="q" id="queue" data-i18n-skip></div>
     <h3 style="margin:18px 0 10px">当前赛事相册 <span class="note" id="albumCount"></span></h3>
     <div id="batchBar" style="margin:0 0 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button type="button" id="batchModeBtn" class="ghost">🗑 批量删除</button>
@@ -99,7 +99,7 @@
       <button type="button" id="batchDelBtn" style="display:none">删除所选</button>
       <button type="button" id="batchCancelBtn" class="ghost" style="display:none">取消</button>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="grid" data-i18n-skip></div>
   </div>
   <p class="note">权限：球员可上传与查看；摄影师另可网页批量上传、管理本人照片；管理方另可审核、隐藏、置顶与删除。上传即共享：照片默认立即在本赛事相册中对有权访问者可见，不设单张可见范围；删除为谁上传谁可删（管理方除外）。照片仅用于本赛事展示与回忆，不用于人脸识别或模型训练。</p>
 </div>
@@ -390,7 +390,7 @@ $('dirInput').onchange = function () { addFiles($('dirInput').files); $('dirInpu
 </script>
 <div class="lb hidden" id="lightbox">
   <button class="x" id="lbClose" type="button">✕ 关闭</button>
-  <div class="stage" id="lbStage"><img id="lbImg" alt="赛事照片"></div>
+  <div class="stage" id="lbStage" data-i18n-skip><img id="lbImg" alt="赛事照片"></div>
   <div class="bar">
     <button id="lbPrev" type="button">← 上一张</button>
     <span class="cnt" id="lbCnt"></span>
@@ -567,5 +567,6 @@ function initPool() {
   loadNext();
 }
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
