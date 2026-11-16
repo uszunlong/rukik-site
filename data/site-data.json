@@ -1,10 +1,11 @@
 {
- "generated_at": "2026-11-16T16:28:54Z",
+ "generated_at": "2026-11-16T17:33:19Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
    "name": "黄梦奇",
    "title": "律师",
+   "title_en": "Lawyer",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
    "slug": "mengqi-huang",
    "follow_count": 1,
@@ -15,7 +16,9 @@
    },
    "profession": "lawyer",
    "profession_name": "律师",
+   "profession_name_en": "Lawyer",
    "city": null,
+   "city_en": null,
    "regions": [
     "CN"
    ],
@@ -30,6 +33,7 @@
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
    "name": "张子淇",
    "title": "中国非遗出海专家",
+   "title_en": "Chinese Intangible Cultural Heritage Global Outreach Expert",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/e7053eee-756b-41b8-be81-7f23c33f8715/d409f8ac-cf92-4ca2-b272-cb93f94f35c9.jpg",
    "slug": "ziqi-zhang",
    "follow_count": 1,
@@ -37,7 +41,9 @@
    "public_contact": null,
    "profession": "other",
    "profession_name": "专业人士",
+   "profession_name_en": "Professional",
    "city": "尔湾",
+   "city_en": "Irvine",
    "regions": [
     "US"
    ],
@@ -52,6 +58,7 @@
    "id": "55987361-96af-43d8-95d2-58a2b58c00cb",
    "name": "Ophelia 奧菲",
    "title": "房产经纪",
+   "title_en": "Real Estate Agent",
    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg?v=20261103015506",
    "slug": "ophelia",
    "follow_count": 1,
@@ -59,7 +66,9 @@
    "public_contact": null,
    "profession": "realtor",
    "profession_name": "房产经纪",
+   "profession_name_en": "Real Estate Agent",
    "city": "新港",
+   "city_en": "Newport Beach",
    "regions": [
     "US-CA",
     "US"
@@ -75,6 +84,7 @@
    "id": "e952d7f8-4ead-42f9-929a-44b81ec73709",
    "name": "John Apple",
    "title": "律师",
+   "title_en": "Lawyer",
    "avatar": "",
    "slug": "john-apple",
    "follow_count": 0,
@@ -82,7 +92,9 @@
    "public_contact": null,
    "profession": "lawyer",
    "profession_name": "律师",
+   "profession_name_en": "Lawyer",
    "city": null,
+   "city_en": null,
    "regions": [
     "US"
    ],
@@ -97,6 +109,7 @@
    "id": "3beea179-1452-4cca-b235-df7388a32251",
    "name": "Michael liu",
    "title": "专业人士",
+   "title_en": "Professional",
    "avatar": "",
    "slug": "michael-liu",
    "follow_count": 0,
@@ -104,7 +117,9 @@
    "public_contact": null,
    "profession": "other",
    "profession_name": "专业人士",
+   "profession_name_en": "Professional",
    "city": null,
+   "city_en": null,
    "regions": [
     "US"
    ],
