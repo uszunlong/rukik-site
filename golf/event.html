@@ -2065,10 +2065,16 @@ function evHolePzWire(box) {
    预览 holes（course_preview，与记分卡同源生成、与 holeData 同表）。严禁使用地图
    几何洞位数量推导总数。数据未加载齐时返回 0：摘要不带总数、绝不默认 18。 */
 function evTotalHoles() {
-  var ev = (EV && EV.event) || (S.ev && S.ev.event) || null;
+  /* [MAPRENDER-FIX 20261115] S 是 ONEPAGE 记分模块 <script type="module"> 的模块
+     作用域变量、经典脚本不可见——原无守卫引用在 EV 未落时（匿名看 invite_only
+     赛事 event_get 403、或地图独立链先于主链渲染）必抛 ReferenceError，连带
+     renderMap 整卡变「球场地图渲染失败」粉框（与 SHARE-INVITE-FIX 同类漏网）。
+     守卫后记分卡分支取不到即跳过、回落赛事配置/预览口径，总洞数语义不变。 */
+  var Sx = (typeof S !== 'undefined' && S) ? S : null;
+  var ev = (EV && EV.event) || (Sx && Sx.ev && Sx.ev.event) || null;
   if (ev && ev.holes) return Number(ev.holes) || 0;
-  if (S.cardData && S.cardData.holes && S.cardData.holes.length) return S.cardData.holes.length;
-  if (S.group && S.group.holes && S.group.holes.length) return S.group.holes.length;
+  if (Sx && Sx.cardData && Sx.cardData.holes && Sx.cardData.holes.length) return Sx.cardData.holes.length;
+  if (Sx && Sx.group && Sx.group.holes && Sx.group.holes.length) return Sx.group.holes.length;
   if (PREVIEW) {
     var by = PREVIEW.holes_by_tee || {};
     var list = by[curTee] || PREVIEW.holes || [];
