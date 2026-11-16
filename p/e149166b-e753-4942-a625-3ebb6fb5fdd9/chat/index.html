@@ -83,9 +83,9 @@
 <body>
 <div class="wrap">
   <img class="avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/persona-avatars/persona-13.webp" alt="Joy Sun">
-  <h1>Joy Sun</h1>
-  <div class="role">保险顾问 · 中国大陆</div><div class="badges"><span class="badge badge-ai">Rukik AI · AI 专业角色（非真人）</span></div>
-  <div class="line">保险配置先看缺口，不盲目加保</div>
+  <h1 data-i18n-skip>Joy Sun</h1>
+  <div class="role" data-i18n-skip>保险顾问 · 中国大陆</div><div class="badges"><span class="badge badge-ai">Rukik AI · AI 专业角色（非真人）</span></div>
+  <div class="line" data-i18n-skip>保险配置先看缺口，不盲目加保</div>
   <div class="ai-note">这是Joy Sun本人训练的 AI 分身，回答由 AI 生成，仅供参考，不构成正式专业意见。</div>
   <div class="chat">
   <div id="authBox">
@@ -177,8 +177,8 @@
     <div class="auth-msg" id="bindMsg"></div>
     </div>
     <div class="chat-title">直接向我的 AI 助理提问</div>
-    <div class="qs" id="chatQs"></div>
-    <div class="msgs" id="chatMsgs"></div>
+    <div class="qs" id="chatQs" data-i18n-skip></div>
+    <div class="msgs" id="chatMsgs" data-i18n-skip></div>
     <div class="chat-row">
       <input id="chatInput" type="text" placeholder="输入您的问题……" maxlength="2000" autocomplete="off">
       <button id="chatSend" type="button">发送</button>
@@ -967,5 +967,6 @@
 </script>
 <script>/*rk-share-track*/(function(){try{var mm=location.pathname.match(/\/p\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/chat)?/i);if(!mm)return;var q=new URLSearchParams(location.search);var AL=['wx_friend','wx_group','moments','qr_home','qr_chat','link'];var src=q.get('src')||'link';if(AL.indexOf(src)<0)src='link';var vid=null;try{vid=localStorage.getItem('rk_vid')}catch(e){}if(!vid){vid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c=='x'?r:(r&0x3|0x8);return v.toString(16)});try{localStorage.setItem('rk_vid',vid)}catch(e){}try{document.cookie='rk_vid='+vid+';path=/;max-age=31536000;SameSite=Lax'}catch(e){}}var body=JSON.stringify({professional_id:mm[1],page_type:mm[2]?'clone_chat':'homepage',src:src,m:q.get('m'),visitor_id:vid});var url='https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/share-track';if(navigator.sendBeacon){navigator.sendBeacon(url,new Blob([body],{type:'text/plain;charset=UTF-8'}));}else{fetch(url,{method:'POST',body:body,keepalive:true}).catch(function(){})}}catch(e){}})();</script>
 <script src="/assets/wxshare.js"></script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
