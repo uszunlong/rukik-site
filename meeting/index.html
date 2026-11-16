@@ -385,7 +385,7 @@
         <span class="avatar-chev">▾</span>
       </button>
       <div class="user-menu" id="user-menu">
-        <div class="who-line" id="who"></div>
+        <div class="who-line" id="who" data-i18n-skip></div>
         <button id="signout" style="display:none">退出登录</button>
       </div>
     </div>
@@ -467,8 +467,8 @@
           <button id="btn-search">搜索</button>
         </div>
       </div>
-      <div id="search-results"></div>
-      <div id="meeting-list"><span class="dim">加载中…</span></div>
+      <div id="search-results" data-i18n-skip></div>
+      <div id="meeting-list" data-i18n-skip><span class="dim">加载中…</span></div>
     </div>
     <div class="home-foot">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
@@ -493,8 +493,8 @@
       <div class="ws-head-row">
         <button id="btn-back" class="ghost" title="我的会议">←</button>
         <span class="ws-brand"><img class="brand-logo" src="./assets/seal.png" alt="RUKIK"><span>RUKIK</span><span class="brand-sub">AI 会议伴侣</span></span>
-        <span id="m-title-view" title="点击修改标题"></span>
-        <input id="m-title">
+        <span id="m-title-view" title="点击修改标题" data-i18n-skip></span>
+        <input id="m-title" data-i18n-skip>
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
         <span id="ws-conn" class="ws-conn" data-state="off"><span class="conn-dot"></span><span class="conn-txt">转写未连接</span></span>
         <span style="flex:1"></span>
@@ -540,9 +540,9 @@
           <button class="ghost" id="corr-view-bi">双语字幕</button>
           <span class="dim" id="corr-status"></span>
         </div>
-        <div id="segments"></div>
-        <div id="partial" class="seg partial"></div>
-        <div id="partial-tr" class="partial-tr"></div>
+        <div id="segments" data-i18n-skip></div>
+        <div id="partial" class="seg partial" data-i18n-skip></div>
+        <div id="partial-tr" class="partial-tr" data-i18n-skip></div>
         <div id="gap-notices"></div>
       </div>
       <div class="center-col">
@@ -569,12 +569,12 @@
           <select id="rp-speed" style="width:auto"><option value="4">4×</option><option value="12" selected>12×</option><option value="30">30×</option></select>
           <button class="ghost" id="rp-exit">退出回放</button>
         </div>
-        <div id="viz-mount"><div class="dim" style="padding:8px 0">打开会议后导图将在此生长…</div></div>
+        <div id="viz-mount" data-i18n-skip><div class="dim" style="padding:8px 0">打开会议后导图将在此生长…</div></div>
       </div>
       <div class="card col" id="col-minutes">
         <h3>会议纪要（可编辑，人工修改不会被 AI 覆盖）</h3>
-        <div id="summary" class="item" style="display:none"></div>
-        <div id="items"></div>
+        <div id="summary" class="item" style="display:none" data-i18n-skip></div>
+        <div id="items" data-i18n-skip></div>
         <div style="border-top:1px solid var(--line);padding-top:10px;margin-top:6px">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <select id="new-kind" style="width:auto"><option value="decision">决策</option><option value="action">行动项</option><option value="question">待确认</option><option value="risk">风险</option></select>
@@ -588,14 +588,14 @@
         <div id="fs-scroll">
         <h3>AI 预见 <span class="chip" style="color:var(--warn)">AI 推演 · 非会议事实</span></h3>
         <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span> <span class="dim" id="fs-auto-stat" style="font-size:12px"></span></div>
-        <div id="foresight-list"><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
+        <div id="foresight-list" data-i18n-skip><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
         </div>
         <div id="ask-block"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场与历史会议提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
           <div style="display:flex;gap:8px;margin-top:8px">
             <input id="ask-q" placeholder="例如：上次会议关于 X 决定了什么？" style="flex:1;min-width:120px">
             <button id="btn-ask">提问</button>
           </div>
-          <div id="ask-a" class="dim" style="margin-top:8px;white-space:pre-wrap"></div>
+          <div id="ask-a" class="dim" style="margin-top:8px;white-space:pre-wrap" data-i18n-skip></div>
         </div>
       </div>
     </div>
@@ -1997,5 +1997,6 @@ function stopCapture() {
   });
 })();
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
