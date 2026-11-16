@@ -1,5 +1,6 @@
 /* RUKIK Web i18n dictionary (zh -> en). Generated from dict-fragments; do not edit by hand. */
 window.RUKIK_I18N_DICT = {
+"2026年11月23日 · Friendly Hills Country Club · 进入赛事页": "Nov 23, 2026 · Friendly Hills Country Club · Open Event Page",
 "A · 基本信息": "A · Basic Info",
 "AI 会议伴侣": "AI Meeting Companion",
 "AI 只引用「已发布」资料；草稿先在这里确认再发布。与赛事正式数据（时间、地点、分组、成绩）冲突时，以正式数据为准，旧资料请及时撤下。": "The AI only cites published material. Review drafts here before publishing. If material conflicts with official event data (time, place, groups, scores), the official data prevails — please take outdated material down promptly.",
@@ -547,6 +548,7 @@ window.RUKIK_I18N_DICT = {
 "已打洞数": "Holes Played",
 "已批量标记已付款": "Bulk-marked as paid",
 "已报名": "Registered",
+"已报名赛事": "Registered Events",
 "已提取": "Extracted",
 "已撤下，回到草稿。": "Taken down and returned to draft.",
 "已撤回": "Withdrawn",
@@ -646,6 +648,7 @@ window.RUKIK_I18N_DICT = {
 "懂你的AI球童，随时为你服务": "Your AI Caddie — always at your service",
 "懂球场、懂策略、懂你的每一次挥杆。": "Knows the course, the strategy, and every one of your swings.",
 "成绩": "Scores",
+"成绩 · 球场 · 球友 · 精彩瞬间": "Scores · Courses · Players · Highlights",
 "成绩 · 球局 · 成长记录": "Scores · Rounds · Progress",
 "成绩与排名": "Scores & Standings",
 "成绩加载失败，请刷新重试。": "Failed to load scores. Please refresh and retry.",
@@ -1164,6 +1167,7 @@ window.RUKIK_I18N_DICT = {
 "认领链接": "Claim Link",
 "认领链接（复制后发给球员；球员打开链接登录即可认领本人安排）": "Claim Link (copy and send to the player; they sign in via the link to claim their spot)",
 "讨论中": "Discussing",
+"让专属AI球童": "Dedicated AI Caddie",
 "让专属AI球童，陪你打好每一杆。": "Let your dedicated AI Caddie be with you for every shot.",
 "让声音看得见，": "Make every voice visible,",
 "让声音看得见，让未来可预见": "See the Voice, Foresee the Future",

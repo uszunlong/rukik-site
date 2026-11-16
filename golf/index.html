@@ -46,6 +46,10 @@
   .eyebrow { color: #76E5AD; font-size: 12px; font-weight: 600; letter-spacing: .34em; margin: 0 0 18px; }
   .hero h1 { margin: 0 0 14px; font-size: 43px; line-height: 1.3; font-weight: 800; }
   .hero h1 .gold { color: #DCC47A; }
+  /* [HEROFIX 2026-11-16] 主口号整段单节点化（原「让」被 .gold span 切成孤节点、词典命不中，英文模式残留中文）：h1 本体金色承载「让专属AI球童」整段文本节点（词典整段条目），尾段 .wht 复白；中文模式下 ::first-letter 使首字「让」保持白色（html lang 由 i18n 引擎按当前语言设置，英文模式自动不生效）。 */
+  .hero h1.h1mix { color: #DCC47A; }
+  .hero h1.h1mix .wht { color: #F2FFF7; }
+  html[lang="zh-CN"] .hero h1.h1mix::first-letter { color: #F2FFF7; }
   .eng { color: #DCC47A; opacity: .82; font-size: 12.5px; font-weight: 500; letter-spacing: .22em; margin: 0 0 12px; }
   .sub { color: #B9D6C2; font-size: 16.5px; line-height: 1.6; margin: 0 0 28px; }
   .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -149,7 +153,7 @@
   <section class="hero">
     <div class="hero-tx">
       <p class="eyebrow">RUKIK GOLF · YOUR AI CADDIE</p>
-      <h1>让<span class="gold">专属AI球童</span>，陪你打好每一杆。</h1>
+      <h1 class="h1mix">让专属AI球童<span class="wht">，陪你打好每一杆。</span></h1>
       <p class="eng">Your Personal AI Caddie, With You Every Swing.</p>
       <p class="sub">懂球场、懂策略、懂你的每一次挥杆。</p>
       <div class="hero-cta">
