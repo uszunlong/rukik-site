@@ -291,7 +291,7 @@
   .defcov .brand{font-size:12px;font-weight:700;letter-spacing:3px;color:#C9A227}
   .defcov .cname{font-size:23px;font-weight:800;line-height:1.25;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.35)}
   .defcov .ttl{font-size:13px;color:rgba(255,255,255,.88);margin-top:3px}
-  /* [Z65] hero 内「管理封面」入口（仅 staff 渲染，口径同 renderStaff） */
+  /* [Z65] hero 内管理入口（[PHOTO-MGR-MERGE 2026-11-15] 已与「管理照片」合并改名，见 pcBtnHtml） */
   .pcBtn{position:absolute;left:10px;bottom:10px;z-index:6;background:rgba(8,26,44,.80);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
   /* [Z65 微修] 默认封面内按钮改置左上，避免与左下球场名/副标题文字重叠（相册形态不受影响） */
   .defcov .pcBtn{top:10px;bottom:auto}
@@ -299,7 +299,7 @@
   #pcSheet{position:fixed;inset:0;z-index:86;display:flex;flex-direction:column;justify-content:flex-end}
   #pcSheet.hidden{display:none}
   #pcSheet .pm-backdrop{position:absolute;inset:0;background:rgba(10,30,16,.45)}
-  #pcSheet .pm-panel{position:relative;background:#fff;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;padding:14px}
+  #pcSheet .pm-panel{position:relative;background:#fff;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;padding:14px;overflow-y:auto}
   .pc-act{border:1px solid #cfe0d2;background:#fff;color:#14532d;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
   .pc-act[disabled]{opacity:.35;cursor:default}
   .pc-cov{font-size:11px;font-weight:700;color:#fff;background:#C9A227;border-radius:999px;padding:2px 8px;flex:none}
@@ -706,14 +706,17 @@ function closePal() { document.getElementById('palOverlay').classList.add('hidde
    requireStaff 统一（organizer ∪ 本场 admin/referee；my_role 缺失默认不渲染） */
 var DEFCOV_SVG = '<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="z65g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#052a1a"/><stop offset=".45" stop-color="#0d5c37"/><stop offset="1" stop-color="#03160d"/></linearGradient><radialGradient id="z65r" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd682" stop-opacity=".20"/><stop offset="1" stop-color="#ffd682" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="url(#z65g)"/><ellipse cx="980" cy="-60" rx="620" ry="340" fill="url(#z65r)"/><path d="M0 700 Q 800 640 1600 690 L1600 900 L0 900 Z" fill="#0a462a" opacity=".55"/><path d="M0 762 Q 800 700 1600 748 L1600 900 L0 900 Z" fill="#0e6038" opacity=".5"/><path d="M0 826 Q 800 766 1600 812 L1600 900 L0 900 Z" fill="#14804a" opacity=".45"/><circle cx="1215" cy="400" r="205" fill="none" stroke="#d8b25a" stroke-width="5"/><line x1="1225" y1="282" x2="1225" y2="518" stroke="#f5f5f0" stroke-width="7"/><polygon points="1225,282 1353,318 1225,354" fill="#2ecc71"/><ellipse cx="1225" cy="508" rx="32" ry="9" fill="#02120a"/><circle cx="1157" cy="509" r="13" fill="#fafaf6"/><line x1="90" y1="618" x2="330" y2="618" stroke="#d8b25a" stroke-width="4"/></svg>';
 function isEventStaff() { return !!(EV && (EV.my_role === 'organizer' || EV.my_role === 'admin' || EV.my_role === 'referee')); }
-function pcBtnHtml() { return isEventStaff() ? '<button type="button" class="pcBtn" data-pcopen>\u{1F5BC} 管理封面</button>' : ''; }
-/* [ALBUM-MGR-VIS 2026-11-15] 管理照片入口呈现与服务端闸分离：统一相册集合为空
-   （未开通/未开放/0 张照片）而回退海报形态时，有相册管理权限者（与统一相册
-   Hero 同口径：my_registration/my_player/my_role 任一成立）仍须看得到入口；
-   点击只打开现行管理菜单，上传/删除仍由 live-photo 服务端逐项复核（含
-   album_not_enabled 与 T-30 门），呈现放行不等于服务端开放。 */
+/* [PHOTO-MGR-MERGE 2026-11-15] 双入口合并（用户亲令）：原左下「管理封面」（staff，
+   pcBtn）与右下「管理照片」（相册管理权，pmBtnHero）功能重复，合并为单一入口
+   「管理照片」——沿用 pcBtn 位置/样式与 data-pcopen，打开合并面板（pcSheet＝
+   照片管理区＋封面与海报区，封面区仅 staff 呈现、动作仍由服务端逐项复核）。
+   可见口径取两原入口并集 canManageAlbum（staff 的 my_role 亦在其内），与
+   [ALBUM-MGR-VIS 2026-11-15] 呈现口径一致：统一相册集合为空（未开通/未开放/
+   0 张照片）而回退海报形态时，有相册管理权限者仍须看得到入口；点击只打开管理
+   面板，上传/删除仍由 live-photo 与 golf-api 服务端逐项复核（含 album_not_enabled
+   与 T-30 门），呈现放行不等于服务端开放。 */
+function pcBtnHtml() { return canManageAlbum() ? '<button type="button" class="pcBtn" data-pcopen>📷 管理照片</button>' : ''; }
 function canManageAlbum() { return !!(EV && (EV.my_registration || EV.my_player || EV.my_role)); }
-function pmBtnHtml() { return canManageAlbum() ? '<button type="button" class="pmBtn pmBtnHero" data-pmopen>📷 管理照片</button>' : ''; }
 function bindPmBtn(scope) { var b = scope && scope.querySelector('[data-pmopen]'); if (b) b.addEventListener('click', function () { if (window.pmOpen) window.pmOpen(); }); }
 function bindPcBtn(scope) { var b = scope && scope.querySelector('[data-pcopen]'); if (b) b.addEventListener('click', function () { if (window.openPcSheet) window.openPcSheet(); }); }
 function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片墙就绪后 renderLive 把 #heroMedia 换成照片墙
@@ -729,15 +732,15 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
       '<div class="scrim"></div><div class="tx"><div class="brand">RUKIK GOLF</div>' +
       '<div class="cname">' + esc(cN) + '</div>' +
       ((EV.course && EV.course.name && EV.event.title !== cN) ? '<div class="ttl">' + esc(EV.event.title) + '</div>' : '') +
-      '</div>' + pcBtnHtml() + pmBtnHtml() + '</div>';
-    bindPcBtn(box); bindPmBtn(box);
+      '</div>' + pcBtnHtml() + '</div>';
+    bindPcBtn(box);
     return;
   }
   box.innerHTML = '<div class="pal" id="palBox"><div class="palTrack" id="palTrack">' +
     list.map(function (u, i) { return '<figure class="palSlide" data-pi="' + i + '"><img src="' + esc(u) + '" alt="赛事海报"></figure>'; }).join('') +
     '</div>' +
     (list.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + list.length + '</div><div class="palDots" id="palDots">' + list.map(function (u, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
-    pcBtnHtml() + pmBtnHtml() + '</div>';
+    pcBtnHtml() + '</div>';
   var palBox = document.getElementById('palBox');
   Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
     var u = list[Number(fig.getAttribute('data-pi'))];
@@ -762,7 +765,7 @@ function renderHeroMedia() { // Hero 媒体区默认海报相册形态；照片�
   palBox.addEventListener('touchstart', function () { palNoteManual(); }, { passive: true });
   palGo(PALB.idx);
   palStart();
-  bindPcBtn(box); bindPmBtn(box);
+  bindPcBtn(box);
 }
 /* [VIEWER-FIX 2026-11-14] 根因：本 IIFE 原在经典脚本解析期执行，而 #palOverlay 的
    静态 HTML 位于该脚本之后，getElementById 恒为 null 直接 return——✕/上一张/下一张/
@@ -2680,7 +2683,7 @@ function renderLive() {
     '<div class="wallbar">' +
     /* [A12] 左下角「管理照片」入口：仅有照片权限者可见（参赛成员/摄影师/管理方，
        与 live-photo sceneAccess 的客户端信号对齐；动作仍由服务端复核） */
-    (EV && (EV.my_registration || EV.my_player || EV.my_role) ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
+    (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
     '<span class="wb-t">🔴 Golf Live · ' + ((WALL.stats && WALL.stats.photos) || feed.length) + ' 张照片</span></div>' +
     (function () { var pl = postersOf(); PALB.list = pl; return pl.length ? '<button type="button" class="palIco" id="palIco" aria-label="查看赛事海报">🏞</button>' : ''; })() + '</div>';
   var box = document.getElementById('carBox');
@@ -3091,13 +3094,19 @@ if (!eventId) {
   </div>
 </div>
 
-<!-- 照片管理弹层（线 Z27，2026-11-11；权限 V2 2026-11-12 升级）：上传照片＝前往照片池（现行上传流不变）；删除照片＝多选批量模式——普通参赛者只能选自己上传的、主办方/管理员可选全场，无权限照片不可选，二次确认显示已选张数 -->
-<div id="pmSheet" class="hidden" role="dialog" aria-label="管理照片">
-  <div class="pm-backdrop" id="pmBackdrop"></div>
+<!-- 照片/封面统一管理弹层（[PHOTO-MGR-MERGE 2026-11-15] 用户亲令合并）：原「管理
+     照片」（线 Z27，2026-11-11；权限 V2 2026-11-12：上传照片＝前往照片池、删除照片＝
+     多选批量模式、普通参赛者只能选自己上传的、主办方/管理员可选全场、二次确认显示
+     已选张数）与「管理封面」（线 Z65，2026-11-12：staff 页内管理海报相册——上传/
+     删除/排序/设封面，全部走 golf-api poster_* 四 action）双面板合一，标题统一
+     「管理照片」；照片区沿用 pmOpts/pmDelView 全部结构与逻辑原样搬入，封面区
+     （#pcStaffSec）仅 staff 呈现，权限口径与服务端校验不变。 -->
+<div id="pcSheet" class="hidden" role="dialog" aria-label="管理照片">
+  <div class="pm-backdrop" id="pcBackdrop"></div>
   <div class="pm-panel">
     <div class="pm-hd">
       <div class="pm-ttl">管理照片</div>
-      <button type="button" class="pm-x" id="pmClose" aria-label="关闭">✕</button>
+      <button type="button" class="pm-x" id="pcClose" aria-label="关闭">✕</button>
     </div>
     <div class="pm-opts" id="pmOpts">
       <button type="button" class="pm-opt" id="pmGoUpload">📷 上传照片<small>前往赛事照片池上传（现有上传方式不变）</small></button>
@@ -3114,22 +3123,14 @@ if (!eventId) {
         <button type="button" class="pm-delsel" id="pmDelSel" disabled>删除所选</button>
       </div>
     </div>
-  </div>
-</div>
-<!-- 封面管理弹层（线 Z65，2026-11-12）：staff 页内管理海报相册——上传/删除/排序/设封面，
-     全部走 golf-api poster_* 四 action（与正式赛事同一套模块）；非 staff 不渲染入口 -->
-<div id="pcSheet" class="hidden" role="dialog" aria-label="管理封面">
-  <div class="pm-backdrop" id="pcBackdrop"></div>
-  <div class="pm-panel">
-    <div class="pm-hd">
-      <div class="pm-ttl">管理封面</div>
-      <button type="button" class="pm-x" id="pcClose" aria-label="关闭">✕</button>
-    </div>
-    <div class="pm-msg" id="pcMsg"></div>
-    <div class="pm-list" id="pcList"></div>
-    <div style="padding-top:10px">
-      <label class="pc-up" for="pcFile">＋ 添加海报<small>PNG / JPG / WebP · 单张 ≤5MB · 最多 9 张；排序即展示序，封面单独设定</small></label>
-      <input type="file" id="pcFile" accept="image/png,image/jpeg,image/webp" style="display:none">
+    <div id="pcStaffSec" class="hidden">
+      <div class="pm-ttl" style="font-size:15px;padding:12px 0 2px">封面与海报</div>
+      <div class="pm-msg" id="pcMsg"></div>
+      <div class="pm-list" id="pcList"></div>
+      <div style="padding-top:10px">
+        <label class="pc-up" for="pcFile">＋ 添加海报<small>PNG / JPG / WebP · 单张 ≤5MB · 最多 9 张；排序即展示序，封面单独设定</small></label>
+        <input type="file" id="pcFile" accept="image/png,image/jpeg,image/webp" style="display:none">
+      </div>
     </div>
   </div>
 </div>
@@ -3442,7 +3443,7 @@ document.addEventListener('click', function (e) {
 (function () {
   var LP = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/live-photo';
   var LSKEY = 'sb-yzgzgtrqrmarfjftgbwt-auth-token';
-  var sheet = document.getElementById('pmSheet');
+  var sheet = document.getElementById('pcSheet'); /* [PHOTO-MGR-MERGE 2026-11-15] 合并面板：照片区与封面区共用 pcSheet */
   var opts = document.getElementById('pmOpts');
   var delView = document.getElementById('pmDelView');
   var msg = document.getElementById('pmMsg');
@@ -3474,10 +3475,18 @@ document.addEventListener('click', function (e) {
   window.pmOpen = function () {
     opts.classList.remove('hidden');
     delView.classList.add('hidden');
+    /* [PHOTO-MGR-MERGE 2026-11-15] 合并面板：封面区仅 staff 呈现并即时渲染海报列表 */
+    var staff = false;
+    try { staff = typeof isEventStaff === 'function' && isEventStaff(); } catch (e) {}
+    var sec = document.getElementById('pcStaffSec');
+    if (sec) sec.classList.toggle('hidden', !staff);
+    if (staff && window.pcRenderList) window.pcRenderList();
     sheet.classList.remove('hidden');
   };
-  document.getElementById('pmClose').addEventListener('click', close);
-  document.getElementById('pmBackdrop').addEventListener('click', close);
+  var pmCloseEl = document.getElementById('pcClose');
+  if (pmCloseEl) pmCloseEl.addEventListener('click', close);
+  var pmBkEl = document.getElementById('pcBackdrop');
+  if (pmBkEl) pmBkEl.addEventListener('click', close);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) close(); });
   document.getElementById('pmGoUpload').addEventListener('click', function () { location.href = poolUrl(); });
   // [相册修正 2026-11-12] 四选项口径补齐：查看全部照片（原地切网格，由相册
@@ -3693,6 +3702,7 @@ document.addEventListener('click', function (e) {
       setMsg('上传失败：' + ((e && e.message) || '请稍后重试'));
     });
   }
+  window.pcRenderList = renderList;
   window.openPcSheet = function () {
     if (!bound) {
       bound = true;
@@ -3701,6 +3711,10 @@ document.addEventListener('click', function (e) {
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) close(); });
       fileIn.addEventListener('change', onFile);
     }
+    /* [PHOTO-MGR-MERGE 2026-11-15] 合并面板：打开时照片区复位到菜单态、封面区呈现 */
+    var pmOptsEl = document.getElementById('pmOpts'); if (pmOptsEl) pmOptsEl.classList.remove('hidden');
+    var pmDelEl = document.getElementById('pmDelView'); if (pmDelEl) pmDelEl.classList.add('hidden');
+    var staffSec = document.getElementById('pcStaffSec'); if (staffSec) staffSec.classList.remove('hidden');
     renderList();
     setMsg('');
     sheet.classList.remove('hidden');
@@ -3794,7 +3808,7 @@ document.addEventListener('click', function (e) {
         return '<figure class="palSlide" data-ai="' + i + '"><img src="' + esc(albSlideSrc(it)) + '" alt="' + (it.is_official ? '赛事海报' : '赛事照片') + '"></figure>';
       }).join('') + '</div>' +
       (ALB.items.length > 1 ? '<div class="palNum" id="palNum">' + (PALB.idx + 1) + ' / ' + ALB.items.length + '</div><div class="palDots" id="palDots">' + ALB.items.map(function (it, i) { return '<i' + (i === PALB.idx ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') +
-      '<div class="wallbar">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
+      '<div class="wallbar">' + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
       '<span class="wb-t">🔴 Golf Live · ' + ALB.count + ' 张照片</span></div></div>';
     var palBox = document.getElementById('palBox');
     Array.prototype.forEach.call(palBox.querySelectorAll('.palSlide'), function (fig) {
@@ -3853,7 +3867,7 @@ document.addEventListener('click', function (e) {
     }
     box.innerHTML = '<div class="albGridWrap">' +
       '<div class="albGridBar"><span class="albGridT">🔴 Golf Live · ' + ALB.count + ' 张照片</span>' +
-      '<span class="albGridActs">' + (canManage ? '<button type="button" class="pmBtn" id="pmOpenBtn">📷 管理照片</button>' : '') + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
+      '<span class="albGridActs">' + (typeof pcBtnHtml === 'function' ? pcBtnHtml() : '') +
       '<button type="button" class="albBack" id="albBackBtn">‹ 返回轮播</button></span></div>' +
       '<div class="albGrid">' + cells + '</div>' +
       (shown < ALB.items.length ? '<button type="button" class="albMore" id="albMoreBtn">加载更多照片（已显示 ' + shown + ' / ' + ALB.items.length + '）</button>' : '') +
