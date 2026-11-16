@@ -472,7 +472,7 @@
         <button class="ghost" id="annBtn">发布公告</button><div style="margin-top:14px"><label>赛事回忆馆</label><p style="margin:6px 0"><button class="ghost" id="memGenBtn">生成赛后回忆</button> <span id="memMsg" class="ok" style="font-size:13px"></span></p></div><div id="viewSettings" class="catview" style="display:none"><div id="adminCard" style="margin-top:14px">
         <label>管理员（可与主办方一样管理本赛事的账号）</label>
         <p style="color:#5c7260;font-size:13px;margin:4px 0 8px">按手机号或邮箱授权：对方已有账号立即生效；还没有账号的记为「待生效」，其用该手机号/邮箱注册登录后自动生效。手机号与邮箱都填时须属于同一账号，否则会被拒绝。管理员可再授权、也可撤销其他管理员；主办方本人不可撤销。每次授权与撤销都会留下审计记录。</p>
-        <div id="admList" style="font-size:14px;color:#17301c">打开赛事后加载。</div>
+        <div id="admList" data-i18n-skip style="font-size:14px;color:#17301c">打开赛事后加载。</div>
         <div class="row">
           <div><label>手机号（可空）</label><input id="admPhone" placeholder="如 9495550100" autocomplete="off"></div>
           <div><label>邮箱（可空）</label><input id="admEmail" placeholder="如 name@example.com" autocomplete="off"></div>
@@ -550,11 +550,11 @@
 
       <h4 style="margin:16px 0 4px">C · 知识确认</h4>
       <p style="color:#5c7260;font-size:13px;margin:2px 0 8px">AI 只引用「已发布」资料；草稿先在这里确认再发布。与赛事正式数据（时间、地点、分组、成绩）冲突时，以正式数据为准，旧资料请及时撤下。</p>
-      <div id="aiKnowList"></div>
+      <div id="aiKnowList" data-i18n-skip></div>
 
       <h4 style="margin:16px 0 4px">D · 问答预览</h4>
       <p style="color:#5c7260;font-size:13px;margin:2px 0 8px">以主办方身份直接体验球员看到的回答。发现答错时，点回答下方的「纠正资料」，更新对应知识即可（不用改聊天内容）。</p>
-      <div id="aiChat" style="border:1px solid #e5eee1;border-radius:10px;padding:10px 12px;max-height:320px;overflow:auto;background:#fbfdf9"></div>
+      <div id="aiChat" data-i18n-skip style="border:1px solid #e5eee1;border-radius:10px;padding:10px 12px;max-height:320px;overflow:auto;background:#fbfdf9"></div>
       <div class="row" style="margin-top:8px">
         <div style="flex:3"><input id="aiQ" placeholder="如：这场活动是谁主办的？几点签到？"></div>
         <div style="flex:0"><button id="aiAskBtn" type="button">提问</button></div>
@@ -3546,5 +3546,6 @@ function consoleDeleteEvent(id, title) {
   });
 }
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>

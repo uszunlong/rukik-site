@@ -198,7 +198,7 @@
 </header>
 <div id="authBar"></div>
 <main id="main">
-  <div class="evname" id="evName"></div>
+  <div class="evname" id="evName" data-i18n-skip></div>
   <div id="loginBox" class="hidden">
     <div class="lt">登录后即可问 AI 球童</div>
     <div class="ld">登录RUKIK账号，AI球童即可结合您的赛事、分组与成绩，提供更懂您的高尔夫陪伴。<span class="sub">与RUKIK App使用同一账号 · 同一UID</span></div>
@@ -210,7 +210,7 @@
       <div>新用户？<button type="button" id="toRegister">立即注册 ›</button></div>
     </div>
   </div>
-  <div id="msgs"></div>
+  <div id="msgs" data-i18n-skip></div>
   <div class="chips" id="chips"></div>
 </main>
 <footer id="composer" class="hidden">
@@ -553,5 +553,6 @@ renderAuthBar(document.getElementById('authBar'), { onLogout: function () { setL
   paint();
 })();
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>

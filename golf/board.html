@@ -32,7 +32,7 @@
 <header>
   <div>
     <div class="brand">RUKIK GOLF ｜ 懂比赛，更懂每一位球员</div>
-    <h1 id="title">排行榜</h1>
+    <h1 id="title" data-i18n-skip>排行榜</h1>
   </div>
   <div style="text-align:right">
     <div class="status" id="status">实时排名 · 未最终确认</div>
@@ -42,11 +42,11 @@
 <main>
   <table>
     <thead><tr><th style="width:90px">名次</th><th>球员 / 球队</th><th style="width:180px">成绩</th><th style="width:150px">完成洞数</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="4" class="empty">正在加载…</td></tr></tbody>
+    <tbody id="rows" data-i18n-skip><tr><td colspan="4" class="empty">正在加载…</td></tr></tbody>
   </table>
 </main>
-<div class="waitlist" id="waitlist"></div>
-<div class="sponsors" id="sponsors"></div>
+<div class="waitlist" id="waitlist" data-i18n-skip></div>
+<div class="sponsors" id="sponsors" data-i18n-skip></div>
 <footer>成绩由 RUKIK Golf 确定性规则引擎计算；未锁定成绩为实时排名，不作为正式名次。每 20 秒自动刷新。</footer>
 <script>
 var API = 'https://yzgzgtrqrmarfjftgbwt.supabase.co/functions/v1/golf-api';
@@ -167,5 +167,6 @@ function render() {
 render();
 setInterval(render, 20000);
 </script>
+<script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script>
 </body>
 </html>
