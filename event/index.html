@@ -91,7 +91,7 @@ a{text-decoration:none;color:inherit}
   <button class="tab" data-f="etc" type="button">其他</button>
 </div></div>
 
-<main class="wrap"><div class="grid" id="grid" data-i18n-skip><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></main>
+<main class="wrap"><div class="grid" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></main>
 
 <footer class="site-foot"><div class="site-foot-in"><div>AI懂很多，RUKIK更懂您。</div><div><a href="/privacy-policy">隐私政策</a> · <a href="/terms">服务条款</a> · <a href="/contact/">联系我们</a> · <a href="/download/">下载 Rukik App</a></div></div></footer>
 
@@ -107,10 +107,17 @@ function jget(url, headers, body){
   return fetch(url, opt).then(function(r){ clearTimeout(to); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .catch(function(e){ clearTimeout(to); throw e; });
 }
+/* [I18N-RESIDUAL-FIX 2026-11-16] 日期格式随当前界面语言：en 用 en-US、zh 用 zh-CN，
+   不再写死 zh-CN（此前英文模式下卡片日期恒为「11月23日 周一」中文格式）。 */
+function curLang(){
+  try{ if(window.RukikI18n && window.RukikI18n.getLang) return window.RukikI18n.getLang(); }catch(e){}
+  try{ return localStorage.getItem('rukik-lang') || 'zh'; }catch(e){ return 'zh'; }
+}
 function fmtDate(iso, tz){
   if(!iso) return '';
+  var loc = curLang()==='en' ? 'en-US' : 'zh-CN';
   try{
-    return new Intl.DateTimeFormat('zh-CN',{timeZone:tz||'America/Los_Angeles',month:'long',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso));
+    return new Intl.DateTimeFormat(loc,{timeZone:tz||'America/Los_Angeles',month:'long',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso));
   }catch(e){ return String(iso).slice(0,10); }
 }
 var GST = { published:'报名中', in_progress:'进行中', completed:'已结束' };
@@ -181,7 +188,7 @@ function paint(){
     return '<a class="card" href="'+esc(c.href)+'"><div class="thumb">'
       + (c.img ? '<img src="'+esc(c.img)+'" alt="" loading="lazy"/>' : '<div class="ph ph-'+c.kind+'">'+ph+'</div>')
       + chip + (c.st ? '<span class="st">'+esc(c.st)+'</span>' : '') + '</div>'
-      + '<div class="info"><h3>'+esc(c.title)+'</h3>'
+      + '<div class="info"><h3 data-i18n-skip>'+esc(c.title)+'</h3>'
       + (c.date ? '<p class="meta">📅 '+esc(fmtDate(c.date, c.tz))+'</p>' : '')
       + (c.place ? '<p class="meta">📍 '+esc(c.place)+'</p>' : '')
       + '</div></a>';
@@ -238,6 +245,14 @@ function applyUrlFilter(repaint){
 applyUrlFilter(false); syncTabs();
 window.addEventListener('pageshow', function(){ applyUrlFilter(true); });
 load();
+/* [I18N-RESIDUAL-FIX 2026-11-16] 语言切换后重绘卡片：日期格式与状态/分类词由本页 JS
+   渲染，引擎只翻静态文本；监听语言变化（FAB 切换写 rukik-lang）后重 paint，
+   使日期格式立即跟随新语言，无需刷新。 */
+var LANG_WATCH = curLang();
+setInterval(function(){
+  var l = curLang();
+  if(l !== LANG_WATCH){ LANG_WATCH = l; if(ALL.length) paint(); }
+}, 800);
 </script>
 <script>
 /* [线Z22] 导航登录态感知：已登录时把导航「登录」换成用户称呼/头像并指向其落点（专家→/studio/ 工作台，普通用户→/build/ 账号页）；未登录保持「登录」→/build/。会话只读本机 Supabase 会话存储，专家判定与 /build/ 页同口径（professionals_resolved 按 user_id 查行）。 */
