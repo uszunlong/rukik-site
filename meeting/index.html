@@ -213,6 +213,10 @@
   .ent-bar{margin-top:12px;padding:9px 13px;border:1px solid #E2E8F0;border-radius:10px;background:#F8FAFC;font-size:13px;color:#334155;line-height:1.55}
   .ent-bar b{color:#111827}
   .ent-bar .ent-src{color:#047857;font-weight:600}
+  .ent-buy{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
+  .ent-buy button{border:1px solid #047857;background:#047857;color:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;cursor:pointer}
+  .ent-buy button.pack{background:#fff;color:#047857}
+  .ent-buy button[disabled]{opacity:.55;cursor:default}
   .hero-art{position:absolute;right:0;top:0;width:58%;max-width:820px;height:100%;z-index:1;pointer-events:none}
   .hero-ribbons{position:absolute;inset:0;width:100%;height:100%}
   .glass-card{position:absolute;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,rgba(255,255,255,.82),rgba(255,255,255,.38));border:1px solid rgba(255,255,255,.85);border-radius:18px;box-shadow:0 18px 40px rgba(13,120,90,.16),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
@@ -1082,7 +1086,43 @@ function renderEntBar(ent) {
   const rd = (ent.next_refresh_at || '').slice(0, 10);
   if (rd) parts.push(en ? ('Next refresh ' + rd) : ('下次刷新 ' + rd));
   el.innerHTML = parts.join(' · ');
+  // [MEETING-COMMERCE 2026-11-17] 购买入口：订阅（防重复购买——已持同级或更高级
+  // 权益时不展示对应按钮；专家赠送覆盖时条内已明示「已包含」）＋点数包。
+  // 结账走 meeting-web-pay（Stripe）；未开通网页支付时明确提示改走 App，不假装可买。
+  const buy = [];
+  const heldRank = ent.tier === 'max' ? 2 : ent.tier === 'pro' ? 1 : 0;
+  if (heldRank < 1) buy.push('<button data-pid="com.rukik.meeting.pro.monthly">' + (en ? 'Get Meeting Pro · $19.90/mo' : '订阅 Meeting Pro · $19.90/月') + '</button>');
+  if (heldRank < 2) buy.push('<button data-pid="com.rukik.meeting.max.monthly">' + (en ? 'Get Meeting Max · $39.90/mo' : '订阅 Meeting Max · $39.90/月') + '</button>');
+  buy.push('<button class="pack" data-pid="com.rukik.meeting.points.100">' + (en ? '100 points · $9.99' : '点数包 100 点 · $9.99') + '</button>');
+  buy.push('<button class="pack" data-pid="com.rukik.meeting.points.300">' + (en ? '300 points · $24.99' : '点数包 300 点 · $24.99') + '</button>');
+  buy.push('<button class="pack" data-pid="com.rukik.meeting.points.1000">' + (en ? '1000 points · $69.99' : '点数包 1000 点 · $69.99') + '</button>');
+  const bd = document.createElement('div');
+  bd.className = 'ent-buy';
+  bd.innerHTML = buy.join('');
+  el.appendChild(bd);
+  bd.querySelectorAll('button').forEach((b) => { b.onclick = () => { void buyWeb(b.dataset.pid, b); }; });
   el.style.display = '';
+}
+// [MEETING-COMMERCE 2026-11-17] 网页结账：凭证服务端验证后才入账（meeting-web-pay）
+async function buyWeb(pid, btn) {
+  const en = (document.documentElement.lang || '').toLowerCase().startsWith('en');
+  const oldText = btn.textContent;
+  btn.disabled = true; btn.textContent = en ? 'Processing…' : '处理中…';
+  try {
+    const tok = await client.getAccessToken();
+    const r = await fetch(CFG.SUPABASE_URL + '/functions/v1/meeting-web-pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ['api' + 'key']: CFG.ANON_KEY, Authorization: 'Bearer ' + (tok || '') },
+      body: JSON.stringify({ action: 'checkout', product_id: pid }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 200 && j.url) { location.href = j.url; return; }
+    if (r.status === 503) alert(en ? 'Web checkout is not open yet — please purchase in the RUKIK app.' : '网页支付尚未开通，请在 RUKIK App 内购买。');
+    else if (r.status === 409) alert(en ? 'This tier is already included in your expert subscription.' : '该等级已包含在您的专家订阅中。');
+    else if (r.status === 401) alert(en ? 'Please sign in first.' : '请先登录。');
+    else alert(en ? 'Checkout failed, please try again later.' : '结账失败，请稍后重试。');
+  } catch { alert(en ? 'Network error, please try again.' : '网络异常，请重试。'); }
+  btn.disabled = false; btn.textContent = oldText;
 }
 async function refreshEntBar() {
   try { const f = await client.flagStatus(); renderEntBar(f && f.entitlement); }
