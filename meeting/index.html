@@ -528,7 +528,7 @@
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
         <div class="ws-menu-wrap">
           <button id="btn-ppl" class="ghost" title="与会人员与发言人绑定">👥 与会人员 <span id="ppl-count">0</span></button>
-          <div id="ppl-panel" class="ppl-panel" style="display:none" data-i18n-skip></div>
+          <div id="ppl-panel" class="ppl-panel" style="display:none"></div>
         </div>
         <span id="ws-conn" class="ws-conn" data-state="off"><span class="conn-dot"></span><span class="conn-txt">转写未连接</span></span>
         <span style="flex:1"></span>
@@ -1302,14 +1302,14 @@ function renderPplPanel() {
     const meta = [p.role || '', p.relation_snapshot || person.relation_label || '', p.company_snapshot || person.company || '', p.job_title_snapshot || person.job_title || ''].filter(Boolean).join(' · ');
     const bind = boundByPart.get(String(p.id));
     const isSelf = p.uid && cur.meeting && String(p.uid) === String(cur.meeting.owner_uid);
-    return `<div class="ppl-row"><div class="who"><span class="nm">${esc(pplName(p))}</span>${isSelf ? ' <span class="chip">我</span>' : ''}<div class="meta">${esc(meta || '—')}${p.note ? '<br>' + esc(p.note) : ''}<br>${bind ? '已绑定 ' + esc(bind) : '未绑定发言轨道'}</div></div><div class="acts"><button class="ghost" data-ppl-edit="${esc(p.id)}">编辑</button><button class="ghost" data-ppl-del="${esc(p.id)}">移除</button></div></div>`;
+    return `<div class="ppl-row"><div class="who" data-i18n-skip><span class="nm">${esc(pplName(p))}</span>${isSelf ? ' <span class="chip">我</span>' : ''}<div class="meta">${esc(meta || '—')}${p.note ? '<br>' + esc(p.note) : ''}<br>${bind ? '已绑定 ' + esc(bind) : '未绑定发言轨道'}</div></div><div class="acts"><button class="ghost" data-ppl-edit="${esc(p.id)}">编辑</button><button class="ghost" data-ppl-del="${esc(p.id)}">移除</button></div></div>`;
   }).join('');
   const trackRows = pplState.tracks.map((t) => {
     const lb = String(t.speaker_label);
-    if (lb === 'unknown') return `<div class="ppl-row"><div class="who"><span class="nm">未确认轨道</span><div class="meta">${Number(t.segments) || 0} 段 · 当前转写未做说话人分离，未归属发言暂归此轨道；不能整轨绑定到某个人（会误标全场），请逐段点字幕旁的「发言人」更正。</div></div></div>`;
+    if (lb === 'unknown') return `<div class="ppl-row"><div class="who" data-i18n-skip><span class="nm">未确认轨道</span><div class="meta">${Number(t.segments) || 0} 段 · 当前转写未做说话人分离，未归属发言暂归此轨道；不能整轨绑定到某个人（会误标全场），请逐段点字幕旁的「发言人」更正。</div></div></div>`;
     const b = pplState.bindings.find((x) => String(x.speaker_label) === lb);
-    const opts = pplState.participants.map((p) => `<option value="${esc(p.id)}" ${b && String(b.participant_id) === String(p.id) ? 'selected' : ''}>${esc(pplName(p))}</option>`).join('');
-    return `<div class="ppl-row"><div class="who"><span class="nm">${esc(lb)}</span><div class="meta">${Number(t.segments) || 0} 段${b ? ' · 已绑定 ' + esc(pplName(pplById(b.participant_id)) || '') : ' · 未绑定'}</div></div><div class="acts"><select id="bind-sel-${esc(lb)}" style="width:auto">${opts}</select><button class="ghost" data-bind="${esc(lb)}">绑定</button>${b ? `<button class="ghost" data-unbind="${esc(lb)}">解绑</button>` : ''}</div></div>`;
+    const opts = pplState.participants.map((p) => `<option data-i18n-skip value="${esc(p.id)}" ${b && String(b.participant_id) === String(p.id) ? 'selected' : ''}>${esc(pplName(p))}</option>`).join('');
+    return `<div class="ppl-row"><div class="who" data-i18n-skip><span class="nm">${esc(lb)}</span><div class="meta">${Number(t.segments) || 0} 段${b ? ' · 已绑定 ' + esc(pplName(pplById(b.participant_id)) || '') : ' · 未绑定'}</div></div><div class="acts"><select id="bind-sel-${esc(lb)}" style="width:auto">${opts}</select><button class="ghost" data-bind="${esc(lb)}">绑定</button>${b ? `<button class="ghost" data-unbind="${esc(lb)}">解绑</button>` : ''}</div></div>`;
   }).join('');
   panel.innerHTML = `
     <h4>与会人员（${pplState.participants.length}）</h4>
@@ -1320,7 +1320,7 @@ function renderPplPanel() {
     <div class="ppl-form">
       <input id="ppl-q" placeholder="搜索我的人物记忆（姓名）…" autocomplete="off">
       <div id="ppl-hits"></div>
-      <div id="ppl-sel" class="meta" style="font-size:12px;color:var(--dim);margin-bottom:6px">${pplSelPerson ? '已选择已有的人物：' + esc(pplSelPerson.display_name) + '（将关联原人物记录，不重复建档）' : ''}</div>
+      <div id="ppl-sel" class="meta" data-i18n-skip style="font-size:12px;color:var(--dim);margin-bottom:6px">${pplSelPerson ? '已选择已有的人物：' + esc(pplSelPerson.display_name) + '（将关联原人物记录，不重复建档）' : ''}</div>
       <input id="ppl-name" placeholder="姓名（必填）">
       <input id="ppl-role" placeholder="会议角色（主持人/参会人/嘉宾…）" list="ppl-roles"><datalist id="ppl-roles"><option value="主持人"></option><option value="参会人"></option><option value="嘉宾"></option><option value="主讲人"></option></datalist>
       <input id="ppl-relation" placeholder="与我的关系（客户/合作伙伴/同事…，可自定义）" list="ppl-rels"><datalist id="ppl-rels"><option value="客户"></option><option value="合作伙伴"></option><option value="同事"></option><option value="朋友"></option><option value="家人"></option><option value="投资人"></option></datalist>
@@ -1335,7 +1335,8 @@ function renderPplPanel() {
     </div>`;
   panel.querySelectorAll('[data-ppl-del]').forEach((btn) => { btn.onclick = async () => {
     const p = pplById(btn.getAttribute('data-ppl-del')); if (!p) return;
-    if (!confirm(`从本场会议移除「${pplName(p)}」？只删本场名单，人物记忆保留。`)) return;
+    const uiEn = (window.RukikI18n && window.RukikI18n.getLang && window.RukikI18n.getLang()) === 'en';
+    if (!confirm(uiEn ? `Remove "${pplName(p)}" from this meeting? This only removes them from this meeting's roster — the person stays in your people memory.` : `从本场会议移除「${pplName(p)}」？只删本场名单，人物记忆保留。`)) return;
     try { await client.api('participant_remove', { meeting_id: cur.meeting.id, participant_id: p.id }); if (pplEditId === p.id) { pplEditId = null; pplSelPerson = null; } await refreshParticipants(); } catch (e) { $('ws-err').textContent = '移除失败：' + e.message; }
   }; });
   panel.querySelectorAll('[data-ppl-edit]').forEach((btn) => { btn.onclick = () => {
@@ -1368,7 +1369,7 @@ function renderPplPanel() {
       if (!q) { hitsBox.innerHTML = ''; return; }
       try {
         const r = await client.api('people_search', { meeting_id: cur.meeting.id, q });
-        hitsBox.innerHTML = (r.people || []).map((pp) => `<button class="ghost ppl-hit" data-hit="${esc(pp.id)}">${esc(pp.display_name)}${pp.company ? ' · ' + esc(pp.company) : ''}${pp.relation_label ? ' · ' + esc(pp.relation_label) : ''}</button>`).join('') || '<p class="dim" style="font-size:12px">人物记忆中没有同名记录，将按下方表单新建。</p>';
+        hitsBox.innerHTML = (r.people || []).map((pp) => `<button class="ghost ppl-hit" data-i18n-skip data-hit="${esc(pp.id)}">${esc(pp.display_name)}${pp.company ? ' · ' + esc(pp.company) : ''}${pp.relation_label ? ' · ' + esc(pp.relation_label) : ''}</button>`).join('') || '<p class="dim" style="font-size:12px">人物记忆中没有同名记录，将按下方表单新建。</p>';
         hitsBox.querySelectorAll('[data-hit]').forEach((hb) => { hb.onclick = () => {
           const pp = (r.people || []).find((x) => String(x.id) === hb.getAttribute('data-hit')); if (!pp) return;
           pplSelPerson = pp;
@@ -1420,7 +1421,7 @@ function openSpeakerModal(segId) {
   const list = $('spk-modal-list'); list.innerHTML = '';
   if (!pplState.participants.length) list.innerHTML = '<p class="dim">本场还没有登记与会人员，请先在「与会人员」中添加。</p>';
   for (const p of pplState.participants) {
-    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = pplName(p) + (p.role ? ' · ' + p.role : '');
+    const b = document.createElement('button'); b.className = 'ghost'; b.setAttribute('data-i18n-skip', ''); b.textContent = pplName(p) + (p.role ? ' · ' + p.role : '');
     b.onclick = async () => {
       try { await client.api('segment_speaker_set', { meeting_id: cur.meeting.id, segment_id: segId, participant_id: p.id }); await refreshParticipants(false); $('modal-speaker').style.display = 'none'; } catch (e) { $('ws-err').textContent = '更正失败：' + e.message; }
     };

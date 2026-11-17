@@ -519,7 +519,7 @@ export function createVizUI(opts) {
     for (const sp of speakers) {
       const chip = document.createElement('button');
       chip.className = 'viz-speaker-chip' + (store.speakerFilter === sp ? ' active' : '');
-      chip.textContent = spkDisplay(sp);
+      if (sp !== 'unknown') chip.setAttribute('data-i18n-skip', ''); chip.textContent = spkDisplay(sp);
       chip.onclick = () => { store.speakerFilter = store.speakerFilter === sp ? null : sp; emit(); };
       speakerBar.appendChild(chip);
     }
@@ -622,7 +622,7 @@ export function createVizUI(opts) {
           ? React.createElement(React.Fragment, null,
               data.dispDetail ? React.createElement('div', { className: 'viz-node-detail full' }, data.dispDetail) : null,
               (n.contributions || []).length ? React.createElement('div', { className: 'viz-node-contrib' },
-                n.contributions.map((c, i) => React.createElement('span', { key: i, style: { background: bdg.bg, color: bdg.fg } }, spkDisplay(c.speaker) + ' · ' + (REL_LABEL[c.relation] || c.relation)))) : null)
+                n.contributions.map((c, i) => React.createElement('span', { key: i, 'data-i18n-skip': '', style: { background: bdg.bg, color: bdg.fg } }, spkDisplay(c.speaker) + ' · ' + (REL_LABEL[c.relation] || c.relation)))) : null)
           : (data.dispSummary ? React.createElement('div', { className: 'viz-node-detail clamp2' }, data.dispSummary) : null));
     };
     const nodeTypes = { viz: VizNode };
