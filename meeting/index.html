@@ -561,6 +561,7 @@
         </div>
       </div>
       <p id="ws-err" class="err" style="margin:6px 0 0"></p>
+      <div id="plan-link-bar" style="display:none;margin-top:6px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap"></div>
     </div>
     <div class="tabs">
       <button data-tab="0" class="ghost">字幕</button><button data-tab="1" class="ghost">导图</button><button data-tab="2" class="ghost">纪要</button><button data-tab="3" class="ghost">预见</button><button data-tab="4" class="ghost">问 RUKIK</button>
@@ -625,6 +626,7 @@
         <div style="margin-bottom:8px"><button class="ghost" id="btn-fs-scan">✦ 立即扫描预见</button> <span class="dim" id="fs-stat"></span> <span class="dim" id="fs-auto-stat" style="font-size:12px"></span></div>
         <div id="foresight-list" data-i18n-skip><p class="dim">暂无预见。会议推进后，AI 会在这里提示风险、冲突与依赖瓶颈，并为关键决策给出情景推演。</p></div>
         </div>
+        <div id="brief-wrap" style="display:none;margin-bottom:10px"><b>会议背景 · 开场参考</b><div id="brief-text" class="dim" data-i18n-skip style="margin-top:6px;white-space:pre-wrap;color:var(--txt)"></div></div>
         <div id="ask-block"><b>问 RUKIK</b><p class="dim" style="margin:6px 0 0">结合本场与历史会议提问，由统一智能中枢（问 Rukik）作答，记录按你的账号授权检索。</p>
           <div style="display:flex;gap:8px;margin-top:8px">
             <input id="ask-q" placeholder="例如：上次会议关于 X 决定了什么？" style="flex:1;min-width:120px">
@@ -1051,6 +1053,8 @@ async function openMeeting(id, autostart = false) {
   const gn = $('gap-notices'); if (gn) gn.innerHTML = ''; // [WS-RECONNECT 2026-11-14] 缺口提示按会议隔离，进新会议清空
   show('ws');
   renderMeeting();
+  loadBrief();
+  if (cur.meeting.status === 'live') fireBrief();
   if (window.matchMedia('(max-width:900px)').matches) { const tb = document.querySelectorAll('.tabs button')[1]; if (tb) tb.click(); } // [WB-REDESIGN 2026-11-14] 手机默认展示导图
   await loadVizAndForesight();
   try { // 恢复补分析：有未处理片段（游标落后）时自动补跑，不依赖手动按钮
@@ -1271,8 +1275,77 @@ async function refreshParticipants(keepPanel = true) {
     if (keepPanel && $('ppl-panel').style.display !== 'none') renderPplPanel();
     renderSegments(); renderMinutes();
     if (vizUI && vizUI.refreshSpeakers) vizUI.refreshSpeakers();
+    fireBrief();
   } catch (e) { $('ws-err').textContent = '与会人员刷新失败：' + e.message; }
 }
+// ---- [BRIEF/PLAN-LINK 2026-11-17] 场景 B 背景情报（后台按需、哈希去重、不足不生成）＋计划会议关联（用户确认式） ----
+// 触发纪律：只在会议已开始（live）时后台 fire-and-forget，绝不阻塞录音/转录；失败静默。
+let briefFiredFor = '';
+function fireBrief() {
+  if (!cur || !cur.meeting || cur.meeting.status !== 'live') return;
+  const key = cur.meeting.id;
+  client.analyze(key, false, 'brief').then(() => { if (cur && cur.meeting.id === key) loadBrief(); }).catch(() => {});
+}
+async function loadBrief() {
+  if (!cur || !cur.meeting) return;
+  try {
+    const r = await client.api('brief_get', { meeting_id: cur.meeting.id });
+    const wrap = $('brief-wrap');
+    if (r.brief && r.brief.status === 'ready' && r.brief.brief_text) {
+      $('brief-text').textContent = r.brief.brief_text;
+      wrap.style.display = '';
+    } else wrap.style.display = 'none';
+    renderPlanBar(r.plan_link || null, undefined);
+    if (!r.plan_link) suggestPlanLink();
+  } catch { /* 背景情报读取失败静默降级 */ }
+}
+async function suggestPlanLink() {
+  if (!cur || !cur.meeting || planLinkDismissed === cur.meeting.id) return;
+  try {
+    const r = await client.api('plan_link_suggest', { meeting_id: cur.meeting.id });
+    if (r.linked) { renderPlanBar({ family_event_id: r.linked.family_event_id, event_title: r.linked.title, pre_meeting_report: null }, undefined); return; }
+    if (r.candidates && r.candidates.length) renderPlanBar(null, r.candidates[0]);
+  } catch { /* 关联建议失败静默 */ }
+}
+let planLinkDismissed = '';
+function renderPlanBar(linked, candidate) {
+  const bar = $('plan-link-bar'); if (!bar) return;
+  bar.innerHTML = '';
+  if (linked) {
+    const t1 = document.createElement('span'); t1.textContent = '已关联计划会议';
+    const t2 = document.createElement('span'); t2.setAttribute('data-i18n-skip', ''); t2.textContent = '《' + (linked.event_title || '') + '》';
+    bar.append(t1, t2);
+    if (linked.pre_meeting_report) { const t3 = document.createElement('span'); t3.className = 'dim'; t3.textContent = '（含会前情报，可在背景中参考）'; bar.appendChild(t3); }
+    const un = document.createElement('button'); un.className = 'ghost'; un.textContent = '解除关联';
+    un.onclick = async () => { try { await client.api('plan_link_unlink', { meeting_id: cur.meeting.id }); cur.meeting.family_event_id = null; renderPlanBar(null, undefined); } catch (e) { $('ws-err').textContent = '解除关联失败：' + e.message; } };
+    bar.appendChild(un);
+    bar.style.display = 'flex';
+    return;
+  }
+  if (candidate) {
+    const ev = candidate.evidence || {};
+    const t1 = document.createElement('span'); t1.textContent = '这场会可能对应计划中的会议';
+    const t2 = document.createElement('span'); t2.setAttribute('data-i18n-skip', ''); t2.textContent = '《' + (candidate.title || '') + '》';
+    const t3 = document.createElement('span'); t3.className = 'dim';
+    t3.textContent = '（证据：时间接近' + (ev.title ? ' · 主题相关' : '') + (ev.person ? ' · 人员相关' : '') + '）';
+    const ok = document.createElement('button'); ok.className = 'ghost'; ok.textContent = '关联';
+    ok.onclick = async () => {
+      try {
+        const r = await client.api('plan_link_confirm', { meeting_id: cur.meeting.id, family_event_id: candidate.family_event_id });
+        cur.meeting.family_event_id = r.family_event_id;
+        planLinkDismissed = '';
+        loadBrief();
+      } catch (e) { $('ws-err').textContent = '关联失败：' + e.message; }
+    };
+    const no = document.createElement('button'); no.className = 'ghost'; no.textContent = '忽略';
+    no.onclick = () => { planLinkDismissed = cur.meeting.id; bar.style.display = 'none'; };
+    bar.append(t1, t2, t3, ok, no);
+    bar.style.display = 'flex';
+    return;
+  }
+  bar.style.display = 'none';
+}
+
 // 发言显示名解析：单段更正 > 轨道绑定 > 原始标签；返回 null 表示未确认（不冒名）
 function speakerDisplayFor(seg) {
   const ov = pplState.overrides.get(String(seg.id));
