@@ -501,6 +501,9 @@ export function createVizUI(opts) {
   speakerBar.style.display = 'none';
   wrapEl.appendChild(speakerBar);
   const REL_LABEL = { propose: '提出', support: '支持', oppose: '反对', supplement: '补充' };
+  // [PARTICIPANTS-V1 2026-11-17] 贡献归属显示名：页面可注入绑定解析（轨道→与会人员姓名）；
+  // 分组/筛选仍以原始 speaker 标签为键，绑定只改显示名、不改归属数据。unknown 永不冒名。
+  const spkDisplay = (s) => { if (s === 'unknown') return '发言者待确认'; try { const n = opts.getSpeakerDisplay && opts.getSpeakerDisplay(s); if (n) return n; } catch { /* 解析失败回落原标签 */ } return s; };
   function nodeSpeakers(n) { return new Set((Array.isArray(n.contributions) ? n.contributions : []).map((c) => c.speaker)); }
   function renderSpeakerBar() {
     if (!speakerBar) return;
@@ -516,7 +519,7 @@ export function createVizUI(opts) {
     for (const sp of speakers) {
       const chip = document.createElement('button');
       chip.className = 'viz-speaker-chip' + (store.speakerFilter === sp ? ' active' : '');
-      chip.textContent = sp === 'unknown' ? '发言者待确认' : sp;
+      chip.textContent = spkDisplay(sp);
       chip.onclick = () => { store.speakerFilter = store.speakerFilter === sp ? null : sp; emit(); };
       speakerBar.appendChild(chip);
     }
@@ -577,6 +580,8 @@ export function createVizUI(opts) {
     enterProjection, exitProjection, renderDetail, resumeFollow, centerOnRoot,
     // [TRANSLATE-P1] 展示语言切换：只重渲染文字（emit+renderDetail），不触碰 positions/图结构/节点 ID
     setDisplayLang(l) { displayLangLocal = l === 'en' ? 'en' : 'zh'; emit(); renderDetail(); },
+    // [PARTICIPANTS-V1 2026-11-17] 发言人绑定变化：只重渲染贡献显示（不动图结构/位置）
+    refreshSpeakers() { renderSpeakerBar(); emit(); renderDetail(); },
     select(id) { store.selectedId = id; emit(); renderDetail(); },
     setAutoFollow(v) { store.autoFollow = v; if (followResumeTimer) { clearTimeout(followResumeTimer); followResumeTimer = null; } if (v) { store.followHold = false; syncFollowChip(); } if (opts.onFollowChange) opts.onFollowChange(); },
     _mountReact: null, // 由页面模块在 import React Flow 后调用 attachReact
@@ -617,7 +622,7 @@ export function createVizUI(opts) {
           ? React.createElement(React.Fragment, null,
               data.dispDetail ? React.createElement('div', { className: 'viz-node-detail full' }, data.dispDetail) : null,
               (n.contributions || []).length ? React.createElement('div', { className: 'viz-node-contrib' },
-                n.contributions.map((c, i) => React.createElement('span', { key: i, style: { background: bdg.bg, color: bdg.fg } }, (c.speaker === 'unknown' ? '发言者待确认' : c.speaker) + ' · ' + (REL_LABEL[c.relation] || c.relation)))) : null)
+                n.contributions.map((c, i) => React.createElement('span', { key: i, style: { background: bdg.bg, color: bdg.fg } }, spkDisplay(c.speaker) + ' · ' + (REL_LABEL[c.relation] || c.relation)))) : null)
           : (data.dispSummary ? React.createElement('div', { className: 'viz-node-detail clamp2' }, data.dispSummary) : null));
     };
     const nodeTypes = { viz: VizNode };

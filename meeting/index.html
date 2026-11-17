@@ -111,6 +111,19 @@
   .ws-menu-wrap{position:relative;flex:none}
   .ws-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:80;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;min-width:160px;flex-direction:column;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
   .ws-menu .menu-item{text-align:left;width:100%;font-weight:500}
+  /* [PARTICIPANTS-V1 2026-11-17] 与会人员浮层（顶部入口＋下拉面板，不挤占三栏） */
+  .ppl-panel{position:absolute;left:0;top:calc(100% + 6px);z-index:95;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;width:min(440px,94vw);max-height:74vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:left}
+  .ppl-panel h4{margin:2px 0 8px;font-size:14px}
+  .ppl-row{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+  .ppl-row .who{flex:1;min-width:0}
+  .ppl-row .nm{font-weight:600}
+  .ppl-row .meta{font-size:12px;color:var(--dim);word-break:break-all}
+  .ppl-row .acts{display:flex;gap:4px;flex:none}
+  .ppl-sec-t{font-weight:600;margin:12px 0 6px;font-size:13px}
+  .ppl-form input,.ppl-form select{margin-bottom:6px}
+  .ppl-hit{display:block;width:100%;text-align:left;margin-bottom:4px;font-weight:500}
+  .spk{color:var(--acc);font-weight:600}
+  #spk-modal-list button{display:block;width:100%;text-align:left;margin-bottom:6px}
   .meeting-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel2);cursor:pointer}
   .err{color:var(--bad)} .ok{color:var(--acc)} .dim{color:var(--dim)}
   .modal{position:fixed;inset:0;background:rgba(3,6,12,.7);display:flex;align-items:center;justify-content:center;z-index:9}
@@ -513,6 +526,10 @@
         <span id="m-title-view" title="点击修改标题" data-i18n-skip></span>
         <input id="m-title" data-i18n-skip>
         <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
+        <div class="ws-menu-wrap">
+          <button id="btn-ppl" class="ghost" title="与会人员与发言人绑定">👥 与会人员 <span id="ppl-count">0</span></button>
+          <div id="ppl-panel" class="ppl-panel" style="display:none" data-i18n-skip></div>
+        </div>
         <span id="ws-conn" class="ws-conn" data-state="off"><span class="conn-dot"></span><span class="conn-txt">转写未连接</span></span>
         <span style="flex:1"></span>
         <span id="rec-ind" style="display:none"><span class="rec-dot"></span><span class="rec-txt">录音中</span></span>
@@ -635,6 +652,19 @@
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button id="btn-cancel-new" class="ghost">取消</button>
       <button id="btn-create">创建并开始录音</button>
+    </div>
+  </div>
+</div>
+
+<!-- [PARTICIPANTS-V1 2026-11-17] 单段更正发言人 -->
+<div id="modal-speaker" class="modal" style="display:none">
+  <div class="box">
+    <h3 style="margin-top:0">更正发言人</h3>
+    <p class="dim" id="spk-modal-desc"></p>
+    <div id="spk-modal-list"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="spk-modal-clear" class="ghost">恢复未确认</button>
+      <button id="spk-modal-close" class="ghost">关闭</button>
     </div>
   </div>
 </div>
@@ -1116,6 +1146,7 @@ function renderMeeting() {
       tick(); if (m.status === 'live') timerInt = setInterval(tick, 1000);
     }
   }
+  syncParticipantsFromCur(); // [PARTICIPANTS-V1] 名单/绑定随 get 响应同步（含人数徽标）
   renderSegments(); renderMinutes(); renderCorrBar(); fsAutoSync();
 }
 
@@ -1209,6 +1240,200 @@ async function editSegment(segId) {
 let followHold = false; // [WB-REDESIGN 2026-11-14] 用户上翻字幕时暂停自动跟随，回到接近底部自动恢复
 $('col-transcript').addEventListener('scroll', (e) => { const p = e.target; followHold = (p.scrollHeight - p.scrollTop - p.clientHeight) > 60; });
 
+// ================= [PARTICIPANTS-V1 2026-11-17] 与会人员与发言人绑定 =================
+// 数据面：meeting-api v17（participants_list/people_search/participant_*/speaker_*
+// /segment_speaker_set）＋迁移 0803。人物本体在统一人物库（people），本页只读写
+// 关联行与绑定映射；原始转录 speaker_label 永不覆盖，显示名按
+// 单段更正 → 轨道绑定 → 原始标签 解析，unknown 永不冒名。
+let pplState = { participants: [], bindings: [], overrides: new Map(), tracks: [] };
+let pplSelPerson = null; // 添加表单中已从人物记忆选中的人物（null=手动新建）
+let pplEditId = null;    // 正在编辑的名单行 id（null=添加模式）
+const personNameCache = new Map(); // person_id -> 显示名（纪要负责人解析用）
+function pplName(part) { return (part && part.person && part.person.display_name) || (part && part.label) || '未命名'; }
+function pplById(id) { return pplState.participants.find((p) => String(p.id) === String(id)) || null; }
+function personNameById(pid) { return personNameCache.get(String(pid)) || null; }
+function syncParticipantsFromCur() {
+  if (!cur) return;
+  pplState.participants = Array.isArray(cur.participants) ? cur.participants : [];
+  pplState.bindings = Array.isArray(cur.speaker_bindings) ? cur.speaker_bindings : [];
+  pplState.overrides = new Map((Array.isArray(cur.segment_overrides) ? cur.segment_overrides : []).map((o) => [String(o.segment_id), String(o.participant_id)]));
+  pplState.tracks = Array.isArray(cur.speaker_tracks) ? cur.speaker_tracks : [];
+  personNameCache.clear();
+  for (const p of pplState.participants) if (p.person) personNameCache.set(String(p.person.id), String(p.person.display_name || ''));
+  const c = $('ppl-count'); if (c) c.textContent = String(pplState.participants.length);
+}
+async function refreshParticipants(keepPanel = true) {
+  if (!cur || !cur.meeting) return;
+  try {
+    const r = await client.api('participants_list', { meeting_id: cur.meeting.id });
+    cur.participants = r.participants; cur.speaker_bindings = r.bindings; cur.segment_overrides = r.overrides; cur.speaker_tracks = r.tracks;
+    syncParticipantsFromCur();
+    if (keepPanel && $('ppl-panel').style.display !== 'none') renderPplPanel();
+    renderSegments(); renderMinutes();
+    if (vizUI && vizUI.refreshSpeakers) vizUI.refreshSpeakers();
+  } catch (e) { $('ws-err').textContent = '与会人员刷新失败：' + e.message; }
+}
+// 发言显示名解析：单段更正 > 轨道绑定 > 原始标签；返回 null 表示未确认（不冒名）
+function speakerDisplayFor(seg) {
+  const ov = pplState.overrides.get(String(seg.id));
+  if (ov) { const p = pplById(ov); if (p) return { name: pplName(p), via: 'segment' }; }
+  const raw = String(seg.speaker_label || 'unknown');
+  const b = pplState.bindings.find((x) => String(x.speaker_label) === raw);
+  if (b) { const p = pplById(b.participant_id); if (p) return { name: pplName(p), via: 'track', label: raw }; }
+  return raw !== 'unknown' ? { name: raw, via: 'raw' } : null;
+}
+function speakerNameForLabel(label) {
+  const b = pplState.bindings.find((x) => String(x.speaker_label) === String(label));
+  if (!b) return null;
+  const p = pplById(b.participant_id);
+  return p ? pplName(p) : null;
+}
+function spkHtmlFor(seg) {
+  const sd = speakerDisplayFor(seg);
+  return sd ? ` <span class="spk">· ${esc(sd.name)}${sd.via === 'track' ? ' · ' + esc(sd.label) : ''}</span>` : '';
+}
+
+function renderPplPanel() {
+  const panel = $('ppl-panel'); if (!panel || !cur) return;
+  const boundByPart = new Map();
+  for (const b of pplState.bindings) boundByPart.set(String(b.participant_id), String(b.speaker_label));
+  const rows = pplState.participants.map((p) => {
+    const person = p.person || {};
+    const meta = [p.role || '', p.relation_snapshot || person.relation_label || '', p.company_snapshot || person.company || '', p.job_title_snapshot || person.job_title || ''].filter(Boolean).join(' · ');
+    const bind = boundByPart.get(String(p.id));
+    const isSelf = p.uid && cur.meeting && String(p.uid) === String(cur.meeting.owner_uid);
+    return `<div class="ppl-row"><div class="who"><span class="nm">${esc(pplName(p))}</span>${isSelf ? ' <span class="chip">我</span>' : ''}<div class="meta">${esc(meta || '—')}${p.note ? '<br>' + esc(p.note) : ''}<br>${bind ? '已绑定 ' + esc(bind) : '未绑定发言轨道'}</div></div><div class="acts"><button class="ghost" data-ppl-edit="${esc(p.id)}">编辑</button><button class="ghost" data-ppl-del="${esc(p.id)}">移除</button></div></div>`;
+  }).join('');
+  const trackRows = pplState.tracks.map((t) => {
+    const lb = String(t.speaker_label);
+    if (lb === 'unknown') return `<div class="ppl-row"><div class="who"><span class="nm">未确认轨道</span><div class="meta">${Number(t.segments) || 0} 段 · 当前转写未做说话人分离，未归属发言暂归此轨道；不能整轨绑定到某个人（会误标全场），请逐段点字幕旁的「发言人」更正。</div></div></div>`;
+    const b = pplState.bindings.find((x) => String(x.speaker_label) === lb);
+    const opts = pplState.participants.map((p) => `<option value="${esc(p.id)}" ${b && String(b.participant_id) === String(p.id) ? 'selected' : ''}>${esc(pplName(p))}</option>`).join('');
+    return `<div class="ppl-row"><div class="who"><span class="nm">${esc(lb)}</span><div class="meta">${Number(t.segments) || 0} 段${b ? ' · 已绑定 ' + esc(pplName(pplById(b.participant_id)) || '') : ' · 未绑定'}</div></div><div class="acts"><select id="bind-sel-${esc(lb)}" style="width:auto">${opts}</select><button class="ghost" data-bind="${esc(lb)}">绑定</button>${b ? `<button class="ghost" data-unbind="${esc(lb)}">解绑</button>` : ''}</div></div>`;
+  }).join('');
+  panel.innerHTML = `
+    <h4>与会人员（${pplState.participants.length}）</h4>
+    <div id="ppl-list">${rows || '<p class="dim">暂无登记人员，可在下方添加。</p>'}</div>
+    <div class="ppl-sec-t">发言人绑定</div>
+    <div id="ppl-tracks">${trackRows || '<p class="dim">暂无发言轨道（还没有字幕）。</p>'}</div>
+    <div class="ppl-sec-t">${pplEditId ? '编辑人员' : '添加人员'}</div>
+    <div class="ppl-form">
+      <input id="ppl-q" placeholder="搜索我的人物记忆（姓名）…" autocomplete="off">
+      <div id="ppl-hits"></div>
+      <div id="ppl-sel" class="meta" style="font-size:12px;color:var(--dim);margin-bottom:6px">${pplSelPerson ? '已选择已有的人物：' + esc(pplSelPerson.display_name) + '（将关联原人物记录，不重复建档）' : ''}</div>
+      <input id="ppl-name" placeholder="姓名（必填）">
+      <input id="ppl-role" placeholder="会议角色（主持人/参会人/嘉宾…）" list="ppl-roles"><datalist id="ppl-roles"><option value="主持人"></option><option value="参会人"></option><option value="嘉宾"></option><option value="主讲人"></option></datalist>
+      <input id="ppl-relation" placeholder="与我的关系（客户/合作伙伴/同事…，可自定义）" list="ppl-rels"><datalist id="ppl-rels"><option value="客户"></option><option value="合作伙伴"></option><option value="同事"></option><option value="朋友"></option><option value="家人"></option><option value="投资人"></option></datalist>
+      <input id="ppl-company" placeholder="公司 / 机构（选填）">
+      <input id="ppl-job" placeholder="职务（选填）">
+      <input id="ppl-note" placeholder="人物备注（选填）">
+      <div style="display:flex;gap:6px">
+        <button id="ppl-add" style="flex:1">${pplEditId ? '保存修改' : '添加与会人员'}</button>
+        ${pplEditId ? '<button id="ppl-edit-cancel" class="ghost">取消编辑</button>' : ''}
+      </div>
+      <p class="dim" style="font-size:12px;margin:6px 0 0">从本场移除只删名单关联，不会删除人物记忆。姓名/关系/公司/职务保存到统一人物档案，角色与备注只属于本场。</p>
+    </div>`;
+  panel.querySelectorAll('[data-ppl-del]').forEach((btn) => { btn.onclick = async () => {
+    const p = pplById(btn.getAttribute('data-ppl-del')); if (!p) return;
+    if (!confirm(`从本场会议移除「${pplName(p)}」？只删本场名单，人物记忆保留。`)) return;
+    try { await client.api('participant_remove', { meeting_id: cur.meeting.id, participant_id: p.id }); if (pplEditId === p.id) { pplEditId = null; pplSelPerson = null; } await refreshParticipants(); } catch (e) { $('ws-err').textContent = '移除失败：' + e.message; }
+  }; });
+  panel.querySelectorAll('[data-ppl-edit]').forEach((btn) => { btn.onclick = () => {
+    const p = pplById(btn.getAttribute('data-ppl-edit')); if (!p) return;
+    pplEditId = p.id; pplSelPerson = null; renderPplPanel();
+    const person = p.person || {};
+    $('ppl-name').value = pplName(p);
+    $('ppl-role').value = p.role || '';
+    $('ppl-relation').value = p.relation_snapshot || person.relation_label || '';
+    $('ppl-company').value = p.company_snapshot || person.company || '';
+    $('ppl-job').value = p.job_title_snapshot || person.job_title || '';
+    $('ppl-note').value = p.note || '';
+  }; });
+  const ec = $('ppl-edit-cancel'); if (ec) ec.onclick = () => { pplEditId = null; pplSelPerson = null; renderPplPanel(); };
+  panel.querySelectorAll('[data-bind]').forEach((btn) => { btn.onclick = async () => {
+    const lb = btn.getAttribute('data-bind');
+    const sel = document.getElementById('bind-sel-' + lb);
+    if (!sel || !sel.value) { $('ws-err').textContent = '请先添加与会人员再绑定。'; return; }
+    try { await client.api('speaker_bind', { meeting_id: cur.meeting.id, speaker_label: lb, participant_id: sel.value }); await refreshParticipants(); } catch (e) { $('ws-err').textContent = '绑定失败：' + e.message; }
+  }; });
+  panel.querySelectorAll('[data-unbind]').forEach((btn) => { btn.onclick = async () => {
+    try { await client.api('speaker_unbind', { meeting_id: cur.meeting.id, speaker_label: btn.getAttribute('data-unbind') }); await refreshParticipants(); } catch (e) { $('ws-err').textContent = '解绑失败：' + e.message; }
+  }; });
+  let searchTimer = null;
+  $('ppl-q').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const q = $('ppl-q').value.trim();
+    searchTimer = setTimeout(async () => {
+      const hitsBox = $('ppl-hits'); if (!hitsBox) return;
+      if (!q) { hitsBox.innerHTML = ''; return; }
+      try {
+        const r = await client.api('people_search', { meeting_id: cur.meeting.id, q });
+        hitsBox.innerHTML = (r.people || []).map((pp) => `<button class="ghost ppl-hit" data-hit="${esc(pp.id)}">${esc(pp.display_name)}${pp.company ? ' · ' + esc(pp.company) : ''}${pp.relation_label ? ' · ' + esc(pp.relation_label) : ''}</button>`).join('') || '<p class="dim" style="font-size:12px">人物记忆中没有同名记录，将按下方表单新建。</p>';
+        hitsBox.querySelectorAll('[data-hit]').forEach((hb) => { hb.onclick = () => {
+          const pp = (r.people || []).find((x) => String(x.id) === hb.getAttribute('data-hit')); if (!pp) return;
+          pplSelPerson = pp;
+          $('ppl-name').value = pp.display_name || '';
+          $('ppl-relation').value = pp.relation_label || '';
+          $('ppl-company').value = pp.company || '';
+          $('ppl-job').value = pp.job_title || '';
+          $('ppl-sel').textContent = '已选择已有的人物：' + (pp.display_name || '') + '（将关联原人物记录，不重复建档）';
+          hitsBox.innerHTML = '';
+        }; });
+      } catch { /* 搜索失败不挡手动添加 */ }
+    }, 250);
+  });
+  $('ppl-add').onclick = async () => {
+    const payload = {
+      name: $('ppl-name').value.trim(), role: $('ppl-role').value.trim(),
+      relation: $('ppl-relation').value.trim(), company: $('ppl-company').value.trim(),
+      job_title: $('ppl-job').value.trim(), note: $('ppl-note').value.trim(),
+    };
+    try {
+      if (pplEditId) {
+        await client.api('participant_update', { meeting_id: cur.meeting.id, participant_id: pplEditId, ...payload });
+        pplEditId = null;
+      } else {
+        if (!payload.name && !pplSelPerson) { $('ws-err').textContent = '请填写姓名，或先从人物记忆中选择。'; return; }
+        await client.api('participant_add', { meeting_id: cur.meeting.id, ...(pplSelPerson ? { person_id: pplSelPerson.id } : {}), ...payload });
+      }
+      pplSelPerson = null;
+      await refreshParticipants();
+    } catch (e) { $('ws-err').textContent = (pplEditId ? '保存' : '添加') + '失败：' + e.message; }
+  };
+}
+$('btn-ppl').onclick = (e) => {
+  e.stopPropagation();
+  const panel = $('ppl-panel');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'flex';
+  if (!open) { syncParticipantsFromCur(); renderPplPanel(); }
+};
+document.addEventListener('click', (e) => { const p = $('ppl-panel'); if (p && p.style.display !== 'none' && !e.target.closest('.ws-menu-wrap')) p.style.display = 'none'; });
+
+// 单段更正发言人：只写覆盖映射，原始转录与整轨绑定都不动
+let spkModalSegId = null;
+function openSpeakerModal(segId) {
+  const s = (cur.segments || []).find((x) => x.id === segId); if (!s) return;
+  spkModalSegId = segId;
+  const sd = speakerDisplayFor(s);
+  $('spk-modal-desc').textContent = `这一段（${fmtT(Number(s.start_sec))}）当前归属：${sd ? sd.name : '未确认'}。选择正确人员后只更正这一段。`;
+  const list = $('spk-modal-list'); list.innerHTML = '';
+  if (!pplState.participants.length) list.innerHTML = '<p class="dim">本场还没有登记与会人员，请先在「与会人员」中添加。</p>';
+  for (const p of pplState.participants) {
+    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = pplName(p) + (p.role ? ' · ' + p.role : '');
+    b.onclick = async () => {
+      try { await client.api('segment_speaker_set', { meeting_id: cur.meeting.id, segment_id: segId, participant_id: p.id }); await refreshParticipants(false); $('modal-speaker').style.display = 'none'; } catch (e) { $('ws-err').textContent = '更正失败：' + e.message; }
+    };
+    list.appendChild(b);
+  }
+  $('modal-speaker').style.display = 'flex';
+}
+$('spk-modal-close').onclick = () => { $('modal-speaker').style.display = 'none'; };
+$('spk-modal-clear').onclick = async () => {
+  if (!spkModalSegId) return;
+  try { await client.api('segment_speaker_set', { meeting_id: cur.meeting.id, segment_id: spkModalSegId, participant_id: null }); await refreshParticipants(false); $('modal-speaker').style.display = 'none'; } catch (e) { $('ws-err').textContent = '恢复失败：' + e.message; }
+};
+
 function renderSegments() {
   const box = $('segments'); box.innerHTML = '';
   const useCorr = corrView === 'corrected' && corrState && corrState.status === 'done';
@@ -1219,7 +1444,7 @@ function renderSegments() {
     if (corrView === 'bilingual') {
       const base = segBaseText(s);
       const bl = bilingualLine(s, base);
-      const spk = s.speaker_label && s.speaker_label !== 'unknown' ? ` <span class="spk">· ${esc(s.speaker_label)}</span>` : '';
+      const spk = spkHtmlFor(s); // [PARTICIPANTS-V1] 显示名按更正>绑定>原标签解析
       const tr = bl.text != null ? `<div class="seg-tr">${esc(bl.text)}</div>` : '<div class="seg-tr-na">译文暂不可用</div>';
       div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spk}${nbSegIds.has(s.id) ? '<span class="chip">断网补录</span>' : ''}<div>${esc(base)}</div>${tr}`;
       box.appendChild(div);
@@ -1235,13 +1460,18 @@ function renderSegments() {
     // [TRANSLATE-P1] 展示语言层：仅渲染层替换，cur.segments 原文数据不动、永不被译文覆盖
     const disp = segDisplay(s, body);
     body = disp.text; if (disp.chip) chips += disp.chip;
-    div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${esc(body)}${chips}`;
+    div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spkHtmlFor(s)}${esc(body)}${chips}`;
     if (corrView === 'original') {
       const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '改';
       b.style.cssText = 'font-size:11px;padding:0 4px;margin-left:4px';
       b.onclick = () => editSegment(s.id);
       div.appendChild(b);
     }
+    // [PARTICIPANTS-V1] 单段更正发言人入口（原文/校订版均可）
+    const sb2 = document.createElement('button'); sb2.className = 'ghost'; sb2.textContent = '发言人';
+    sb2.style.cssText = 'font-size:11px;padding:0 4px;margin-left:4px';
+    sb2.onclick = () => openSpeakerModal(s.id);
+    div.appendChild(sb2);
     box.appendChild(div);
   }
   // [WB-REDESIGN 2026-11-14] 最新一段以薄荷细线突出；自动跟随开启且用户未上翻时才滚动
@@ -1274,6 +1504,7 @@ async function loadVizAndForesight() {
       onError: (m) => { $('ws-err').textContent = m; },
       onReplayChange: syncReplayBar,
       getDisplayLang: () => displayLang, // [TRANSLATE-P1] 导图与页面共用同一展示语言状态（单一设置、同一入口语义）
+      getSpeakerDisplay: (label) => speakerNameForLabel(label), // [PARTICIPANTS-V1] 导图贡献显示名走轨道绑定解析
       onFollowChange: syncFollowBtn, // [STAGE 2026-11-14] 跟随被手动平移暂停/恢复时同步按钮文案
       getStageInfo: () => ({ title: (cur && cur.meeting && cur.meeting.title) || '未命名会议', status: cur && cur.meeting ? cur.meeting.status : '', recording: !!(cur && cur.meeting && cur.meeting.status === 'live' && wsReady) }), // [STAGE 2026-11-14] 演讲模式极简提示行数据源
     });
@@ -1533,7 +1764,7 @@ function renderMinutes() {
     const sel = ['confirmed','discussing','proposed','disputed','done','withdrawn'].map(s => `<option value="${s}" ${s===it.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
     div.innerHTML = `<span class="chip">${KIND_LABEL[it.kind] || it.kind}</span><span class="chip ${it.status}">${STATUS_LABEL[it.status] || it.status}</span>${it.user_locked ? '<span class="chip">已锁定</span>' : ''}<br>
       <span class="txt">${esc((it.i18n && it.i18n[displayLang] && it.i18n[displayLang].text) || it.text)}</span>
-      <div class="meta">${it.owner_label ? '负责人：' + esc(it.owner_label) + ' · ' : ''}${it.due_at ? '截止：' + esc(String(it.due_at).slice(0,10)) + ' · ' : ''}${it.origin === 'user' ? '人工条目' : 'AI 整理'}${it.supersedes_id ? ' · 替代了先前一条' : ''}</div>
+      <div class="meta">${(it.owner_person_id ? (personNameById(it.owner_person_id) || it.owner_label) : it.owner_label) ? '负责人：' + esc((it.owner_person_id ? (personNameById(it.owner_person_id) || it.owner_label) : it.owner_label)) + ' · ' : ''}${it.due_at ? '截止：' + esc(String(it.due_at).slice(0,10)) + ' · ' : ''}${it.origin === 'user' ? '人工条目' : 'AI 整理'}${it.supersedes_id ? ' · 替代了先前一条' : ''}</div>
       <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
         <select data-act="status">${sel}</select>
         <button class="ghost" data-act="edit">编辑</button>
@@ -1552,6 +1783,20 @@ function renderMinutes() {
       if (!confirm('删除这条纪要？')) return;
       try { await client.deleteItem(cur.meeting.id, it.id); await reloadMinutes(); } catch (e) { $('ws-err').textContent = e.message; }
     };
+    // [PARTICIPANTS-V1] 行动项负责人＝本场与会人员（写 owner_person_id 权威关联）
+    if (it.kind === 'action') {
+      const withPerson = pplState.participants.filter((p) => p.person_id);
+      if (withPerson.length) {
+        const selO = document.createElement('select');
+        selO.innerHTML = '<option value="">负责人：未指定</option>' + withPerson.map((p) => `<option value="${esc(p.person_id)}" ${String(it.owner_person_id || '') === String(p.person_id) ? 'selected' : ''}>负责人：${esc(pplName(p))}</option>`).join('');
+        selO.onchange = async () => {
+          const pid = selO.value || null;
+          const part = withPerson.find((p) => String(p.person_id) === String(pid));
+          try { await client.upsertItemUser(cur.meeting.id, { id: it.id, kind: it.kind, text: it.text, status: it.status, owner_person_id: pid, owner_label: part ? pplName(part) : it.owner_label }); await reloadMinutes(); } catch (e) { $('ws-err').textContent = '负责人保存失败：' + e.message; }
+        };
+        div.lastElementChild.appendChild(selO);
+      }
+    }
     box.appendChild(div);
   }
 }
