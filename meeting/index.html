@@ -255,6 +255,25 @@
   .mr-status.paused{background:#fdf0d5;color:#96660f}
   .mr-time{flex:none;color:#71808f;font-size:13.5px;white-space:nowrap}
   .mr-chev{flex:none;color:#a7b5ad;font-size:19px;line-height:1}
+  /* [LIVE-RESUME P0 2026-11-17] 首页「录音进行中」醒目区＋快速录音守卫卡（仅新增） */
+  #live-now-sec .live-now-card{background:#fff;border:1px solid #f3c1c1;border-radius:18px;box-shadow:0 16px 38px rgba(80,23,23,.07);padding:6px 0;margin-top:14px}
+  .live-now-row{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #f7e8e8;cursor:pointer}
+  .live-now-row:last-child{border-bottom:0}
+  .live-now-row:hover{background:#fdf3f3}
+  .live-now-dot{width:10px;height:10px;border-radius:50%;background:#dc2626;flex:none}
+  .live-now-dot.paused{background:#d97706}
+  .live-now-title{flex:1;min-width:0;font-size:15.5px;font-weight:700;color:#16241c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .live-now-meta{flex:none;color:#71808f;font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .live-now-enter{flex:none;color:#047857;font-weight:700;font-size:14px}
+  #live-guard{display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin-top:12px}
+  #live-guard .lg-title{font-weight:700;color:#9a3412;margin-bottom:8px}
+  #live-guard .lg-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #ffedd5}
+  #live-guard .lg-name{flex:1;min-width:0;font-weight:600;color:#16241c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #live-guard .lg-meta{color:#71808f;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  #live-guard button{cursor:pointer}
+  #live-guard .lg-resume{background:#047857;color:#fff;border:0;border-radius:9px;padding:8px 14px;font-weight:600}
+  #live-guard .lg-new{background:#fff;color:#9a3412;border:1px solid #fdba74;border-radius:9px;padding:8px 14px;font-weight:600}
+  #live-guard .lg-note{color:#71808f;font-size:13px;margin-top:8px}
   /* [LONGPRESS-DELETE 2026-11-17] 「我的会议」长按/右键操作菜单＋删会二次确认（仅新增，既有行样式与布局不动） */
   #meeting-list .meeting-row,#search-results .meeting-row{-webkit-touch-callout:none}
   #row-menu{position:fixed;z-index:120;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 18px 44px rgba(10,30,20,.22);padding:6px;min-width:176px}
@@ -591,6 +610,9 @@ body.in-topic{background:#FFFFFF}
         <div id="ent-bar" class="ent-bar" style="display:none" data-i18n-skip></div>
       </div>
     </div>
+    <!-- [LIVE-RESUME P0 2026-11-17] 录音进行中醒目区（JS 渲染，有 live/paused 会话才显示） -->
+    <div class="home-sec" id="live-now-sec" style="display:none"></div>
+    <div id="live-guard" data-i18n-skip></div>
     <!-- [TOPIC-VIS 2026-11-17] 我的主题（紧凑列表，含 0 次会议的主题；无主题时整区不渲染） -->
     <div class="home-sec" id="topic-sec" style="display:none">
       <div class="home-sec-head">
@@ -1127,12 +1149,102 @@ async function refreshEntBar() {
   try { const f = await client.flagStatus(); renderEntBar(f && f.entitlement); }
   catch { renderEntBar(null); }
 }
+// [LIVE-RESUME P0 2026-11-17] 进行中会话：首页醒目区＋快速录音/主题开录守卫（与 App 同口径）。
+// 计时口径与 App/录音页一致：timer v1＝累计＋live 当前段实时推进（暂停冻结）；v0 回落 started_at 墙钟。
+let __meetingsCache = null;
+let __liveNowTimer = null;
+function fmtElapsedWeb(m, nowMs) {
+  let sec = 0;
+  if (Number(m.timer_version || 0) >= 1) {
+    sec = Number(m.timer_accumulated_ms || 0) / 1000;
+    if (m.status === 'live' && m.timer_segment_started_at) sec += Math.max(0, nowMs - Date.parse(m.timer_segment_started_at)) / 1000;
+  } else if (m.started_at) {
+    const end = m.ended_at ? Date.parse(m.ended_at) : nowMs;
+    sec = Math.max(0, (end - Date.parse(m.started_at)) / 1000);
+  }
+  const s = Math.floor(sec);
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function activeSessionsOf(meetings) {
+  const sorted = [...(meetings || [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  return { live: sorted.filter((m) => m.status === 'live'), paused: sorted.filter((m) => m.status === 'paused') };
+}
+function renderLiveNow(meetings) {
+  const sec = $('live-now-sec');
+  if (!sec) return;
+  const active = activeSessionsOf(meetings);
+  const all = [...active.live, ...active.paused];
+  if (__liveNowTimer) { clearInterval(__liveNowTimer); __liveNowTimer = null; }
+  if (!all.length) { sec.style.display = 'none'; sec.innerHTML = ''; return; }
+  sec.style.display = '';
+  sec.innerHTML = '<div class="home-sec-head"><h3>' + L('录音进行中', 'Recording in progress') + '</h3></div><div class="live-now-card"></div>';
+  const card = sec.querySelector('.live-now-card');
+  for (const m of all) {
+    const row = document.createElement('div');
+    row.className = 'live-now-row';
+    row.innerHTML = '<span class="live-now-dot' + (m.status === 'paused' ? ' paused' : '') + '"></span>'
+      + '<span class="live-now-title">' + esc((m.title || '').trim() || L('未命名会议', 'Untitled meeting')) + '</span>'
+      + '<span class="live-now-meta" data-ln-elapsed="' + m.id + '">' + (m.status === 'live' ? L('录音中', 'Recording') : L('已暂停', 'Paused')) + ' · ' + fmtElapsedWeb(m, Date.now()) + '</span>'
+      + '<span class="live-now-enter">' + L('进入', 'Open') + '</span>';
+    row.onclick = () => openMeeting(m.id);
+    card.appendChild(row);
+  }
+  if (active.live.length) {
+    __liveNowTimer = setInterval(() => {
+      for (const m of active.live) {
+        const el = sec.querySelector('[data-ln-elapsed="' + m.id + '"]');
+        if (el) el.textContent = L('录音中', 'Recording') + ' · ' + fmtElapsedWeb(m, Date.now());
+      }
+    }, 1000);
+  }
+}
+async function fetchActiveSessions() {
+  if (__meetingsCache) { const a = activeSessionsOf(__meetingsCache); if (a.live.length || a.paused.length) return a; }
+  try {
+    const { meetings } = await client.listMeetings();
+    __meetingsCache = meetings || [];
+    return activeSessionsOf(__meetingsCache);
+  } catch { return { live: [], paused: [] }; }
+}
+// 守卫卡：有进行中会话时，开录前先让用户明确选「回到录音」或「新开一场」，杜绝静默新建第二场
+function showLiveGuard(active, onNewSession) {
+  const box = $('live-guard');
+  if (!box) { onNewSession(); return; }
+  const all = [...active.live, ...active.paused];
+  box.style.display = '';
+  box.innerHTML = '<div class="lg-title">' + (active.live.length ? L('有一场录音正在进行', 'A recording is in progress') : L('有一场已暂停的录音', 'A recording is paused')) + '</div>';
+  for (const m of all) {
+    const row = document.createElement('div');
+    row.className = 'lg-row';
+    row.innerHTML = '<span class="lg-name">' + esc((m.title || '').trim() || L('未命名会议', 'Untitled meeting')) + '</span>'
+      + '<span class="lg-meta">' + (m.status === 'live' ? L('录音中', 'Recording') : L('已暂停', 'Paused')) + ' · ' + fmtElapsedWeb(m, Date.now()) + '</span>';
+    const btn = document.createElement('button');
+    btn.className = 'lg-resume';
+    btn.textContent = L('回到录音', 'Back to recording');
+    btn.onclick = () => { box.style.display = 'none'; openMeeting(m.id); };
+    row.appendChild(btn);
+    box.appendChild(row);
+  }
+  const note = document.createElement('div');
+  note.className = 'lg-note';
+  note.textContent = L('点「回到录音」继续之前的录音；只有明确点「新开一场」才会新建会议。', 'Tap "Back to recording" to continue the earlier recording. A new session is created only if you explicitly choose "Start a new session".');
+  box.appendChild(note);
+  const nb = document.createElement('button');
+  nb.className = 'lg-new';
+  nb.textContent = L('新开一场', 'Start a new session');
+  nb.style.marginTop = '10px';
+  nb.onclick = () => { box.style.display = 'none'; onNewSession(); };
+  box.appendChild(nb);
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 async function loadList() {
   void refreshEntBar(); // [MEETING-ENTITLEMENT] 权益条随列表一并刷新（失败隐藏，不阻塞列表）
   loadTopics(); // [TOPICS-S2] 主题区与会议列表并行刷新（失败各自呈现，不互相阻塞）
   const box = $('meeting-list');
   try {
     const { meetings } = await client.listMeetings();
+    __meetingsCache = meetings; renderLiveNow(meetings);
     if (!meetings.length) { box.innerHTML = '<span class="dim">还没有会议。点上方按钮开始第一场。</span>'; return; }
     box.innerHTML = '';
     for (const m of meetings) {
@@ -1301,6 +1413,11 @@ async function loadTopics() {
 
 // 主题内开录：复用既有同意门；候选勾选区可选、默认不勾、加载失败不阻塞
 async function startTopicRecording(t) {
+  const active = await fetchActiveSessions();
+  if (active.live.length || active.paused.length) { showLiveGuard(active, () => { void startTopicRecordingInner(t); }); return; }
+  return startTopicRecordingInner(t);
+}
+async function startTopicRecordingInner(t) {
   pendingTopic = { id: t.id, title: t.title };
   $('new-title').value = t.title || '';
   $('consent').checked = false; $('consent-err').textContent = '';
@@ -1594,7 +1711,12 @@ $('btn-ask').onclick = async () => {
   $('btn-ask').disabled = false;
 };
 
-$('btn-new').onclick = () => { pendingTopic = null; $('consent-topic').style.display = 'none'; $('new-title').value = ''; $('modal-consent').style.display = 'flex'; };
+function openQuickConsent() { pendingTopic = null; $('consent-topic').style.display = 'none'; $('new-title').value = ''; $('modal-consent').style.display = 'flex'; }
+$('btn-new').onclick = async () => {
+  const active = await fetchActiveSessions();
+  if (active.live.length || active.paused.length) { showLiveGuard(active, openQuickConsent); return; }
+  openQuickConsent();
+};
 $('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; pendingTopic = null; };
 $('btn-create').onclick = async () => {
   if (!$('consent').checked) { $('consent-err').textContent = '请先确认录音同意。'; return; }
