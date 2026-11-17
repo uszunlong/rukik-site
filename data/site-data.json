@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T21:11:44Z",
+ "generated_at": "2026-11-17T23:02:04Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -27,7 +27,7 @@
    ],
    "specialties": [],
    "tagline": "",
-   "article_count": 11
+   "article_count": 12
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
@@ -134,6 +134,25 @@
   }
  ],
  "articles": [
+  {
+   "id": "180b7c89-e69b-4971-90ec-74db9aee95f6",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
+   "title": "英伟达黄仁勋复职争议背后的公司治理、董事会责任与跨境出口合规风险",
+   "summary": null,
+   "topics": [],
+   "date": "2026-11-17",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/180b7c89-e69b-4971-90ec-74db9aee95f6/hero-author-1794956384084.jpg",
+   "published_at": "2026-11-17 23:01:39.281575+00",
+   "url": "https://rukik.com/a/180b7c89-e69b-4971-90ec-74db9aee95f6",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
+  },
   {
    "id": "15c909a6-f5b1-440b-9411-afd6517b8116",
    "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
