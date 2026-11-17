@@ -58,7 +58,7 @@ export class MeetingClient {
     search(q) {
         return this.api('search', { q });
     }
-    deleteMeeting(meetingId) { return this.api('delete', { meeting_id: meetingId }); }
+    deleteMeeting(meetingId, expectedVersion) { return this.api('delete', { meeting_id: meetingId, ...(expectedVersion ? { expected_version: expectedVersion } : {}) }); }
     analyze(meetingId, force = false, kind = 'minutes', auto = false) {
         // [AUTO-FORESIGHT 2026-11-14] auto=true 标记自动扫描（服务端单次落库上限 2 条，手动 3 条）
         return this.orchestrator('analyze', { meeting_id: meetingId, force, kind, auto: !!auto });

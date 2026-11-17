@@ -247,6 +247,15 @@
   .mr-status.paused{background:#fdf0d5;color:#96660f}
   .mr-time{flex:none;color:#71808f;font-size:13.5px;white-space:nowrap}
   .mr-chev{flex:none;color:#a7b5ad;font-size:19px;line-height:1}
+  /* [LONGPRESS-DELETE 2026-11-17] 「我的会议」长按/右键操作菜单＋删会二次确认（仅新增，既有行样式与布局不动） */
+  #meeting-list .meeting-row,#search-results .meeting-row{-webkit-touch-callout:none}
+  #row-menu{position:fixed;z-index:120;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 18px 44px rgba(10,30,20,.22);padding:6px;min-width:176px}
+  #row-menu button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#111827;font-size:15px;font-weight:500;padding:11px 12px;border-radius:8px;cursor:pointer}
+  #row-menu button:hover{background:#f2faf6}
+  #row-menu button.rm-danger{color:#DC2626}
+  #modal-del-meeting .dm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  body:not(.in-ws) #modal-del-meeting #dm-cancel{background:#fff;color:#33463c;border:1px solid #dbe5df}
+  body:not(.in-ws) #modal-del-meeting #dm-confirm{background:#DC2626;color:#fff;border:0}
   .home-foot{display:flex;align-items:center;gap:8px;padding:18px 6px 6px;margin-top:28px;border-top:1px solid #e3ece7;color:#8b98a5;font-size:13px}
   .home-foot .foot-right{margin-left:auto}
   .settings-toggle{display:flex;align-items:center;gap:7px;background:transparent;border:0;color:#5b6a72;font-size:13.5px;padding:8px 6px;cursor:pointer}
@@ -806,6 +815,23 @@ body.in-topic{background:#FFFFFF}
   </div>
 </div>
 
+<!-- [LONGPRESS-DELETE 2026-11-17] 会议行长按/右键菜单＋删会二次确认框（首页列表专用） -->
+<div id="row-menu" style="display:none">
+  <button id="rm-view" type="button">查看会议</button>
+  <button id="rm-del" type="button" class="rm-danger">删除会议</button>
+</div>
+<div id="modal-del-meeting" class="modal" style="display:none">
+  <div class="box">
+    <h3 id="dm-title" style="margin-top:0">删除这条会议记录？</h3>
+    <p id="dm-body">删除后，该次会议的录音、转写、纪要及关联的会议专属内容将按照数据删除规则处理。其他会议和所属长期主题不受影响。</p>
+    <p id="dm-err" class="err"></p>
+    <div class="dm-actions">
+      <button id="dm-cancel" class="ghost">取消</button>
+      <button id="dm-confirm" class="danger">删除会议</button>
+    </div>
+  </div>
+</div>
+
 <!-- [PARTICIPANTS-V1 2026-11-17] 单段更正发言人 -->
 <div id="modal-speaker" class="modal" style="display:none">
   <div class="box">
@@ -1039,6 +1065,8 @@ async function loadList() {
       const row = document.createElement('div'); row.className = 'meeting-row';
       row.innerHTML = `<span class="mr-ico">${ICO_WAVE}</span><span class="mr-title">${esc(m.title)}</span><span class="mr-type">${m.mode === 'speech' ? ICO_MIC : ICO_PEOPLE}<span class="mr-type-txt">${m.mode === 'speech' ? '演讲' : '会议'}</span></span><span class="mr-sep"></span><span class="mr-status ${esc(m.status)}">${ST_TXT[m.status] || esc(m.status)}</span><span class="mr-time">${fmtDay(m.started_at || m.created_at)}</span><span class="mr-chev">›</span>`;
       row.onclick = () => openMeeting(m.id);
+      row.dataset.mid = m.id;
+      attachRowActions(row, { id: m.id, status: m.status, updated_at: m.updated_at });
       box.appendChild(row);
     }
   } catch (e) { box.innerHTML = '<span class="err">加载失败：' + esc(e.message) + '</span>'; }
@@ -1056,11 +1084,102 @@ $('btn-search').onclick = async () => {
       const row = document.createElement('div'); row.className = 'meeting-row';
       row.innerHTML = `<span><b>${esc(h.title)}</b><br><span class="dim">${h.via === 'title' ? '标题匹配' : esc(fmtT(h.start_sec)) + ' · ' + esc(h.quote)}</span></span>`;
       row.onclick = () => openMeeting(h.meeting_id);
+      row.dataset.mid = h.meeting_id;
+      attachRowActions(row, { id: h.meeting_id, status: null, updated_at: null });
       box.appendChild(row);
     }
   } catch (e) { box.innerHTML = '<span class="err">搜索失败：' + esc(e.message) + '</span>'; }
 };
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-search').click(); }); // [HOME-REDESIGN 2026-11-14] 回车搜索：与搜索按钮同一逻辑
+
+// ================= [LONGPRESS-DELETE 2026-11-17] 会议记录长按删除 =================
+// 交互：触屏长按约 500ms（移动 >10px 视为滚动、取消）或桌面右键 → 行菜单
+// （查看会议／删除会议）；长按触发的那次 click 被吞掉，不误入详情。普通
+// 点击、搜索、状态标签与行样式全部不变，不加常驻删除按钮。
+// 删除：走 meeting-api 既有 delete 通道（墓碑软删＋索引失效＋跨会推翻撤
+// 销＋本会提醒取消的既有生命周期）；执行前以列表行 updated_at 为版本锚
+// 点回读复核（状态＋版本），服务端再过统一对象操作协议校验
+// （meeting/delete）＋录音状态硬闸；录音未结束（live/paused）只提示先
+// 结束录音、本处不删除。成功后先就地移除该行，再 loadList 整表复核
+// （会议计数与主题计数随服务端数据自然更新）。
+let rmTarget = null; // {id, status, updated_at}
+function hideRowMenu() { $('row-menu').style.display = 'none'; }
+function openRowMenu(row, snap) {
+  rmTarget = snap;
+  row._lpFired = true; // 吞掉长按/右键手势尾随的 click
+  const menu = $('row-menu');
+  menu.style.display = 'block';
+  const r = row.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let x = Math.min(r.left + 8, window.innerWidth - mw - 8); if (x < 8) x = 8;
+  let y = r.bottom + 6; if (y + mh > window.innerHeight - 8) y = Math.max(8, r.top - mh - 6);
+  menu.style.left = x + 'px'; menu.style.top = y + 'px';
+  // 搜索结果行没有状态/版本快照：打开菜单时回读权威行补齐（不阻塞菜单）
+  if (snap.status == null || !snap.updated_at) {
+    client.getMeeting(snap.id).then((d) => { if (rmTarget === snap && d && d.meeting) { snap.status = d.meeting.status; snap.updated_at = d.meeting.updated_at; } }).catch(() => {});
+  }
+}
+function attachRowActions(row, snap) {
+  let timer = null, sx = 0, sy = 0;
+  const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  row.addEventListener('pointerdown', (e) => {
+    if (e.button && e.button !== 0) return;
+    row._lpFired = false; sx = e.clientX; sy = e.clientY; clear();
+    timer = setTimeout(() => { timer = null; openRowMenu(row, snap); }, 500);
+  });
+  row.addEventListener('pointermove', (e) => { if (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10) clear(); });
+  row.addEventListener('pointerup', clear);
+  row.addEventListener('pointercancel', clear);
+  row.addEventListener('contextmenu', (e) => { e.preventDefault(); clear(); openRowMenu(row, snap); });
+  row.addEventListener('click', (e) => { if (row._lpFired) { e.stopPropagation(); e.preventDefault(); row._lpFired = false; } }, true);
+}
+document.addEventListener('pointerdown', (e) => { const m = $('row-menu'); if (m.style.display !== 'none' && !m.contains(e.target)) hideRowMenu(); });
+window.addEventListener('scroll', hideRowMenu, true);
+window.addEventListener('resize', hideRowMenu);
+$('rm-view').onclick = () => { const t = rmTarget; hideRowMenu(); if (t) openMeeting(t.id); };
+$('rm-del').onclick = async () => {
+  hideRowMenu();
+  const snap = rmTarget; if (!snap) return;
+  if (snap.status == null || !snap.updated_at) { // 快照未补齐时先回读权威行
+    try { const d = await client.getMeeting(snap.id); snap.status = d.meeting.status; snap.updated_at = d.meeting.updated_at; } catch { /* 回读失败按未知状态处理：确认框照常打开，确认时再复核 */ }
+  }
+  showDeleteModal((snap.status === 'live' || snap.status === 'paused') ? 'blocked' : 'confirm');
+};
+function showDeleteModal(mode) {
+  const blocked = mode === 'blocked';
+  $('dm-title').textContent = blocked ? L('请先结束录音', 'End the recording first') : L('删除这条会议记录？', 'Delete this meeting?');
+  $('dm-body').textContent = blocked
+    ? L('这场会议尚未结束录音，请先结束录音后再删除。', 'This meeting has not finished recording yet. End the recording before deleting it.')
+    : L('删除后，该次会议的录音、转写、纪要及关联的会议专属内容将按照数据删除规则处理。其他会议和所属长期主题不受影响。', 'The recording, transcript, notes, and meeting-specific content will be handled according to the deletion policy. Other meetings and the parent topic will not be affected.');
+  $('dm-confirm').style.display = blocked ? 'none' : '';
+  $('dm-err').textContent = '';
+  $('modal-del-meeting').style.display = 'flex';
+}
+function hideDeleteModal() { $('modal-del-meeting').style.display = 'none'; }
+$('dm-cancel').onclick = hideDeleteModal;
+$('modal-del-meeting').addEventListener('pointerdown', (e) => { if (e.target === $('modal-del-meeting')) hideDeleteModal(); });
+const dmStaleMsg = () => L('这条会议记录刚刚有变化，列表已刷新，请重新操作。', 'This meeting just changed. The list has been refreshed — please try again.');
+$('dm-confirm').onclick = async () => {
+  const snap = rmTarget; if (!snap) { hideDeleteModal(); return; }
+  const btn = $('dm-confirm'); btn.disabled = true; $('dm-err').textContent = '';
+  try {
+    const d = await client.getMeeting(snap.id); // 执行前回读权威现状（状态＋版本锚点复核）
+    const cur = d.meeting;
+    if (cur.status === 'live' || cur.status === 'paused') { showDeleteModal('blocked'); return; }
+    if (snap.updated_at && cur.updated_at !== snap.updated_at) { hideDeleteModal(); alert(dmStaleMsg()); await loadList(); return; }
+    await client.deleteMeeting(snap.id, cur.updated_at);
+    hideDeleteModal();
+    document.querySelectorAll('[data-mid="' + snap.id + '"]').forEach((el) => el.remove()); // 先就地移除（列表＋搜索结果同步）
+    if (rmTarget === snap) rmTarget = null;
+    await loadList(); // 整表复核：计数与所属主题会议数随服务端数据更新
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    if (msg.includes('meeting_recording_active')) { showDeleteModal('blocked'); }
+    else if (msg.includes('op_validation_failed') || msg.includes('stale_version')) { hideDeleteModal(); alert(dmStaleMsg()); await loadList(); }
+    else if (msg.includes('meeting_not_found')) { hideDeleteModal(); document.querySelectorAll('[data-mid="' + snap.id + '"]').forEach((el) => el.remove()); await loadList(); }
+    else { $('dm-err').textContent = L('删除失败：', 'Delete failed: ') + msg; } // 真实错误如实呈现，不提前报成功
+  } finally { btn.disabled = false; }
+};
 
 // ================= [TOPICS-S2 2026-11-17] 长期主题（第二段：首页/弹窗/工作台/双层人员接线） =================
 // 数据面：meeting-api v21 的 topic_* 动作（0805/0806 RPC 与视图）＋ orchestrator kind='topic'。
@@ -2490,7 +2609,7 @@ function startEndReconcile() {
 
 $('btn-delete').onclick = async () => {
   if (!confirm('删除这场会议？删除后其转写与纪要将不可再被检索。')) return;
-  try { await client.deleteMeeting(cur.meeting.id); show('home'); await loadList(); } catch (e) { $('ws-err').textContent = e.message; }
+  try { await client.deleteMeeting(cur.meeting.id, cur.meeting.updated_at); show('home'); await loadList(); } catch (e) { $('ws-err').textContent = e.message; }
 };
 
 document.querySelectorAll('.tabs button').forEach((b) => {
