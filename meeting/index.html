@@ -1103,10 +1103,11 @@ $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-search
 // 结束录音、本处不删除。成功后先就地移除该行，再 loadList 整表复核
 // （会议计数与主题计数随服务端数据自然更新）。
 let rmTarget = null; // {id, status, updated_at}
+let rmSwallow = false; // 长按/右键手势尾随的那次 click 在 document 捕获层吞掉（行内监听与 onclick 在目标阶段按注册顺序触发、吞不住落在行本身的点击）；下一次 pointerdown 先解除武装，菜单项点击不受影响
 function hideRowMenu() { $('row-menu').style.display = 'none'; }
 function openRowMenu(row, snap) {
   rmTarget = snap;
-  row._lpFired = true; // 吞掉长按/右键手势尾随的 click
+  rmSwallow = true;
   const menu = $('row-menu');
   menu.style.display = 'block';
   const r = row.getBoundingClientRect();
@@ -1124,16 +1125,16 @@ function attachRowActions(row, snap) {
   const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
   row.addEventListener('pointerdown', (e) => {
     if (e.button && e.button !== 0) return;
-    row._lpFired = false; sx = e.clientX; sy = e.clientY; clear();
+    sx = e.clientX; sy = e.clientY; clear();
     timer = setTimeout(() => { timer = null; openRowMenu(row, snap); }, 500);
   });
   row.addEventListener('pointermove', (e) => { if (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10) clear(); });
   row.addEventListener('pointerup', clear);
   row.addEventListener('pointercancel', clear);
   row.addEventListener('contextmenu', (e) => { e.preventDefault(); clear(); openRowMenu(row, snap); });
-  row.addEventListener('click', (e) => { if (row._lpFired) { e.stopPropagation(); e.preventDefault(); row._lpFired = false; } }, true);
 }
-document.addEventListener('pointerdown', (e) => { const m = $('row-menu'); if (m.style.display !== 'none' && !m.contains(e.target)) hideRowMenu(); });
+document.addEventListener('click', (e) => { if (rmSwallow) { rmSwallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener('pointerdown', (e) => { rmSwallow = false; const m = $('row-menu'); if (m.style.display !== 'none' && !m.contains(e.target)) hideRowMenu(); });
 window.addEventListener('scroll', hideRowMenu, true);
 window.addEventListener('resize', hideRowMenu);
 $('rm-view').onclick = () => { const t = rmTarget; hideRowMenu(); if (t) openMeeting(t.id); };
