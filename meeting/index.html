@@ -394,6 +394,26 @@
     body.in-ws #m-title-view{max-width:30%}
     body.in-ws #m-timer{display:none}
   }
+/* [TOPICS-S2 2026-11-17] 长期主题：首页主题卡 / 主题工作台 / 新建主题弹窗 / 未确认发言人提示 */
+.topic-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.topic-card .tc-title{font-weight:600;font-size:15px}
+.topic-card .tc-meta{color:var(--dim);font-size:12px;margin-top:2px}
+.topic-card .tc-progress{margin-top:6px;font-size:13px}
+.topic-card .tc-acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tp-tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.tp-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:5px 12px;cursor:pointer;font:inherit}
+.tp-tabs button.on{background:rgba(45,212,160,.16);border-color:rgba(45,212,160,.5)}
+.tp-kv{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.tp-kv h4{margin:0 0 6px;font-size:13px}
+.tp-item{padding:4px 0;border-bottom:1px dashed rgba(127,127,127,.25);font-size:13px}
+.tp-item:last-child{border-bottom:none}
+.tp-tl-row{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.tp-person-row{display:flex;gap:6px;margin-bottom:6px;position:relative}
+.tp-person-row input{flex:1;min-width:0}
+.tp-hits{position:absolute;top:100%;left:0;right:110px;background:var(--card,#12241f);border:1px solid var(--line);border-radius:8px;z-index:30;max-height:160px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.tp-hits div{padding:6px 10px;cursor:pointer;font-size:13px}
+.tp-hits div:hover{background:rgba(45,212,160,.12)}
+#spk-hint{margin-top:8px;padding:8px 10px;border:1px solid rgba(250,204,21,.45);border-radius:10px;font-size:13px;display:none;align-items:center;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -488,6 +508,15 @@
         </div>
       </div>
     </div>
+    <!-- [TOPICS-S2 2026-11-17] 长期主题区：主题是长期容器，录音只是其中一次记录 -->
+    <div class="home-sec" id="topic-sec">
+      <div class="home-sec-head">
+        <h3>长期主题</h3>
+        <button id="btn-new-topic" class="ghost">＋ 新建主题</button>
+      </div>
+      <p class="dim" style="margin:0 0 10px">一次主题，长期积累；多次录音，连续理解。</p>
+      <div id="topic-list" data-i18n-skip><span class="dim">加载中…</span></div>
+    </div>
     <div class="home-sec">
       <div class="home-sec-head">
         <h3>我的会议</h3>
@@ -517,6 +546,31 @@
     </div>
   </div>
 
+  <!-- [TOPICS-S2 2026-11-17] 主题工作台：概览/会议记录/主题记忆/任务与进展 -->
+  <div id="view-topic" style="display:none">
+    <div class="card">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button id="btn-topic-back" class="ghost" title="返回首页">←</button>
+        <h3 id="tp-title" data-i18n-skip style="margin:0"></h3>
+        <span id="tp-status" class="chip"></span>
+        <span style="flex:1"></span>
+        <button id="tp-record">开始录音</button>
+        <button id="tp-edit" class="ghost">编辑主题</button>
+        <button id="tp-archive" class="ghost">归档</button>
+        <button id="tp-delete" class="ghost" style="color:var(--bad)">删除主题</button>
+      </div>
+      <p id="tp-meta" class="dim" data-i18n-skip style="margin:6px 0 0"></p>
+      <div id="tp-objective" data-i18n-skip style="margin-top:6px"></div>
+      <div class="tp-tabs" id="tp-tabs">
+        <button data-tp-tab="overview" class="on">概览</button>
+        <button data-tp-tab="sessions">会议记录</button>
+        <button data-tp-tab="memory">主题记忆</button>
+        <button data-tp-tab="tasks">任务与进展</button>
+      </div>
+      <div id="tp-pane" data-i18n-skip></div>
+    </div>
+  </div>
+
   <!-- 工作台 -->
   <div id="view-ws" style="display:none">
     <div class="card ws-head">
@@ -525,7 +579,7 @@
         <span class="ws-brand"><img class="brand-logo" src="./assets/seal.png" alt="RUKIK"><span>RUKIK</span><span class="brand-sub">AI 会议伴侣</span></span>
         <span id="m-title-view" title="点击修改标题" data-i18n-skip></span>
         <input id="m-title" data-i18n-skip>
-        <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span>
+        <span id="m-mode" class="chip"></span><span id="m-status" class="chip"></span><span id="m-topic-chip" class="chip" data-i18n-skip style="display:none;cursor:pointer" title="打开主题工作台"></span>
         <div class="ws-menu-wrap">
           <button id="btn-ppl" class="ghost" title="与会人员与发言人绑定">👥 与会人员 <span id="ppl-count">0</span></button>
           <div id="ppl-panel" class="ppl-panel" style="display:none"></div>
@@ -562,6 +616,8 @@
       </div>
       <p id="ws-err" class="err" style="margin:6px 0 0"></p>
       <div id="plan-link-bar" style="display:none;margin-top:6px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap"></div>
+      <!-- [TOPICS-S2 2026-11-17] 录音结束后未确认发言人轻量提示：只提示、不阻塞 -->
+      <div id="spk-hint"><span id="spk-hint-txt" data-i18n-skip></span><button id="spk-hint-btn" class="ghost">去确认</button></div>
     </div>
     <div class="tabs">
       <button data-tab="0" class="ghost">字幕</button><button data-tab="1" class="ghost">导图</button><button data-tab="2" class="ghost">纪要</button><button data-tab="3" class="ghost">预见</button><button data-tab="4" class="ghost">问 RUKIK</button>
@@ -648,12 +704,40 @@
     <!-- [ASR-LANG 2026-11-14] 识别语言＝ASR 输入语言（识别走哪个通道），与字幕/导图/纪要的展示语言是两个设置、互不代替；auto 暂无音频自动识别、如实标注 -->
     <p><label class="dim" for="new-lang">识别语言（语音转写的输入语言）</label>
     <select id="new-lang"><option value="auto">自动（暂按中文识别，英文会议请选 English）</option><option value="zh">中文</option><option value="en">English（英文识别）</option></select></p>
+    <!-- [TOPICS-S2 2026-11-17] 主题内开录：候选勾选区（可选、默认不勾、绝不阻塞开录） -->
+    <div id="consent-topic" style="display:none">
+      <p class="dim" style="margin:10px 0 4px">本场参会人员（来自主题候选，可选；不勾选也能直接开始，录音中可随时增删）</p>
+      <div id="consent-topic-list" data-i18n-skip></div>
+    </div>
     <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="consent" style="width:auto;margin-top:3px">
       <span>我确认已向参会者告知本次会议将被录音并转写，且已取得适用的同意。录音开始后请让页面保持前台。</span></label>
     <p id="consent-err" class="err"></p>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button id="btn-cancel-new" class="ghost">取消</button>
       <button id="btn-create">创建并开始录音</button>
+    </div>
+  </div>
+</div>
+
+<!-- [TOPICS-S2 2026-11-17] 新建/编辑主题弹窗：名称必填≤100、人员动态行选填、目标多行选填 -->
+<div id="modal-topic" class="modal" style="display:none">
+  <div class="box">
+    <h3 id="tp-modal-title" style="margin-top:0">新建主题</h3>
+    <p><label class="dim" for="tp-name">主题名称（必填）</label>
+    <input id="tp-name" maxlength="100" placeholder="例如：融资计划"></p>
+    <div id="tp-similar" class="dim" data-i18n-skip style="display:none;margin:-4px 0 8px"></div>
+    <div>
+      <label class="dim">相关人员（选填）</label>
+      <div id="tp-people-rows" style="margin-top:6px"></div>
+      <button id="tp-add-person" class="ghost" type="button">＋ 添加人员</button>
+      <p class="dim" style="font-size:12px;margin:6px 0 0">主题人员是长期候选名单，不代表每次都出席；每场会议的实际参会人员在录音时单独确认。从人物记忆选择可直接关联原人物，不重复建档；陌生人也可以先只写姓名。</p>
+    </div>
+    <p><label class="dim" for="tp-objective-in">主题目标（选填）</label>
+    <textarea id="tp-objective-in" rows="3" placeholder="这个主题希望达成什么？"></textarea></p>
+    <p id="tp-err" class="err"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="tp-cancel" class="ghost">取消</button>
+      <button id="tp-save">创建主题</button>
     </div>
   </div>
 </div>
@@ -840,7 +924,7 @@ async function provFire() {
 function provOnFinal() { provClear(); }
 
 function show(view) {
-  for (const v of ['login','home','ws']) $('view-'+v).style.display = v === view ? '' : 'none';
+  for (const v of ['login','home','ws','topic']) $('view-'+v).style.display = v === view ? '' : 'none';
   $('signout').style.display = view === 'login' ? 'none' : '';
   document.body.classList.toggle('in-ws', view === 'ws'); // [STAGE 2026-11-14] 工作台内隐藏全局顶栏，纵向空间让给画布
 }
@@ -880,6 +964,7 @@ const ICO_WAVE = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" st
 const ICO_MIC = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
 const ICO_PEOPLE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.8-3 2.9-4.5 5.5-4.5s4.7 1.5 5.5 4.5M16 5.6a3.2 3.2 0 0 1 0 5.9M17.8 15.3c1.5.6 2.4 1.9 2.8 4.2"/></svg>';
 async function loadList() {
+  loadTopics(); // [TOPICS-S2] 主题区与会议列表并行刷新（失败各自呈现，不互相阻塞）
   const box = $('meeting-list');
   try {
     const { meetings } = await client.listMeetings();
@@ -911,6 +996,313 @@ $('btn-search').onclick = async () => {
   } catch (e) { box.innerHTML = '<span class="err">搜索失败：' + esc(e.message) + '</span>'; }
 };
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-search').click(); }); // [HOME-REDESIGN 2026-11-14] 回车搜索：与搜索按钮同一逻辑
+
+// ================= [TOPICS-S2 2026-11-17] 长期主题（第二段：首页/弹窗/工作台/双层人员接线） =================
+// 数据面：meeting-api v21 的 topic_* 动作（0805/0806 RPC 与视图）＋ orchestrator kind='topic'。
+// 纪律：创建主题不自动录音；主题人员只是长期候选库——本场实际参会经同意门可选
+// 勾选或录中面板加入，默认不自动出席；结束录音只结束会话、不关主题；
+// 改主题只动主题自有数据，不伤计划/录音/纪要原件。
+let topicsCache = [];
+let pendingTopic = null; // 同意门上下文 {id,title}：本次录音归入该主题；null=独立快速录音
+let currentTopicDetail = null;
+let tpTab = 'overview';
+let tpEditId = null;     // null=新建主题；否则为编辑中的主题 id
+let tpClientKey = '';    // 新建幂等键：一次弹窗打开生成一次，重试复用同一键
+let tpOrigParts = [];    // 编辑态原参与人快照（保存时做增/删/改 diff）
+const tpUiEn = () => (window.RukikI18n && window.RukikI18n.getLang && window.RukikI18n.getLang()) === 'en';
+const L = (zh, en) => tpUiEn() ? en : zh;
+
+async function loadTopics() {
+  const box = $('topic-list'); if (!box) return;
+  try {
+    const { topics } = await client.api('topic_list');
+    topicsCache = topics || [];
+    if (!topicsCache.length) { box.innerHTML = '<span class="dim">' + L('还没有主题。新建一个主题，把多次会议沉淀成长期记忆。', 'No topics yet. Create one to build long-term memory across sessions.') + '</span>'; return; }
+    box.innerHTML = '';
+    for (const t of topicsCache) {
+      const card = document.createElement('div'); card.className = 'topic-card';
+      const meta = tpUiEn()
+        ? `${Number(t.session_count) || 0} sessions${t.last_session_at ? ' · last discussed ' + fmtDay(t.last_session_at) : ''} · ${Number(t.open_items) || 0} to advance`
+        : `共 ${Number(t.session_count) || 0} 次会议${t.last_session_at ? ' · 最近讨论 ' + fmtDay(t.last_session_at) : ''} · 待推进 ${Number(t.open_items) || 0}`;
+      card.innerHTML = `<div class="tc-title">${esc(t.title)}${t.status === 'archived' ? ' <span class="chip">' + L('已归档', 'Archived') + '</span>' : ''}</div><div class="tc-meta">${esc(meta)}</div>${t.latest_progress ? `<div class="tc-progress">${esc(t.latest_progress)}</div>` : ''}<div class="tc-acts"><button class="ghost" data-tp-open>${L('打开主题', 'Open topic')}</button><button data-tp-rec>${L('继续录音', 'Continue recording')}</button></div>`;
+      card.querySelector('[data-tp-open]').onclick = () => openTopic(t.id);
+      card.querySelector('[data-tp-rec]').onclick = () => startTopicRecording(t);
+      box.appendChild(card);
+    }
+  } catch (e) { box.innerHTML = '<span class="err">' + L('主题加载失败：', 'Failed to load topics: ') + esc(e.message) + '</span>'; }
+}
+
+// 主题内开录：复用既有同意门；候选勾选区可选、默认不勾、加载失败不阻塞
+async function startTopicRecording(t) {
+  pendingTopic = { id: t.id, title: t.title };
+  $('new-title').value = t.title || '';
+  $('consent').checked = false; $('consent-err').textContent = '';
+  const wrap = $('consent-topic'); const list = $('consent-topic-list');
+  list.innerHTML = '<span class="dim">' + L('正在加载主题候选…', 'Loading topic candidates…') + '</span>';
+  wrap.style.display = '';
+  $('modal-consent').style.display = 'flex';
+  try {
+    const { detail } = await client.api('topic_detail', { topic_id: t.id });
+    const parts = (detail && detail.participants) || [];
+    if (!parts.length) { list.innerHTML = '<span class="dim">' + L('该主题暂无候选人员，可直接开始，录音中再添加。', 'No candidates for this topic yet — start now and add people during the recording.') + '</span>'; return; }
+    list.innerHTML = '';
+    for (const p of parts) {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;margin:4px 0';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.style.width = 'auto';
+      cb.dataset.personId = p.person_id || ''; cb.dataset.pname = p.name || p.label || ''; cb.dataset.ppos = p.position || '';
+      const span = document.createElement('span'); span.setAttribute('data-i18n-skip', '');
+      span.textContent = (p.name || p.label || '') + (p.position ? ' · ' + p.position : '') + (p.relation_label ? ' · ' + p.relation_label : '');
+      row.append(cb, span); list.appendChild(row);
+    }
+  } catch { list.innerHTML = '<span class="dim">' + L('候选加载失败，可直接开始，录音中再添加。', 'Candidates failed to load — start now and add people during the recording.') + '</span>'; }
+}
+
+// ---------- 新建/编辑主题弹窗 ----------
+function tpErr(msg) { $('tp-err').textContent = msg || ''; }
+function tpAddPersonRow(data = {}) {
+  const wrap = $('tp-people-rows');
+  const row = document.createElement('div'); row.className = 'tp-person-row';
+  row.dataset.personId = data.person_id || '';
+  row.dataset.tpId = data.tp_id || '';
+  const nameIn = document.createElement('input'); nameIn.className = 'tp-p-name'; nameIn.placeholder = L('姓名', 'Name'); nameIn.value = data.name || '';
+  const posIn = document.createElement('input'); posIn.className = 'tp-p-pos'; posIn.placeholder = L('职位（选填）', 'Position (optional)'); posIn.value = data.position || '';
+  const hits = document.createElement('div'); hits.className = 'tp-hits'; hits.style.display = 'none';
+  const del = document.createElement('button'); del.className = 'ghost'; del.type = 'button'; del.textContent = L('移除', 'Remove');
+  del.onclick = () => row.remove();
+  let searchTimer = 0;
+  nameIn.addEventListener('input', () => {
+    row.dataset.personId = ''; // 改名即解除已选关联（保存时按姓名走同名复用/建档，与人员线同口径）
+    clearTimeout(searchTimer);
+    const q = nameIn.value.trim();
+    if (!q) { hits.style.display = 'none'; return; }
+    searchTimer = setTimeout(async () => {
+      try {
+        const { people } = await client.api('topic_people_search', { q });
+        if (!people || !people.length) { hits.style.display = 'none'; return; }
+        hits.innerHTML = '';
+        for (const p of people.slice(0, 8)) {
+          const d = document.createElement('div'); d.setAttribute('data-i18n-skip', '');
+          d.textContent = p.display_name + (p.job_title ? ' · ' + p.job_title : '') + (p.company ? ' · ' + p.company : '');
+          d.onclick = () => { row.dataset.personId = p.id; nameIn.value = p.display_name; if (!posIn.value && p.job_title) posIn.value = p.job_title; hits.style.display = 'none'; };
+          hits.appendChild(d);
+        }
+        hits.style.display = '';
+      } catch { hits.style.display = 'none'; }
+    }, 250);
+  });
+  document.addEventListener('click', (e) => { if (!row.contains(e.target)) hits.style.display = 'none'; });
+  row.append(nameIn, posIn, del, hits);
+  wrap.appendChild(row);
+  return row;
+}
+function tpFormDirty() {
+  if ($('tp-name').value.trim() || $('tp-objective-in').value.trim()) return true;
+  return [...$('tp-people-rows').querySelectorAll('.tp-p-name')].some((i) => i.value.trim());
+}
+function openTopicModal(editDetail) {
+  tpErr('');
+  $('tp-similar').style.display = 'none';
+  $('tp-people-rows').innerHTML = '';
+  tpOrigParts = [];
+  if (editDetail) {
+    tpEditId = editDetail.topic.id;
+    $('tp-modal-title').textContent = L('编辑主题', 'Edit topic');
+    $('tp-save').textContent = L('保存修改', 'Save changes');
+    $('tp-name').value = editDetail.topic.title || '';
+    $('tp-objective-in').value = editDetail.topic.description || '';
+    for (const p of (editDetail.participants || [])) {
+      tpAddPersonRow({ name: p.name || p.label || '', position: p.position || '', person_id: p.person_id || '', tp_id: p.id });
+      tpOrigParts.push({ tp_id: p.id, name: p.name || p.label || '', position: p.position || '' });
+    }
+    if (!(editDetail.participants || []).length) tpAddPersonRow();
+  } else {
+    tpEditId = null;
+    tpClientKey = 'tp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    $('tp-modal-title').textContent = L('新建主题', 'New topic');
+    $('tp-save').textContent = L('创建主题', 'Create topic');
+    $('tp-name').value = ''; $('tp-objective-in').value = '';
+    tpAddPersonRow();
+  }
+  $('modal-topic').style.display = 'flex';
+}
+$('tp-name').addEventListener('input', () => {
+  const q = $('tp-name').value.trim().toLowerCase();
+  const hint = $('tp-similar');
+  if (!q || tpEditId) { hint.style.display = 'none'; return; }
+  const sim = topicsCache.find((t) => t.title && (t.title.toLowerCase().includes(q) || q.includes(t.title.toLowerCase())));
+  if (sim) { hint.textContent = L(`你已有相似主题《${sim.title}》，仍可继续创建。`, `You already have a similar topic "${sim.title}". You can still create a new one.`); hint.style.display = ''; }
+  else hint.style.display = 'none';
+});
+$('tp-add-person').onclick = () => tpAddPersonRow();
+$('tp-cancel').onclick = () => {
+  if (tpFormDirty() && !confirm(L('放弃已填写的内容？', 'Discard what you have entered?'))) return;
+  $('modal-topic').style.display = 'none';
+};
+$('btn-new-topic').onclick = () => openTopicModal(null);
+$('tp-save').onclick = async () => {
+  const title = $('tp-name').value.trim();
+  if (!title) { tpErr(L('请填写主题名称。', 'Please enter a topic name.')); return; }
+  if (title.length > 100) { tpErr(L('主题名称不能超过 100 个字符。', 'Topic name must be 100 characters or fewer.')); return; }
+  const objective = $('tp-objective-in').value.trim();
+  const rows = [...$('tp-people-rows').querySelectorAll('.tp-person-row')];
+  const people = rows.map((r) => ({ person_id: r.dataset.personId || undefined, name: r.querySelector('.tp-p-name').value.trim(), position: r.querySelector('.tp-p-pos').value.trim() })).filter((p) => p.name);
+  const btn = $('tp-save'); btn.disabled = true; tpErr('');
+  try {
+    if (!tpEditId) {
+      // 幂等：同一弹窗重试复用同一 client_key，服务端 (owner, client_key) 唯一约束防双主题
+      const { topic } = await client.api('topic_create', { title, objective: objective || undefined, client_key: tpClientKey, participants: people.map((p) => ({ person_id: p.person_id, name: p.name, position: p.position || undefined })) });
+      $('modal-topic').style.display = 'none';
+      await loadTopics();
+      await openTopic(topic.id); // 成功进主题工作台；创建后不自动录音
+    } else {
+      await client.api('topic_update', { topic_id: tpEditId, title, objective });
+      const keepIds = new Set(rows.map((r) => r.dataset.tpId).filter(Boolean));
+      for (const orig of tpOrigParts) if (!keepIds.has(orig.tp_id)) await client.api('topic_participant_remove', { topic_id: tpEditId, tp_id: orig.tp_id });
+      for (const r of rows) {
+        const name = r.querySelector('.tp-p-name').value.trim(); if (!name) continue;
+        const position = r.querySelector('.tp-p-pos').value.trim();
+        if (r.dataset.tpId) {
+          const orig = tpOrigParts.find((o) => o.tp_id === r.dataset.tpId);
+          if (orig && (orig.name !== name || (orig.position || '') !== position)) await client.api('topic_participant_update', { topic_id: tpEditId, tp_id: r.dataset.tpId, name, position });
+        } else {
+          await client.api('topic_participant_add', { topic_id: tpEditId, person_id: r.dataset.personId || undefined, name, position: position || undefined });
+        }
+      }
+      $('modal-topic').style.display = 'none';
+      await loadTopics();
+      await openTopic(tpEditId);
+    }
+  } catch (e) { tpErr(L('保存失败：', 'Save failed: ') + e.message); } // 失败保留已填内容、报真实错误
+  btn.disabled = false;
+};
+
+// ---------- 主题工作台 ----------
+async function openTopic(id) {
+  try {
+    const { detail } = await client.api('topic_detail', { topic_id: id });
+    currentTopicDetail = detail;
+    renderTopicWorkbench();
+    show('topic');
+  } catch (e) { alert(L('打开主题失败：', 'Failed to open topic: ') + e.message); }
+}
+function renderTopicWorkbench() {
+  const d = currentTopicDetail; if (!d) return;
+  const t = d.topic; const st = d.stats || {};
+  $('tp-title').textContent = t.title || '';
+  $('tp-status').textContent = t.status === 'archived' ? L('已归档', 'Archived') : L('进行中', 'Active');
+  $('tp-archive').textContent = t.status === 'archived' ? L('取消归档', 'Unarchive') : L('归档', 'Archive');
+  const n = Number(st.session_count) || 0; const o = Number(st.open_items) || 0;
+  $('tp-meta').textContent = tpUiEn()
+    ? `${n} sessions${st.last_session_at ? ' · last discussed ' + fmtDay(st.last_session_at) : ''} · ${o} to advance`
+    : `共 ${n} 次会议${st.last_session_at ? ' · 最近讨论 ' + fmtDay(st.last_session_at) : ''} · 待推进 ${o}`;
+  const hist = Array.isArray(t.objective_history) ? t.objective_history : [];
+  $('tp-objective').innerHTML = t.description
+    ? `<div class="tp-kv"><h4>${L('主题目标', 'Objective')}</h4><div>${esc(t.description)}</div>${hist.length ? `<div class="dim" style="margin-top:6px">${L('历史目标：', 'Previous objectives: ')}${hist.map((h) => esc(h.objective || '')).join('；')}</div>` : ''}</div>`
+    : '';
+  renderTpPane();
+}
+function tpKeyItems(arr) {
+  return Array.isArray(arr) && arr.length ? arr.map((x) => `<div class="tp-item">${esc(x.text || '')}</div>`).join('') : '<span class="dim">' + L('暂无', 'None') + '</span>';
+}
+function tpTlRow(s) {
+  return `<div class="tp-tl-row" data-tp-session="${esc(s.session_id)}"><b>${esc(s.session_title || '')}</b><div class="dim">${esc(fmtDay(s.started_at))} · ${L('决定', 'Decisions')} ${Number(s.decision_count) || 0} · ${L('条目', 'Items')} ${Number(s.item_count) || 0}</div>${s.progress_line ? `<div>${esc(s.progress_line)}</div>` : (s.stage_title ? `<div>${esc(s.stage_title)}</div>` : '')}</div>`;
+}
+function bindTlRows(pane) { pane.querySelectorAll('[data-tp-session]').forEach((el) => { el.onclick = () => openMeeting(el.getAttribute('data-tp-session')); }); }
+function renderTpPane() {
+  const d = currentTopicDetail; const pane = $('tp-pane'); if (!d || !pane) return;
+  const ins = d.insight || {};
+  const mem = d.memories || { current: [], unconfirmed: [], superseded: [], historical_count: 0 };
+  const tl = d.timeline || [];
+  const emptySessions = L('还没有会议记录。开始第一次录音，让 RUKIK 持续理解这个主题。', 'No sessions yet. Start your first recording and let RUKIK build continuous context.');
+  if (tpTab === 'overview') {
+    let html = `<div class="tp-kv"><h4>${L('当前进展', 'Current progress')}</h4><div>${ins.current_progress ? esc(ins.current_progress) : '<span class="dim">' + L('暂无进展记录。', 'No progress recorded yet.') + '</span>'}</div></div>`;
+    if (ins.next_suggestions) html += `<div class="tp-kv"><h4>${L('主题洞察 · 下次建议', 'Topic insight · Suggested next steps')}</h4>${String(ins.next_suggestions).split('\n').filter(Boolean).map((s) => `<div class="tp-item">${esc(s)}</div>`).join('')}</div>`;
+    html += `<div class="tp-kv"><h4>${L('关键信息', 'Key information')}</h4><div class="dim">${L('已确认', 'Confirmed')}</div>${tpKeyItems(ins.key_confirmed)}<div class="dim" style="margin-top:6px">${L('待确认', 'To confirm')}</div>${tpKeyItems(ins.key_pending)}<div class="dim" style="margin-top:6px">${L('下一步', 'Next steps')}</div>${tpKeyItems(ins.key_next)}</div>`;
+    html += `<div class="tp-kv"><h4>${L('进展时间轴', 'Progress timeline')}</h4>${tl.length ? tl.slice(0, 5).map(tpTlRow).join('') : '<span class="dim">' + emptySessions + '</span>'}</div>`;
+    pane.innerHTML = html; bindTlRows(pane);
+  } else if (tpTab === 'sessions') {
+    pane.innerHTML = tl.length ? tl.map(tpTlRow).join('') : '<p class="dim">' + emptySessions + '</p>';
+    bindTlRows(pane);
+  } else if (tpTab === 'memory') {
+    const grp = (title, arr) => `<div class="tp-kv"><h4>${title}</h4>${Array.isArray(arr) && arr.length ? arr.map((m) => `<div class="tp-item"><span class="chip">${esc(m.memory_type || '')}</span> ${esc(m.content || '')}</div>`).join('') : '<span class="dim">' + L('暂无', 'None') + '</span>'}</div>`;
+    pane.innerHTML = grp(L('当前有效', 'Current'), mem.current) + grp(L('未确认', 'Unconfirmed'), mem.unconfirmed) + grp(L('已被替代', 'Superseded'), mem.superseded) + `<p class="dim">${L('历史事实条目：', 'Historical entries: ')}${Number(mem.historical_count) || 0}</p>`;
+  } else {
+    const next = Array.isArray(ins.key_next) ? ins.key_next : [];
+    pane.innerHTML = `<div class="tp-kv"><h4>${L('待推进事项', 'Open items')}</h4>${next.length ? next.map((x) => `<div class="tp-item">${esc(x.text || '')}${x.due_at ? ' <span class="dim">' + esc(fmtDay(x.due_at)) + '</span>' : ''}</div>`).join('') : '<span class="dim">' + L('暂无待推进事项。', 'No open items.') + '</span>'}</div>` + (ins.current_progress ? `<div class="tp-kv"><h4>${L('当前进展', 'Current progress')}</h4><div>${esc(ins.current_progress)}</div></div>` : '');
+  }
+}
+$('tp-tabs').querySelectorAll('button').forEach((b) => { b.onclick = () => { tpTab = b.getAttribute('data-tp-tab'); $('tp-tabs').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); renderTpPane(); }; });
+$('btn-topic-back').onclick = async () => { show('home'); await loadList(); };
+$('tp-record').onclick = () => { if (currentTopicDetail) startTopicRecording(currentTopicDetail.topic); };
+$('tp-edit').onclick = () => { if (currentTopicDetail) openTopicModal(currentTopicDetail); };
+$('tp-archive').onclick = async () => {
+  if (!currentTopicDetail) return;
+  const t = currentTopicDetail.topic;
+  const next = t.status === 'archived' ? 'active' : 'archived';
+  try { await client.api('topic_set_status', { topic_id: t.id, status: next }); await loadTopics(); await openTopic(t.id); }
+  catch (e) { alert(L('状态更新失败：', 'Status update failed: ') + e.message); }
+};
+$('tp-delete').onclick = async () => {
+  if (!currentTopicDetail) return;
+  const t = currentTopicDetail.topic;
+  if (!confirm(L(`删除主题《${t.title}》？主题下的会议记录与纪要会保留，只是不再归属这个主题。`, `Delete topic "${t.title}"? Its sessions and minutes are kept — they just stop belonging to this topic.`))) return;
+  try { await client.api('topic_delete', { topic_id: t.id }); currentTopicDetail = null; show('home'); await loadList(); }
+  catch (e) { alert(L('删除失败：', 'Delete failed: ') + e.message); }
+};
+
+// ---------- 工作台主题 chip / 未确认发言人提示 ----------
+function renderTopicChip() {
+  const chip = $('m-topic-chip'); if (!chip) return;
+  if (cur && cur.topic) { chip.textContent = L('主题：《', 'Topic: "') + (cur.topic.title || '') + L('》', '"'); chip.style.display = ''; chip.onclick = () => openTopic(cur.topic.id); }
+  else { chip.style.display = 'none'; chip.onclick = null; }
+}
+function unconfirmedSpeakerCount() {
+  if (!cur || !cur.meeting) return 0;
+  const bound = new Set(pplState.bindings.map((b) => String(b.speaker_label)));
+  let n = 0;
+  for (const t of pplState.tracks) {
+    const lb = String(t.speaker_label);
+    if (lb === 'host' || bound.has(lb)) continue; // host 为会议发起人本人，身份已知
+    if (lb === 'unknown') {
+      const un = (cur.segments || []).filter((s) => String(s.speaker_label || 'unknown') === 'unknown' && !pplState.overrides.has(String(s.id))).length;
+      if (un > 0) n += 1;
+    } else n += 1;
+  }
+  return n;
+}
+function updateSpkHint() {
+  const hint = $('spk-hint'); if (!hint || !cur || !cur.meeting) return;
+  const n = cur.meeting.status === 'ended' ? unconfirmedSpeakerCount() : 0;
+  if (n > 0) { $('spk-hint-txt').textContent = L(`有 ${n} 位发言人尚未确认身份`, `There are ${n} speakers whose identities haven't been confirmed yet`); hint.style.display = 'flex'; }
+  else hint.style.display = 'none';
+}
+$('spk-hint-btn').onclick = () => { const p = $('ppl-panel'); if (p && p.style.display === 'none') $('btn-ppl').click(); };
+
+// ---------- 录中/录后人员面板：主题候选一键加入本场 ----------
+let topicCandsCache = { forTopic: '', list: [] };
+async function fillTopicCands() {
+  const host = $('ppl-topic-cands'); if (!host) return;
+  if (!cur || !cur.topic) { host.innerHTML = ''; return; }
+  try {
+    if (topicCandsCache.forTopic !== String(cur.topic.id)) {
+      const { detail } = await client.api('topic_detail', { topic_id: cur.topic.id });
+      topicCandsCache = { forTopic: String(cur.topic.id), list: (detail && detail.participants) || [] };
+    }
+    const have = new Set(pplState.participants.map((p) => String(p.person_id || '') + '|' + pplName(p)));
+    const cands = topicCandsCache.list.filter((c) => !have.has(String(c.person_id || '') + '|' + (c.name || c.label || '')));
+    if (!cands.length) { host.innerHTML = ''; return; }
+    host.innerHTML = `<div class="ppl-sec-t">${L('主题候选（点按加入本场）', 'Topic candidates (tap to add to this session)')}</div>` + cands.map((c, i) => `<div class="ppl-row"><div class="who" data-i18n-skip><span class="nm">${esc(c.name || c.label || '')}</span><div class="meta">${esc([c.position, c.relation_label].filter(Boolean).join(' · ') || '—')}</div></div><div class="acts"><button class="ghost" data-tp-cand="${i}">${L('加入本场', 'Add')}</button></div></div>`).join('');
+    host.querySelectorAll('[data-tp-cand]').forEach((btn) => { btn.onclick = async () => {
+      const c = cands[Number(btn.getAttribute('data-tp-cand'))]; if (!c) return;
+      try { await client.api('participant_add', { meeting_id: cur.meeting.id, person_id: c.person_id || undefined, name: c.person_id ? undefined : (c.name || c.label), job_title: c.position || undefined }); await refreshParticipants(); }
+      catch (e) { $('ws-err').textContent = L('加入失败：', 'Failed to add: ') + e.message; }
+    }; });
+  } catch { host.innerHTML = ''; }
+}
+// 人员面板每次重渲染后补填主题候选区（包装既有 renderPplPanel，不改其本体）
+const renderPplPanelOrig = renderPplPanel;
+renderPplPanel = function () { renderPplPanelOrig(); fillTopicCands(); };
 $('btn-asr').onclick = () => { localStorage.setItem('meeting_asr_url', $('asr-url').value.trim()); alert('已保存'); };
 // [MEETING-HUB 2026-11-14] 问 RUKIK：直连统一中枢 family-chat（本人 JWT），
 // 中枢侧按 UID 授权检索本人会议记录（MEETING-HUB 预取腿）；本场标题只作
@@ -934,17 +1326,32 @@ $('btn-ask').onclick = async () => {
   $('btn-ask').disabled = false;
 };
 
-$('btn-new').onclick = () => { $('modal-consent').style.display = 'flex'; };
-$('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; };
+$('btn-new').onclick = () => { pendingTopic = null; $('consent-topic').style.display = 'none'; $('new-title').value = ''; $('modal-consent').style.display = 'flex'; };
+$('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; pendingTopic = null; };
 $('btn-create').onclick = async () => {
   if (!$('consent').checked) { $('consent-err').textContent = '请先确认录音同意。'; return; }
   $('consent-err').textContent = '';
   try {
-    const { meeting } = await client.createMeeting($('new-title').value.trim() || undefined, $('new-mode').value, $('new-lang').value);
+    // [TOPICS-S2] 主题内开录走同一 create 通道并带 topic_id；快速录音不带（独立会议）
+    const payload = { title: $('new-title').value.trim() || undefined, mode: $('new-mode').value, lang: $('new-lang').value };
+    if (pendingTopic) payload.topic_id = pendingTopic.id;
+    const { meeting } = await client.api('create', payload);
+    // 主题候选勾选 → 本场名单（职位取主题层当前职位作本场快照）；单个失败不阻塞开录
+    let candFailed = 0;
+    if (pendingTopic) {
+      const checks = $('consent-topic-list').querySelectorAll('input[type=checkbox]:checked');
+      for (const cb of checks) {
+        try {
+          await client.api('participant_add', { meeting_id: meeting.id, person_id: cb.dataset.personId || undefined, name: cb.dataset.personId ? undefined : cb.dataset.pname, job_title: cb.dataset.ppos || undefined });
+        } catch { candFailed++; }
+      }
+    }
     await client.consent(meeting.id);
     const { meeting: started } = await client.start(meeting.id);
     $('modal-consent').style.display = 'none';
+    pendingTopic = null;
     await openMeeting(started.id, true);
+    if (candFailed) $('ws-err').textContent = tpUiEn() ? `${candFailed} candidate(s) could not be added to this session — add them from the Participants panel.` : `${candFailed} 位候选未能加入本场名单，可在「与会人员」中手动添加。`;
   } catch (e) { $('consent-err').textContent = '创建失败：' + e.message; }
 };
 
@@ -1151,6 +1558,7 @@ function renderMeeting() {
     }
   }
   syncParticipantsFromCur(); // [PARTICIPANTS-V1] 名单/绑定随 get 响应同步（含人数徽标）
+  renderTopicChip(); updateSpkHint(); // [TOPICS-S2] 主题 chip 与未确认发言人提示随详情同步
   renderSegments(); renderMinutes(); renderCorrBar(); fsAutoSync();
 }
 
@@ -1387,6 +1795,7 @@ function renderPplPanel() {
   panel.innerHTML = `
     <h4>与会人员（${pplState.participants.length}）</h4>
     <div id="ppl-list">${rows || '<p class="dim">暂无登记人员，可在下方添加。</p>'}</div>
+    <div id="ppl-topic-cands"></div>
     <div class="ppl-sec-t">发言人绑定</div>
     <div id="ppl-tracks">${trackRows || '<p class="dim">暂无发言轨道（还没有字幕）。</p>'}</div>
     <div class="ppl-sec-t">${pplEditId ? '编辑人员' : '添加人员'}</div>
@@ -1959,6 +2368,8 @@ $('btn-end').onclick = async () => {
       renderMeeting();
     } catch { /* 排空失败不挡结束流程 */ }
     triggerCorrection(); // [TEXT-CORRECTION 2026-11-14] 会议已 ended：自动跑一次会后文本校订（服务端指纹幂等，失败不挡结束流程）
+    // [TOPICS-S2 2026-11-17] 已归类主题的会议结束 → 后台增量提取主题记忆＋洞察刷新（fire-and-forget，失败不挡结束；结束录音不关主题）
+    if (cur.meeting.topic_id) client.analyze(cur.meeting.id, false, 'topic').catch(() => {});
     startEndReconcile();
   } catch (e) { $('ws-err').textContent = e.message; }
 };
