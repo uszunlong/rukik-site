@@ -27,11 +27,11 @@
   :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 56px; }
+  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 128px; }
   .brand { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
   .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
   .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
-  .cover { width:100%; border-radius:12px; margin-bottom:14px; }
+  .cover { width:100%; border-radius:12px; margin-bottom:14px; display:block; background:#EFE9DC; }
   .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
   .statusbad { background:#B3261E; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
   .statusend { background:#5A5348; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
@@ -78,6 +78,16 @@
   button.btn { border:none; }
   button.btn.ghost { border:1px solid var(--navy); }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
+  .signup { margin-top:30px; border:1px solid var(--line); border-radius:16px; padding:20px 18px; background:#FFFDF8; }
+  .signup h2 { margin:0 0 8px; }
+  .fld { margin-bottom:14px; }
+  .fld label { display:block; font-size:13.5px; font-weight:600; margin-bottom:6px; }
+  .fld input, .fld select { width:100%; font-size:16px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; color:var(--navy); }
+  .err { color:#B3261E; font-size:13.5px; min-height:18px; margin-bottom:8px; }
+  .su-btn { width:100%; cursor:pointer; font-family:inherit; border:none; }
+  .su-ok { font-size:19px; font-weight:700; color:#1E6B45; margin-bottom:6px; }
+  .su-app { margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:13.5px; color:var(--gray); }
+  .su-app .btn { margin:0; padding:9px 20px; font-size:14px; cursor:pointer; font-family:inherit; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
 </style>
 </head>
@@ -87,22 +97,40 @@
   
   <img class="cover" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/events/e0fa92f7-34da-4878-a3d7-02d9e392fd3c/cover-c7d515d6.jpg" alt="">
   <span class="badge">AI-generated image by Rukik</span>
-  <h1>Centennial Farm</h1>
+  <h1 data-i18n-skip>Centennial Farm</h1>
   <div class="meta">Centennial Farm 百年农场</div>
-  <div class="meta">Outdoors · Costa Mesa</div>
+  <div class="meta" data-i18n-skip>Outdoors · Costa Mesa</div>
   <div class="credit">Image: AI 示意图</div>
   <h2>Time</h2><p>Time to be announced (see official updates)</p>
-  <h2>Location</h2><p>Centennial Farm (OC Fair &amp; Event Center) · 88 Fair Drive, Costa Mesa, CA 92626 · Costa Mesa</p>
+  <h2>Location</h2><p>Centennial Farm (OC Fair &amp; Event Center) · 88 Fair Drive, Costa Mesa, CA 92626</p>
   <h2>Fee</h2><p>免费入场，无需预约</p>
   <h2>Good For</h2><p>Fun for the Whole Family</p>
   <h2>A Note from Rukik</h2><p>三英亩真农场，全年开放、免费免预约，价值在于随时可去的确定性：临时起意带孩子认识果蔬和牲畜，不用计划、不用抢票。适合把它当作日常备选而不是节日专程。开放日会随节假日和全场活动调整，出发前看一眼官网日历即可；时段分平日与周末两种，请按当天类型对照。可分享给朋友一起参考。</p>
-  <h2>About This Event</h2><p>OC Fair 会展中心内的三英亩教学农场，全年开放：看果蔬种植与牲畜，定位为青少年农业教育。常规时段为周一至周五 13:00–16:00、周六周日 10:00–16:00（节假日与全场活动日除外，关门日见官网日历）。免费入场、无需预约。常设场馆，按周循环开放，故不设单次场次。</p>
+  <h2>About This Event</h2><p data-i18n-skip>OC Fair 会展中心内的三英亩教学农场，全年开放：看果蔬种植与牲畜，定位为青少年农业教育。常规时段为周一至周五 13:00–16:00、周六周日 10:00–16:00（节假日与全场活动日除外，关门日见官网日历）。免费入场、无需预约。常设场馆，按周循环开放，故不设单次场次。</p>
   <h2>Organizer</h2><p>OC Fair &amp; Event Center</p>
   <p style="margin-top:24px;"><a href="https://ocfair.com/centennial-farm/">View Official Page ›</a></p>
   <p class="note">Information verified on 2026-10-25. Details are subject to official announcements.</p>
-  <div class="jocta">
-    <button class="btn" id="joinBtn" type="button">Join Event</button>
-    <p class="note">Choose a session and confirm in the Rukik App. Joining adds this event to your plan; official ticketing and reservations are with the organizer.</p>
+  <div class="signup" id="signupBox">
+    <h2>Sign Up for This Event</h2>
+    <p class="note" style="margin:0 0 14px">Fill in your details to sign up right here — no app install needed. The organizer will reach you at the mobile number you provide, including if plans change.</p>
+    <form id="suForm" novalidate>
+      
+      <div class="fld"><label for="suName">Name (required)</label><input id="suName" type="text" autocomplete="name" placeholder="Your name"></div>
+      <div class="fld"><label for="suPhone">Mobile Number (required)</label><input id="suPhone" type="tel" autocomplete="tel" placeholder="Country code welcome, e.g. +1 949 555 0100"></div>
+      <div class="fld"><label for="suNote">Note (optional)</label><input id="suNote" type="text" placeholder="Anything the organizer should know"></div>
+      <input id="suHp" type="text" name="company" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0">
+      <div class="err" id="suErr"></div>
+      <button class="btn su-btn" id="suBtn" type="submit">Submit Sign-Up</button>
+    </form>
+    <div id="suDone" style="display:none">
+      <div class="su-ok" id="suOkText">✓ You're signed up</div>
+      <p class="note" style="margin:0">We've received your sign-up. To view or manage your plans anytime, open the Rukik App — sign up there with the same mobile number to link this registration.</p>
+    </div>
+    <div class="su-app">
+      <span>Already using Rukik?</span>
+      <button class="btn ghost" id="joinBtn" type="button">Open in App</button>
+    </div>
+    <p class="note">Official ticketing and reservations are with the organizer.</p>
   </div>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
@@ -149,7 +177,8 @@
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var EVENT_ID = "e0fa92f7-34da-4878-a3d7-02d9e392fd3c";
-var SHARE_TEXT = "Find surprises on Rukik\n\nFound an event worth joining!\n\nCentennial Farm\nCentennial Farm (OC Fair & Event Center) · 88 Fair Drive, Costa Mesa, CA 92626 · Costa Mesa\n\nTap to view event details.";
+var SU_SESSION = "";
+var SHARE_TEXT = "Find surprises on Rukik\n\nFound an event worth joining!\n\nCentennial Farm\nCentennial Farm (OC Fair & Event Center) · 88 Fair Drive, Costa Mesa, CA 92626\n\nTap to view event details.";
 var q = new URLSearchParams(location.search);
 var sParam = q.get("s") || "";
 var refParam = q.get("ref") || "";
@@ -278,6 +307,73 @@ if (openBtn) {
 var joinBtn = document.getElementById("joinBtn");
 if (joinBtn) {
   joinBtn.addEventListener("click", function(){ openInApp(); });
+}
+// 网页直接报名（0799 web_event_signup）：免登录填表直报，落库与 App 报名
+// 同为组织者名单真源。文案按页面 lang 取（zh 页 zh-CN、en 页 en），逻辑单份。
+var suForm = document.getElementById("suForm");
+if (suForm) {
+  var SU_EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var SU_MSG = SU_EN ? {
+    name: "Please enter your name.",
+    phone: "That mobile number doesn't look right — please check it (country code welcome).",
+    rate: "Too many attempts — please try again in a little while.",
+    closed: "Sign-ups have closed for this event.",
+    ended: "This session has already ended.",
+    joinable: "This event can't be signed up for right now.",
+    failed: "Sign-up didn't go through — please try again.",
+    net: "Network hiccup — please try again.",
+    dup: "✓ You've already signed up"
+  } : {
+    name: "请填写姓名。",
+    phone: "手机号格式不太对，请检查一下（可带 +国际区号）。",
+    rate: "提交太频繁了，请稍后再试。",
+    closed: "报名已截止。",
+    ended: "这场已经结束了。",
+    joinable: "这个活动暂时不能报名。",
+    failed: "报名未成功，请稍后再试。",
+    net: "网络不太顺，请稍后再试。",
+    dup: "✓ 您已报名"
+  };
+  suForm.addEventListener("submit", function(pev){
+    pev.preventDefault();
+    var errEl = document.getElementById("suErr");
+    function fail(m){ errEl.textContent = m; }
+    var hp = document.getElementById("suHp");
+    if (hp && hp.value) { // 蜜罐命中：静默装作成功，不落库
+      suForm.style.display = "none";
+      document.getElementById("suDone").style.display = "block";
+      return;
+    }
+    var name = document.getElementById("suName").value.trim();
+    var phone = document.getElementById("suPhone").value.trim();
+    var note = document.getElementById("suNote").value.trim();
+    var sessEl = document.getElementById("suSession");
+    var sessionId = sessEl ? (sessEl.value || null) : (SU_SESSION || null);
+    if (!name) { fail(SU_MSG.name); return; }
+    var digits = phone.replace(/\D/g, "");
+    if (!/^\+?[0-9\s\-()]+$/.test(phone) || digits.length < 7 || digits.length > 15) { fail(SU_MSG.phone); return; }
+    var btn = document.getElementById("suBtn");
+    btn.disabled = true; errEl.textContent = "";
+    var ref = [sParam ? "s=" + sParam : "", refParam ? "ref=" + refParam : ""].filter(Boolean).join("&");
+    fetch(SB_URL + "/rest/v1/rpc/web_event_signup", {
+      method: "POST",
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event_id: EVENT_ID, p_session_id: sessionId, p_name: name, p_phone: phone, p_note: note || null, p_share_ref: ref || null })
+    }).then(function(r){ return r.json(); }).then(function(j){
+      btn.disabled = false;
+      if (j && j.ok) {
+        resolveShareId().then(function(id){ postShareEvent(id, "web_signup", refParam); });
+        suForm.style.display = "none";
+        if (j.duplicate) document.getElementById("suOkText").textContent = SU_MSG.dup;
+        document.getElementById("suDone").style.display = "block";
+      } else {
+        var m = (j && j.error) || "";
+        fail(m === "rate_limited" ? SU_MSG.rate : m === "registration_closed" ? SU_MSG.closed
+          : m === "session_ended" ? SU_MSG.ended : m === "event_not_joinable" ? SU_MSG.joinable
+          : m === "invalid_phone" ? SU_MSG.phone : m === "invalid_name" ? SU_MSG.name : SU_MSG.failed);
+      }
+    }).catch(function(){ btn.disabled = false; fail(SU_MSG.net); });
+  });
 }
 var shareBtn = document.getElementById("shareBtn");
 if (shareBtn) {
