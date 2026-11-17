@@ -114,13 +114,16 @@ export function createVizUI(opts) {
     replay: null, // { graph, offsetMs, totalMs, playing, speed, timer }
     autoFollow: true,
     theme: 'light', // [VIZ-VISUAL-V1 2026-11-14] 双主题：工作台浅色默认 / 演讲模式深色星图（enterProjection 切换）
-    followHold: false, // [STAGE 2026-11-14] 用户手动平移/缩放后暂停跟随（回正恢复）
+    followHold: false, // [VIZ-FOLLOW-V2 2026-11-16] 用户手动平移/缩放期间临时让行；操作结束经 followResumeMs 缓冲自动恢复（不再永久暂停）
+    followResumeMs: 2600, // [VIZ-FOLLOW-V2] 自动恢复跟随缓冲（交互参数，可调；默认约 2.6 秒）
+    booted: false, // [VIZ-FOLLOW-V2] load() 完成前，React Flow 初始 fitView 的视口事件不触发让行
+    lastFreshId: null, // [VIZ-FOLLOW-V2] 最近一次新增节点 id（跟随/恢复跟随的目标）
     _progMove: false, // [STAGE 2026-11-14] 程序化移动标记：setCenter/fitView 不触发跟随暂停
     listeners: new Set(),
     rfApi: null,
     version: 0,
   };
-  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); renderSpeakerBar(); };
+  const emit = () => { store.version++; store.listeners.forEach((fn) => fn()); syncEmptyHint(); renderSpeakerBar(); renderOutline(); };
   // [TRANSLATE-P1 2026-11-14] 展示语言：页面持有唯一状态（opts.getDisplayLang 注入），本模块只读不写 ASR 任何状态。
   // 切换只换节点展示文字——位置存 store.positions 与文本无关、盒宽取双语包络，节点中心坐标不变（验收坐标差=0）。
   let displayLangLocal = 'zh';
@@ -138,6 +141,63 @@ export function createVizUI(opts) {
   function progMove(fn) {
     store._progMove = true;
     try { fn(); } finally { setTimeout(() => { store._progMove = false; }, 900); }
+  }
+
+  // ---------- [VIZ-FOLLOW-V2 2026-11-16] 实时跟随状态机（覆盖旧「拖动即暂停、点回正才恢复」） ----------
+  // 默认持续跟随最新节点；用户拖动/缩放/拖节点只临时让出控制权，操作结束经 followResumeMs
+  // 缓冲自动恢复，不需要点任何按钮。跟随移动合并：短时间内连续新增只在安静期后平滑移动一次。
+  let followResumeTimer = null;
+  let followDebTimer = null;
+  let followPendingId = null;
+  let userMoveActive = false; // [VIZ-FOLLOW-V2] 本次视口移动是否由真人手势发起（onMoveStart 事件 type 判别）
+  let outlineEls = null; // 目录面板元素（创建段赋值；renderOutline 未就绪时空转）
+  function centerOnNode(id, zoomOpt) {
+    if (!store.rfApi) return;
+    const posMap = store.mode === 'replay' && store.replay ? store.replay.state.positions : store.positions;
+    const p = posMap.get(id); if (!p) return;
+    const { depth } = computeLayout(currentGraph());
+    const w = NODE_WIDTHS[Math.min(depth.get(id) || 1, 3)];
+    const zoom = zoomOpt === 'keep' ? store.rfApi.getZoom()
+      : zoomOpt === 'resume' ? Math.max(store.rfApi.getZoom(), 0.85)
+      : Math.min(1.15, Math.max(0.85, store.rfApi.getZoom())); // 回到中心：收敛到合适缩放带
+    progMove(() => store.rfApi.setCenter(p.x + w / 2, p.y + 44, { zoom, duration: 620 }));
+  }
+  function followLatest() { // 恢复跟随瞬间：把最新节点带回主视区（用户原话：停手后及时看到最新生成）
+    const id = store.lastFreshId || (store.graph.nodes.length ? store.graph.nodes[store.graph.nodes.length - 1].id : null);
+    if (id) centerOnNode(id, 'resume');
+  }
+  function scheduleFollowTo(id) { // 新增节点跟随：合并高频新增，安静 700ms 后只移动一次
+    followPendingId = id;
+    if (followDebTimer) clearTimeout(followDebTimer);
+    followDebTimer = setTimeout(() => {
+      followDebTimer = null;
+      const target = followPendingId; followPendingId = null;
+      if (!target || store.mode !== 'live' || !store.autoFollow || store.followHold) return;
+      centerOnNode(target, 'keep');
+    }, 700);
+  }
+  function noteUserHoldStart() { // 用户开始拖动/缩放：临时让行（取消待恢复计时与待跟随移动）
+    if (!store.booted || store.mode !== 'live' || !store.autoFollow) return; // booted 前的初始 fitView 视口事件不算用户让行
+    if (followResumeTimer) { clearTimeout(followResumeTimer); followResumeTimer = null; }
+    if (!store.followHold) { store.followHold = true; syncFollowChip(); if (opts.onFollowChange) opts.onFollowChange(); }
+  }
+  function noteUserHoldEnd() { // 用户操作结束：缓冲 followResumeMs 后自动恢复跟随
+    if (store.mode !== 'live' || !store.autoFollow || !store.followHold) return;
+    if (followResumeTimer) clearTimeout(followResumeTimer);
+    followResumeTimer = setTimeout(() => {
+      followResumeTimer = null;
+      if (store.mode !== 'live' || !store.autoFollow) { store.followHold = false; syncFollowChip(); return; }
+      store.followHold = false; syncFollowChip();
+      if (opts.onFollowChange) opts.onFollowChange();
+      followLatest();
+    }, store.followResumeMs);
+  }
+  // 「回到中心」：平滑移回中心主题＋合适缩放，不改节点/数据、不关跟随（后续新节点仍自动跟随）
+  function centerOnRoot() {
+    const g = currentGraph(); if (!g.nodes.length || !store.rfApi) return;
+    const { depth } = computeLayout(g);
+    const root = g.nodes.find((n) => (depth.get(n.id) || 0) === 0) || g.nodes[0];
+    centerOnNode(root.id, 'center');
   }
 
   // ---------- 位置：增量落位（已有节点不挪窝） ----------
@@ -200,16 +260,12 @@ export function createVizUI(opts) {
       }
       if (store.deepened.size) setTimeout(() => { store.deepened.clear(); emit(); }, 1500);
     }
+    const addedIds = patch.ops.filter((o) => o.op === 'add_node').map((o) => o.node.id);
+    if (addedIds.length) store.lastFreshId = addedIds[addedIds.length - 1];
     emit(); renderDetail();
-    setTimeout(() => {
-      const added = patch.ops.filter((o) => o.op === 'add_node').map((o) => o.node.id);
-      store.fresh.clear(); store.freshEdges.clear(); emit();
-      // [STAGE 2026-11-14] 跟随生效（开＋未被用户手动平移暂停）时才平滑移入新节点，并保持用户当前缩放
-      if (store.autoFollow && !store.followHold && added.length && store.rfApi) {
-        const p = store.positions.get(added[added.length - 1]);
-        if (p) progMove(() => store.rfApi.setCenter(p.x + 90, p.y + 30, { zoom: store.rfApi.getZoom(), duration: 650 }));
-      }
-    }, 750);
+    setTimeout(() => { store.fresh.clear(); store.freshEdges.clear(); emit(); }, 750);
+    // [VIZ-FOLLOW-V2] 跟随走合并调度：连续新增只在安静期后平滑移动一次；用户让行期间不抢控制权
+    if (addedIds.length) scheduleFollowTo(addedIds[addedIds.length - 1]);
     return res;
   }
 
@@ -228,6 +284,7 @@ export function createVizUI(opts) {
       savePositions();
     }
     for (const n of graph.nodes) if (!store.positions.has(n.id)) placeNode(n, { nodes: graph.nodes.filter((x) => x.id !== n.id), edges: graph.edges }, graph.edges);
+    store.booted = true;
     emit(); renderDetail();
     setTimeout(() => { if (store.rfApi) progMove(() => store.rfApi.fitView({ duration: 400, padding: 0.15 })); }, 80);
   }
@@ -377,24 +434,60 @@ export function createVizUI(opts) {
   emptyHint.style.display = 'none';
   wrapEl.appendChild(emptyHint);
   function syncEmptyHint() { emptyHint.style.display = (store.mode === 'live' && store.graph.nodes.length === 0) ? '' : 'none'; }
-  // [STAGE 2026-11-14] 跟随暂停提示 chip：用户手动平移/缩放后出现，点按回正并恢复跟随
+  // [VIZ-FOLLOW-V2 2026-11-16] 让行提示 chip：仅作状态提示（跟随将自动恢复），点按可立即恢复——不是恢复跟随的必要按钮
   const followChip = document.createElement('button');
   followChip.className = 'viz-follow-chip';
-  followChip.textContent = '已暂停跟随 · 回正';
+  followChip.textContent = '实时跟随已让行 · 将自动恢复';
   followChip.style.display = 'none';
   followChip.onclick = () => resumeFollow();
   wrapEl.appendChild(followChip);
   function syncFollowChip() { followChip.style.display = store.followHold && store.autoFollow ? '' : 'none'; }
-  function resumeFollow() {
+  function resumeFollow() { // 立即恢复（chip 点按/外部调用）；自动恢复走 noteUserHoldEnd 计时器，二者殊途同归
+    if (followResumeTimer) { clearTimeout(followResumeTimer); followResumeTimer = null; }
     store.followHold = false;
     syncFollowChip();
     if (opts.onFollowChange) opts.onFollowChange();
     if (!store.rfApi) return;
-    const nodes = store.graph.nodes;
-    const last = nodes[nodes.length - 1];
-    const p = last && store.positions.get(last.id);
-    if (p) progMove(() => store.rfApi.setCenter(p.x + 90, p.y + 30, { zoom: Math.max(store.rfApi.getZoom(), 0.85), duration: 600 }));
+    if (store.graph.nodes.length) followLatest();
     else progMove(() => store.rfApi.fitView({ duration: 500, padding: 0.15 }));
+  }
+  // [VIZ-FOLLOW-V2 2026-11-16] 左侧节点目录（可收起）：按 contains 树序列出节点，点击定位＋选中；
+  // 选中节点完整信息仍走画布下方详情抽屉（renderDetail），目录只做导航、不复制数据
+  const outlineBtn = document.createElement('button');
+  outlineBtn.className = 'viz-outline-btn';
+  outlineBtn.textContent = '☰ 目录';
+  wrapEl.appendChild(outlineBtn);
+  const outlineEl = document.createElement('div');
+  outlineEl.className = 'viz-outline';
+  outlineEl.style.display = 'none';
+  wrapEl.appendChild(outlineEl);
+  let outlineOpen = false;
+  outlineBtn.onclick = () => { outlineOpen = !outlineOpen; outlineEl.style.display = outlineOpen ? '' : 'none'; if (outlineOpen) renderOutline(); };
+  outlineEls = { btn: outlineBtn, el: outlineEl };
+  function renderOutline() {
+    if (!outlineEls || !outlineOpen) return;
+    const g = currentGraph();
+    const { kids, roots } = buildTree(g);
+    const { depth } = computeLayout(g);
+    const byId = new Map(g.nodes.map((n) => [n.id, n]));
+    const rows = []; const seen = new Set();
+    const walk = (id, d) => { if (seen.has(id)) return; seen.add(id); const n = byId.get(id); if (!n) return; rows.push({ n, d }); (kids.get(id) || []).forEach((k) => walk(k, d + 1)); };
+    roots.forEach((r) => walk(r, 0));
+    for (const n of g.nodes) if (!seen.has(n.id)) rows.push({ n, d: depth.get(n.id) || 1 });
+    outlineEl.innerHTML = '';
+    if (!rows.length) { outlineEl.innerHTML = '<div class="viz-outline-empty">暂无节点</div>'; return; }
+    for (const { n, d } of rows) {
+      const row = document.createElement('div');
+      row.className = 'viz-outline-row' + (store.selectedId === n.id ? ' active' : '');
+      row.style.paddingLeft = (10 + d * 14) + 'px';
+      row.textContent = nodeText(n).label || '(未命名)';
+      row.title = row.textContent;
+      row.onclick = () => {
+        store.selectedId = n.id; emit(); renderDetail();
+        centerOnNode(n.id, 'resume');
+      };
+      outlineEl.appendChild(row);
+    }
   }
   // [STAGE 2026-11-14] 演讲模式极简提示行：只留会议标题＋录音状态，数据由页面 getStageInfo 提供、投影中每 2 秒刷新
   const stageBar = document.createElement('div');
@@ -481,11 +574,11 @@ export function createVizUI(opts) {
   return {
     store, load, syncNewPatches, setGraph, userPatch, tidyLayout,
     startReplay, seekReplay, playReplay, stopReplay,
-    enterProjection, exitProjection, renderDetail, resumeFollow,
+    enterProjection, exitProjection, renderDetail, resumeFollow, centerOnRoot,
     // [TRANSLATE-P1] 展示语言切换：只重渲染文字（emit+renderDetail），不触碰 positions/图结构/节点 ID
     setDisplayLang(l) { displayLangLocal = l === 'en' ? 'en' : 'zh'; emit(); renderDetail(); },
     select(id) { store.selectedId = id; emit(); renderDetail(); },
-    setAutoFollow(v) { store.autoFollow = v; if (v) { store.followHold = false; syncFollowChip(); } if (opts.onFollowChange) opts.onFollowChange(); },
+    setAutoFollow(v) { store.autoFollow = v; if (followResumeTimer) { clearTimeout(followResumeTimer); followResumeTimer = null; } if (v) { store.followHold = false; syncFollowChip(); } if (opts.onFollowChange) opts.onFollowChange(); },
     _mountReact: null, // 由页面模块在 import React Flow 后调用 attachReact
     attach(reactBits) { mountReact(reactBits); },
   };
@@ -566,13 +659,15 @@ export function createVizUI(opts) {
         nodes: rfNodes, edges: rfEdges, nodeTypes,
         colorMode: store.theme, fitView: true, minZoom: 0.2, maxZoom: 2.2,
         panOnDrag: true, zoomOnPinch: true, zoomOnScroll: true, // [STAGE 2026-11-14] 拖动平移＋双指捏合缩放（RF 内置，显式声明防默认值漂移）
-        // [STAGE 2026-11-14] 用户手动平移/缩放（非程序化移动）即暂停自动跟随，回正后恢复
-        onMoveStart: () => { if (store._progMove) return; if (store.mode === 'live' && store.autoFollow && !store.followHold) { store.followHold = true; syncFollowChip(); if (opts.onFollowChange) opts.onFollowChange(); } },
-        onMoveEnd: () => { store._progMove = false; },
+        // [VIZ-FOLLOW-V2 2026-11-16] 用户手动平移/缩放只临时让行，操作结束自动恢复跟随。
+        // 程序化移动（fitView/setCenter，含 RF 初始 fit）的事件 type 为 null，真人手势为 mousedown/wheel/touchstart——据此判别，不误伤
+        onMoveStart: (ev) => { if (store._progMove) return; if (!ev || !ev.type) return; userMoveActive = true; noteUserHoldStart(); },
+        onMoveEnd: () => { store._progMove = false; if (userMoveActive) { userMoveActive = false; noteUserHoldEnd(); } },
         proOptions: { hideAttribution: false },
         onNodeClick: (_, node) => { store.selectedId = node.id; emit(); renderDetail(); },
         onPaneClick: () => { store.selectedId = null; emit(); renderDetail(); },
-        onNodeDragStop: (_, node) => { store.positions.set(node.id, node.position); savePositions(); },
+        onNodeDragStart: () => { noteUserHoldStart(); },
+        onNodeDragStop: (_, node) => { store.positions.set(node.id, node.position); savePositions(); noteUserHoldEnd(); },
         onInit: (inst) => { store.rfApi = inst; },
         nodesDraggable: store.mode === 'live', nodesConnectable: false, elementsSelectable: true,
       }, React.createElement(Background, { gap: 22, size: 1.1, color: store.theme === 'dark' ? '#1D2A35' : '#D5E3DB' }), React.createElement(Controls, { showInteractive: false }));
