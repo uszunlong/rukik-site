@@ -24,11 +24,11 @@
   :root { --ivory:#FAF7F1; --navy:#142235; --gold:#B58A58; --gray:#8A8378; --line:#E5DED2; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--ivory); color:var(--navy); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
-  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 56px; }
+  .wrap { max-width:640px; margin:0 auto; padding:32px 22px 128px; }
   .brand { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
   .logo { font-weight:700; letter-spacing:4px; color:var(--gold); font-size:15px; }
   .kind { font-size:12px; letter-spacing:2px; color:var(--gray); }
-  .cover { width:100%; border-radius:12px; margin-bottom:14px; }
+  .cover { width:100%; border-radius:12px; margin-bottom:14px; display:block; background:#EFE9DC; }
   .badge { display:inline-block; font-size:11px; color:#5A5348; border:1px solid var(--line); border-radius:10px; padding:2px 8px; margin-bottom:14px; }
   .statusbad { background:#B3261E; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
   .statusend { background:#5A5348; color:#fff; font-size:15px; font-weight:700; text-align:center; border-radius:10px; padding:10px; margin-bottom:16px; }
@@ -75,6 +75,16 @@
   button.btn { border:none; }
   button.btn.ghost { border:1px solid var(--navy); }
   .foot { margin-top:28px; text-align:center; color:var(--gray); font-size:11px; letter-spacing:.4px; }
+  .signup { margin-top:30px; border:1px solid var(--line); border-radius:16px; padding:20px 18px; background:#FFFDF8; }
+  .signup h2 { margin:0 0 8px; }
+  .fld { margin-bottom:14px; }
+  .fld label { display:block; font-size:13.5px; font-weight:600; margin-bottom:6px; }
+  .fld input, .fld select { width:100%; font-size:16px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; color:var(--navy); }
+  .err { color:#B3261E; font-size:13.5px; min-height:18px; margin-bottom:8px; }
+  .su-btn { width:100%; cursor:pointer; font-family:inherit; border:none; }
+  .su-ok { font-size:19px; font-weight:700; color:#1E6B45; margin-bottom:6px; }
+  .su-app { margin-top:16px; border-top:1px dashed var(--line); padding-top:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:13.5px; color:var(--gray); }
+  .su-app .btn { margin:0; padding:9px 20px; font-size:14px; cursor:pointer; font-family:inherit; }
   .foot .b { color:var(--navy); font-weight:700; letter-spacing:2px; font-size:13px; margin-bottom:5px; }
 </style>
 </head>
@@ -97,9 +107,27 @@
   <h2>主办</h2><p data-i18n-skip>Octane</p>
   
   <p class="note">信息核实于 2026-10-26，具体安排以官方公布为准。</p>
-  <div class="jocta">
-    <button class="btn" id="joinBtn" type="button">参加活动</button>
-    <p class="note">在 Rukik App 内选择场次并确认参加；加入的是您的参加计划，官方购票 / 预约请以主办方为准。</p>
+  <div class="signup" id="signupBox" data-i18n-skip>
+    <h2>报名参加</h2>
+    <p class="note" style="margin:0 0 14px">在本页填写信息即可报名，无需安装 App。主办方会按您留下的手机号与您联系，活动如有变动也会据此通知您。</p>
+    <form id="suForm" novalidate>
+      
+      <div class="fld"><label for="suName">姓名（必填）</label><input id="suName" type="text" autocomplete="name" placeholder="您的姓名"></div>
+      <div class="fld"><label for="suPhone">手机号（必填）</label><input id="suPhone" type="tel" autocomplete="tel" placeholder="可带 +国际区号，如 +1 949 555 0100"></div>
+      <div class="fld"><label for="suNote">备注（选填）</label><input id="suNote" type="text" placeholder="想告诉主办方的话，可留空"></div>
+      <input id="suHp" type="text" name="company" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0">
+      <div class="err" id="suErr"></div>
+      <button class="btn su-btn" id="suBtn" type="submit">提交报名</button>
+    </form>
+    <div id="suDone" style="display:none">
+      <div class="su-ok" id="suOkText">✓ 报名成功</div>
+      <p class="note" style="margin:0">已收到您的报名。想随时查看或管理参加计划，可以打开 Rukik App；用同一手机号注册后即可关联这笔报名。</p>
+    </div>
+    <div class="su-app">
+      <span>已在用 Rukik？</span>
+      <button class="btn ghost" id="joinBtn" type="button">在 App 中打开</button>
+    </div>
+    <p class="note">官方购票 / 预约请以主办方为准。</p>
   </div>
   <div class="brandcard" id="brandcard">
     <div class="bc-head">
@@ -147,6 +175,7 @@
 var SB_URL = "https://yzgzgtrqrmarfjftgbwt.supabase.co";
 var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc";
 var EVENT_ID = "f8626659-209f-44e8-b903-05ddd3bdb60d";
+var SU_SESSION = "f03444e4-ca45-410e-8e53-e609a628c992";
 var SHARE_TEXT = "上Rukik 找惊喜\n\n发现一个值得去的活动！\n\nInnovators & Investors Forum\n5月12日 周三 08:00 – 18:00 · UCI BEALL APPLIED INNOVATION · Irvine\n\n点击查看活动详情。";
 var q = new URLSearchParams(location.search);
 var sParam = q.get("s") || "";
@@ -285,6 +314,73 @@ if (openBtn) {
 var joinBtn = document.getElementById("joinBtn");
 if (joinBtn) {
   joinBtn.addEventListener("click", function(){ openInApp(); });
+}
+// 网页直接报名（0799 web_event_signup）：免登录填表直报，落库与 App 报名
+// 同为组织者名单真源。文案按页面 lang 取（zh 页 zh-CN、en 页 en），逻辑单份。
+var suForm = document.getElementById("suForm");
+if (suForm) {
+  var SU_EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var SU_MSG = SU_EN ? {
+    name: "Please enter your name.",
+    phone: "That mobile number doesn't look right — please check it (country code welcome).",
+    rate: "Too many attempts — please try again in a little while.",
+    closed: "Sign-ups have closed for this event.",
+    ended: "This session has already ended.",
+    joinable: "This event can't be signed up for right now.",
+    failed: "Sign-up didn't go through — please try again.",
+    net: "Network hiccup — please try again.",
+    dup: "✓ You've already signed up"
+  } : {
+    name: "请填写姓名。",
+    phone: "手机号格式不太对，请检查一下（可带 +国际区号）。",
+    rate: "提交太频繁了，请稍后再试。",
+    closed: "报名已截止。",
+    ended: "这场已经结束了。",
+    joinable: "这个活动暂时不能报名。",
+    failed: "报名未成功，请稍后再试。",
+    net: "网络不太顺，请稍后再试。",
+    dup: "✓ 您已报名"
+  };
+  suForm.addEventListener("submit", function(pev){
+    pev.preventDefault();
+    var errEl = document.getElementById("suErr");
+    function fail(m){ errEl.textContent = m; }
+    var hp = document.getElementById("suHp");
+    if (hp && hp.value) { // 蜜罐命中：静默装作成功，不落库
+      suForm.style.display = "none";
+      document.getElementById("suDone").style.display = "block";
+      return;
+    }
+    var name = document.getElementById("suName").value.trim();
+    var phone = document.getElementById("suPhone").value.trim();
+    var note = document.getElementById("suNote").value.trim();
+    var sessEl = document.getElementById("suSession");
+    var sessionId = sessEl ? (sessEl.value || null) : (SU_SESSION || null);
+    if (!name) { fail(SU_MSG.name); return; }
+    var digits = phone.replace(/\D/g, "");
+    if (!/^\+?[0-9\s\-()]+$/.test(phone) || digits.length < 7 || digits.length > 15) { fail(SU_MSG.phone); return; }
+    var btn = document.getElementById("suBtn");
+    btn.disabled = true; errEl.textContent = "";
+    var ref = [sParam ? "s=" + sParam : "", refParam ? "ref=" + refParam : ""].filter(Boolean).join("&");
+    fetch(SB_URL + "/rest/v1/rpc/web_event_signup", {
+      method: "POST",
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event_id: EVENT_ID, p_session_id: sessionId, p_name: name, p_phone: phone, p_note: note || null, p_share_ref: ref || null })
+    }).then(function(r){ return r.json(); }).then(function(j){
+      btn.disabled = false;
+      if (j && j.ok) {
+        resolveShareId().then(function(id){ postShareEvent(id, "web_signup", refParam); });
+        suForm.style.display = "none";
+        if (j.duplicate) document.getElementById("suOkText").textContent = SU_MSG.dup;
+        document.getElementById("suDone").style.display = "block";
+      } else {
+        var m = (j && j.error) || "";
+        fail(m === "rate_limited" ? SU_MSG.rate : m === "registration_closed" ? SU_MSG.closed
+          : m === "session_ended" ? SU_MSG.ended : m === "event_not_joinable" ? SU_MSG.joinable
+          : m === "invalid_phone" ? SU_MSG.phone : m === "invalid_name" ? SU_MSG.name : SU_MSG.failed);
+      }
+    }).catch(function(){ btn.disabled = false; fail(SU_MSG.net); });
+  });
 }
 var shareBtn = document.getElementById("shareBtn");
 if (shareBtn) {
