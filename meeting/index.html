@@ -40,6 +40,14 @@
   .viz-stage-dot.paused{background:var(--warn)}
   /* [STAGE 2026-11-14] 跟随被用户手动平移暂停时，画布右下角回正入口 */
   .viz-follow-chip{position:absolute;right:12px;bottom:12px;z-index:65;background:rgba(17,26,46,.88);color:var(--txt);border:1px solid var(--acc);font-size:12px;padding:6px 10px}
+  /* [VIZ-FOLLOW-V2 2026-11-16] 左侧节点目录（可收起）：浅色卡片浮层，行点击定位＋选中 */
+  .viz-outline-btn{position:absolute;left:12px;top:12px;z-index:66;background:rgba(255,255,255,.92);color:#0B8A5F;border:1px solid #BDEEDD;border-radius:99px;font-size:12px;padding:5px 11px;box-shadow:0 2px 8px rgba(16,60,40,.10);cursor:pointer}
+  .viz-outline{position:absolute;left:12px;top:46px;z-index:66;width:228px;max-width:72%;max-height:68%;overflow-y:auto;background:rgba(255,255,255,.96);border:1px solid #DCE8E1;border-radius:12px;box-shadow:0 10px 28px rgba(16,60,40,.14);padding:6px 0}
+  .viz-outline-row{padding-top:5px;padding-bottom:5px;padding-right:10px;font-size:13px;color:#22332A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-left:3px solid transparent}
+  .viz-outline-row:hover{background:#F0F8F3}
+  .viz-outline-row.active{background:#E7F6EE;border-left-color:#0B8A5F;font-weight:650}
+  .viz-outline-empty{padding:8px 12px;font-size:12.5px;color:var(--dim)}
+  .viz-wrap.in-projection .viz-outline-btn,.viz-wrap.in-projection .viz-outline{display:none}
   /* [VIZ-VISUAL-V1 2026-11-14] 导图节点新版视觉：浅色默认（白卡＋细绿边＋柔和阴影）；演讲模式深色在 [WB-VISUAL-V1] 块内以 .in-projection 覆盖 */
   .viz-node{background:#fff;border:1px solid #DCE8E1;border-radius:14px;padding:9px 13px 10px;color:#14231B;box-shadow:0 6px 20px rgba(16,60,40,.10);position:relative;transition:box-shadow .25s}
   .viz-node.lv0{padding:16px 20px 14px;text-align:center;color:#fff;border:0}
@@ -251,7 +259,7 @@
   body.in-ws #col-minutes{flex:0 1 auto;max-height:42%;overflow-y:auto;padding:10px 14px}
   body.in-ws #viz-mount{flex:1;min-height:0;display:flex;flex-direction:column}
   body.in-ws .viz-wrap:not(.in-projection){position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
-  body.in-ws .viz-canvas{flex:1;min-height:0;height:auto;max-height:none;background:#F3F9F6;border-color:var(--line);border-radius:14px}
+  body.in-ws .viz-canvas{flex:1;min-height:0;height:auto;max-height:none;background:linear-gradient(155deg,#FFFFFF 0%,#F3F9F6 52%,#E8F4ED 100%);border-color:var(--line);border-radius:14px}
   body.in-ws .viz-detail{flex:none;background:#FBFDFC}
   /* [VIZ-VISUAL-V1] 导图深色星图主题只在演讲模式（.in-projection）生效；工作台用浅色默认（见基础 .viz-node） */
   .viz-wrap.in-projection .viz-canvas{background:#0A0F14}
@@ -318,6 +326,15 @@
   body.in-ws #col-ai{display:flex;flex-direction:column;overflow:hidden;padding:10px 14px}
   #fs-scroll{flex:1;min-height:0;overflow-y:auto}
   #foresight-list .item{background:#FBFDFC;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px}
+  /* [FS3 2026-11-16] AI 预见三段式：发现（红）/预见（黑）/建议（绿）三独立圆角区＋新卡轻微淡入 */
+  @keyframes fsFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  #foresight-list .item{animation:fsFadeIn .45s ease-out}
+  .fs3{border-radius:10px;padding:8px 11px;margin-top:7px;font-size:13px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere}
+  .fs3 .fs3-ic{margin-right:5px;font-style:normal}
+  .fs3 b{font-weight:700}
+  .fs3-obs{background:#FDECEC;color:#B3261E}
+  .fs3-pre{background:#F1F5F4;color:#1F2937}
+  .fs3-rec{background:#E7F6EE;color:#14713F}
   /* [FORESIGHT-SUPERSEDE 2026-11-15] 被推翻的预见整卡弱化（仍可展开依据/恢复） */
   #foresight-list .item.fs-superseded{opacity:.58;border-left-color:var(--line)}
   /* [WB-VISUAL-V1] 预见/状态色彩的浅色适配（深底荧光色→白底深色，语义不变） */
@@ -550,6 +567,7 @@
         <h3>会议导图 <span class="viz-h3-note" style="font-weight:400">· 实时生长</span></h3>
         <div class="viz-toolbar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
           <button class="ghost" id="btn-viz-tidy">整理布局</button>
+          <button class="ghost" id="btn-viz-center">◎ 回到中心</button>
           <button class="ghost" id="btn-viz-follow">自动跟随：开</button>
           <button class="ghost" id="btn-viz-replay">▶ 回放</button>
           <button class="ghost" id="btn-viz-project">⛶ 演讲模式</button>
@@ -1306,16 +1324,17 @@ $('btn-viz-grow').onclick = async () => {
   $('btn-viz-grow').disabled = false;
 };
 $('btn-viz-tidy').onclick = () => vizUI && vizUI.tidyLayout();
-// [STAGE 2026-11-14] 跟随三态：开／关／被用户手动平移暂停——暂停时点按回正并恢复跟随
+// [VIZ-FOLLOW-V2 2026-11-16] 回到中心：只移视角回中心主题，不改数据、不关跟随（与实时跟随是两个功能）
+$('btn-viz-center').onclick = () => { if (vizUI) { try { vizUI.centerOnRoot(); } catch (e) { $('ws-err').textContent = e.message; } } };
+// [VIZ-FOLLOW-V2 2026-11-16] 跟随只剩开/关两态：用户操作只临时让行、自动恢复，按钮不再承担「回正恢复」职责
 function syncFollowBtn() {
   if (!vizUI) return;
   const s = vizUI.store;
-  $('btn-viz-follow').textContent = !s.autoFollow ? '自动跟随：关' : s.followHold ? '回正并跟随' : '自动跟随：开';
+  $('btn-viz-follow').textContent = s.autoFollow ? '自动跟随：开' : '自动跟随：关';
 }
 $('btn-viz-follow').onclick = () => {
   if (!vizUI) return;
-  if (vizUI.store.followHold) vizUI.resumeFollow();
-  else vizUI.setAutoFollow(!vizUI.store.autoFollow);
+  vizUI.setAutoFollow(!vizUI.store.autoFollow);
   syncFollowBtn();
 };
 $('btn-viz-replay').onclick = () => { if (vizUI) { try { vizUI.startReplay(); } catch (e) { $('ws-err').textContent = e.message; } } };
@@ -1326,6 +1345,49 @@ $('rp-speed').onchange = () => { if (vizUI && vizUI.store.replay) vizUI.store.re
 $('btn-viz-project').onclick = () => vizUI && vizUI.enterProjection();
 
 const FS_LABEL = { risk: '决策风险', conflict: '逻辑冲突', gap: '被忽略的问题', dependency: '任务依赖与瓶颈', delay: '潜在延误', history_change: '历史决策变化', simulation: '情景推演' };
+// [FS3 2026-11-16] 预见正文三段式拆分（纯展示层，不调 AI、不改数据）：
+// 数据优先——若接口将来带 observation/prediction/recommendation 字段直接复用（2026-11-16 实查
+// foresight_insights 表无此三列、当前恒走文本拆分）；文本按「发现：/预见：/建议：」标签切分，
+// 英文译文按 Found:/Foresee:/Recommendation: 等标签切分。拆分门槛：必须以「发现」段开头、
+// 至少命中两段、段序与位置一致；任一不满足返回 null → 原文整段展示，绝不丢内容。
+const FS3_LABELS = [
+  { key: 'obs', icon: '🔍', zh: '发现', en: 'Found', words: ['发现', 'Found', 'Observation'] },
+  { key: 'pre', icon: '📈', zh: '预见', en: 'Foresee', words: ['预见', 'Foresee', 'Prediction'] },
+  { key: 'rec', icon: '💡', zh: '建议', en: 'Recommendation', words: ['建议', 'Recommendation', 'Suggestion'] },
+];
+function splitFsBody(body) {
+  if (!body) return null;
+  const t = String(body).replace(/<br\s*\/?>/gi, '\n');
+  const hits = [];
+  for (let i = 0; i < FS3_LABELS.length; i++) {
+    let best = null;
+    for (const w of FS3_LABELS[i].words) {
+      const re = new RegExp('(^|[\\n。；;.!?！？])\\s*' + w + '\\s*[：:]\\s*', 'g');
+      const m = re.exec(t);
+      if (m && (!best || m.index < best.m.index)) best = { m, w, lastIndex: re.lastIndex };
+    }
+    if (best) hits.push({ seg: i, labelStart: best.m.index + best.m[1].length, contentStart: best.lastIndex, isZh: /[一-鿿]/.test(best.w) });
+  }
+  if (!hits.length || hits[0].seg !== 0) return null;
+  if (t.slice(0, hits[0].labelStart).trim() !== '') return null;
+  for (let i = 1; i < hits.length; i++) if (hits[i].labelStart <= hits[i - 1].labelStart) return null;
+  if (hits.length < 2) return null;
+  return hits.map((h, i) => {
+    const end = i + 1 < hits.length ? hits[i + 1].labelStart : t.length;
+    const text = t.slice(h.contentStart, end).replace(/[\s。；;]+$/, '').trim();
+    const cfg = FS3_LABELS[h.seg];
+    return { key: cfg.key, icon: cfg.icon, label: h.isZh ? cfg.zh : cfg.en, text };
+  }).filter((s) => s.text);
+}
+function fsBodyParts(f, bodyText) {
+  if (f.observation || f.prediction || f.recommendation) {
+    const vals = [f.observation, f.prediction, f.recommendation];
+    const parts = [];
+    for (let i = 0; i < 3; i++) if (vals[i]) parts.push({ key: FS3_LABELS[i].key, icon: FS3_LABELS[i].icon, label: displayLang === 'en' ? FS3_LABELS[i].en : FS3_LABELS[i].zh, text: String(vals[i]) });
+    if (parts.length) return parts;
+  }
+  return splitFsBody(bodyText);
+}
 async function loadForesight() {
   const box = $('foresight-list');
   try {
@@ -1360,8 +1422,13 @@ async function loadForesight() {
       // [WB-REDESIGN 2026-11-14] 卡面只留标题与正文；依据/情景/校验说明折叠进「查看依据」，无依据不给入口、不伪造引用
       const hasBasis = parts.length > 0 || !!scen || !!dg || isSup;
       const div = document.createElement('div'); div.className = 'item' + (isSup ? ' fs-superseded' : '');
+      // [FS3 2026-11-16] 正文三段式：拆得出→发现/预见/建议三色独立区；拆不出→原文整段（与旧版一致）
+      const fsParts = fsBodyParts(f, fBody);
+      const bodyHtml = fsParts
+        ? fsParts.map((s) => `<div class="fs3 fs3-${s.key}"><i class="fs3-ic">${s.icon}</i><b>${esc(s.label)}：</b>${esc(s.text)}</div>`).join('')
+        : `<p style="margin:4px 0 0">${esc(fBody)}</p>`;
       div.innerHTML = `<span class="chip">${FS_LABEL[f.kind] || f.kind}</span><span class="chip" style="color:var(--warn)">AI 推演</span>${statusChip}
-        <br><b>${esc(fTitle)}</b><p style="margin:4px 0 0">${esc(fBody)}</p>
+        <br><b>${esc(fTitle)}</b>${bodyHtml}
         ${hasBasis ? `<div class="fs-details" style="display:none">${parts.join('')}${scen}${dg}${supPart}</div>` : ''}
         <div style="margin-top:6px;display:flex;gap:6px">
           ${hasBasis ? '<button class="ghost" data-fact="basis">查看依据</button>' : ''}
