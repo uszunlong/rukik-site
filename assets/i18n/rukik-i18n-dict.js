@@ -1123,6 +1123,7 @@ window.RUKIK_I18N_DICT = {
 "我想让家人住得更安心": "Help my family feel safer at home",
 "我是新用户": "I'm a New User",
 "我比较在意家人的居住安全。您能帮我调查这套房附近的公开治安记录、交通风险、洪水和山火风险，并告诉我需要注意什么吗？": "I care a lot about my family's safety at home. Can you check public safety records, traffic risks, and flood and wildfire risks near this home, and tell me what to watch out for?",
+"我的主题": "My Topics",
 "我的会议": "My Meetings",
 "我的位置": "My Position",
 "我的公开文章、观点与专业资料都已经装进我的专业 AI。您向 AI 助理提问时，它会结合这些公开内容回答，并在回答中注明出处；私有与未公开资料不会出现在任何回答里。": "All my public articles, insights, and professional materials are loaded into my professional AI. When you ask my AI assistant, it answers using this public content and cites its sources; private and unpublished material never appears in any answer.",
