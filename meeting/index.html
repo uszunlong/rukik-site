@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RUKIK AI 会议伴侣（内部测试）</title>
+<title>RUKIK AI 会议伴侣</title>
 <link rel="stylesheet" href="https://esm.sh/@xyflow/react@12.3.6/dist/style.css">
 <script type="importmap">
 {"imports":{
@@ -507,7 +507,6 @@ body.in-topic{background:#FFFFFF}
       
     </div>
     <span style="flex:1"></span>
-    <span class="beta-badge">内部测试</span>
     <span class="brand-sep"></span>
     <div class="user-menu-wrap" id="user-menu-wrap" style="display:none">
       <button class="avatar-btn" id="avatar-btn" aria-haspopup="true" aria-expanded="false" title="账号">
@@ -524,7 +523,7 @@ body.in-topic{background:#FFFFFF}
   <!-- 登录 -->
   <div id="view-login" class="card" style="max-width:420px;margin:40px auto">
     <h3 style="margin-top:0">使用 RUKIK 账号登录</h3>
-    <p class="dim">统一 UID 登录。会议功能目前仅对内部测试名单开放。</p>
+    <p class="dim">统一 UID 登录。会议功能目前仅向受邀用户开放。</p>
     <p><input id="email" type="email" placeholder="邮箱" autocomplete="username"></p>
     <p><input id="password" type="password" placeholder="密码" autocomplete="current-password"></p>
     <p><button id="btn-login" style="width:100%">登录</button></p>
@@ -624,7 +623,7 @@ body.in-topic{background:#FFFFFF}
     <div id="home-settings" style="display:none">
       <label class="dim">转写服务地址（ASR WebSocket）</label>
       <div class="set-row"><input id="asr-url"><button id="btn-asr" class="ghost">保存</button></div>
-      <p class="dim">录音与转写仅保存在你的账号下，默认私有；删除会议后其内容将不可再被检索。发言人分离在后续阶段提供；会议导图与 AI 预见已上线（内部测试）。</p>
+      <p class="dim">录音与转写仅保存在你的账号下，默认私有；删除会议后其内容将不可再被检索。发言人分离在后续阶段提供；会议导图与 AI 预见已上线。</p>
     </div>
   </div>
 
@@ -1051,7 +1050,7 @@ async function enterHome() {
   try {
     const f = await client.flagStatus();
     flagEnabled = !!f.enabled;
-    $('home-flag').textContent = flagEnabled ? '' : '当前账号不在内部测试名单内，暂不能开始新会议。';
+    $('home-flag').textContent = flagEnabled ? '' : '当前账号暂不在开放名单内，暂不能开始新会议。';
     $('btn-new').disabled = !flagEnabled;
   } catch { $('home-flag').textContent = '无法读取功能开关状态。'; }
   await loadList();
@@ -2978,7 +2977,7 @@ function connectWS() {
     if (!wasEnding && rcHandleClose(ev, sock)) return; // [WS-RECONNECT 2026-11-14] 非主动断开由自动重连接管
     if (cur && cur.meeting.status === 'live') $('ws-err').textContent = '转写连接已断开（' + ev.code + '）。已保存到服务器的字幕会保留；断开期间的声音不会被记录。刷新页面后将从服务器记录的最新进度继续，不会从头重记。'; setConn('err', '转写已断开');
   };
-  ws.onerror = () => { $('ws-err').textContent = '转写服务连接失败（内部测试需 ASR 服务可达）。纪要与历史功能不受影响。'; };
+  ws.onerror = () => { $('ws-err').textContent = '转写服务连接失败（需 ASR 服务可达）。纪要与历史功能不受影响。'; };
 }
 
 let micLevel = 0, micLevelAt = 0, micSmooth = 0; // [WB-REDESIGN 2026-11-14] 顶栏声波电平：只来自麦克风真实输入，无输入/未录音回落静止
