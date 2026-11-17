@@ -61,6 +61,9 @@
   .auth-row select { flex:1; min-width:0; border:1px solid #e3ddd2; border-radius:999px; padding:11px 16px; font-size:16px; outline:none; background:#fff; color:#202020; min-height:44px; box-sizing:border-box; }
   .auth-row button.plain { background:#fff; color:#142235; border:1px solid #e3ddd2; }
   #bindBar { border:1px solid #e3ddd2; border-radius:14px; padding:14px; margin-bottom:14px; }
+  /* [GUEST-TRIAL 2026-11-17] 登录区弹窗形态（游客第二问拦截时） */
+  #authBox.auth-modal { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(520px, calc(100vw - 32px)); max-height:88vh; overflow:auto; background:#FBF9F5; border-radius:16px; padding:20px; z-index:60; box-shadow:0 0 0 100vmax rgba(20,34,53,.45), 0 18px 50px rgba(0,0,0,.25); box-sizing:border-box; }
+  #authClose { position:absolute; top:8px; right:12px; background:none; border:none; font-size:22px; line-height:1; color:#8B857D; cursor:pointer; padding:6px; }
 </style>
 <style>.badges{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;line-height:1.7}.badge-verified{background:#fdf3d7;color:#7a5b00;border:1px solid #e3c565;font-weight:700}.badge-ai{background:#e8eef7;color:#33527a;border:1px solid #b9cbe4}</style>
 </head>
@@ -73,6 +76,7 @@
   <div class="card">Sophia Wang 是 Rukik 创建的 AI 专业角色，擅长家族财富与传承领域的信息梳理、问题讨论与思路整理。关注纽约、中国香港与新加坡等地的家族财富议题，善于用平实的语言讲清传承安排的逻辑。本角色提供一般性信息参考，不构成正式专业意见；遇到重要决定，建议再向具备相应资格的真人专业人士确认。</div>
   <div class="chat">
   <div id="authBox">
+    <button id="authClose" type="button" hidden aria-label="关闭">×</button>
     <div class="chat-title">您的每一个问题，都值得专业解答。</div>
     <p class="auth-hint">注册登录后，即可与我的专属 AI 智能团队交流，获得专业、贴心的解答。需要进一步帮助时，也可以直接联系我本人。</p>
     <div class="auth-row">
@@ -81,6 +85,7 @@
     <div class="auth-tabs">
       <button id="authTabEmail" type="button" class="on">邮箱登录</button>
       <button id="authTabPhone" type="button">手机号登录</button>
+      <button id="authTabPwd" type="button">密码登录</button>
     </div>
     <div id="authEmailPane">
     <div class="auth-row">
@@ -128,6 +133,29 @@
       <button id="authRegBack" type="button" class="plain">返回</button>
     </div>
     </div>
+    </div>
+    <div id="authPwdPane" hidden>
+    <div class="auth-row">
+      <select id="authPwdCc" aria-label="国家或地区区号">
+        <option value="+1" selected>美国 / 加拿大 +1</option>
+        <option value="+86">中国 +86</option>
+        <option value="+852">中国香港 +852</option>
+        <option value="+886">中国台湾 +886</option>
+        <option value="+65">新加坡 +65</option>
+        <option value="+44">英国 +44</option>
+        <option value="+61">澳大利亚 +61</option>
+        <option value="+81">日本 +81</option>
+        <option value="+82">韩国 +82</option>
+      </select>
+    </div>
+    <div class="auth-row">
+      <input id="authAccount" type="text" placeholder="邮箱地址或手机号码" maxlength="120" autocomplete="username">
+    </div>
+    <div class="auth-row">
+      <input id="authPassword" type="password" placeholder="密码" maxlength="128" autocomplete="current-password">
+      <button id="authPwdLogin" type="button">登录</button>
+    </div>
+    <p class="auth-hint" style="text-align:left">与 Rukik App 同一账号密码。用手机号登录时请先选对区号；还没有密码的账号，可改用验证码登录，或在 Rukik App 里先设置密码。</p>
     </div>
     <div class="auth-msg" id="authMsg">正在准备登录…</div>
   </div>
@@ -236,6 +264,12 @@
   var tabPhoneBtn = document.getElementById('authTabPhone');
   var emailPane = document.getElementById('authEmailPane');
   var phonePane = document.getElementById('authPhonePane');
+  var tabPwdBtn = document.getElementById('authTabPwd');
+  var pwdPane = document.getElementById('authPwdPane');
+  var pwdCcEl = document.getElementById('authPwdCc');
+  var accountEl = document.getElementById('authAccount');
+  var pwdEl = document.getElementById('authPassword');
+  var pwdLoginBtn = document.getElementById('authPwdLogin');
   var ccEl = document.getElementById('authCc');
   var phoneEl = document.getElementById('authPhone');
   var sendSmsBtn = document.getElementById('authSendSms');
@@ -258,6 +292,8 @@
   var bindVerifyBtn = document.getElementById('bindVerify');
   var bindMsg = document.getElementById('bindMsg');
   var authMsg = document.getElementById('authMsg');
+  var authCloseBtn = document.getElementById('authClose');
+  var chatNoteEl = document.querySelector('.chat-note');
   var authBarText = document.getElementById('authBarText');
   var logoutBtn = document.getElementById('authLogout');
   var msgsEl = document.getElementById('chatMsgs');
@@ -295,14 +331,55 @@
     var rounds = 0;
     var busy = false;
 
+    // [GUEST-TRIAL 2026-11-17] 游客（无会话/匿名会话）进页即可见对话区，
+    // 免费问 1 个问题；第二问点发送时弹出登录面板（authBox 本体）。
+    var GUEST_MAX_ROUNDS = 1;
+    var authPanelOpen = false;
+    var pendingGuestSend = false;
+    var guestStarting = false;
+    function isAnonUser() {
+      return !!(session && session.user && session.user.is_anonymous);
+    }
+    function openAuthPanel(fromTrial) {
+      authPanelOpen = true;
+      authBox.classList.add('auth-modal');
+      authBox.hidden = false;
+      if (authCloseBtn) authCloseBtn.hidden = false;
+      if (fromTrial && authMsg) authMsg.textContent = '免费体验已用完，注册或登录后即可继续咨询。';
+      var f = document.getElementById('authEmail');
+      if (f) f.focus();
+    }
+    function closeAuthPanel() {
+      authPanelOpen = false;
+      authBox.classList.remove('auth-modal');
+      if (authCloseBtn) authCloseBtn.hidden = true;
+      renderAuth();
+      if (inputEl) inputEl.focus();
+    }
     function renderAuth() {
-      var logged = !!session;
-      authBox.hidden = logged;
-      chatBox.hidden = !logged;
-      if (logged) {
+      var registered = !!session && !isAnonUser();
+      if (registered) {
+        authPanelOpen = false;
+        authBox.classList.remove('auth-modal');
+        if (authCloseBtn) authCloseBtn.hidden = true;
+      }
+      authBox.hidden = registered || !authPanelOpen;
+      chatBox.hidden = false;
+      if (registered) {
         authBarText.textContent = '已登录：' + ((session.user && (session.user.email || session.user.phone)) || '');
+        if (logoutBtn) logoutBtn.textContent = '退出登录';
         if (authMsg) authMsg.textContent = '';
+        if (chatNoteEl) chatNoteEl.textContent = '网页端可免费咨询 3 轮 · AI 回答仅供参考，不构成正式专业意见';
         if (bindBar) { var hasPh = !!(session.user && session.user.phone); bindBar.hidden = hasPh || boundDone; if (!bindBar.hidden) prefillBind(); }
+        if (pendingGuestSend) {
+          pendingGuestSend = false;
+          if (inputEl && inputEl.value.trim() && !busy) send();
+        }
+      } else {
+        authBarText.textContent = '游客模式 · 可免费咨询 1 个问题';
+        if (logoutBtn) logoutBtn.textContent = '登录 / 注册';
+        if (bindBar) bindBar.hidden = true;
+        if (chatNoteEl) chatNoteEl.textContent = '游客可免费咨询 1 个问题 · 注册登录后可继续咨询 · AI 回答仅供参考，不构成正式专业意见';
       }
     }
 
@@ -363,17 +440,84 @@
       }
     });
 
-    function setAuthTab(phone) {
-      if (tabEmailBtn) tabEmailBtn.classList.toggle('on', !phone);
-      if (tabPhoneBtn) tabPhoneBtn.classList.toggle('on', phone);
-      if (emailPane) emailPane.hidden = phone;
-      if (phonePane) phonePane.hidden = !phone;
+    function setAuthTab(mode) {
+      // [P-PWD-LOGIN 2026-11-17] 三通道 email / phone / pwd；兼容旧调用 setAuthTab(true|false)
+      if (mode === true) mode = 'phone';
+      else if (mode === false || !mode) mode = 'email';
+      if (tabEmailBtn) tabEmailBtn.classList.toggle('on', mode === 'email');
+      if (tabPhoneBtn) tabPhoneBtn.classList.toggle('on', mode === 'phone');
+      if (tabPwdBtn) tabPwdBtn.classList.toggle('on', mode === 'pwd');
+      if (emailPane) emailPane.hidden = mode !== 'email';
+      if (phonePane) phonePane.hidden = mode !== 'phone';
+      if (pwdPane) pwdPane.hidden = mode !== 'pwd';
       if (branchEl) branchEl.hidden = true;
       if (regEl) regEl.hidden = true;
       if (authMsg) authMsg.textContent = '';
     }
-    if (tabEmailBtn) tabEmailBtn.addEventListener('click', function () { setAuthTab(false); });
-    if (tabPhoneBtn) tabPhoneBtn.addEventListener('click', function () { setAuthTab(true); });
+    if (tabEmailBtn) tabEmailBtn.addEventListener('click', function () { setAuthTab('email'); });
+    if (tabPhoneBtn) tabPhoneBtn.addEventListener('click', function () { setAuthTab('phone'); });
+    if (tabPwdBtn) tabPwdBtn.addEventListener('click', function () { setAuthTab('pwd'); });
+
+    // [P-PWD-LOGIN 2026-11-17] 密码登录：走 GoTrue 既有密码校验 signInWithPassword，
+    // 与官网/App 同一账号体系；页面不记录密码明文，成功后与验证码登录同路进对话。
+    function buildPwdPhone() {
+      var cc = (pwdCcEl && pwdCcEl.value) || '+1';
+      var digits = normalizePhoneDigits(accountEl && accountEl.value, cc);
+      if (digits.length < 6 || digits.length > 14) return '';
+      return cc + digits;
+    }
+    async function doPwdLogin() {
+      var acct = (accountEl.value || '').trim();
+      var pwd = pwdEl.value || '';
+      if (!acct) { authMsg.textContent = '请先填写邮箱地址或手机号码。'; return; }
+      if (!pwd) { authMsg.textContent = '请填写密码。'; return; }
+      var creds = null;
+      if (acct.indexOf('@') > 0) {
+        creds = { email: acct, password: pwd };
+      } else {
+        var phone = buildPwdPhone();
+        if (!phone) { authMsg.textContent = '请填写正确的手机号码，并确认区号无误。'; return; }
+        creds = { phone: phone, password: pwd };
+      }
+      pwdLoginBtn.disabled = true;
+      authMsg.textContent = '正在登录…';
+      try {
+        var r = await sb.auth.signInWithPassword(creds);
+        if (r.error) {
+          var code = r.error.code || '';
+          var emsg = r.error.message || '';
+          if (code === 'invalid_credentials' || /invalid login credentials/i.test(emsg)) {
+            authMsg.textContent = '账号或密码不正确。若您一直用验证码或 Apple 登录、还没设置过密码，请改用验证码登录，或在 Rukik App 里先设置密码。';
+          } else if (code === 'email_not_confirmed' || /email not confirmed/i.test(emsg)) {
+            authMsg.textContent = '这个邮箱还没有完成验证，请改用邮箱验证码登录。';
+          } else if (code === 'phone_not_confirmed' || /phone not confirmed/i.test(emsg)) {
+            authMsg.textContent = '这个手机号还没有完成验证，请改用短信验证码登录。';
+          } else if (code === 'user_banned' || /user banned/i.test(emsg)) {
+            authMsg.textContent = '该账号已被停用，如有疑问请联系我们。';
+          } else if (/captcha/i.test(emsg)) {
+            authMsg.textContent = '安全验证未通过，请刷新页面后重试。';
+          } else {
+            authMsg.textContent = '登录失败，请稍后重试。';
+          }
+        } else {
+          session = (r.data && r.data.session) || null;
+          var name = (nameEl.value || '').trim();
+          if (name) {
+            try { await sb.auth.updateUser({ data: { name: name } }); } catch (e) { /* 称呼保存失败不阻塞登录 */ }
+          }
+          pwdEl.value = '';
+          renderAuth();
+          if (inputEl) inputEl.focus();
+        }
+      } catch (e) {
+        authMsg.textContent = '登录失败，请检查网络后重试。';
+      } finally {
+        pwdLoginBtn.disabled = false;
+      }
+    }
+    if (pwdLoginBtn) pwdLoginBtn.addEventListener('click', doPwdLogin);
+    if (pwdEl) pwdEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); doPwdLogin(); } });
+    if (accountEl) accountEl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); if (pwdEl) pwdEl.focus(); } });
 
     var PHONE_LOCAL_LEN = { '1': 10, '86': 11, '852': 8, '886': 9, '65': 8, '44': 10, '61': 9, '81': 11, '82': 11 };
     function normalizePhoneDigits(raw, cc) {
@@ -643,7 +787,11 @@
       }
     });
 
+    if (authCloseBtn) authCloseBtn.addEventListener('click', closeAuthPanel);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && authPanelOpen) closeAuthPanel(); });
     logoutBtn.addEventListener('click', async function () {
+      // [GUEST-TRIAL 2026-11-17] 游客态此按钮是「登录 / 注册」入口
+      if (!session || isAnonUser()) { openAuthPanel(false); return; }
       try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
       session = null;
       history = [];
@@ -700,16 +848,40 @@
     function friendlyError(code) {
       if (code === 'not_configured') return '助理正在开通中，暂时还不能回答。请稍后再来，或点下方按钮在 Rukik App 里联系我本人。';
       if (code === 'round_limit') { lockWithGuide(); return '网页端的 3 轮免费咨询已用完，下载 Rukik App 可以继续咨询。'; }
+      if (code === 'register_required') return '免费体验已用完，注册或登录后即可继续咨询。';
       if (code === 'login_required') return '登录已过期，请重新登录后再咨询。';
       return '暂时无法回答，请检查网络后重试。';
     }
 
     async function send() {
       if (busy) return;
-      if (!session) { renderAuth(); return; }
-      if (rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
       var text = inputEl.value.trim();
       if (!text) return;
+      if (!session) {
+        // [GUEST-TRIAL 2026-11-17] 游客首问：懒创建匿名会话（服务端按匿名
+        // UID 计数限 1 问、不扣专家点数）；创建失败回落登录面板。
+        if (guestStarting) return;
+        guestStarting = true;
+        try {
+          var ar = await sb.auth.signInAnonymously();
+          if (ar.error || !ar.data || !ar.data.session) throw new Error('anon_failed');
+          session = ar.data.session;
+          renderAuth();
+        } catch (e) {
+          openAuthPanel(false);
+          if (authMsg) authMsg.textContent = '游客体验暂时不可用，请先注册或登录后咨询。';
+          return;
+        } finally {
+          guestStarting = false;
+        }
+      }
+      if (isAnonUser() && rounds >= GUEST_MAX_ROUNDS) {
+        // 第二问：不发送，弹登录面板；草稿保留在输入框里，登录后自动续发
+        pendingGuestSend = true;
+        openAuthPanel(true);
+        return;
+      }
+      if (!isAnonUser() && rounds >= MAX_ROUNDS) { lockWithGuide(); return; }
       busy = true;
       sendBtn.disabled = true;
       inputEl.value = '';
@@ -733,6 +905,11 @@
           var errData = {};
           try { errData = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
           history.pop();
+          if ((errData.error || '') === 'register_required') {
+            pendingGuestSend = true;
+            inputEl.value = text;
+            openAuthPanel(true);
+          }
           if ((errData.error || '') === 'login_required') {
             try { await sb.auth.signOut(); } catch (e) { /* 忽略 */ }
             session = null;
@@ -779,6 +956,7 @@
           try { data = await res.json(); } catch (e) { /* 非 JSON 响应按通用错误处理 */ }
           if (!data.reply) {
             history.pop();
+            if ((data.error || '') === 'register_required') { pendingGuestSend = true; inputEl.value = text; openAuthPanel(true); }
             thinking.textContent = friendlyError(data.error || '');
           } else {
             thinking.innerHTML = rkMd(data.reply);
