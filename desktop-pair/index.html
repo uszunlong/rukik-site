@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>确认桌面伴侣配对 · Confirm Desktop Pairing</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #F4F7F5; color: #10263C; }
+  .card { max-width: 420px; margin: 48px auto; background: #fff; border-radius: 14px; padding: 28px 24px; box-shadow: 0 4px 24px rgba(16,38,60,.08); }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .sub { color: #5A6B7C; margin: 0 0 20px; font-size: 14px; }
+  label { display: block; font-size: 13px; color: #5A6B7C; margin: 14px 0 6px; }
+  input { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #C9D6DF; border-radius: 8px; font-size: 16px; }
+  button { width: 100%; margin-top: 18px; padding: 12px; border: 0; border-radius: 8px; background: #0B3023; color: #fff; font-size: 16px; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  .code { font-size: 32px; letter-spacing: 8px; text-align: center; font-weight: 700; margin: 10px 0 2px; }
+  .msg { margin-top: 16px; font-size: 14px; }
+  .err { color: #B3261E; } .ok { color: #0B7A43; }
+  .who { font-size: 13px; color: #5A6B7C; }
+  .lang { text-align: right; font-size: 13px; } .lang a { color: #0B3023; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="lang"><a id="langToggle">EN</a></div>
+  <h1 data-zh="确认桌面伴侣配对" data-en="Confirm desktop pairing">确认桌面伴侣配对</h1>
+  <p class="sub" data-zh="确认后，这台电脑上的 Rukik智能桌面伴侣将登录到您的账号。只确认您本人正在设置的电脑。" data-en="After confirming, Rukik Desktop Companion on that computer signs in to your account. Only confirm a computer you are setting up yourself.">确认后，这台电脑上的 Rukik智能桌面伴侣将登录到您的账号。只确认您本人正在设置的电脑。</p>
+
+  <div id="loginBox">
+    <label data-zh="邮箱" data-en="Email">邮箱</label>
+    <input id="email" type="email" autocomplete="username">
+    <label data-zh="密码" data-en="Password">密码</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button id="loginBtn" data-zh="登录" data-en="Sign in">登录</button>
+  </div>
+
+  <div id="confirmBox" style="display:none">
+    <p class="who" id="who"></p>
+    <label data-zh="电脑上显示的配对码" data-en="Pairing code shown on the computer">电脑上显示的配对码</label>
+    <input id="code" inputmode="numeric" maxlength="6" style="text-align:center; letter-spacing:8px; font-size:22px;">
+    <button id="confirmBtn" data-zh="确认这台电脑" data-en="Confirm this computer">确认这台电脑</button>
+  </div>
+
+  <p class="msg" id="msg"></p>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const SUPABASE_URL = 'https://yzgzgtrqrmarfjftgbwt.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6Z3pndHJxcm1hcmZqZnRnYnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyOTkzNjksImV4cCI6MjEwNzg3NTM2OX0.SORkmMkYrorMPHdDBwgyG8bRIJRi7hhhLHKe5mvQCnc';
+const sb = createClient(SUPABASE_URL, ANON_KEY);
+const $ = (id) => document.getElementById(id);
+const msg = (t, cls) => { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (cls || ''); };
+let lang = localStorage.getItem('rukik_lang') || 'zh';
+function applyLang() {
+  document.querySelectorAll('[data-zh]').forEach(el => { el.textContent = el.dataset[lang]; });
+  $('langToggle').textContent = lang === 'zh' ? 'EN' : '中文';
+}
+$('langToggle').onclick = () => { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('rukik_lang', lang); applyLang(); };
+applyLang();
+const T = (zh, en) => lang === 'zh' ? zh : en;
+
+const urlCode = new URLSearchParams(location.search).get('code') || '';
+if (urlCode) $('code').value = urlCode;
+
+async function refresh() {
+  const { data } = await sb.auth.getSession();
+  const session = data.session;
+  $('loginBox').style.display = session ? 'none' : 'block';
+  $('confirmBox').style.display = session ? 'block' : 'none';
+  if (session) $('who').textContent = T('已登录：', 'Signed in as: ') + (session.user.email || session.user.id);
+  return session;
+}
+await refresh();
+
+$('loginBtn').onclick = async () => {
+  $('loginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  $('loginBtn').disabled = false;
+  if (error) { msg(T('登录失败，请检查邮箱和密码。', 'Sign-in failed. Check your email and password.'), 'err'); return; }
+  msg('');
+  await refresh();
+};
+
+$('confirmBtn').onclick = async () => {
+  const session = await refresh();
+  if (!session) return;
+  const code = $('code').value.trim();
+  if (!/^\d{6}$/.test(code)) { msg(T('请输入 6 位配对码。', 'Enter the 6-digit pairing code.'), 'err'); return; }
+  $('confirmBtn').disabled = true;
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/desktop-pair', {
+      method: 'POST',
+      headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'confirm', code })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (res.ok && out.confirmed) {
+      msg(T('已确认！请回到电脑上，桌面伴侣会自动完成登录。', 'Confirmed! Return to the computer — the companion will finish signing in automatically.'), 'ok');
+    } else {
+      msg(T('确认失败：配对码可能已过期，请在电脑上重新生成。', 'Confirmation failed: the code may have expired. Generate a new one on the computer.'), 'err');
+      $('confirmBtn').disabled = false;
+    }
+  } catch {
+    msg(T('网络错误，请重试。', 'Network error, please retry.'), 'err');
+    $('confirmBtn').disabled = false;
+  }
+};
+</script>
+</body>
+</html>
