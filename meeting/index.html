@@ -1285,8 +1285,10 @@ $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-search
 // 删除：走 meeting-api 既有 delete 通道（墓碑软删＋索引失效＋跨会推翻撤
 // 销＋本会提醒取消的既有生命周期）；执行前以列表行 updated_at 为版本锚
 // 点回读复核（状态＋版本），服务端再过统一对象操作协议校验
-// （meeting/delete）＋录音状态硬闸；录音未结束（live/paused）只提示先
-// 结束录音、本处不删除。成功后先就地移除该行，再 loadList 整表复核
+// （meeting/delete）＋录音状态硬闸；正在录音（live）只提示先结束录音、
+// 本处不删除。[PAUSED-DELETE 2026-11-17 用户亲定放宽] 已暂停（paused）
+// 允许直接删除、不再要求先进场结束录音（服务端 meeting-api v26 同口径）。
+// 成功后先就地移除该行，再 loadList 整表复核
 // （会议计数与主题计数随服务端数据自然更新）。
 let rmTarget = null; // {id, status, updated_at}
 let rmSwallow = false; // 长按/右键手势尾随的那次 click 在 document 捕获层吞掉（行内监听与 onclick 在目标阶段按注册顺序触发、吞不住落在行本身的点击）；下一次 pointerdown 先解除武装，菜单项点击不受影响
@@ -1330,14 +1332,14 @@ $('rm-del').onclick = async () => {
   if (snap.status == null || !snap.updated_at) { // 快照未补齐时先回读权威行
     try { const d = await client.getMeeting(snap.id); snap.status = d.meeting.status; snap.updated_at = d.meeting.updated_at; } catch { /* 回读失败按未知状态处理：确认框照常打开，确认时再复核 */ }
   }
-  showDeleteModal((snap.status === 'live' || snap.status === 'paused') ? 'blocked' : 'confirm');
+  showDeleteModal(snap.status === 'live' ? 'blocked' : 'confirm');
 };
 function showDeleteModal(mode) {
   const blocked = mode === 'blocked';
   $('dm-title').textContent = blocked ? L('请先结束录音', 'End the recording first') : L('删除这条会议记录？', 'Delete this meeting?');
   $('dm-body').textContent = blocked
     ? L('这场会议尚未结束录音，请先结束录音后再删除。', 'This meeting has not finished recording yet. End the recording before deleting it.')
-    : L('删除后，该次会议的录音、转写、纪要及关联的会议专属内容将按照数据删除规则处理。其他会议和所属长期主题不受影响。', 'The recording, transcript, notes, and meeting-specific content will be handled according to the deletion policy. Other meetings and the parent topic will not be affected.');
+    : L('删除后，该次会议的录音、转写、纪要及关联的会议专属内容将一并删除，不可恢复。其他会议和所属长期主题不受影响。', 'The recording, transcript, notes, and meeting-specific content of this meeting will be deleted together and cannot be recovered. Other meetings and the parent topic will not be affected.');
   $('dm-confirm').style.display = blocked ? 'none' : '';
   $('dm-err').textContent = '';
   $('modal-del-meeting').style.display = 'flex';
@@ -1352,7 +1354,7 @@ $('dm-confirm').onclick = async () => {
   try {
     const d = await client.getMeeting(snap.id); // 执行前回读权威现状（状态＋版本锚点复核）
     const cur = d.meeting;
-    if (cur.status === 'live' || cur.status === 'paused') { showDeleteModal('blocked'); return; }
+    if (cur.status === 'live') { showDeleteModal('blocked'); return; }
     if (snap.updated_at && cur.updated_at !== snap.updated_at) { hideDeleteModal(); alert(dmStaleMsg()); await loadList(); return; }
     await client.deleteMeeting(snap.id, cur.updated_at);
     hideDeleteModal();
@@ -1926,7 +1928,8 @@ function renderMeeting() {
   // [ASR-LANG 2026-11-14] 识别语言选择器与本场设置同步；已结束会议不可改（服务端 set_lang 同口径 409）
   $('m-lang').value = m.lang || 'auto';
   $('m-lang').disabled = m.status === 'ended';
-  $('btn-delete').style.display = m.status === 'ended' ? '' : 'none';
+  // [PAUSED-DELETE 2026-11-17] 删除按钮对 paused 一并放开（live 仍隐藏，与全站口径一致）
+  $('btn-delete').style.display = (m.status === 'ended' || m.status === 'paused') ? '' : 'none';
   $('btn-end').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
   $('btn-pause').style.display = (m.status === 'live' || m.status === 'paused') ? '' : 'none';
   $('btn-pause').textContent = m.status === 'paused' ? '继续' : '暂停';
