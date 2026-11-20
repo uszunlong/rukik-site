@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T19:44:34Z",
+ "generated_at": "2026-11-20T20:41:00Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -191,6 +191,39 @@
    "specialties": [],
    "tagline": "",
    "article_count": 0
+  },
+  {
+   "id": "d9cdff06-1e8b-4188-96cc-c29d96c25335",
+   "name": "wendy weng",
+   "title": "教育顾问",
+   "title_en": "Education Consultant",
+   "avatar": "",
+   "slug": "wendy-weng",
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": null,
+   "profession": "education",
+   "profession_name": "教育顾问",
+   "profession_name_en": "Education Consultant",
+   "city": "Irvine",
+   "city_en": null,
+   "regions": [
+    "US",
+    "US-CA",
+    "US-CA-IRV",
+    "US-CA-SF",
+    "US-CA-SD",
+    "US-CA-LA",
+    "US-CA-NB",
+    "US-WA-SEA",
+    "CA"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "教育升学二十年",
+   "article_count": 1
   }
  ],
  "articles": [
@@ -589,7 +622,7 @@
    "summary": null,
    "topics": [],
    "date": "2026-11-20",
-   "cover": null,
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/a181564d-524d-497c-a8ba-4a03c34dcd42/2bc57103-af4b-45ff-b278-b0feabefc842/hero-author-1795205814517.jpg",
    "published_at": "2026-11-20 19:31:42.793147+00",
    "url": "https://rukik.com/a/2bc57103-af4b-45ff-b278-b0feabefc842",
    "author": {
@@ -598,6 +631,31 @@
     "title": "专业人士",
     "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/a181564d-524d-497c-a8ba-4a03c34dcd42.jpg?v=20261120040815",
     "slug": "expert-a181564d"
+   }
+  },
+  {
+   "id": "cbdba43a-749d-4450-921a-754cf2f12103",
+   "expert_id": "d9cdff06-1e8b-4188-96cc-c29d96c25335",
+   "expert_name": "wendy weng",
+   "title": "学姐学长陪跑论坛第一期：宾大沃顿Una的申请与专攻选择",
+   "summary": "新力国际教育集团「学姐学长陪跑论坛」第一期邀请宾大沃顿商学院在读生Una Liu，分享如何把社团、竞赛经历整理成有说服力的申请故事。",
+   "topics": [
+    "留学申请",
+    "名校申请策略",
+    "沃顿商学院",
+    "课外活动规划",
+    "申请文书"
+   ],
+   "date": "2026-11-20",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/d9cdff06-1e8b-4188-96cc-c29d96c25335/cbdba43a-749d-4450-921a-754cf2f12103/hero-0301f7fb.jpg",
+   "published_at": "2026-11-20 20:22:50.095737+00",
+   "url": "https://rukik.com/a/cbdba43a-749d-4450-921a-754cf2f12103",
+   "author": {
+    "id": "d9cdff06-1e8b-4188-96cc-c29d96c25335",
+    "name": "wendy weng",
+    "title": "教育顾问",
+    "avatar": "",
+    "slug": "wendy-weng"
    }
   }
  ]
