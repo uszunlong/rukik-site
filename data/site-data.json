@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T08:39:11Z",
+ "generated_at": "2026-11-20T18:09:26Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -159,6 +159,37 @@
     "专业PR"
    ],
    "tagline": "洛杉矶专业探店",
+   "article_count": 0
+  },
+  {
+   "id": "439825fd-2ced-48ce-a6f3-69063b6d4ded",
+   "name": "Irene Bao",
+   "title": "房产经纪",
+   "title_en": "Real Estate Agent",
+   "avatar": "",
+   "slug": "irene-bao",
+   "follow_count": 0,
+   "pro_chat": true,
+   "public_contact": null,
+   "profession": "realtor",
+   "profession_name": "房产经纪",
+   "profession_name_en": "Real Estate Agent",
+   "city": "Irvine",
+   "city_en": null,
+   "regions": [
+    "US",
+    "US-CA",
+    "US-CA-IRV",
+    "US-CA-LA",
+    "US-CA-SF",
+    "US-CA-SD",
+    "US-CA-NB"
+   ],
+   "languages": [
+    "中文"
+   ],
+   "specialties": [],
+   "tagline": "",
    "article_count": 0
   }
  ],
