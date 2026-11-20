@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T20:41:00Z",
+ "generated_at": "2026-11-20T21:41:12Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -223,7 +223,7 @@
    ],
    "specialties": [],
    "tagline": "教育升学二十年",
-   "article_count": 1
+   "article_count": 2
   }
  ],
  "articles": [
@@ -631,6 +631,25 @@
     "title": "专业人士",
     "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/a181564d-524d-497c-a8ba-4a03c34dcd42.jpg?v=20261120040815",
     "slug": "expert-a181564d"
+   }
+  },
+  {
+   "id": "622a19fd-cc09-48e0-953e-228ec0088294",
+   "expert_id": "d9cdff06-1e8b-4188-96cc-c29d96c25335",
+   "expert_name": "wendy weng",
+   "title": "新力国际教育集团「学姐学长陪跑论坛」首期活动预告，嘉宾沃顿商学院Una Liu分享申请与留学经验",
+   "summary": null,
+   "topics": [],
+   "date": "2026-11-20",
+   "cover": null,
+   "published_at": "2026-11-20 21:23:31.36267+00",
+   "url": "https://rukik.com/a/622a19fd-cc09-48e0-953e-228ec0088294",
+   "author": {
+    "id": "d9cdff06-1e8b-4188-96cc-c29d96c25335",
+    "name": "wendy weng",
+    "title": "教育顾问",
+    "avatar": "",
+    "slug": "wendy-weng"
    }
   },
   {
