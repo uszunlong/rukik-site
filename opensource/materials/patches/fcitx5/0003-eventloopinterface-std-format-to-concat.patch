@@ -1,0 +1,19 @@
+diff --git a/src/lib/fcitx-utils/eventloopinterface.cpp b/src/lib/fcitx-utils/eventloopinterface.cpp
+index 4333975..434b18b 100644
+--- a/src/lib/fcitx-utils/eventloopinterface.cpp
++++ b/src/lib/fcitx-utils/eventloopinterface.cpp
+@@ -24,7 +24,13 @@ std::string getErrorMessage(int error) {
+     if (error < 0) {
+         error = -error;
+     }
+-    return std::format("EventLoopException: {0}", std::strerror(error));
++    // rukik-ios-compat: std::format replaced by string concatenation.
++    // libc++ instantiates its floating-point formatter -- and with it
++    // the floating-point std::to_chars that is unavailable below
++    // iOS 16.3 -- for every std::format instantiation, whatever the
++    // argument types are; this build targets iOS 13.0. The output is
++    // identical: the literal prefix followed by the strerror text.
++    return "EventLoopException: " + std::string(std::strerror(error));
+ }
+ 
+ } // namespace

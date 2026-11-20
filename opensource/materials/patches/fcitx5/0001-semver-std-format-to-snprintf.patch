@@ -1,0 +1,30 @@
+diff --git a/src/lib/fcitx-utils/semver.cpp b/src/lib/fcitx-utils/semver.cpp
+index ae7aad8..8489ecb 100644
+--- a/src/lib/fcitx-utils/semver.cpp
++++ b/src/lib/fcitx-utils/semver.cpp
+@@ -10,6 +10,7 @@
+ #include <charconv>
+ #include <cstddef>
+ #include <cstdint>
++#include <cstdio>
+ #include <iterator>
+ #include <optional>
+ #include <string>
+@@ -160,7 +161,16 @@ void SemanticVersion::setMinor(uint32_t minor) { minor_ = minor; }
+ void SemanticVersion::setPatch(uint32_t patch) { patch_ = patch; }
+ 
+ std::string SemanticVersion::toString() const {
+-    std::string result = std::format("{0}.{1}.{2}", major_, minor_, patch_);
++    // rukik-ios-compat: std::format replaced by snprintf. libc++'s
++    // std::format instantiates floating-point std::to_chars, which is
++    // unavailable below iOS 16.3; this build targets iOS 13.0. The
++    // output is identical: decimal major.minor.patch, no padding.
++    char versionBuf[40];
++    std::snprintf(versionBuf, sizeof(versionBuf), "%u.%u.%u",
++                  static_cast<unsigned>(major_),
++                  static_cast<unsigned>(minor_),
++                  static_cast<unsigned>(patch_));
++    std::string result = versionBuf;
+     if (!preReleaseIds_.empty()) {
+         result.append("-");
+         result.append(preReleaseIds_.front().toString());

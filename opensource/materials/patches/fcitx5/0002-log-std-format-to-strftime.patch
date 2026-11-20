@@ -1,0 +1,52 @@
+diff --git a/src/lib/fcitx-utils/log.cpp b/src/lib/fcitx-utils/log.cpp
+index 07efe4b..3a85aa5 100644
+--- a/src/lib/fcitx-utils/log.cpp
++++ b/src/lib/fcitx-utils/log.cpp
+@@ -8,7 +8,9 @@
+ #include "log.h"
+ #include <charconv>
+ #include <chrono>
++#include <cstdio>
+ #include <cstdlib>
++#include <ctime>
+ #include <iostream>
+ #include <memory>
+ #include <mutex>
+@@ -248,14 +250,32 @@ LogMessageBuilder::LogMessageBuilder(std::ostream &out, LogLevel l,
+         try {
+             auto now = std::chrono::time_point_cast<std::chrono::microseconds>(
+                 std::chrono::system_clock::now());
++            // rukik-ios-compat: std::format("{:%F %T}", ...) replaced
++            // by strftime plus an explicit fractional-seconds suffix.
++            // libc++'s chrono std::format instantiates floating-point
++            // std::to_chars, unavailable below iOS 16.3; this build
++            // targets iOS 13.0. Output is identical:
++            // "YYYY-MM-DD HH:MM:SS.ffffff" -- local time when chrono
++            // tzdb is available, UTC otherwise, as upstream.
++            auto secs =
++                std::chrono::time_point_cast<std::chrono::seconds>(now);
++            auto micros = static_cast<long long>(
++                std::chrono::duration_cast<std::chrono::microseconds>(
++                    now - secs)
++                    .count());
++            std::time_t timeT = std::chrono::system_clock::to_time_t(secs);
++            std::tm tmValue{};
+ #if __cpp_lib_chrono >= 201907L
+-            const auto *current_zone = std::chrono::current_zone();
+-            std::chrono::zoned_time zoned_time{current_zone, now};
+-
+-            auto timeString = std::format("{:%F %T}", zoned_time);
++            ::localtime_r(&timeT, &tmValue);
+ #else
+-            auto timeString = std::format("{:%F %T}", now);
++            ::gmtime_r(&timeT, &tmValue);
+ #endif
++            char timeBuf[32];
++            std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M:%S",
++                          &tmValue);
++            char fracBuf[16];
++            std::snprintf(fracBuf, sizeof(fracBuf), ".%06lld", micros);
++            auto timeString = std::string(timeBuf) + fracBuf;
+             out_ << timeString << " ";
+         } catch (...) {
+         }

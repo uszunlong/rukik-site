@@ -1,0 +1,8 @@
+# desktop instantiation of generated/libime-preload.cmake.tmpl (FIX6)
+if(NOT DEFINED RUKIK_LIBIME_PRELOAD_DONE)
+  set(RUKIK_LIBIME_PRELOAD_DONE TRUE)
+  list(APPEND CMAKE_MODULE_PATH "/home/hatch/workspace/.relink-work/fcitx5-src/cmake")
+  find_package(LibIntl REQUIRED)
+  find_package(Pthread REQUIRED)
+  find_package(DL REQUIRED)
+endif()

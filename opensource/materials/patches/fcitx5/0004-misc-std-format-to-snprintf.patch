@@ -1,0 +1,22 @@
+diff --git a/src/lib/fcitx-utils/misc.cpp b/src/lib/fcitx-utils/misc.cpp
+index 6f9f8cb..0676581 100644
+--- a/src/lib/fcitx-utils/misc.cpp
++++ b/src/lib/fcitx-utils/misc.cpp
+@@ -144,7 +144,16 @@ std::string getProcessName(pid_t pid) {
+     FCITX_UNUSED(pid);
+     return {};
+ #else
+-    auto path = std::format("/proc/{}/exe", pid);
++    // rukik-ios-compat: std::format replaced by snprintf. This branch
++    // is Linux-only (the __APPLE__/TARGET_OS_IPHONE branch above
++    // returns earlier on iOS, verified at preprocessing level in
++    // IOS_SCRIPT_FIX3.md); it is patched anyway so the post-patch
++    // zero-residual assertion over fcitx-utils stays absolute. The
++    // output is identical: "/proc/<pid>/exe".
++    char procPath[32];
++    std::snprintf(procPath, sizeof(procPath), "/proc/%d/exe",
++                  static_cast<int>(pid));
++    auto path = std::string(procPath);
+     if (auto link = fs::readlink(path)) {
+         return fs::baseName(*link);
+     }

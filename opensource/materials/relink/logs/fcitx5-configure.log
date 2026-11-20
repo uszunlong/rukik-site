@@ -1,0 +1,16 @@
+-- The following OPTIONAL packages have been found:
+
+ * Execinfo
+
+-- The following REQUIRED packages have been found:
+
+ * ECM
+ * PkgConfig
+ * DL
+ * LibIntl
+ * Pthread
+ * Gettext
+
+-- Configuring done (0.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/hatch/workspace/.relink-work/fcitx5-build

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Source Licenses &amp; Materials — Rukik</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; line-height: 1.8; color: #202020; background: #F7F3EC; }
+h1 { color: #142235; font-size: 24px; }
+h2 { color: #142235; font-size: 18px; margin-top: 32px; }
+p, li { font-size: 15px; }
+.updated { color: #8B857D; font-size: 13px; }
+.dl { background: #FFFFFF; border: 1px solid #E3DCCF; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }
+.dl a { font-weight: 600; }
+.hash { font-size: 12px; color: #8B857D; word-break: break-all; }
+hr.sep { border: none; border-top: 1px solid #E3DCCF; margin: 48px 0; }
+</style>
+</head>
+<body>
+<h1>Third-Party Open Source Licenses</h1>
+<p class="updated">Open source components, license texts, corresponding source code and relinking materials for the RUKIK smart keyboard.</p>
+
+<p>The input engine of the RUKIK smart keyboard uses the open source components listed below. We thank their authors and contributors. Each component's name, version, license, and copyright notice are given below; the full license texts, the corresponding source code, and the relinking materials (see below) are available as described at the end of this page.</p>
+
+<h2>Components</h2>
+<p><strong>libime 1.1.18</strong> (including the KenLM submodule)<br>
+Pinyin decoding engine.<br>
+License: GNU Lesser General Public License, version 2.1 or later (LGPL-2.1-or-later)<br>
+Copyright: © CSSlayer and other Fcitx project contributors (per-file notices appear as SPDX-FileCopyrightText headers in the source code)<br>
+Source: <a href="https://github.com/fcitx/libime">https://github.com/fcitx/libime</a></p>
+
+<p><strong>KenLM</strong> (submodule of libime, commit 4cb443e6)<br>
+Language model inference library.<br>
+License: GNU Lesser General Public License, version 2.1 (LGPL-2.1; individual files may be under their own licenses — see the LICENSE notes in the source)<br>
+Copyright: © Kenneth Heafield and contributors<br>
+Source: <a href="https://github.com/kpu/kenlm">https://github.com/kpu/kenlm</a></p>
+
+<p><strong>Fcitx5Utils 5.1.23</strong> (fcitx5)<br>
+Utility library.<br>
+License: GNU Lesser General Public License, version 2.1 or later (LGPL-2.1-or-later)<br>
+Copyright: © CSSlayer and other Fcitx project contributors (per-file notices appear as SPDX-FileCopyrightText headers in the source code)<br>
+Source: <a href="https://github.com/fcitx/fcitx5">https://github.com/fcitx/fcitx5</a></p>
+
+<p><strong>Boost 1.85.0</strong> (iostreams component and selected headers only)<br>
+License: Boost Software License 1.0<br>
+Copyright: © the respective Boost library authors (see the copyright notices in each source file)<br>
+Source: <a href="https://www.boost.org">https://www.boost.org</a></p>
+
+<p><strong>Zstandard (zstd) 1.5.6</strong><br>
+License: BSD 3-Clause License<br>
+Copyright: © Meta Platforms, Inc. and affiliates<br>
+Source: <a href="https://github.com/facebook/zstd">https://github.com/facebook/zstd</a></p>
+
+<h2>About the LGPL Components and Relinking</h2>
+<p>The LGPL components above are linked into this app as static libraries. All modifications we made to them (iOS compatibility patches) are provided together with the corresponding source code. Under section 6 of the LGPL 2.1, you may obtain the complete corresponding source code of these components, our modification patches, the build and linking instructions, and the materials needed to relink a modified version of these components with this application.</p>
+<p>How to obtain them: download the materials package below, or email <a href="mailto:hello@rukik.com">hello@rukik.com</a> and we will provide them within 30 days of your request. The full license texts are also included in those materials and are available at <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</a>. These materials will remain available for at least three years after the last distribution of the application version they accompany.</p>
+
+<div class="dl">
+<p><strong>Download:</strong> <a href="/opensource/materials/">LGPL materials package — browse &amp; download all files</a><br>
+Contains: the file manifest (MANIFEST.md, with per-file SHA-256), all license texts, our patches to libime / Fcitx5 / KenLM, the source-fetch script (fetch-sources.sh), build &amp; linking instructions, our bridge code (LibimeBridge), and the relinking demonstration scripts and logs. To receive the whole package as a single archive file, email <a href="mailto:hello@rukik.com">hello@rukik.com</a> and we will provide it within 30 days.</p>
+</div>
+
+<hr class="sep">
+
+<h1>第三方开源许可证</h1>
+<p class="updated">RUKIK 智能键盘所用开源组件、许可证全文、对应源代码与重新链接材料。</p>
+
+<p>RUKIK 的智能键盘输入引擎使用了以下开源组件。我们感谢这些项目的作者与贡献者。每个组件的名称、版本、许可证与版权声明如下；许可证全文、对应源代码以及重新链接材料（见下方说明）的获取方式见本页末尾。</p>
+
+<h2>组件清单</h2>
+<p><strong>libime 1.1.18</strong>（含 KenLM 子模块）<br>
+拼音解码引擎。<br>
+许可证：GNU 宽通用公共许可证 2.1 或更高版本（LGPL-2.1-or-later）<br>
+版权：© CSSlayer 及 Fcitx 项目其他贡献者（逐文件的版权声明见源代码中的 SPDX-FileCopyrightText 标记）<br>
+源码：<a href="https://github.com/fcitx/libime">https://github.com/fcitx/libime</a></p>
+
+<p><strong>KenLM</strong>（libime 子模块，提交 4cb443e6）<br>
+语言模型推理库。<br>
+许可证：GNU 宽通用公共许可证 2.1（LGPL-2.1；个别文件适用其各自许可证，见源码内 LICENSE 说明）<br>
+版权：© Kenneth Heafield 及贡献者<br>
+源码：<a href="https://github.com/kpu/kenlm">https://github.com/kpu/kenlm</a></p>
+
+<p><strong>Fcitx5Utils 5.1.23</strong>（fcitx5）<br>
+基础工具库。<br>
+许可证：GNU 宽通用公共许可证 2.1 或更高版本（LGPL-2.1-or-later）<br>
+版权：© CSSlayer 及 Fcitx 项目其他贡献者（逐文件的版权声明见源代码中的 SPDX-FileCopyrightText 标记）<br>
+源码：<a href="https://github.com/fcitx/fcitx5">https://github.com/fcitx/fcitx5</a></p>
+
+<p><strong>Boost 1.85.0</strong>（仅 iostreams 组件与部分头文件）<br>
+许可证：Boost Software License 1.0<br>
+版权：© 各 Boost 库的原作者（见各源文件版权声明）<br>
+源码：<a href="https://www.boost.org">https://www.boost.org</a></p>
+
+<p><strong>Zstandard (zstd) 1.5.6</strong><br>
+许可证：BSD 3-Clause License<br>
+版权：© Meta Platforms, Inc. and affiliates<br>
+源码：<a href="https://github.com/facebook/zstd">https://github.com/facebook/zstd</a></p>
+
+<h2>关于 LGPL 组件与重新链接</h2>
+<p>上述 LGPL 组件以静态库形式链接进本应用。我们对这些组件所做的全部修改（iOS 兼容性补丁）均随对应源代码一并提供。根据 LGPL 2.1 第 6 条，您可以获取上述组件的完整对应源代码、我们的修改补丁、构建与链接说明，以及为将修改后的组件与本应用重新链接所需的材料。</p>
+<p>获取方式：请下载下方材料包，或发送邮件至 <a href="mailto:hello@rukik.com">hello@rukik.com</a> 索取，我们在收到请求后 30 日内提供。许可证全文亦包含在上述材料中，并可在 <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</a> 查阅。上述材料将自其所对应应用版本最后一次分发之日起持续提供不少于 3 年。</p>
+
+<div class="dl">
+<p><strong>下载：</strong><a href="/opensource/materials/">LGPL 材料包——浏览并下载全部文件</a><br>
+内容：文件清单（MANIFEST.md，含逐文件 SHA-256）、全部许可证文本、我们对 libime / Fcitx5 / KenLM 的补丁、源码获取脚本（fetch-sources.sh）、构建与链接说明、我们的桥接代码（LibimeBridge），以及重新链接演示脚本与日志。如需整包单个压缩文件，请邮件至 <a href="mailto:hello@rukik.com">hello@rukik.com</a> 索取，我们将在 30 日内提供。</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for dgettext
+-- Looking for dgettext - found
+-- Found LibIntl: /usr/include  
+-- Looking for pthread_create
+-- Looking for pthread_create - found
+-- Found Pthread: /usr/include  
+-- Looking for dlmopen
+-- Looking for dlmopen - found
+-- Found DL: /usr/include  
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1") 
+-- Checking for module 'libzstd'
+--   Found libzstd, version 1.5.5
+-- Looking for _LIBCPP_VERSION
+-- Looking for _LIBCPP_VERSION - not found
+-- Looking for clock_gettime in rt
+-- Looking for clock_gettime in rt - found
+-- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY
+-- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY - Success
+-- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY
+-- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY - Success
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+-- The following REQUIRED packages have been found:
+
+ * LibIntl
+ * Pthread
+ * DL
+ * ECM (required version >= 1.0)
+ * PkgConfig
+ * Fcitx5Utils (required version >= 5.1.20)
+ * boost_headers (required version == 1.83.0)
+ * boost_iostreams (required version == 1.83.0)
+ * Boost (required version >= 1.61)
+
+-- Configuring done (1.8s)
+CMake Error: install(EXPORT "LibIMECoreTargets" ...) includes target "IMECore" which requires target "kenlm" that is not in any export set.
+-- Generating done (0.0s)
+CMake Generate step failed.  Build files cannot be regenerated correctly.

@@ -1,0 +1,37 @@
+diff --git a/src/libime/core/kenlm/util/usage.cc b/src/libime/core/kenlm/util/usage.cc
+index 79d61c2..799bc18 100644
+--- a/src/libime/core/kenlm/util/usage.cc
++++ b/src/libime/core/kenlm/util/usage.cc
+@@ -43,7 +43,16 @@ typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+ #include <sys/sysctl.h>
+ #include <mach/task.h>
+ #include <mach/mach.h>
++// rukik-ios-compat: <libproc.h> is a macOS-only header (the iOS SDK
++// does not ship it), so include it only where it exists and record
++// that in KENLM_HAVE_LIBPROC. Its sole use in this file is the
++// proc_name() call in PrintUsage() below, which is guarded by the
++// same macro. On macOS the header exists, the macro is defined, and
++// behavior is identical to upstream. See IOS_SCRIPT_FIX8.md.
++#if __has_include(<libproc.h>)
+ #include <libproc.h>
++#define KENLM_HAVE_LIBPROC 1
++#endif
+ #endif
+ 
+ namespace util {
+@@ -203,7 +212,15 @@ void PrintUsage(std::ostream &out) {
+   struct mach_task_basic_info t_info;
+   char name[2 * MAXCOMLEN] = {0};
+ 
++#ifdef KENLM_HAVE_LIBPROC
+   proc_name(getpid(), name, sizeof(name));
++#else
++  // rukik-ios-compat: without libproc (iOS) there is no proc_name();
++  // leave name as the empty string it was zero-initialized to. Only
++  // the process-name field of this diagnostic printout is affected;
++  // the resident-size fields that follow are unchanged.
++  name[0] = '\0';
++#endif
+   mach_msg_type_number_t t_info_count = MACH_TASK_BASIC_INFO_COUNT;
+   task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count);
+ 

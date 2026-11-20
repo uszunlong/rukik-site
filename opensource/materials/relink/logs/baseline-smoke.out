@@ -1,0 +1,19 @@
+CREATE_OK
+[womenqucanjia] preedit=womenqucanjia cand0=我们去参加 cand_count=60
+[PASS] preedit_is_pinyin womenqucanjia
+[PASS] cand0_is_sentence 我们去参加
+[PASS] preedit_ne_cand0 
+[punct-idle comma] commit=，
+[PASS] punct_idle_comma ，
+[PASS] punct_idle_period 。
+[PASS] punct_idle_question ？
+[PASS] punct_idle_lparen_halfshape （
+[PASS] preedit_nihao nihao
+[punct-composing nihao+,] commit=你好， preedit_after=
+[PASS] punct_composing_commit 你好，
+[PASS] punct_composing_clears 
+[punct-composing womenqucanjia+.] commit=我们去参加。
+[PASS] punct_sentence_period 我们去参加。
+[PASS] select_commit_regression 你好
+[PASS] backspace_preedit_pinyin wome
+SMOKE_DONE failures=0

@@ -1,0 +1,84 @@
+=== RUKIK libime LGPL relink demonstration (desktop) ===
+date: 2026-11-19T15:51:13+00:00
+toolchain: g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0; cmake version 3.28.3; git 2.43.0
+--- step 0: pristine source verification ---
+/home/hatch/workspace/rukik-ai-keyboard-20261117/formal/lexicon/decoder-research/drivers/libime/src HEAD=53df6a248793f9a00c1769e658630de313f3e419 (want 53df6a248793f9a00c1769e658630de313f3e419)
+/home/hatch/workspace/rukik-ai-keyboard-20261117/formal/lexicon/decoder-research/drivers/libime/src/src/libime/core/kenlm HEAD=4cb443e60b7bf2c0ddf3c745378f76cb59e254e5 (want 4cb443e60b7bf2c0ddf3c745378f76cb59e254e5)
+/home/hatch/workspace/rukik-ai-keyboard-20261117/formal/lexicon/decoder-research/drivers/libime/vendor/fcitx5-src HEAD=98830ef7910eb0fe6bfda47466a17e273182486e (want 98830ef7910eb0fe6bfda47466a17e273182486e)
+working trees clean
+package LibimeBridge.cpp == tree-libime 0ab718d copy
+--- step 1: baseline smoke (unmodified libime, existing desktop build) ---
+CREATE_OK
+[womenqucanjia] preedit=womenqucanjia cand0=我们去参加 cand_count=60
+[PASS] preedit_is_pinyin womenqucanjia
+[PASS] cand0_is_sentence 我们去参加
+[PASS] preedit_ne_cand0 
+[punct-idle comma] commit=，
+[PASS] punct_idle_comma ，
+[PASS] punct_idle_period 。
+[PASS] punct_idle_question ？
+[PASS] punct_idle_lparen_halfshape （
+[PASS] preedit_nihao nihao
+[punct-composing nihao+,] commit=你好， preedit_after=
+[PASS] punct_composing_commit 你好，
+[PASS] punct_composing_clears 
+[punct-composing womenqucanjia+.] commit=我们去参加。
+[PASS] punct_sentence_period 我们去参加。
+[PASS] select_commit_regression 你好
+[PASS] backspace_preedit_pinyin wome
+SMOKE_DONE failures=0
+BASELINE: 14/14 PASS
+--- step 2: copy pristine sources ---
+--- step 3: build Fcitx5Utils (static, package patches applied) ---
+ src/lib/fcitx-utils/eventloopinterface.cpp |  8 +++++++-
+ src/lib/fcitx-utils/log.cpp                | 30 +++++++++++++++++++++++++-----
+ src/lib/fcitx-utils/misc.cpp               | 11 ++++++++++-
+ src/lib/fcitx-utils/semver.cpp             | 12 +++++++++++-
+ 4 files changed, 53 insertions(+), 8 deletions(-)
+libFcitx5Utils.a installed
+--- step 3.5: desktop instantiation of the FIX6 preload ---
+preload written: /home/hatch/workspace/.relink-work/preload-desktop.cmake
+--- step 4: probe — static libime configure WITHOUT the core patch (expect export-set failure) ---
+PROBE: failed as expected — kenlm export-set error present:
+CMake Error: install(EXPORT "LibIMECoreTargets" ...) includes target "IMECore" which requires target "kenlm" that is not in any export set.
+-- Generating done (0.0s)
+--- step 5: apply libime+kenlm patches and the demo modification ---
+ src/libime/core/CMakeLists.txt        | 12 +++++++++++-
+ src/libime/core/kenlm                 |  0
+ src/libime/core/userlanguagemodel.cpp | 10 ++++++++++
+ 3 files changed, 21 insertions(+), 1 deletion(-)
+--- step 6: build libime (static) and install ---
+-rw-r--r-- 1 root root 2853508 Nov 19 15:52 libIMECore.a
+-rw-r--r-- 1 root root 1802374 Nov 19 15:53 libIMEPinyin.a
+-rw-r--r-- 1 root root 1291928 Nov 19 15:53 libIMETable.a
+--- step 7: compile RUKIK-side object and relink ---
+kenlm objects not inside libIMECore.a; linking them explicitly: 39 objects
+--- step 8: marker verification ---
+RUKIK-RELINK-DEMO libime-modified 2026-11-19
+marker present in rebuilt libIMECore.a
+RUKIK-RELINK-DEMO libime-modified 2026-11-19
+marker present in relinked binary
+0000000000132b80 T rukik_relink_demo_marker
+--- step 9: relinked smoke run ---
+CREATE_OK
+[womenqucanjia] preedit=womenqucanjia cand0=我们去参加 cand_count=60
+[PASS] preedit_is_pinyin womenqucanjia
+[PASS] cand0_is_sentence 我们去参加
+[PASS] preedit_ne_cand0 
+[punct-idle comma] commit=，
+[PASS] punct_idle_comma ，
+[PASS] punct_idle_period 。
+[PASS] punct_idle_question ？
+[PASS] punct_idle_lparen_halfshape （
+[PASS] preedit_nihao nihao
+[punct-composing nihao+,] commit=你好， preedit_after=
+[PASS] punct_composing_commit 你好，
+[PASS] punct_composing_clears 
+[punct-composing womenqucanjia+.] commit=我们去参加。
+[PASS] punct_sentence_period 我们去参加。
+[PASS] select_commit_regression 你好
+[PASS] backspace_preedit_pinyin wome
+SMOKE_DONE failures=0
+RELINK: 14/14 PASS
+=== SUMMARY ===
+RELINK DEMO RESULT: PASS (baseline 14/14, probe reproduced, modified libime relinked, smoke 14/14)

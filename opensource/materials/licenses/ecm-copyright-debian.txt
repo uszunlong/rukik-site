@@ -1,0 +1,177 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: extra-cmake-modules
+Source: https://invent.kde.org/frameworks/extra-cmake-modules
+Upstream-Contact: kde-frameworks-devel@kde.org
+
+Files: *
+Copyright: 2021, Ahmad Samir <a.samirh78@gmail.com>
+           2013, Albert Astals Cid <aacid@kde.org>
+           2013, Aleix Pol <aleixpol@kde.org>
+           2013-2015, Aleix Pol Gonzalez <aleixpol@blue-systems.com>
+           2014-2017, Aleix Pol Gonzalez <aleixpol@kde.org>
+           2014, Aleix Pol i Gonzalez <aleixpol@kde.org>
+           2014-2015, Alex Merry <alex.merry@kde.org>
+           2013-2014, Alex Merry <alex.merry@kdemail.net>
+           2006-2013, Alex Neundorf <neundorf@kde.org>
+           2015, Alex Richardson <arichardson.kde@gmail.com>
+           2020-2021, Alexander Lohnau <alexander.lohnau@gmx.de>
+           2006-2012, Alexander Neundorf <neundorf@kde.org>
+           2013, Alexander Richardson <arichardson.kde@gmail.com>
+           2020, Andreas Cord-Landwehr <cordlandwehr@kde.org>
+           2014, Aurélien Gâteau <agateau@kde.org>
+           2014-2019, Christoph Cullmann <cullmann@kde.org>
+           2018, Christophe Giboudeaux <christophe@krop.fr>
+           2008, Chusslove Illich <caslav.ilic@gmx.net>
+           2020, David Edmundson <davidedmundson@kde.org>
+           2013, David Edmundson <kde@davidedmundson.co.uk>
+           2012-2014, David Faure <faure@kde.org>
+           2017, David Kahles <david.kahles96@gmail.com>
+           2020, Elvis Angelaccio <elvis.angelaccio@kde.org>
+           2011-2014, Fredrik Höglund <fredrik@kde.org>
+           2016-2021, Friedrich W. H. Kossebau <kossebau@kde.org>
+           2008, Gilles Caulier <caulier.gilles@gmail.com>
+           2016, Gleb Popov <6yearold@gmail.com>
+           2019, Harald Sitter <sitter@kde.org>
+           2019, Heiko Becker <heirecka@exherbo.org>
+           2008, Helio Chissini de Castro <helio@kde.org>
+           2020, Henri Chain <henri.chain@enioka.com>
+           2014, Hrvoje Senjan <hrvoje.senjan@gmail.com>
+           2012, Jeremy Whiting <jpwhiting@kde.org>
+           2020, Kai Uwe Broulik <kde@broulik.de>
+           2000-2013, Kitware Inc., Insight Software Consortium
+           2000-2013, Kitware, Inc.
+           2017, Klaralvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
+           2006-2008, Laurent Montel <montel@kde.org>
+           2015, Marco Martin <mart@kde.org>
+           2009, Marcus Hufgard <Marcus.Hufgard@hufgard.de>
+           2017, Martin Flöser <mgraesslin@kde.org>
+           2013-2014, Martin Gräßlin <mgraesslin@kde.org>
+           2014, Mathieu Tarral <mathieu.tarral@gmail.com>
+           2007-2008, Matthias Kretz <kretz@kde.org>
+           2013, Nico Kruber <nico.kruber@gmail.com>
+           2015, Patrick Spendrin <patrick.spendrin@kdab.com>
+           2012-2014, Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+           2016-2017, Pino Toscano <pino@kde.org>
+           2007, Pino Toscano <toscano.pino@tiscali.it>
+           2010, Rafael Fernández López <ereslibre@kde.org>
+           2014, Ralf Habacker <ralf.habacker@freenet.de>
+           2012-2013, Raphael Kubo da Costa <rakuco@FreeBSD.org>
+           2016, Shaheed Haque <srhaque@theiet.org>
+           2014, Simon Wächter <waechter.simon@gmail.com>
+           2012-2016, Stephen Kelly <steveire@gmail.com>
+           2003-2018, University of Illinois at Urbana-Champaign.
+           2017, Vincent Pinon <vpinon@kde.org>
+           2019-2020, Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+           2018-2021, Volker Krause <vkrause@kde.org>
+License: BSD-3-Clause
+
+Files: .gitlab-ci.yml
+Copyright: 2020, Volker Krause <vkrause@kde.org>
+License: CC0-1.0
+ On Debian systems, the full text of the Creative Commons CC0 1.0
+ Universal license can be found in the file
+ `/usr/share/common-licenses/CC0-1.0’.
+
+Files: find-modules/FindInotify.cmake
+Copyright: 2017, Adriaan de Groot <groot@kde.org>
+           2016, Tobias C. Berner <tcberner@FreeBSD.org>
+License: BSD-2-Clause
+
+Files: Jenkinsfile_master_kf5-qt5_linux_gcc
+       kde-modules/clang-format.cmake
+Copyright: 2019, Christoph Cullmann <cullmann@kde.org>
+           2019, Gernot Gebhard <gebhard@absint.com>
+License: MIT
+
+Files: toolchain/generate-fastlane-metadata.py
+Copyright: 2018-2020, Aleix Pol Gonzalez <aleixpol@kde.org>
+           2019-2020, Ben Cooksley <bcooksley@kde.org>
+           2020, Volker Krause <vkrause@kde.org>
+License: GPL-2.0-or-later
+
+Files: debian/*
+Copyright: 2014, Jonathan Riddell <jriddell@ubuntu.com>
+           2022, Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>
+License: BSD-3-Clause
+
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: BSD-3-Clause
+ Redistribution and use in source and binary forms with or without
+ modification are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the copyright
+    notice this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the copyright
+    notice this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. The name of the author may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT INDIRECT
+ INCIDENTAL SPECIAL EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING BUT
+ NOT LIMITED TO PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE
+ DATA OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY WHETHER IN CONTRACT STRICT LIABILITY OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: GPL-2.0-or-later
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>
+ .
+ On Debian systems, the complete text of the GNU General Public
+ License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is furnished
+ to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice (including the next
+ paragraph) shall be included in all copies or substantial portions of the
+ Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

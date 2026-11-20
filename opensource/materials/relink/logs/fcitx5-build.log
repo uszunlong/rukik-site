@@ -1,0 +1,34 @@
+[  0%] Building CXX object src/lib/fcitx-utils/CMakeFiles/Fcitx5Utils.dir/log.cpp.o
+[  3%] Building CXX object src/lib/fcitx-utils/CMakeFiles/Fcitx5Utils.dir/misc.cpp.o
+[  7%] Building CXX object src/lib/fcitx-utils/CMakeFiles/Fcitx5Utils.dir/semver.cpp.o
+/home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.cpp: In constructor 'fcitx::LogMessageBuilder::LogMessageBuilder(std::ostream&, fcitx::LogLevel, const char*, int)':
+/home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.cpp:277:55: warning: '%06lld' directive output may be truncated writing between 6 and 18 bytes into a region of size 15 [-Wformat-truncation=]
+  277 |             std::snprintf(fracBuf, sizeof(fracBuf), ".%06lld", micros);
+      |                                                       ^~~~~~
+/home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.cpp:277:53: note: directive argument in the range [-18446744072854775, 18446744072854775]
+  277 |             std::snprintf(fracBuf, sizeof(fracBuf), ".%06lld", micros);
+      |                                                     ^~~~~~~~~
+In file included from /usr/include/stdio.h:980,
+                 from /usr/include/c++/13/cstdio:42,
+                 from /usr/include/c++/13/ext/string_conversions.h:45,
+                 from /usr/include/c++/13/bits/basic_string.h:4109,
+                 from /usr/include/c++/13/string:54,
+                 from /usr/include/c++/13/bits/locale_classes.h:40,
+                 from /usr/include/c++/13/bits/ios_base.h:41,
+                 from /usr/include/c++/13/ios:44,
+                 from /usr/include/c++/13/ostream:40,
+                 from /usr/include/c++/13/iostream:41,
+                 from /home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.h:15,
+                 from /home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.cpp:8:
+In function 'int snprintf(char*, size_t, const char*, ...)',
+    inlined from 'fcitx::LogMessageBuilder::LogMessageBuilder(std::ostream&, fcitx::LogLevel, const char*, int)' at /home/hatch/workspace/.relink-work/fcitx5-src/src/lib/fcitx-utils/log.cpp:277:26:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:54:35: note: '__builtin___snprintf_chk' output between 8 and 20 bytes into a destination of size 16
+   54 |   return __builtin___snprintf_chk (__s, __n, __USE_FORTIFY_LEVEL - 1,
+      |          ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   55 |                                    __glibc_objsize (__s), __fmt,
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   56 |                                    __va_arg_pack ());
+      |                                    ~~~~~~~~~~~~~~~~~
+[ 11%] Building CXX object src/lib/fcitx-utils/CMakeFiles/Fcitx5Utils.dir/eventloopinterface.cpp.o
+[ 14%] Linking CXX static library ../../../lib/libFcitx5Utils.a
+[100%] Built target Fcitx5Utils

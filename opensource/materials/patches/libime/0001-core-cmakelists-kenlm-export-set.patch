@@ -1,0 +1,23 @@
+diff --git a/src/libime/core/CMakeLists.txt b/src/libime/core/CMakeLists.txt
+index 5c089ce..d14b870 100644
+--- a/src/libime/core/CMakeLists.txt
++++ b/src/libime/core/CMakeLists.txt
+@@ -87,7 +87,17 @@ target_include_directories(IMECore PUBLIC
+ 
+ target_link_libraries(IMECore PUBLIC Fcitx5::Utils Boost::boost PRIVATE kenlm Boost::iostreams PkgConfig::ZSTD)
+ 
+-install(TARGETS IMECore EXPORT LibIMECoreTargets LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib)
++# rukik-ios-compat: kenlm is added to the LibIMECoreTargets export
++# set. kenlm is an OBJECT library linked PRIVATE into IMECore; with
++# BUILD_SHARED_LIBS=OFF (static IMECore, as this build uses) that
++# PRIVATE dependency enters IMECore's install interface as
++# LINK_ONLY, and CMake's export validation then requires kenlm to
++# belong to an export set -- generate fails with: install(EXPORT
++# "LibIMECoreTargets") includes target "IMECore" which requires
++# target "kenlm" that is not in any export set. Shared builds are
++# unaffected (PRIVATE deps stay out of the interface); exporting
++# kenlm alongside is harmless there too. See IOS_SCRIPT_FIX7.md.
++install(TARGETS IMECore kenlm EXPORT LibIMECoreTargets LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib)
+ install(FILES ${LIBIME_HDRS} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/LibIME/libime/core" COMPONENT header)
+ 
+ add_library(LibIME::Core ALIAS IMECore)

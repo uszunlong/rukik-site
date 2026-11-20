@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.20)
+project(boost_iostreams_ios CXX)
+if(NOT DEFINED BOOST_ROOT)
+  message(FATAL_ERROR "BOOST_ROOT required")
+endif()
+add_library(boost_iostreams STATIC
+  ${BOOST_ROOT}/libs/iostreams/src/file_descriptor.cpp
+  ${BOOST_ROOT}/libs/iostreams/src/mapped_file.cpp
+  ${BOOST_ROOT}/libs/iostreams/src/zlib.cpp)
+target_include_directories(boost_iostreams PUBLIC ${BOOST_ROOT})
+target_compile_features(boost_iostreams PUBLIC cxx_std_17)
+install(TARGETS boost_iostreams ARCHIVE DESTINATION lib)

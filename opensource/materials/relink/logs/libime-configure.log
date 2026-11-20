@@ -1,0 +1,24 @@
+-- Looking for dgettext
+-- Looking for dgettext - found
+-- Found LibIntl: /usr/include  
+-- Looking for pthread_create
+-- Looking for pthread_create - found
+-- Found Pthread: /usr/include  
+-- Looking for dlmopen
+-- Looking for dlmopen - found
+-- Found DL: /usr/include  
+-- The following REQUIRED packages have been found:
+
+ * LibIntl
+ * Pthread
+ * DL
+ * ECM (required version >= 1.0)
+ * PkgConfig
+ * Fcitx5Utils (required version >= 5.1.20)
+ * boost_headers (required version == 1.83.0)
+ * boost_iostreams (required version == 1.83.0)
+ * Boost (required version >= 1.61)
+
+-- Configuring done (0.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/hatch/workspace/.relink-work/libime-build

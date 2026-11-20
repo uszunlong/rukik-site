@@ -1,0 +1,18 @@
+diff --git a/src/libime/core/userlanguagemodel.cpp b/src/libime/core/userlanguagemodel.cpp
+index 64fd30c..7235fae 100644
+--- a/src/libime/core/userlanguagemodel.cpp
++++ b/src/libime/core/userlanguagemodel.cpp
+@@ -182,3 +182,13 @@ void UserLanguageModel::setCodeExtractor(ValidationCodeExtractor extractor) {
+ }
+ 
+ } // namespace libime
++
++// rukik-relink-demo: harmless modification added by the RUKIK LGPL
++// relink demonstration (D-line, 2026-11-19). It changes no engine
++// behavior; it only proves that a modified libime can be rebuilt and
++// relinked against the RUKIK-side objects shipped in this package.
++// The marker string is verifiable in the rebuilt library and in the
++// final linked binary (see relink/relink-demo.log).
++extern "C" const char *rukik_relink_demo_marker(void) {
++    return "RUKIK-RELINK-DEMO libime-modified 2026-11-19";
++}

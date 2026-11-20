@@ -1,0 +1,18 @@
+# Minimal Boost config package for the iOS cross build (script-generated).
+# Defines exactly the imported targets libime requests: Boost::boost
+# (headers) and Boost::iostreams (static, subset sources).
+if(NOT TARGET Boost::boost)
+  add_library(Boost::boost INTERFACE IMPORTED)
+  set_target_properties(Boost::boost PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "$SRC/boost")
+endif()
+if(NOT TARGET Boost::iostreams)
+  add_library(Boost::iostreams STATIC IMPORTED)
+  set_target_properties(Boost::iostreams PROPERTIES
+    IMPORTED_LOCATION "$1/lib/libboost_iostreams.a"
+    INTERFACE_INCLUDE_DIRECTORIES "$SRC/boost"
+    INTERFACE_LINK_LIBRARIES "Boost::boost;z")
+endif()
+set(Boost_FOUND TRUE)
+set(Boost_INCLUDE_DIRS "$SRC/boost")
+set(Boost_LIBRARIES Boost::iostreams)
