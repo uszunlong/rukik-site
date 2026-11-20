@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T05:35:59Z",
+ "generated_at": "2026-11-20T08:39:11Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -27,7 +27,7 @@
    ],
    "specialties": [],
    "tagline": "",
-   "article_count": 14
+   "article_count": 15
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
@@ -163,6 +163,25 @@
   }
  ],
  "articles": [
+  {
+   "id": "bc1cea3b-4487-4c8b-abae-a3ac0a438eb8",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
+   "title": "后黄仁勋时代：英伟达治理权力结构真相与AI产业从单点算力崇拜转向多元生态竞争的投资逻辑",
+   "summary": null,
+   "topics": [],
+   "date": "2026-11-20",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/bc1cea3b-4487-4c8b-abae-a3ac0a438eb8/hero-author-1795163784954.jpg",
+   "published_at": "2026-11-20 08:38:43.393743+00",
+   "url": "https://rukik.com/a/bc1cea3b-4487-4c8b-abae-a3ac0a438eb8",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
+  },
   {
    "id": "e9f5b5fe-f509-41fc-90ba-dfde0ce10319",
    "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
