@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T19:13:08Z",
+ "generated_at": "2026-11-20T19:44:34Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -159,7 +159,7 @@
     "专业PR"
    ],
    "tagline": "洛杉矶专业探店",
-   "article_count": 0
+   "article_count": 1
   },
   {
    "id": "439825fd-2ced-48ce-a6f3-69063b6d4ded",
@@ -579,6 +579,25 @@
     "title": "房产经纪",
     "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/55987361-96af-43d8-95d2-58a2b58c00cb.jpg?v=20261103015506",
     "slug": "ophelia"
+   }
+  },
+  {
+   "id": "2bc57103-af4b-45ff-b278-b0feabefc842",
+   "expert_id": "a181564d-524d-497c-a8ba-4a03c34dcd42",
+   "expert_name": "刘芯妤",
+   "title": "CES整合营销传播方法论——以时间节奏为主线的展前铺垫与渠道整合打法",
+   "summary": null,
+   "topics": [],
+   "date": "2026-11-20",
+   "cover": null,
+   "published_at": "2026-11-20 19:31:42.793147+00",
+   "url": "https://rukik.com/a/2bc57103-af4b-45ff-b278-b0feabefc842",
+   "author": {
+    "id": "a181564d-524d-497c-a8ba-4a03c34dcd42",
+    "name": "刘芯妤",
+    "title": "专业人士",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/pro/a181564d-524d-497c-a8ba-4a03c34dcd42.jpg?v=20261120040815",
+    "slug": "expert-a181564d"
    }
   }
  ]
