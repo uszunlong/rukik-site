@@ -734,6 +734,8 @@ body.in-topic{background:#FFFFFF}
           <button class="ghost" id="corr-view-bi">双语字幕</button>
           <span class="dim" id="corr-status"></span>
         </div>
+        <!-- [TR-SYNC 2026-11-21] 译文回拉连续失败的如实提示细条：达阈值显示、恢复自动撤下 -->
+        <div id="tr-sync-note" style="display:none;margin:2px 0 6px;font-size:12px;color:var(--warn)">译文同步失败，正在重试</div>
         <div id="segments" data-i18n-skip></div>
         <div id="partial" class="seg partial" data-i18n-skip></div>
         <div id="partial-tr" class="partial-tr" data-i18n-skip></div>
@@ -923,7 +925,27 @@ let lastTranslateAt = 0, finalsSinceTranslate = 0;
 const fnv1aPage = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return 'fnv1a:' + h.toString(16); };
 const detectLangPage = (text) => { const han = (String(text).match(/[㐀-鿿豈-﫿]/g) || []).length; const lw = (String(text).match(/[A-Za-z]+(?:[-'][A-Za-z0-9]+)*|[0-9]+(?:[.,][0-9]+)*/g) || []).length; if (han >= 4 && lw >= 2) return 'mixed'; if (han > 0 && han >= lw) return 'zh'; if (lw > 0) return 'en'; return han > 0 ? 'zh' : 'unknown'; };
 function indexTranslations(rows) { translationsBySeg = new Map(); for (const t of rows || []) translationsBySeg.set(`${t.segment_id}|${t.tgt_lang}`, t); }
-async function loadTranslations() { if (!cur || !cur.meeting) return; try { const r = await client.translationsList(cur.meeting.id); indexTranslations(r.translations); } catch { /* 译文加载失败：保持原文呈现，不挡页面 */ } }
+// [TR-SYNC 2026-11-21] 译文同步健康与段龄记账（定谳 meeting-translate-down-20261121）：
+// 回拉失败不再全程静默——连续失败计数，达 3 次由字幕区顶部细条如实提示、恢复自动撤下；
+// 段龄＝本页首次渲染见到该段的时刻（打开会议时已在场的段记 0＝陈旧），供双语下行区分
+// 「译文生成中…」（新段待产出/哈希刚变化）与「译文暂不可用」（真失败/长时未产出）。
+let trPullFailStreak = 0;
+let trRowsSig = ''; // 译文行指纹：回拉数据无变化时不重索引、不重渲染（接口无游标参数，以指纹代增量）
+const segFirstSeenAt = new Map(); // segment_id -> 首次见到的 Date.now()（0＝打开时已在场）
+const segMismatchSince = new Map(); // `${segment_id}|${tgt}` -> 哈希不一致首次观察时刻
+const TR_GEN_WINDOW_MS = 60000; // 新段无译文时显示「生成中」的窗口（服务端产出节律约 7–25 秒）
+const TR_STALE_WINDOW_MS = 10000; // 哈希不一致持续超过一个回拉周期才判「暂不可用」
+function trSigOf(rows) { return (rows || []).map((t) => `${t.segment_id}|${t.tgt_lang}|${t.state}|${t.source_text_hash || ''}|${(t.translated_text || '').length}`).join(';'); }
+function syncTrSyncNote() { const el = $('tr-sync-note'); if (el) el.style.display = trPullFailStreak >= 3 ? '' : 'none'; }
+async function loadTranslations() {
+  if (!cur || !cur.meeting) return false;
+  try {
+    const r = await client.translationsList(cur.meeting.id);
+    indexTranslations(r.translations); trRowsSig = trSigOf(r.translations);
+    trPullFailStreak = 0; syncTrSyncNote();
+    return true;
+  } catch { trPullFailStreak += 1; syncTrSyncNote(); return false; /* 译文加载失败：保持原文呈现，不挡页面；失败计数达阈值由细条如实提示 */ }
+}
 // 段呈现：以生效原文（原文/校订/人工版）为底；展示语言不同且译文源哈希与生效文本一致才用译文。
 // entity_mismatch 的译文不展示、只显原文＋弱提示；provisional 弱化标注；缺译/过期回落原文（过渡态）。
 function segDisplay(s, baseText) {
@@ -1884,9 +1906,39 @@ function maybeFireViz() {
 }
 setInterval(() => { if (cur && cur.meeting && cur.meeting.status === 'live') { maybeFireViz(); maybeFireTranslate(); } }, 5000);
 
+// [TR-SYNC 2026-11-21] 译文独立回拉（根治 meeting-translate-down-20261121 定谳）：旧实现
+// 译文映射只靠自身 analyze 成功回调刷新，回调回路未跑通（或译文由另一端驱动产出）时
+// 页面全程停在空映射上恒显「暂不可用」，与库内完备状态脱节。现改为：直播＋已开翻译＋
+// 需要译文（双语档，或单语展示语言与内容主导语言不一致）时，每 10 秒独立回拉一次，与
+// analyze 成败完全解耦，口径对齐 App 端 2026-11-17「数据变化即重拉」的修法。页面隐藏、
+// 会议结束、离开工作台即自动停拉；译文行指纹无变化且非双语档时不重渲染（接口无游标
+// 参数，以指纹比对代增量取数）。失败计数与细条提示与 loadTranslations 共用同一口径。
+let trPullBusy = false;
+setInterval(async () => {
+  if (trPullBusy) return;
+  if (document.visibilityState !== 'visible') return;
+  if (!cur || !cur.meeting || cur.meeting.status !== 'live' || !cur.meeting.translation_enabled) return;
+  if ($('view-ws').style.display === 'none') return;
+  if (!translateNeeded()) return;
+  trPullBusy = true;
+  try {
+    const r = await client.translationsList(cur.meeting.id);
+    trPullFailStreak = 0; syncTrSyncNote();
+    const sig = trSigOf(r.translations);
+    if (sig !== trRowsSig) { trRowsSig = sig; indexTranslations(r.translations); renderSegments(); }
+    else if (corrView === 'bilingual') renderSegments(); // 数据未变也要刷新：段龄/哈希文案分层随时间翻转
+  } catch { trPullFailStreak += 1; syncTrSyncNote(); }
+  finally { trPullBusy = false; }
+}, 10000);
+
 async function openMeeting(id, autostart = false) {
   const data = await client.getMeeting(id);
   cur = data;
+  // [TR-SYNC 2026-11-21] 段龄/哈希记账按会议隔离重置：打开时已在场的段记 0（陈旧，
+  // 缺译即「暂不可用」沿用旧口径）；直播中新到达的段在 renderSegments 首次渲染时登记。
+  segFirstSeenAt.clear(); segMismatchSince.clear();
+  for (const s of cur.segments || []) segFirstSeenAt.set(s.id, 0);
+  trPullFailStreak = 0; syncTrSyncNote();
   const gn = $('gap-notices'); if (gn) gn.innerHTML = ''; // [WS-RECONNECT 2026-11-14] 缺口提示按会议隔离，进新会议清空
   show('ws');
   renderMeeting();
@@ -2009,20 +2061,42 @@ function segBaseText(s) {
   }
   return s.user_locked && s.user_text ? s.user_text : s.text;
 }
-// 双语下行决策（纯函数，可测）：目标语言＝原语言的对侧（混合段按主导字系）；译文须状态可用、
-// 源哈希与生效文本一致、无 entity_mismatch，否则回落「译文暂不可用」（不编造、不拿过期译文冒充）。
+// 双语下行决策：目标语言＝原语言的对侧（混合段按主导字系）；译文须状态可用、
+// 源哈希与生效文本一致、无 entity_mismatch 才呈现（不编造、不拿过期译文冒充）。
+// [TR-SYNC 2026-11-21] 缺译时带 why 原因供文案分层：missing＝尚无译文行、stale＝哈希
+// 不一致（多为原文刚被校订/锁定、重译在途）、failed/entity＝真失败——分层口径见 trPendingLabel。
 function bilingualLine(s, baseText) {
   const lang = s.lang || detectLangPage(baseText);
   let tgt;
   if (lang === 'zh') tgt = 'en';
   else if (lang === 'en') tgt = 'zh';
   else if (lang === 'mixed') { const han = (String(baseText).match(/[㐀-鿿豈-﫿]/g) || []).length; const lw = (String(baseText).match(/[A-Za-z]/g) || []).length; tgt = han >= lw ? 'en' : 'zh'; }
-  else return { tgt: null, text: null };
-  const t = translationsBySeg.get(`${s.id}|${tgt}`);
-  if (!t || t.state === 'failed') return { tgt, text: null };
-  if (t.source_text_hash && t.source_text_hash !== fnv1aPage(baseText)) return { tgt, text: null };
-  if (t.quality_flag === 'entity_mismatch') return { tgt, text: null };
+  else return { tgt: null, text: null, why: 'nolang' };
+  const key = `${s.id}|${tgt}`;
+  const t = translationsBySeg.get(key);
+  if (!t) return { tgt, text: null, why: 'missing' };
+  if (t.state === 'failed') return { tgt, text: null, why: 'failed' };
+  if (t.source_text_hash && t.source_text_hash !== fnv1aPage(baseText)) {
+    if (!segMismatchSince.has(key)) segMismatchSince.set(key, Date.now());
+    return { tgt, text: null, why: 'stale' };
+  }
+  if (t.quality_flag === 'entity_mismatch') return { tgt, text: null, why: 'entity' };
+  segMismatchSince.delete(key);
   return { tgt, text: t.translated_text };
+}
+// [TR-SYNC 2026-11-21] 双语缺译文案分层：「译文暂不可用」只留给真失败（failed/entity）、
+// 段龄已过生成窗口仍无译文、或哈希不一致持续超过一个回拉周期；其余过渡态如实显示
+// 「译文生成中…」，消除「系统坏了」的误读（定谳 §四之二）。
+function trPendingLabel(s, bl) {
+  if (bl.why === 'missing') {
+    const seen = segFirstSeenAt.get(s.id);
+    return (seen && Date.now() - seen < TR_GEN_WINDOW_MS) ? '译文生成中…' : '译文暂不可用';
+  }
+  if (bl.why === 'stale') {
+    const since = segMismatchSince.get(`${s.id}|${bl.tgt}`) || 0;
+    return (Date.now() - since < TR_STALE_WINDOW_MS) ? '译文生成中…' : '译文暂不可用';
+  }
+  return '译文暂不可用';
 }
 async function setSubMode(m) {
   if (m !== 'original' && m !== 'corrected' && m !== 'bilingual') return;
@@ -2353,13 +2427,15 @@ function renderSegments() {
   const useCorr = corrView === 'corrected' && corrState && corrState.status === 'done';
   for (const s of cur.segments) {
     const div = document.createElement('div'); div.className = 'seg'; div.dataset.seg = s.id;
-    // [BILINGUAL-SUB] 双语档：原文在上、译文在下，共享时间戳＋发言者；译文缺失/过期/待核对一律
-    // 显示「译文暂不可用」，不编造。导图不受此模式影响（导图仍按 displayLang 单语言整图显示）。
+    // [BILINGUAL-SUB] 双语档：原文在上、译文在下，共享时间戳＋发言者；不编造译文。
+    // [TR-SYNC 2026-11-21] 缺译文案按 trPendingLabel 分层（生成中…／暂不可用），不再一律
+    // 「暂不可用」。导图不受此模式影响（导图仍按 displayLang 单语言整图显示）。
     if (corrView === 'bilingual') {
+      if (!segFirstSeenAt.has(s.id)) segFirstSeenAt.set(s.id, Date.now()); // [TR-SYNC] 段龄记账：首次渲染即登记
       const base = segBaseText(s);
       const bl = bilingualLine(s, base);
       const spk = spkHtmlFor(s); // [PARTICIPANTS-V1] 显示名按更正>绑定>原标签解析
-      const tr = bl.text != null ? `<div class="seg-tr">${esc(bl.text)}</div>` : '<div class="seg-tr-na">译文暂不可用</div>';
+      const tr = bl.text != null ? `<div class="seg-tr">${esc(bl.text)}</div>` : `<div class="seg-tr-na">${trPendingLabel(s, bl)}</div>`;
       div.innerHTML = `<span class="tm">${fmtT(Number(s.start_sec))}</span>${spk}${nbSegIds.has(s.id) ? '<span class="chip">断网补录</span>' : ''}<div>${esc(base)}</div>${tr}`;
       box.appendChild(div);
       continue;
