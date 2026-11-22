@@ -2087,10 +2087,17 @@ function bilingualLine(s, baseText) {
 // [TR-SYNC 2026-11-21] 双语缺译文案分层：「译文暂不可用」只留给真失败（failed/entity）、
 // 段龄已过生成窗口仍无译文、或哈希不一致持续超过一个回拉周期；其余过渡态如实显示
 // 「译文生成中…」，消除「系统坏了」的误读（定谳 §四之二）。
+// 段龄口径：优先段行自带的服务端 created_at（重进页面仍准确）；缺失时回落本页首次
+// 见到该段的时刻（segFirstSeenAt，打开时已在场的段记 0＝陈旧）。
+function segAgeMs(s) {
+  const ct = s.created_at ? Date.parse(s.created_at) : NaN;
+  if (Number.isFinite(ct) && ct > 0) return Math.max(0, Date.now() - ct);
+  const seen = segFirstSeenAt.get(s.id);
+  return seen ? Date.now() - seen : Infinity;
+}
 function trPendingLabel(s, bl) {
   if (bl.why === 'missing') {
-    const seen = segFirstSeenAt.get(s.id);
-    return (seen && Date.now() - seen < TR_GEN_WINDOW_MS) ? '译文生成中…' : '译文暂不可用';
+    return segAgeMs(s) < TR_GEN_WINDOW_MS ? '译文生成中…' : '译文暂不可用';
   }
   if (bl.why === 'stale') {
     const since = segMismatchSince.get(`${s.id}|${bl.tgt}`) || 0;
