@@ -1377,6 +1377,14 @@ $('dm-confirm').onclick = async () => {
 // 改主题只动主题自有数据，不伤计划/录音/纪要原件。
 let topicsCache = [];
 let pendingTopic = null; // 同意门上下文 {id,title}：本次录音归入该主题；null=独立快速录音
+// [CREATE-DEDUP 2026-11-21 用户亲批] 建会幂等键＋在途单飞：一次同意弹窗打开生成
+// 一个 client_key，弹窗内连点/失败重试复用同一键（服务端 (owner, client_key)
+// 唯一约束＋回查兜底）；弹窗关闭（取消/创建成功）即作废，下次打开换新键——
+// 口径与 App 端 createClientKeyRef 及本页 tpClientKey 一致。在途 Promise 是
+// 第二道防线：请求未回前程序级单飞，按钮禁用是其 UI 呈现。
+let createClientKey = '';
+let createInFlight = null;
+function rollCreateClientKey() { createClientKey = 'ck-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
 let currentTopicDetail = null;
 let tpTab = 'overview';
 let tpEditId = null;     // null=新建主题；否则为编辑中的主题 id
@@ -1420,6 +1428,7 @@ async function startTopicRecording(t) {
   return startTopicRecordingInner(t);
 }
 async function startTopicRecordingInner(t) {
+  rollCreateClientKey();
   pendingTopic = { id: t.id, title: t.title };
   $('new-title').value = t.title || '';
   $('consent').checked = false; $('consent-err').textContent = '';
@@ -1713,19 +1722,32 @@ $('btn-ask').onclick = async () => {
   $('btn-ask').disabled = false;
 };
 
-function openQuickConsent() { pendingTopic = null; $('consent-topic').style.display = 'none'; $('new-title').value = ''; $('modal-consent').style.display = 'flex'; }
+function openQuickConsent() { rollCreateClientKey(); pendingTopic = null; $('consent-topic').style.display = 'none'; $('new-title').value = ''; $('modal-consent').style.display = 'flex'; }
 $('btn-new').onclick = async () => {
   const active = await fetchActiveSessions();
   if (active.live.length || active.paused.length) { showLiveGuard(active, openQuickConsent); return; }
   openQuickConsent();
 };
-$('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; pendingTopic = null; };
-$('btn-create').onclick = async () => {
+$('btn-cancel-new').onclick = () => { $('modal-consent').style.display = 'none'; pendingTopic = null; createClientKey = ''; };
+$('btn-create').onclick = () => {
+  // [CREATE-DEDUP 2026-11-21] 在途单飞：上一笔建会链未回前，连点/双击直接忽略
+  if (createInFlight) return;
   if (!$('consent').checked) { $('consent-err').textContent = '请先确认录音同意。'; return; }
   $('consent-err').textContent = '';
+  const btn = $('btn-create');
+  const btnOrigText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = L('正在创建…', 'Creating…');
+  createInFlight = (async () => {
+  let startedMeeting = null;
+  let candFailedOut = 0;
   try {
     // [TOPICS-S2] 主题内开录走同一 create 通道并带 topic_id；快速录音不带（独立会议）
-    const payload = { title: $('new-title').value.trim() || undefined, mode: $('new-mode').value, lang: $('new-lang').value };
+    // [CREATE-DEDUP 2026-11-21] payload 带 client_key 启用服务端幂等：本弹窗内
+    // 任何重试复用同一键；上一笔若其实已落库，服务端回查命中回既有会议，
+    // 后续 consent/start 对同一 id 重跑，不再双建。
+    if (!createClientKey) rollCreateClientKey();
+    const payload = { title: $('new-title').value.trim() || undefined, mode: $('new-mode').value, lang: $('new-lang').value, client_key: createClientKey };
     if (pendingTopic) payload.topic_id = pendingTopic.id;
     const { meeting } = await client.api('create', payload);
     // 主题候选勾选 → 本场名单（职位取主题层当前职位作本场快照）；单个失败不阻塞开录
@@ -1742,9 +1764,25 @@ $('btn-create').onclick = async () => {
     const { meeting: started } = await client.start(meeting.id);
     $('modal-consent').style.display = 'none';
     pendingTopic = null;
-    await openMeeting(started.id, true);
-    if (candFailed) $('ws-err').textContent = tpUiEn() ? `${candFailed} candidate(s) could not be added to this session — add them from the Participants panel.` : `${candFailed} 位候选未能加入本场名单，可在「与会人员」中手动添加。`;
+    createClientKey = ''; // [CREATE-DEDUP 2026-11-21] 创建成功：本键使命完成，下次打开弹窗换新键
+    startedMeeting = started;
+    candFailedOut = candFailed;
   } catch (e) { $('consent-err').textContent = '创建失败：' + e.message; }
+  finally {
+    // [CREATE-DEDUP 2026-11-21] 锁只罩 create→consent→start 变更链：链一落定
+    // （成功或失败）立即释放；openMeeting 是导航/渲染，不占锁——防其慢或挂
+    // 把本页后续建会堵死（原代码无锁时该 await 挂起无副作用，加锁后必须收口）。
+    createInFlight = null;
+    btn.disabled = false;
+    btn.textContent = btnOrigText;
+  }
+  if (startedMeeting) {
+    try {
+      await openMeeting(startedMeeting.id, true);
+      if (candFailedOut) $('ws-err').textContent = tpUiEn() ? `${candFailedOut} candidate(s) could not be added to this session — add them from the Participants panel.` : `${candFailedOut} 位候选未能加入本场名单，可在「与会人员」中手动添加。`;
+    } catch (e) { $('ws-err').textContent = L('打开会议失败：', 'Failed to open the meeting: ') + e.message; }
+  }
+  })();
 };
 
 $('btn-back').onclick = async () => { stopCapture(); if (endReconcileTimer) { clearInterval(endReconcileTimer); endReconcileTimer = null; } if (vizUI && vizUI.store.mode === 'replay') vizUI.stopReplay(); show('home'); await loadList(); };
