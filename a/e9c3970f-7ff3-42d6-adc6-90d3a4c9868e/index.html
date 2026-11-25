@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token出海六种商业模式的跨境数据合规与法律风险边界 · Rukik 专业知识库</title>
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="Token出海六种商业模式的跨境数据合规与法律风险边界｜Rukik智库">
+<meta property="og:description" content="境内推理境外调用：数据出境的合规门槛 判断 API 直连模式的法律风险，关键不在 Token 计费这一商业外观，而在数据跨境流转本身：谁、向境外、提供了什么数据。境外客户向境内推理节点提交的prompt，一旦落地到服务器完成推理再回传，就构 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/e9c3970f-7ff3-42d6-adc6-90d3a4c9868e/hero-author-1795637714347.jpg?cv=3">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Token出海六种商业模式的跨境数据合规与法律风险边界｜Rukik智库">
+<meta name="twitter:description" content="境内推理境外调用：数据出境的合规门槛 判断 API 直连模式的法律风险，关键不在 Token 计费这一商业外观，而在数据跨境流转本身：谁、向境外、提供了什么数据。境外客户向境内推理节点提交的prompt，一旦落地到服务器完成推理再回传，就构 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/e9c3970f-7ff3-42d6-adc6-90d3a4c9868e/hero-author-1795637714347.jpg?cv=3">
+<meta name="description" content="境内推理境外调用：数据出境的合规门槛 判断 API 直连模式的法律风险，关键不在 Token 计费这一商业外观，而在数据跨境流转本身：谁、向境外、提供了什么数据。境外客户向境内推理节点提交的prompt，一旦落地到服务器完成推理再回传，就构 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<style>
+body{margin:0;background:#FBF7EF;color:#14243A;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+.brand{color:#B88B57;letter-spacing:.2em;font-size:12px;font-weight:700}
+h1{font-size:26px;line-height:1.4;margin:14px 0 8px}
+.meta{color:#5A6B85;font-size:14px;line-height:1.7}
+.meta a{color:#B88B57;text-decoration:none}
+hr{border:none;border-top:1px solid #E8DCC4;margin:20px 0}
+article{font-size:16px;line-height:1.9;word-break:break-word}
+article p{margin:0 0 1em}
+article h2{font-size:20px;line-height:1.5;margin:1.4em 0 .5em}
+article h3{font-size:17px;line-height:1.5;margin:1.2em 0 .4em}
+article ul,article ol{margin:0 0 1em;padding-left:1.4em}
+article li{margin:.3em 0}
+article strong{font-weight:600}
+article a{color:#B88B57}
+.hero{margin:18px 0 4px}
+.hero img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px}
+.author-card{margin-top:40px;padding:16px;background:#fff;border:1px solid #E8DCC4;border-radius:12px}
+.author-card .ac-title{font-size:13px;color:#8A97AB;margin-bottom:6px}
+.author-card .ac-head{display:flex;align-items:center;gap:12px}
+.author-card .ac-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none;background:#E8DCC4}
+.author-card .ac-name{font-size:16px;font-weight:600;color:#14243A;line-height:1.5}
+.author-card .ac-name a{color:#14243A;text-decoration:none}
+.author-card .ac-verified{color:#B88B57;font-size:13px;font-weight:600}
+.author-card .ac-bio{font-size:14px;color:#333F52;line-height:1.7;margin-top:8px}
+.author-cta{display:block;margin-top:12px;background:#142235;color:#fff;text-align:center;padding:14px 16px;border-radius:12px;font-size:16px;font-weight:600;text-decoration:none}
+.invite-card{margin-top:24px;padding:24px 20px;background:#fff;border:1px solid #E8DCC4;border-radius:16px;text-align:center}
+.invite-card .ic-seal{width:54px;height:54px;border-radius:12px;object-fit:cover}
+.invite-card .ic-slogan{margin-top:10px;font-size:15px;font-weight:600;color:#14243A;letter-spacing:1px}
+.invite-card .ic-divider{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0}
+.invite-card .ic-divider span{display:block;width:44px;height:1px;background:#B58A58}
+.invite-card .ic-divider i{display:block;width:6px;height:6px;background:#B58A58;transform:rotate(45deg)}
+.invite-card .ic-headline{font-size:20px;font-weight:700;color:#14243A;line-height:1.5}
+.invite-card .ic-poem{margin:8px 0 0;font-size:15px;color:#333F52;line-height:1.9}
+.invite-card .ic-value{margin:10px auto 0;font-size:15px;color:#8A97AB;line-height:1.9;max-width:520px}
+.invite-card .ic-tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.invite-card .ic-tags span{border:1px solid #B58A58;border-radius:999px;padding:4px 10px;font-size:12px;color:#14243A}
+.invite-card .ic-codezone{margin-top:18px;background:rgba(181,138,88,.08);border-radius:10px;padding:14px}
+.invite-card .ic-codelabel{font-size:12px;color:#8A97AB;letter-spacing:2px}
+.invite-card .ic-code{margin-top:4px;font-size:28px;font-weight:700;color:#14243A;letter-spacing:3px;word-break:break-all}
+.invite-card .ic-btns{margin-top:16px;display:flex;gap:10px}
+.invite-card .ic-btn-primary{flex:1;min-height:48px;border:none;border-radius:10px;background:#14243A;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.invite-card .ic-btn-ghost{flex:1;min-height:48px;border:1px solid #14243A;border-radius:10px;background:#fff;color:#14243A;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;text-decoration:none}
+footer{margin-top:40px;color:#8A97AB;font-size:12px;line-height:1.7}
+.brandline{margin-top:16px;color:#14243A;font-size:13px}
+.brandline .slogan{color:#B88B57;font-weight:600}
+.empty{padding:80px 0;text-align:center;color:#5A6B85}
+@media (max-width:480px){
+.wrap{padding:24px 16px 48px}
+h1{font-size:23px}
+.hero{margin:14px 0 2px}
+.hero img{border-radius:10px}
+.author-card{padding:14px}
+.author-card .ac-head{align-items:flex-start}
+}
+</style><link rel="canonical" href="https://rukik.com/a/e9c3970f-7ff3-42d6-adc6-90d3a4c9868e"><meta property="og:url" content="https://rukik.com/a/e9c3970f-7ff3-42d6-adc6-90d3a4c9868e"></head><body><div class="wrap">
+<div class="brand">RUKIK · 专业知识库</div>
+
+<!-- hero-state: themed -->
+<div class="hero" data-i18n-skip><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/e9c3970f-7ff3-42d6-adc6-90d3a4c9868e/hero-author-1795637714347.jpg" alt="Token出海六种商业模式的跨境数据合规与法律风险边界" loading="eager"></div>
+<h1 data-i18n-skip>Token出海六种商业模式的跨境数据合规与法律风险边界</h1>
+<div class="meta">作者：<a href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">黄梦奇</a>｜<span>律师</span><br><span>发布于 2026-11-25</span> · <span>更新于 2026-11-25</span></div>
+<hr>
+<article data-hero-state="themed" data-i18n-skip><h2>境内推理境外调用：数据出境的合规门槛</h2>
+<p>判断 API 直连模式的法律风险，关键不在 Token 计费这一商业外观，而在数据跨境流转本身：谁、向境外、提供了什么数据。境外客户向境内推理节点提交的prompt，一旦落地到服务器完成推理再回传，就构成了一次完整的数据跨境流转——方向是入境，但这次入境本身同样要纳入数据处理者的合规视野，因为后续结果回传、日志留存、模型训练数据的再利用，都可能触发出境环节的评估义务。更需要留意的是一种容易被忽视的情形：如果境内服务商在推理过程中引入了境内收集的个人信息或企业自身的数据资产用于比对、增强或模型迭代，再把处理结果返回境外，这就不再是单纯的&quot;境外数据入境处理后返回&quot;，而可能被认定为引入了境内个人信息或重要数据的出境活动。</p>
+<p>现行规则的基本框架来自国家网信办2024年公布的《促进和规范数据跨境流动规定》，这是当前判断API直连模式合规路径的核心依据。该规定为了保障数据安全，保护个人信息权益，促进数据依法有序自由流动，根据网络安全法、数据安全法、个人信息保护法等法律法规，对数据出境安全评估、个人信息出境标准合同、个人信息保护认证等数据出境制度的施行作出规定。对Token出海的服务商而言，第一步永远是重要数据识别：数据处理者应当按照相关规定识别、申报重要数据，未被相关部门、地区告知或者公开发布为重要数据的，不需要作为重要数据申报数据出境安全评估。这意味着，如果海外客户提交的prompt中不包含被明确告知或公开认定的重要数据，安全评估的门槛本身就不会触发，这对纯商业性、非敏感行业的API调用是实质性的减负。</p>
+<p>但这条豁免不能一概而论地套用到所有Token出海场景。规则设置了几类可以免予申报安全评估、免于订立标准合同或认证的情形，其中与API直连模式最相关的一类是：数据处理者在境外收集和产生的个人信息传输至境内处理后向境外提供，处理过程中没有引入境内个人信息或者重要数据的，免予申报数据出境安全评估、订立个人信息出境标准合同、通过个人信息保护认证。换言之，如果境外用户的个人信息原本就产生在境外、经由API传入境内仅做&quot;过手加工&quot;、处理完毕即回传且未掺入任何境内数据，这条通道是打开的。但一旦境内服务商在推理层做了数据留存、用于模型训练或与境内其他数据集做了关联处理，豁免条件就不再成立，合规义务重新落回评估、标准合同或认证三选一的框架。</p>
+<p>对于规模化调用的API服务商，还有一条容易被技术团队忽视的量化红线。根据《促进和规范数据跨境流动规定》，关键信息基础设施运营者以外的数据处理者自当年1月1日起累计向境外提供10万人以上、不满100万人个人信息（不含敏感个人信息）或者不满1万人敏感个人信息的，应当依法与境外接收方订立个人信息出境标准合同或者通过个人信息保护认证。这条规则对Token出海业务的实际意义在于：即便单次API调用看似只是技术性的推理请求，如果终端用户规模或者敏感信息调用量在一个自然年度内累积突破门槛，服务商就从“豁免区”滑入了“强制备案区”，而这种累积效应往往是业务上量后才被合规部门后知后觉发现的风险点。此外，根据《促进和规范数据跨境流动规定》第十条，数据处理者向境外提供个人信息的，应当按照法律、行政法规的规定履行告知、取得个人单独同意、进行个人信息保护影响评估等义务，这一条款独立于前述的评估/合同/认证三选一框架之外，意味着即便业务规模未达到强制申报门槛，告知与单独同意的程序性义务依然不能豁免——这恰恰是很多技术驱动型团队在产品设计阶段容易遗漏的环节，因为API的无感化调用体验天然与“显式告知、单独同意”的合规要求存在摩擦。</p>
+<p>从执业角度看，API直连模式的合规路径不是单一结论，而是会随着业务规模、数据类型和客户行业不断变化的判断区间。初期如果调用规模较小、所涉数据敏感度较低，企业在一定条件下可能不必一开始就进入最重的合规路径，但前提是服务商已经建立持续监测机制，能够动态识别所处理数据的类型、涉及主体范围以及是否触及重要数据等高风险情形，而不是在产品上线时做一次静态判断后长期沿用。只要处理过程中存在向境外提供个人信息的安排，企业通常就需要把告知、单独同意、个人信息保护影响评估以及留痕管理嵌入交易结构和产品流程之中。就合同设计而言，至少应当把个人信息来源合法性、告知同意责任分配、客户指令边界、敏感字段过滤、日志留存、违规使用的追偿机制写清楚，否则业务前端看似只是API调用，责任后端却可能直接回到服务商自身。</p>
+<h2>保税区近岸推理的合规闭环及其法律边界</h2>
+<p>在实务上，&quot;保税区模式&quot;的法律基础并不是传统的海关保税概念，而是一套专门针对数据跨境流动设计的监管豁免安排。海南儋州洋浦&quot;数字保税&quot;区的实质，是在特定区域内通过国际互联网专线进行数据交互，在确保数据安全的情况下，为产生于境外的数据要素提供收集、存储、加工、治理、交易等增值服务，服务产品用于境外市场或经审批后用于境内市场的商业模式。值得特别注意的是，虽然用&quot;保税&quot;二字，但&quot;数字保税&quot;着重在于强调对区内数据与区外形成隔离、实现&quot;两头在外&quot;从而数据出境时国家网信部门的监管要求豁免，并非海关概念下的&quot;保税&quot;。这个定性非常关键：企业若简单套用海关特殊监管区域的合规逻辑去理解&quot;数据保税&quot;，很容易误判自己的义务边界——真正触发豁免的法律要件是&quot;原始数据不与境内互通&quot;的物理与网络隔离，而不是货物意义上的保税监管。</p>
+<p>这套豁免安排并非空中楼阁，而是嵌入在现行数据跨境流动规则的框架之内。自贸试验区在这一框架下被赋予了差异化空间，典型做法是制定负面清单：天津自贸区管委会发布了《中国（天津）自由贸易试验区数据出境管理清单（负面清单）（2024年版）》，列明天津自贸试验区企业向境外提供数据需要申报数据出境安全评估、订立个人信息出境标准合同、通过个人信息保护认证的情形，负面清单外的数据则免予申报。保税区/来数加工模式的合规逻辑与此一脉相承，但走得更彻底——它不是缩窄申报范围，而是通过物理与网络隔离，使&quot;数据出境&quot;这一法律事实本身在原始数据层面不发生，从而绕开安全评估、标准合同、认证这三道常规程序。</p>
+<p>保税区或“来数加工”模式的合规优势并不是无条件取得的，它本质上建立在物理隔离和制度隔离同时成立的前提上。较为稳妥的理解是：原始数据留在专区闭环处理，仅将加工结果或Token输出至境外，才可能构成这一模式得以运行的核心合规基础；一旦加工后的Token、模型输出或衍生结果要回流境内市场使用，其法律评价就不能再简单沿用“专区内闭环”的逻辑，而应重新判断是否触发新的审批、备案或其他监管要求。就目前公开信息看，这一模式的具体规范依据、主管机关分工、审批路径和办理周期仍缺乏统一且充分的公开说明，企业不应把园区宣传、项目推介口径直接等同于可执行规则。更稳妥的做法，是在正式入区前分别取得属地网信部门以及特殊监管区域管理机构的书面确认，尤其要把“数据不出区”如何认定、“输出结果”是否限于特定形态、以及结果回流境内时适用何种规则问清楚。否则，所谓专区豁免很容易只覆盖园区内的一段处理流程，而无法覆盖产品进入市场后的完整合规责任。</p>
+<p>从可扩展性看，这一模式的边界首先是行政边界，而不是技术边界。能够承接此类业务的区域通常依赖特定试点、特定园区和特定审批安排，因此其复制速度往往取决于地方监管协调能力，而不是算力节点能否快速铺开。根据公开资料，部分地区已经围绕跨境数据加工和专区算力布局展开探索，其共同特征都是尽量把原始数据留在封闭环境内处理，并将业务设计成“两头在外”的运行结构，以降低落入常规数据出境路径的概率。但企业不能据此推导出同类项目在不同城市当然可复制，更不能把某一地区的试点实践视为全国统一规则。对经营者而言，真正决定项目能否落地的，通常不是技术方案写得多完整，而是当地是否已经形成可执行的审批口径、监管分工和持续检查机制。</p>
+<h2>托管分成下的管辖权让渡与责任分配</h2>
+<p>海外托管分成模式在前两种模式的讨论中已经可以看出其特殊性：它不是把数据搬到境外，而是把推理能力本身&quot;嵌入&quot;到境外云厂商的基础设施之中，由对方的合规体系接管。这种安排在商业上确实解决了延迟与信任问题，但从法律结构上看，它触发的是一类与API直连、保税区模式都不同的责任转移——数据处理者的角色认定随基础设施控制权一起转移了。</p>
+<p><strong>谁是&quot;提供者&quot;，谁是&quot;处理者&quot;</strong>。在AWS Bedrock这类托管架构下，数据在AWS的数据边界内处理，且为零数据保留、零运营商访问，这意味着实际的数据处理行为发生在云厂商控制的基础设施内，云厂商在事实上承担起个人信息保护法意义上的处理者或受托处理者角色。但中国出海方（模型研发公司）与终端用户之间的法律关系并未因此消失——如果终端客户的输入内容中包含源自中国境内的个人信息或重要数据，无论推理环节物理上发生在何处，境内主体作为原始数据处理者的出境合规义务并不会因为&quot;模型托管给了境外云厂商&quot;而自动免除。换言之，托管分成模式解决的是推理层面的延迟与信任问题，并不自动解决数据出境合规问题——如果业务流程中确实存在个人信息或重要数据从境内流向境外云平台的环节，仍需回到数据出境安全评估或标准合同备案的框架下判断。数据处理者因业务需要向境外提供重要数据和个人信息，应当遵守《数据出境安全评估办法》、《个人信息出境标准合同办法》和《促进和规范数据跨境流动规定》有关规定，这一基本义务不因交付形态是&quot;API直连&quot;还是&quot;托管分成&quot;而改变主体归属。</p>
+<p><strong>管辖权的实际让渡，往往发生在合同条款，而不只发生在技术部署层。</strong> 海外云厂商在托管中国模型时，通常会强调该模型适用与其平台内其他模型相同的安全边界、访问控制、加密和审计体系。对客户而言，这当然构成一定程度的信任基础；但对模型出海方而言，这同时意味着其对推理环节的直接控制被纳入云厂商既有治理体系之中。模型研发方通常无法单凭自身能力独立证明某次推理是否被留存、调用日志保存到何种程度、或相关数据是否被用于其他内部流程，最终仍要依赖托管协议中的承诺、审计权安排和责任分配条款来主张自身立场。一旦发生数据泄露、监管问询或第三方索赔，决定责任走向的往往不是“谁提供了服务器”这样简单的事实，而是协议中对数据控制者、处理者、次级处理安排、证据调取、通知时限和赔偿上限的细化约定。至于市场上流传的具体分成比例，多数来源于媒体报道，缺乏统一、充分的公开披露佐证；更值得企业关注的，不是某个数字本身，而是分成机制、结算口径、审计权限和单方改价权是否会在实操中压缩自身收益和控制力。</p>
+<p><strong>两种司法管辖的叠加，而非替代</strong>。托管分成模式常被误读为&quot;数据主权已完全转移给境外云厂商所在地法律&quot;，但这是不准确的。实际情况是双重管辖的叠加：一方面，云厂商所在司法辖区的数据保护规则（如适用的域外数据保护立法）仍然直接约束在该基础设施上发生的处理行为；另一方面，如果上游数据源自中国境内，境内数据合规体系的域外适用效力同样不会因技术架构调整而自动退出。这种叠加状态意味着，出海方需要同时满足两套规则体系，而不能以&quot;推理已经不在境内发生&quot;为由主张豁免。</p>
+<p><strong>责任分配的现实做法，是把权利义务写进托管与分成协议本身</strong>。由于托管分成模式下云厂商事实上接管了大部分推理环节的安全控制，中国出海方在合规文件设计上应当把握的重点，不是重复证明自己仍然&quot;控制&quot;推理过程，而是清晰界定：哪些数据触碰点仍由自身承担直接合规责任（例如上游数据采集、用户授权、跨境传输前的分类分级），哪些环节的责任已经通过托管协议转移给云厂商并应有相应的赔偿与审计条款予以兜底。这类协议条款的设计质量，决定了一旦发生跨境数据争议时，责任能否被清晰切割，而不至于在两套司法管辖的夹缝中被双重追责或互相推诿。</p>
+<p>需要指出的是，不同云厂商、不同模型托管协议在数据留存、审计权限、责任分担方面的具体约定差异很大，本文所述仅为一般性的法律结构分析，具体责任边界仍应以个案项下的托管协议文本与适用监管规则为准。</p>
+<h2>开源分发与分销转售中的许可责任问题</h2>
+<p>开源权重分发和分销白标，表面上是同一条链上的上下游，但在责任结构上是两个不同的法律问题：前者问的是&quot;许可协议本身约束了什么、谁对模型生成内容负责&quot;；后者问的是&quot;中间商转手倒卖调用额度，是否因此继承或转嫁了上游的合规义务&quot;。</p>
+<p>以Qwen系列为代表的开放权重模型，主干版本多以Apache 2.0协议发布，这是一种宽松型许可：允许自由使用、修改和分发，包括用于商业目的，而不要求使用者公开自己的源代码。但&quot;宽松&quot;不等于&quot;免责&quot;，Apache 2.0同时设定了两条硬性义务：一是在再分发时必须保留许可证和版权声明；二是责任限制条款本身只约束&quot;贡献者&quot;（即模型发布方），并不自动豁免下游使用者的侵权或违约责任。需要提醒的是，并非所有版本都统一适用同一协议——部分厂商的新版本或特定规格的模型会切换为自定义许可，附加用户规模、收入门槛或&quot;模型即服务&quot;场景的单独授权要求，企业在选型和商用前应逐一核对具体权重版本对应的许可证文件，而不能依据同系列早期版本的许可条款做想当然的类推。</p>
+<p>国内厂商在开源协议的免责条款设计上也趋同于这一思路：发布者通常声明模型&quot;按现状提供&quot;，不对所有权、不侵权或适用性作保证，使用者需对使用、修改开源模型及模型生成内容，或使用、重新分发衍生模型的结果负责。这类条款在格式条款效力和实际司法适用上存在一个容易被低估的问题：免责声明不是绝对的护身符。国内司法实践对此已有明确态度——仅依据现有司法实践，尚不能认为开源软件开发者、提供者在许可证中设置一般性的免责声明或责任限制条款，就当然排除其在特定情形下可能承担的法律责任，其效力仍需结合格式条款的相关规定及具体适用情形个案判断。换言之，模型发布方在许可协议里写了&quot;概不负责&quot;，并不意味着在训练数据侵权、生成内容违法等场景下就能一键脱责；审理涉开源软件案件，认定各方侵权责任，应当综合考量开源许可协议类型、权利限制的具体内容、安全合规举措和信息披露程度等因素，对不同主体作适当而非绝对的责任豁免。这对以开源权重出海的中国模型公司有直接提示：许可协议中是否明确列出禁止性使用场景、是否要求下游在再分发时传递相同限制、公司自身的安全审查和信息披露是否留痕，都会实质影响其在域外发生纠纷时的抗辩空间。</p>
+<p>分销与白标转售这一层的责任边界通常比表面看上去更重，因为它虽然不直接训练模型，却未必只是中立通道。从合同关系看，白标转售商与终端客户之间成立的是独立服务合同，转售商既然以自己的品牌、控制台或计费系统对外提供服务，就不能仅以“上游才是真正的模型提供方”为由切断自身责任。如果上游许可协议对行业、地域、内容生成场景或再分发方式设有限制，转售商必须把这些限制准确传导到下游合同和产品规则之中；否则，一旦下游使用行为突破上游授权边界，最先被客户追索或被监管关注的，往往正是直接对外签约并收款的转售商。更现实的风险在于，白标平台常常会为了鉴权、计费、风控、排障或客户支持而接触、缓存或留存调用内容，只要存在这类处理行为，转售商在不少司法管辖区就很可能被评价为独立的数据处理者，而不是单纯的技术管道。届时，其需要自行承担相应的数据安全、跨境传输、事件响应和通知义务，不能把上游模型方已有的合规资质直接视为自身免责依据。</p>
+<p>对拟采取开源分发或分销模式出海的企业而言，协议层面至少要把两件事做扎实。第一，逐版本核验实际适用的许可证文本，不能仅凭系列名称、社区印象或第三方转载说明来判断授权范围；模型权重、代码、工具链和商标使用规则往往并不当然一致，任何一个环节的授权缺口都可能在商业化时暴露出来。第二，在企业与下游用户或二级分销商的合同中，把上游许可证中的关键限制条款、使用边界、再分发条件、合规义务、侵权处置和终止后果完整传导下去，并配套审计权、暂停服务权、违规追偿和日志配合义务。只有这样，企业才能把“开放分发”与“责任可控”同时放进同一套法律结构之中；否则，前端看似扩大了生态覆盖，后端却可能因为授权链条断裂、责任传导不足或商用边界不清而承担本可避免的争议成本。</p>
+<h2>智能体与行业方案落地的合同与数据治理挑战</h2>
+<p>把前五种模式放在一起看，数据跨境合规的难点大体可以归为三类：谁在传输数据、传输的是什么数据、由谁对外承担责任。智能体与行业解决方案出海，恰恰是这三类难点叠加得最密集的一种形态——它不是单一的API调用，而是把模型能力、业务逻辑、客户数据处理流程捆在一起打包出海，法律风险因此也从&quot;单点合规&quot;变成了&quot;链条合规&quot;。</p>
+<p><strong>谁是数据处理者，谁是受托处理者</strong></p>
+<p>API直连模式下，责任主体相对清晰：境内主体直接向境外客户提供服务，数据处理者身份不难识别。但智能体嵌入行业SaaS之后，情况变得复杂。以一个假设场景说明：某中国AI公司将其智能体工作流嵌入一家东南亚企业的客户服务系统，智能体在执行任务过程中会读取该企业客户的个人信息、处理其内部业务数据，并可能将部分数据片段作为上下文传回境内模型推理。这里至少存在三层主体关系——境外企业客户是其终端用户个人信息的处理者，中国AI公司既可能是该境外企业的受托处理者（仅按约定处理数据），也可能因为模型本身在境内完成推理而被认定为独立的数据处理者，对&quot;向境外提供数据&quot;这件事承担直接合规义务。</p>
+<p>这一区分在中国法项下并非文字游戏。数据出境安全评估适用于数据处理者向境外提供在中华人民共和国境内运营中收集和产生的重要数据和个人信息的情形。如果中国AI公司在智能体工作流中实际触碰、存储或回传了来自境外终端用户的个人信息，即便合同上把自己定位为&quot;技术服务提供方&quot;，也不能当然排除其作为数据处理者的出境合规义务——监管关注的是数据流动的实质，而非合同措辞。从执业角度看，合同中的角色界定条款（究竟是&quot;数据处理者&quot;&quot;受托处理者&quot;还是单纯的&quot;技术许可方&quot;）必须与数据流的实际架构一致，否则条款本身在穿透审查时可能失去抗辩力。</p>
+<p><strong>出境义务的触发门槛需要按场景逐一核对，而非套用统一标准</strong></p>
+<p>现行规则对个人信息出境设置了分层路径，这一点在为客户设计智能体出海架构时必须逐项核对，不能笼统套用&quot;做了标准合同就万事大吉&quot;的思路。个人信息处理者通过与境外接收方订立个人信息出境标准合同的方式向中华人民共和国境外提供个人信息，适用标准合同办法，但适用标准合同本身是有前提的：个人信息处理者通过订立标准合同的方式向境外提供个人信息的，应当同时符合非关键信息基础设施运营者、处理个人信息不满一百万人、自上年起累计向境外提供个人信息不满十万人等条件。一旦智能体嵌入的行业场景涉及医疗、金融等敏感领域，或终端用户规模突破上述门槛，路径就会从&quot;自主缔约+备案&quot;切换到必须申报数据出境安全评估的重阶合规——数据处理者向境外提供重要数据，或者关键信息基础设施运营者和处理一百万人以上个人信息的数据处理者向境外提供个人信息，或者自上年起累计向境外提供十万人个人信息或一万人敏感个人信息的，应当通过所在地省级网信部门向国家网信部门申报数据出境安全评估。这意味着智能体产品如果计划规模化复制到多个行业客户，必须在设计阶段就对用户体量和数据敏感度做压力测试，而不是等用户规模起来后才发现触发了申报义务却来不及走流程。</p>
+<p>需要特别提示的是，自由贸易试验区可以自行制定区内需要纳入数据出境安全评估、个人信息出境标准合同、个人信息保护认证管理范围的数据清单（负面清单），自贸区内数据处理者向境外提供负面清单外的数据，可以免予申报上述合规路径。这类自贸区负面清单制度为智能体出海提供了潜在的制度便利，但负面清单的具体内容因自贸区而异、动态调整，不能把&quot;落地在自贸区&quot;简单等同于&quot;自动豁免&quot;，具体适用仍需逐案核查当地清单的现行版本。</p>
+<p><strong>备案不是选择题，是时限刚性的程序义务</strong></p>
+<p>一个在执业中容易被低估的细节是，标准合同路径下的备案义务具有严格时限，个人信息处理者应当在标准合同生效之日起10个工作日内向所在地省级网信部门备案，备案应当提交标准合同和个人信息保护影响评估报告。智能体项目往往涉及多轮迭代——客户需求变化、数据处理范围扩大、新增数据接收方——而在标准合同有效期内出现特定情形的，个人信息处理者应当重新开展个人信息保护影响评估，补充或者重新订立标准合同，并履行相应备案手续。对于按&quot;结果&quot;持续计费、功能不断迭代的智能体产品而言，这意味着合规团队需要建立常态化的变更监测机制，而不能把备案当作一次性动作——产品每一次实质性变更（新增数据字段、新增境外子处理方、扩大处理目的）都可能触发重新评估的义务，技术团队的迭代节奏必须与法务的备案节奏同步，否则极易出现&quot;产品已上线新功能，合规备案尚未跟上&quot;的空窗期。</p>
+<p><strong>合同层面的责任界定：技术许可与数据处理义务不能混为一谈</strong></p>
+<p>智能体和行业解决方案的交付合同通常是技术许可协议与服务协议的混合体，这恰恰是风险容易被掩盖的地方。许可协议习惯性地聚焦知识产权条款——使用范围、二次开发权限、责任限制——但对嵌入该智能体的数据处理活动约定模糊。执业经验是，这类合同至少需要把三组条款从&quot;技术条款&quot;中独立出来，作为专门的数据处理附件处理：数据处理的范围和目的限定条款（避免境外部署方以&quot;业务优化&quot;为由扩大处理范围）、子处理方披露与同意条款（智能体调用的底层模型、向量数据库、日志存储服务商是否构成新的境外接收方，需要逐层穿透）、以及数据安全事件下的通知与协作条款。尤其是子处理方穿透问题，智能体工作流常常涉及多个第三方组件（如境外客户自建的RAG知识库、第三方Agent编排平台），每新增一个组件都可能意味着新增一个&quot;境外接收方&quot;，合同若未预先约定变更通知和重新评估机制，一旦监管问询，责任边界会非常模糊。</p>
+<p><strong>跨境治理需求与商业诉求的匹配</strong></p>
+<p>行业解决方案的客户通常最关心&quot;流程花了多少Token、产出了什么、ROI如何&quot;，但从合规角度看，这组治理数据本身也值得审视——调用日志、中间推理结果、业务流程数据如果包含可识别的个人信息，其留存、分析、跨境回传同样要纳入前述出境合规框架通盘考虑，而不能因为它被归类为&quot;运营数据&quot;或&quot;治理数据&quot;就想当然地排除在外。对律师而言，在起草此类合同时，与其事后应对监管问询，不如在交付架构设计阶段就把数据流图谱和合规路径绑定在一起，让技术团队的系统设计天然符合&quot;原始数据不出域、处理痕迹可审计、责任主体可识别&quot;的基本逻辑——这比任何事后补救性的条款都更有效</p></article>
+<section class="author-card" data-author-card>
+<div class="ac-title">关于作者</div>
+<div class="ac-head"><img class="ac-avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg" alt="黄梦奇"><div class="ac-name"><a href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">黄梦奇</a> · <span>律师</span> · <span class="ac-verified">Rukik Verified Professional</span></div></div>
+<div class="ac-bio" data-i18n-skip>金融衍生品全产业链专业</div>
+</section>
+<a class="author-cta" data-author-cta href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">点击联系专家了解更多</a>
+<section class="invite-card" data-invite-card>
+<img class="ic-seal" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/brand/rukik-seal.png" alt="Rukik">
+<div class="ic-slogan">AI懂很多，Rukik更懂您。</div>
+<div class="ic-divider"><span></span><i></i><span></span></div>
+<div class="ic-headline">遇见 RUKIK，遇见更好的您。</div>
+<p class="ic-poem">一花一世界，一叶一菩提。<br>每一场相遇，都自有因缘。</p>
+<p class="ic-value">为您打造专属 AI 智能体，懂您的需求，记得重要的事，提前想到下一步。</p>
+<div class="ic-tags"><span>专属 AI 智能体</span><span>千人千面的智慧资讯</span><span>重要事项主动关怀</span><span>专业知识与资源连接</span></div>
+<div class="ic-codezone"><div class="ic-codelabel">您的专属邀请码</div><div class="ic-code">35C5Q4KKS8</div></div>
+<div class="ic-btns"><button type="button" class="ic-btn-primary" id="icCopyBtn">复制邀请码</button><a class="ic-btn-ghost" href="https://rukik.com/invite/?c=35C5Q4KKS8">分享给朋友</a></div>
+<script>(function(){var b=document.getElementById('icCopyBtn');if(!b)return;var code="35C5Q4KKS8";b.addEventListener('click',function(){function done(){b.textContent='已复制';setTimeout(function(){b.textContent='复制邀请码';},2000);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done).catch(function(){});}else{var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(t);}});})();</script>
+</section>
+<footer>本文来自 Rukik 专业知识网络：专业人士在「我的专业团队」公开发布，RUKIK 全平台检索引用时注明作者及来源。文中观点为作者专业见解，不构成正式法律/专业意见。<div class="brandline">RUKIK · <span class="slogan">AI懂很多，Rukik更懂您。</span></div></footer>
+</div><script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script></body></html>
