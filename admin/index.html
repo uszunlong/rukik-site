@@ -250,6 +250,24 @@
     </div>
 
     <div class="card">
+      <h2>用户服务监控中心（RUKIK Guardian · User Service Monitoring）</h2>
+      <p class="muted">口径说明：监控的是每个用户是否真正获得预期服务，按真实交付标准判定——只有链接没有正文＝降级交付，不算成功；服务端生成成功≠客户端交付成功。每个真实用户异常一经确认即进本中心并实时通知管理员（日报仅作统计）。未接入客户端回执的模块，交付率/采纳率显示「不可测」，绝不用生成率替代。异常关闭必须过六项标准。Guardian 负责系统异常与受控恢复，UFMS 负责用户失败发现与影响统计，两者共用同一任务账本与事件中心。</p>
+      <div id="guardianStats"><div class="empty">加载中…</div></div>
+      <div class="cred" style="margin:16px 0 6px">服务异常（Service Anomalies）· 问题归并（Issues）</div>
+      <div id="guardianIssues"><div class="empty">加载中…</div></div>
+      <div class="mt" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="gdModule"><option value="">全部模块</option><option value="kb">视频知识</option><option value="calendar">日历同步</option><option value="ask">问 RUKIK</option><option value="meeting">会议</option><option value="article">成文/口播</option><option value="share">分享</option><option value="points">点数/支付</option><option value="subscription">订阅</option><option value="memory">记忆</option><option value="expert">专家知识</option></select>
+        <select id="gdSeverity"><option value="">全部等级</option><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select>
+        <select id="gdStatus"><option value="">全部状态</option><option value="open">待处理</option><option value="repairing">修复中</option><option value="pending_manual">待人工</option><option value="closed">已关闭</option></select>
+        <button id="gdReload" class="btn" type="button">刷新</button>
+      </div>
+      <div id="guardianEvents" class="mt"><div class="empty">加载中…</div></div>
+      <div id="guardianCloseBox" class="mt"></div>
+      <div class="cred" style="margin:16px 0 6px">用户体验（User Experience · UFMS）· 近 24 小时各模块九率</div>
+      <div id="guardianMetrics"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div class="card">
       <h2>商用健康（Health Center · 2.58.0 第八大能力）</h2>
       <p class="muted">口径说明：数据来自健康聚合层 health_metric_daily（迁移 0395，pg_cron 每日＋每 6 小时 rollup；迟缓趋势由迟缓探针 ingest 覆写）。状态三档——<b>可算</b>＝现有数据源可算比率；<b>部分可算</b>＝代理口径或仅补偿账可见（分母不完整）；<b>无数据源</b>＝现无埋点/落账，显式标注、绝不以 0 冒充。四态分开呈现：客户端实际成功（core_request 落账）／服务端成功／排队中／执行结果待确认（超时≠失败）。登录看板为代理口径（gate_settle/auth 遥测），与登录 P0 事件契约对齐项见健康线终报。</p>
       <div class="mt" style="display:flex;gap:8px;align-items:center">
@@ -523,6 +541,7 @@ async function loadAll() {
     loadReviewQueues();
     loadEventReviewQueue();
     loadSupport();
+    loadGuardian();
   } catch (e) {
     $('appErr').textContent = '加载失败：' + e.message;
   }
@@ -2402,6 +2421,132 @@ function renderRewards(r) {
 
 if ($('saAddBtn')) $('saAddBtn').onclick = () => submitSchoolAssign();
 if ($('saReload')) $('saReload').onclick = () => loadSchoolAssign();
+
+// ===== 用户服务监控中心（RUKIK Guardian · 0886 · admin_guardian_* RPC） =====
+const GD_SEV = { P0: 'P0 紧急', P1: 'P1 高', P2: 'P2 中', P3: 'P3 低' };
+const GD_ESTATUS = { open: '待处理', repairing: '修复中', pending_manual: '待人工', closed: '已关闭' };
+const GD_CLASS = { confirmed_failure: '确认失败', suspected_failure: '疑似失败', degraded_delivery: '降级交付', data_risk: '数据风险', recovered: '已恢复', user_cancelled: '用户取消', info: '信息' };
+const GD_CLOSE_KEYS = [
+  ['delivered_or_explained', '用户已获得预期服务，或已得到明确失败说明及必要补偿'],
+  ['no_data_loss', '数据没有丢失'],
+  ['no_duplicate_charge', '没有重复扣费'],
+  ['sync_completed_or_waiting_device', '跨端同步已完成，或明确处于等待设备状态'],
+  ['repair_verified', '自动修复结果经过真实验证'],
+  ['root_cause_logged', '根因及处理过程完整留痕'],
+];
+let gdCloseTarget = null;
+
+async function loadGuardian() {
+  try {
+    const ov = await rpc('admin_guardian_overview');
+    const items = [
+      [ov.open_events, '当前异常 Open anomalies'],
+      [ov.today_events, '今日异常 Today'],
+      [ov.today_affected_real_users, '今日受影响用户 Affected users'],
+      [ov.open_issues, '未关闭问题 Open issues'],
+      [ov.critical_open, 'P0/P1 未处理 Critical'],
+      [ov.auto_repaired_today, '今日自动修复 Auto-repaired'],
+      [ov.pending_manual, '待人工 Pending manual'],
+    ];
+    $('guardianStats').innerHTML = '<div class="stats">' + items.map(([n, label]) =>
+      `<div class="stat"><b>${n ?? 0}</b><span class="muted">${label}</span></div>`).join('') + '</div>';
+    renderGuardianMetrics(ov.modules || []);
+  } catch (e) {
+    $('guardianStats').innerHTML = '<div class="empty">监控总览加载失败：' + esc(e.message) + '</div>';
+  }
+  try {
+    const issues = await rpc('admin_guardian_issues', { p_status: null, p_limit: 50 });
+    $('guardianIssues').innerHTML = issues.length ? '<table>' +
+      '<tr><th>等级</th><th>模块</th><th>问题</th><th>确认/疑似</th><th>受影响用户</th><th>状态</th><th>最近发生</th></tr>' +
+      issues.map((i) => `<tr><td>${GD_SEV[i.severity_p] || i.severity_p}</td><td>${esc(i.module)}</td>
+        <td>${esc(i.failure_kind || '')} <span class="muted">${esc(i.error_code || '')}</span></td>
+        <td>${i.confirmed_count} / ${i.suspected_count}</td><td>${i.affected_real_users}（共 ${i.affected_users}）</td>
+        <td>${esc(i.status)}${i.promoted_by ? ' · 规则 ' + esc(i.promoted_by) : ''}</td>
+        <td class="muted">${fmtDate(i.last_seen_at)}</td></tr>`).join('') + '</table>'
+      : '<div class="empty">暂无归并问题。</div>';
+  } catch (e) {
+    $('guardianIssues').innerHTML = '<div class="empty">问题归并加载失败：' + esc(e.message) + '</div>';
+  }
+  loadGuardianEvents();
+}
+
+async function loadGuardianEvents() {
+  try {
+    const data = await rpc('admin_guardian_events', {
+      p_module: $('gdModule').value || null,
+      p_severity: $('gdSeverity').value || null,
+      p_status: $('gdStatus').value || null,
+      p_event_domain: null, p_limit: 100, p_offset: 0,
+    });
+    $('guardianEvents').innerHTML = data.length ? '<table>' +
+      '<tr><th>时间</th><th>等级</th><th>模块</th><th>异常</th><th>类别</th><th>用户</th><th>修复</th><th>状态</th><th>操作</th></tr>' +
+      data.map((e) => `<tr><td class="muted">${fmtDate(e.occurred_at)}</td><td>${GD_SEV[e.severity_p] || e.severity_p}</td>
+        <td>${esc(e.module)}</td>
+        <td>${esc(e.event_type)} <span class="muted">${esc(e.error_code || '')}</span><br><span class="muted">${esc(e.error_reason || '')}</span></td>
+        <td>${GD_CLASS[e.event_class] || e.event_class}${e.involves_payment ? ' · 涉支付' : ''}${e.involves_points ? ' · 涉点数' : ''}${e.data_loss_risk ? ' · 数据风险' : ''}</td>
+        <td>${e.user_uid ? '…' + esc(String(e.user_uid).slice(-4)) + (e.is_test_user ? '（测试）' : '') : '—'}</td>
+        <td>${esc(e.repair_status)}${e.repair_attempts ? ' ×' + e.repair_attempts : ''}</td>
+        <td>${GD_ESTATUS[e.status] || e.status}</td>
+        <td>${e.status !== 'closed' ? `<button class="btn ghost" data-gd-act="start_repair" data-gd-id="${e.id}">修复</button>
+          <button class="btn ghost" data-gd-act="pending_manual" data-gd-id="${e.id}">转人工</button>
+          <button class="btn ghost" data-gd-act="close" data-gd-id="${e.id}">关闭…</button>`
+        : `<button class="btn ghost" data-gd-act="reopen" data-gd-id="${e.id}">重开</button>`}</td></tr>`).join('') + '</table>'
+      : '<div class="empty">暂无符合条件的异常事件。</div>';
+    $('guardianEvents').querySelectorAll('[data-gd-act]').forEach((b) => {
+      b.onclick = () => guardianEventAction(b.dataset.gdAct, b.dataset.gdId);
+    });
+  } catch (e) {
+    $('guardianEvents').innerHTML = '<div class="empty">异常事件加载失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function guardianEventAction(act, id) {
+  if (act === 'close') {
+    gdCloseTarget = id;
+    $('guardianCloseBox').innerHTML = '<div class="cred">关闭异常必须逐项确认六项标准：</div>' +
+      GD_CLOSE_KEYS.map(([k, label], idx) =>
+        `<label style="display:block;margin:4px 0"><input type="checkbox" class="gd-close-chk" data-k="${k}"> ${label}</label>`).join('') +
+      '<button id="gdCloseConfirm" class="btn" type="button">确认关闭</button> <button id="gdCloseCancel" class="btn ghost" type="button">取消</button>';
+    $('gdCloseCancel').onclick = () => { $('guardianCloseBox').innerHTML = ''; gdCloseTarget = null; };
+    $('gdCloseConfirm').onclick = async () => {
+      const chk = {};
+      let all = true;
+      $('guardianCloseBox').querySelectorAll('.gd-close-chk').forEach((c) => {
+        chk[c.dataset.k] = c.checked; if (!c.checked) all = false;
+      });
+      if (!all) { alert('六项标准必须全部确认才能关闭。'); return; }
+      try {
+        await rpc('admin_guardian_event_action', { p_event_id: gdCloseTarget, p_action: 'close', p_close_check: chk });
+        $('guardianCloseBox').innerHTML = ''; gdCloseTarget = null;
+        loadGuardian();
+      } catch (e) { alert('关闭失败：' + e.message); }
+    };
+    return;
+  }
+  try {
+    await rpc('admin_guardian_event_action', { p_event_id: id, p_action: act, p_close_check: null });
+    loadGuardian();
+  } catch (e) { alert('操作失败：' + e.message); }
+}
+
+function gdRate(v) { return v === null || v === undefined ? '<span class="cred">不可测</span>' : v + '%'; }
+
+function renderGuardianMetrics(mods) {
+  $('guardianMetrics').innerHTML = mods.length ? '<table>' +
+    '<tr><th>模块</th><th>任务数</th><th>生成成功率</th><th>交付成功率</th><th>采纳率</th><th>确认失败率</th><th>疑似事件</th><th>状态未知率</th><th>自动恢复率</th><th>重复失败率</th><th>回执覆盖率</th></tr>' +
+    mods.map((m) => `<tr><td>${esc(m.label_zh || m.module)}<br><span class="muted">${esc(m.label_en || '')}</span></td>
+      <td>${m.tasks_total ?? 0}</td><td>${gdRate(m.generation_rate)}</td>
+      <td>${gdRate(m.delivery_rate)}</td><td>${gdRate(m.adoption_rate)}</td>
+      <td>${gdRate(m.confirmed_failure_rate)}</td><td>${m.suspected_events ?? 0}</td>
+      <td>${gdRate(m.unknown_rate)}</td><td>${gdRate(m.recovery_rate)}</td>
+      <td>${gdRate(m.repeat_failure_rate)}</td><td>${gdRate(m.ack_coverage)}</td></tr>`).join('') + '</table>'
+    : '<div class="empty">暂无指标。</div>';
+}
+
+if ($('gdReload')) $('gdReload').onclick = () => loadGuardian();
+if ($('gdModule')) $('gdModule').onchange = () => loadGuardianEvents();
+if ($('gdSeverity')) $('gdSeverity').onchange = () => loadGuardianEvents();
+if ($('gdStatus')) $('gdStatus').onchange = () => loadGuardianEvents();
 
 (async () => {
   if (RECOVERY_LINK) { show('reset'); return; }
