@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-27T11:21:47Z",
+ "generated_at": "2026-11-28T09:51:34Z",
  "experts": [
   {
    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
@@ -27,7 +27,7 @@
    ],
    "specialties": [],
    "tagline": "",
-   "article_count": 18
+   "article_count": 19
   },
   {
    "id": "69933229-f9df-4384-bf2e-86682f09fd30",
@@ -230,6 +230,25 @@
   }
  ],
  "articles": [
+  {
+   "id": "f0a7a79f-37a5-4471-8377-b34ae095ecf0",
+   "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+   "expert_name": "黄梦奇",
+   "title": "以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。",
+   "summary": null,
+   "topics": [],
+   "date": "2026-11-28",
+   "cover": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/f0a7a79f-37a5-4471-8377-b34ae095ecf0/hero-author-1795858317172.jpg",
+   "published_at": "2026-11-28 09:32:44.490457+00",
+   "url": "https://rukik.com/a/f0a7a79f-37a5-4471-8377-b34ae095ecf0",
+   "author": {
+    "id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
+    "name": "黄梦奇",
+    "title": "律师",
+    "avatar": "https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg",
+    "slug": "mengqi-huang"
+   }
+  },
   {
    "id": "e9c3970f-7ff3-42d6-adc6-90d3a4c9868e",
    "expert_id": "8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee",
