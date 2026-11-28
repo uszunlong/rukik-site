@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。 · Rukik 专业知识库</title>
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Rukik">
+<meta property="og:title" content="以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。｜Rukik智库">
+<meta property="og:description" content="不是谁持股最多，而是谁拿到了哪一种权力 看Anthropic这套架构，最容易误读的地方，是把它当成“更复杂的AB股”。其实不是。AB股解决的是同一类权力的倍数分配问题：谁的票更多；Anthropic试图解决的，则是不同类型权力的拆分问题：谁 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<meta property="og:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/f0a7a79f-37a5-4471-8377-b34ae095ecf0/hero-author-1795858317172.jpg?cv=3">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。｜Rukik智库">
+<meta name="twitter:description" content="不是谁持股最多，而是谁拿到了哪一种权力 看Anthropic这套架构，最容易误读的地方，是把它当成“更复杂的AB股”。其实不是。AB股解决的是同一类权力的倍数分配问题：谁的票更多；Anthropic试图解决的，则是不同类型权力的拆分问题：谁 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<meta name="twitter:image" content="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/f0a7a79f-37a5-4471-8377-b34ae095ecf0/hero-author-1795858317172.jpg?cv=3">
+<meta name="description" content="不是谁持股最多，而是谁拿到了哪一种权力 看Anthropic这套架构，最容易误读的地方，是把它当成“更复杂的AB股”。其实不是。AB股解决的是同一类权力的倍数分配问题：谁的票更多；Anthropic试图解决的，则是不同类型权力的拆分问题：谁 —— 黄梦奇 · 律师 · Rukik Verified Professional">
+<style>
+body{margin:0;background:#FBF7EF;color:#14243A;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+.brand{color:#B88B57;letter-spacing:.2em;font-size:12px;font-weight:700}
+h1{font-size:26px;line-height:1.4;margin:14px 0 8px}
+.meta{color:#5A6B85;font-size:14px;line-height:1.7}
+.meta a{color:#B88B57;text-decoration:none}
+hr{border:none;border-top:1px solid #E8DCC4;margin:20px 0}
+article{font-size:16px;line-height:1.9;word-break:break-word}
+article p{margin:0 0 1em}
+article h2{font-size:20px;line-height:1.5;margin:1.4em 0 .5em}
+article h3{font-size:17px;line-height:1.5;margin:1.2em 0 .4em}
+article ul,article ol{margin:0 0 1em;padding-left:1.4em}
+article li{margin:.3em 0}
+article strong{font-weight:600}
+article a{color:#B88B57}
+.hero{margin:18px 0 4px}
+.hero img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px}
+.author-card{margin-top:40px;padding:16px;background:#fff;border:1px solid #E8DCC4;border-radius:12px}
+.author-card .ac-title{font-size:13px;color:#8A97AB;margin-bottom:6px}
+.author-card .ac-head{display:flex;align-items:center;gap:12px}
+.author-card .ac-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none;background:#E8DCC4}
+.author-card .ac-name{font-size:16px;font-weight:600;color:#14243A;line-height:1.5}
+.author-card .ac-name a{color:#14243A;text-decoration:none}
+.author-card .ac-verified{color:#B88B57;font-size:13px;font-weight:600}
+.author-card .ac-bio{font-size:14px;color:#333F52;line-height:1.7;margin-top:8px}
+.author-cta{display:block;margin-top:12px;background:#142235;color:#fff;text-align:center;padding:14px 16px;border-radius:12px;font-size:16px;font-weight:600;text-decoration:none}
+.invite-card{margin-top:24px;padding:24px 20px;background:#fff;border:1px solid #E8DCC4;border-radius:16px;text-align:center}
+.invite-card .ic-seal{width:54px;height:54px;border-radius:12px;object-fit:cover}
+.invite-card .ic-slogan{margin-top:10px;font-size:15px;font-weight:600;color:#14243A;letter-spacing:1px}
+.invite-card .ic-divider{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0}
+.invite-card .ic-divider span{display:block;width:44px;height:1px;background:#B58A58}
+.invite-card .ic-divider i{display:block;width:6px;height:6px;background:#B58A58;transform:rotate(45deg)}
+.invite-card .ic-headline{font-size:20px;font-weight:700;color:#14243A;line-height:1.5}
+.invite-card .ic-poem{margin:8px 0 0;font-size:15px;color:#333F52;line-height:1.9}
+.invite-card .ic-value{margin:10px auto 0;font-size:15px;color:#8A97AB;line-height:1.9;max-width:520px}
+.invite-card .ic-tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.invite-card .ic-tags span{border:1px solid #B58A58;border-radius:999px;padding:4px 10px;font-size:12px;color:#14243A}
+.invite-card .ic-codezone{margin-top:18px;background:rgba(181,138,88,.08);border-radius:10px;padding:14px}
+.invite-card .ic-codelabel{font-size:12px;color:#8A97AB;letter-spacing:2px}
+.invite-card .ic-code{margin-top:4px;font-size:28px;font-weight:700;color:#14243A;letter-spacing:3px;word-break:break-all}
+.invite-card .ic-btns{margin-top:16px;display:flex;gap:10px}
+.invite-card .ic-btn-primary{flex:1;min-height:48px;border:none;border-radius:10px;background:#14243A;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.invite-card .ic-btn-ghost{flex:1;min-height:48px;border:1px solid #14243A;border-radius:10px;background:#fff;color:#14243A;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;text-decoration:none}
+footer{margin-top:40px;color:#8A97AB;font-size:12px;line-height:1.7}
+.brandline{margin-top:16px;color:#14243A;font-size:13px}
+.brandline .slogan{color:#B88B57;font-weight:600}
+.empty{padding:80px 0;text-align:center;color:#5A6B85}
+@media (max-width:480px){
+.wrap{padding:24px 16px 48px}
+h1{font-size:23px}
+.hero{margin:14px 0 2px}
+.hero img{border-radius:10px}
+.author-card{padding:14px}
+.author-card .ac-head{align-items:flex-start}
+}
+</style><link rel="canonical" href="https://rukik.com/a/f0a7a79f-37a5-4471-8377-b34ae095ecf0"><meta property="og:url" content="https://rukik.com/a/f0a7a79f-37a5-4471-8377-b34ae095ecf0"></head><body><div class="wrap">
+<div class="brand">RUKIK · 专业知识库</div>
+
+<!-- hero-state: themed -->
+<div class="hero" data-i18n-skip><img src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/article-images/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee/f0a7a79f-37a5-4471-8377-b34ae095ecf0/hero-author-1795858317172.jpg" alt="以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。" loading="eager"></div>
+<h1 data-i18n-skip>以Anthropic招股书中的五层控制权设计为样本，分析AI硬科技公司如何在持续融资中重构控制权、董事会与经济权利的分配。</h1>
+<div class="meta">作者：<a href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">黄梦奇</a>｜<span>律师</span><br><span>发布于 2026-11-28</span> · <span>更新于 2026-11-28</span></div>
+<hr>
+<article data-hero-state="themed" data-i18n-skip><h2>不是谁持股最多，而是谁拿到了哪一种权力</h2>
+<p>看Anthropic这套架构，最容易误读的地方，是把它当成“更复杂的AB股”。其实不是。AB股解决的是同一类权力的倍数分配问题：谁的票更多；Anthropic试图解决的，则是不同类型权力的拆分问题：谁决定经营，谁决定董事会，谁享受经济收益，谁在特定使命事项上握有否决或修正能力。</p>
+<p>按公开披露材料目前能够看出的轮廓，这套安排的重点并不在于把股份名称做得多复杂，而在于把公司里的几类核心权力拆开处理：有的股份主要承接经济利益和一般股东权利，有的更接近为特定投资人保留收益参与而弱化表决影响力，还有的股份安排明显更靠近董事会产生机制或特定治理事项本身。至于创始人一侧持有的特殊股份，公开信息所反映出来的核心目标，也更像是控制权配置，而不只是分红或清算利益。也就是说，这里真正值得注意的，不是“同股不同权”被做了多少层，而是同一家公司内部，收益权、一般表决权、董事会影响力以及特定事项决定权，被有意识地放进了不同工具里。至于五类股份各自的具体权利边界、触发条件和相互制衡方式，仍应以招股文件正文及公司章程的最终披露为准，不能仅凭二手概述下结论。</p>
+<p>这套设计最重要的制度意义，在于它把三种原本经常捆绑在一起的东西硬生生拆开了：第一是公司层面的控制权，第二是董事会的人事权，第三是经济收益权。传统创业公司到后期融资时，创始人最常见的失控，不是因为现金流权先丢了，而是因为这三种权力被默认绑在普通股和优先股上，一轮一轮融资之后同步稀释。Anthropic反其道而行之：经济利益可以广泛分配，甚至可以向战略投资者让渡相当比例；但控制公司方向的权力、影响董事会构成的权力，并不当然随出资比例等比例外流。</p>
+<p>这也是它与AB股最本质的不同。AB股仍然服从一个朴素逻辑：持股比例下降，哪怕你有更高投票倍数，控制力仍会被融资稀释，只是稀释得慢一些。Anthropic的思路则更接近“先定义权力，再定义股份”，即把某些关键权力直接写成一项独立制度安排，而不是让它附着在普通持股比例上。创始人特殊股份如果确实按照固定比例锁定表决权，其抗稀释能力就不再取决于创始人还剩多少经济权益；而董事会多数席位如果由独立治理载体对应的股份来产生，董事会控制也不必完全受资本进入节奏摆布。</p>
+<p>再看战略投资者持有的无表决权或弱表决权股份，逻辑也很清楚：对这类投资人而言，真正重要的未必是改写公司治理，而是锁定业务协同、供应关系、技术接入或生态位置。于是，资本进入公司，但不当然进入控制权核心层。这一点对硬科技公司尤其关键，因为许多融资本质上不是纯财务融资，而是“资金+产能+渠道+场景”的复合交易。创始人如果没有事先把权力分层，最后往往是业务合作谈成了，治理结构也一并让出去了。</p>
+<p>对中国创始人而言，最值得学的不是照抄五类股名目，而是先把问题问对：您真正要保的，到底是经济利益、股东会层面的表决权、董事会席位影响力，还是融资、并购、章程修改这类重大事项上的特别否决或同意权。中国法和境内资本市场规则下，可直接复制这类高度定制化分层设计的空间通常有限，尤其涉及特别表决权安排、委托投票、一致行动、持股平台、员工持股载体以及董事提名机制时，不同公司类型、不同上市地规则、章程自治边界和监管接受度，都会直接影响可行性。我的判断是，中国创始人真正该借鉴的是方法论：不要再只盯着“我还剩多少股”，而要把控制权拆解成可被配置的若干权能，再分别放进最合适、最可执行、也最能经受后续融资和监管检验的法律工具里。硬科技公司走到后期，决定公司是否“还是您的”，往往不是静态股比，而是哪种权力在什么文件里、由谁持有、在什么条件下生效。</p>
+<h2>固定50.1%金股：把控制权从持股比例里剥离出来</h2>
+<p>硬科技公司在多轮融资后最常见的失控，不是创始人突然“让出公司”，而是控制权被一轮一轮、看似合理的稀释慢慢搬空。早期为了换资金接受优先股，之后扩大期权池，再往后引入产业投资人、Pre-IPO轮和上市发行，创始人的经济持股比例不断下降，表决权通常也随之下降。很多人以为自己守住了一个看上去还不错的持股比例，实际上真正起决定作用的，早已不是“你还有多少股”，而是“你的表决权是否仍然独立、稳定且不被后续融资动摇”。</p>
+<p>传统双层股权结构的价值在于放大创始人表决权，但它并没有真正切断表决权与持股比例之间的联系。无论是一股十票还是一股二十票，底层逻辑仍然是“持股比例×投票倍数”。倍数可以放大控制权，却无法消除稀释。公司继续融资、继续发股，创始人的持股基数变小，放大后的表决权也会跟着缩水。换言之，AB股解决的是“同股不同权”的问题，并不当然解决“连续融资后的长期控制稳定性”问题。</p>
+<p>Anthropic这一层设计之所以值得创业者重视，不在于它把表决权倍数做得更高，而在于它试图把控制权从持股比例公式里直接剥离出来。按照招股书披露口径，Class F并不是传统意义上的高倍投票股，而是一种将表决权固定锚定在特定比例的安排。若公开披露文件最终版本保持这一口径不变，其核心含义就是：后续公司无论再发行多少其他类别股份，创始人这一层的核心控制权原则上不再按持股比例同步下滑。</p>
+<p>这一步是制度逻辑上的跃迁。AB股仍然是“我持有更多高票股份，所以我控制公司”；固定比例金股则更接近“公司章程先行约定，由某一特定类别承接一块相对恒定的表决权”。前者是数量逻辑，后者是结构逻辑。对融资频繁、资本开支持续、估值波动又大的硬科技企业而言，这种差别非常关键，因为真正威胁创始人的，往往不是某一轮融资本身，而是融资叠加后的累计稀释。</p>
+<p>从法律与治理角度看，50.1%这个数字本身也有明确意味。它不是一种象征性的“金边控制”，而是压着普通多数决门槛设置的控制比例：只比半数略高，但已足以确保在通常需要简单多数通过的事项上形成决定性影响。当然，是否能够覆盖“所有”普通决议，仍应以公司章程、各类别股份权利条款以及适用公司法中的强制性例外为准，不宜把这一安排理解为对一切公司事项的绝对单独控制。尤其涉及类别股单独表决、特定保护性条款、董事会层面的前置程序或其他特别批准事项时，控制权的实际边界仍取决于更完整的制度文本。</p>
+<p>另一个容易被忽视、但恰恰体现其可接受性的点，是这类金股安排通常并不与超额经济利益绑定。也就是说，控制权被强化，并不必然意味着分红权、剩余财产分配权也同步放大。对外部投资人而言，这种切分方式至少在理论上更容易辩护：创始人拿到的是方向控制，而不是对公司现金流和清算收益的双重攫取。控制权与经济权的分离，降低了“控制溢价完全由创始人独占”的观感冲突，也更符合硬科技公司在早中期阶段“先稳住技术路线和长期投入，再谈收益分配”的治理需求。</p>
+<p>但这套结构并不只是优势，没有代价。第一，它显著提高了外部投资人接受门槛。财务投资人之所以愿意投票让渡，前提通常是公司本身具备强技术稀缺性、强市场位置或强议价能力；否则，他们会要求用董事席位、否决权、清算优先权、反稀释或信息权把失去的投票影响力补回来。第二，它会放大“谁代表创始人行使这50.1%”这个内部治理问题。如果金股由创始人共同控制的平台持有，那么外部控制稳定的同时，内部协调成本也会上升；一旦创始团队分化，真正的风险就不再是股东稀释，而是创始阵营内部的决策瘫痪。第三，固定控制比例越强，市场对日落机制、退出机制和失格机制的要求通常也越高。控制权可以被设计得很牢，但不能被设计成永不回收、永不问责。</p>
+<p>这也是为什么，对中国创始人而言，最值得学习的未必是“50.1%金股”这个结果，而是背后的方法论：控制权不一定非要靠高持股维持，也可以通过章程、股东协议、持股平台、表决权委托、一致行动安排以及上市地允许的特别表决权机制进行重构。真正要问的不是“我还能剩多少股”，而是“哪些事项必须由我决定、这些决定权是否会被后续融资稀释、出现团队分化时控制机制是否还能运转”。</p>
+<p>当然，这套安排并不能直接平移到中国法下。中国境内公司治理与境外上市架构适用的规则不同，特别表决权、类别股、信托持股、员工特殊治理权等工具的可用范围、落地路径和监管边界都不一样。境内有限责任公司更常见的是通过协议和人合安排稳住控制，境外红筹或特定资本市场路径才可能更接近“章程型控制权重构”。因此，中国创业者真正可借鉴的，是尽早把控制权设计从“股比思维”升级为“权力分层思维”：把经济权、表决权、董事提名权、重大事项否决权、员工激励权分别拆开设计，而不是等到融资稀释发生后，再试图用补丁条款去抢救。</p>
+<p>如果说传统创业融资是在谈估值，那么Anthropic这一层设计提醒创始人：更深的一层，其实是在谈“控制权是否仍然跟着股份走”。一旦答案是否定的，公司治理就进入了另一个维度。对硬科技企业来说，这往往不是技术问题，而是生死问题。</p>
+<h2>LTBT信托为何比章程口号更有约束力</h2>
+<p>很多创始人愿意在章程、股东信或公司官网里写上“长期主义”“安全优先”“对社会负责”，但在公司法语境下，这类表述如果没有对应的权力配置，通常只是一种价值宣示，而不是可执行的治理安排。真正决定长期使命能否穿越融资、增长和上市压力的，不是写了什么，而是谁有权任命董事、谁能阻止治理结构被改写。</p>
+<p>Anthropic这套设计最值得硬科技创始人琢磨的地方，不在于它把“使命”说得多漂亮，而在于它把长期使命嵌进了董事会的人事权。董事会不是抽象的道德机关，而是预算、产品上线、风险容忍度、重大合作与管理层任免的实际决策中心。只要董事会的产生机制仍然完全服从于普通股东的短期收益偏好，那么所谓“使命”在经营承压时很容易退化为公关语言。相反，如果董事会多数席位的产生逻辑被重新设计，使命才可能从口号变成结构。</p>
+<p>这也是PBC身份、Class T安排和高修改门槛必须配套观察的原因。三者分别解决的是三个不同层次的问题：PBC解决“董事会能不能合法地不把短期利润最大化作为唯一目标”；Class T解决“谁来挑选真正会这样做的董事”；高修改门槛解决“这套机制会不会在下一轮融资或下一次控制权谈判中被轻易拆掉”。</p>
+<p>先看PBC。公益公司身份的核心价值，不是自动让公司变“高尚”，而是为董事履职提供一套更宽的合法性边界。在传统股东利益导向较强的公司治理框架下，董事如果为了安全、合规、社会影响或长期研发而牺牲短期利润，往往更容易承受来自股东的问责压力。PBC的意义在于，它允许董事在法律上同时考虑股东回报、公司宗旨以及受公司行为影响的其他利益相关方。对AI、药械、航天、新材料这类硬科技企业来说，这一步非常关键，因为这类企业经常面临一个现实冲突：最正确的决定，未必是最赚钱的短期决定。</p>
+<p>但仅有PBC仍然不够。因为“可以平衡”不等于“必然平衡”。如果董事还是由追求短期退出回报的资本力量完全主导选出，那么法律上允许平衡，实践中也可能无人愿意承担平衡的代价。于是第二层安排才显出锋芒：通过Class T这一类纯治理工具，把董事会多数席位的任命权交给一个独立于普通经济股权的长期利益信托。</p>
+<p>这里的法律技术非常精细。信托本身并不以分红和增值为直接目标，它持有的也不是传统意义上追求财务回报的股份，而是围绕董事会任免而设计的特殊治理权利。这样一来，“谁拿钱最多谁说了算”的逻辑被刻意打断了。资本当然仍然重要，创始人控制权也仍然存在，但在董事会这一层，系统里被植入了一个不完全受短期财务回报驱动的节点。对硬科技公司而言，这个节点的意义很大：它使得安全投入、伦理审查、发布节奏、客户筛选这类原本最容易被商业化压力压缩的事项，至少有了一个制度上的守门人。</p>
+<p>更重要的是，LTBT并不是一项“咨询权”或“建议权”。咨询机制在繁荣期有效，在冲突期往往失效；真正有约束力的，是人事权。谁能决定董事会多数席位，谁就能在关键时刻影响CEO授权边界、委员会组成、预算取向和重大交易审议。换句话说，Anthropic不是要求董事“记得初心”，而是直接改写了“谁来当董事”这一上游问题。法律结构做到这一步，使命才不再依赖管理层个人品格。</p>
+<p>第三层是修改门槛。任何治理创新如果可以被普通多数轻易推翻，它在融资谈判中就会迅速贬值。Anthropic公开披露的思路，恰恰是把涉及LTBT的核心条款放在极难单方改写的位置：要么取得受托体系支持，要么同时满足极高强度的多方同意条件。其制度含义很明确——既防董事会自己“反手拆桥”，也防创始人、员工、公众股东或新进入的大型投资人单独重写规则。</p>
+<p>这类高门槛的价值，不在于让治理结构永远僵化，而在于把“修改使命约束”从一次普通公司决议，抬升为一次需要跨主体协调的重大制度事件。它逼迫所有参与者承认：长期使命不是融资文件里的附属条款，而是公司宪制的一部分。对外部资本而言，这也是清晰信号——你可以买经济权益，可以谈商业合作，但你不能默认在后续轮次中顺手把使命护栏拆掉。</p>
+<p>从律师视角看，这套安排真正高明之处在于，它没有把不同功能混成一团。PBC提供理念合法性，Class T提供董事会任免抓手，高修改门槛提供抗稀释、抗重写的稳定性。三者缺一不可：没有PBC，董事即便想平衡长期使命，也可能面临更强的利益最大化压力；没有Class T，使命没有落实到具体的人事权；没有高修改门槛，前两者都可能在下一轮博弈中被重置。</p>
+<p>对中国创始人而言，最该学的不是照搬“信托+特殊类别股”的字面形式，而是理解这套结构背后的治理原理：如果你真有一个必须穿越资本周期的长期目标，就不能只把它写进愿景，而要写进董事会的产生机制和章程的修改机制。中国法下，公益公司与美国PBC并不等同，特殊表决权、信托持股、员工类别权利、章程自治边界也受制于不同监管框架，因此很难原样复制。但功能上仍可借鉴：例如在可适用的资本市场规则内，通过特别表决权安排、董事提名权分配、保留事项清单、更高章程修改门槛、持股平台或一致行动安排，把“长期目标”从价值表述转换成可执行的人事与否决结构。</p>
+<p>归根到底，章程口号约束的是态度，LTBT这类设计约束的是权力。企业最困难的时候，能够留下来的从来不是态度，而是结构。</p>
+<h2>Amazon和Google为什么愿意拿无表决权股份</h2>
+<p>把Anthropic与Amazon、Google的关系只理解为“巨头入股”，很容易得出错误结论：既然投了这么多钱，为什么不要求董事会席位、表决权，至少也该拿到能够影响公司方向的治理权。真正值得创始人学习的，恰恰是这里的切分方式——对这类战略投资者而言，最有价值的未必是公司控制权，而是围绕技术供给、算力消耗和产品分发形成的协同收益。</p>
+<p>法律上看，无表决权股份首先是一种清晰的权利分层。投资人仍然可以保留经济权益：持有股份、享有增值预期、在满足条件时参与分红或退出收益；但在股东会层面，不进入日常控制权分配。这意味着创始人把“钱”和“权”拆开了卖：资本可以进来，控制权不跟着让渡。对于处在高强度融资周期中的硬科技公司，这种拆分非常关键。因为一旦把每一轮战略融资都附着在治理权上，最终累积起来的不是资源协同，而是董事会和股东会层面的否决权碎片化。</p>
+<p>从商业逻辑上看，Amazon和Google这类投资者通常并不以“控股一家前沿模型公司”为首要目标。它们更现实的诉求，是通过资本关系锁定合作优先级、提升交易稳定性，并在未来产业链分工中占据有利位置。换句话说，它们交换的不是控制权，而是可持续的协同收益。</p>
+<p>第一层是股权收益。无表决权不等于无价值。只要股份对应的经济权利完整，战略投资者仍然能够分享企业成长红利。对于平台型公司而言，这本身就是一项财务投资回报来源。只是这类回报并不要求它们进入公司内部治理核心。</p>
+<p>第二层是算力收益。大模型公司最重的成本之一就是训练和推理资源。对云厂商而言，一家头部模型公司的长期部署、扩容和持续消耗，本身就是极高质量的基础设施收入来源。与其争取几张董事会席位，不如争取模型训练、推理、托管和企业交付尽可能多地跑在自己的云平台上。前者影响的是公司治理；后者影响的是真正可计量、可持续放大的商业现金流。两者相比，后者往往更直接。</p>
+<p>第三层是产品协同收益。战略投资并不只为财务回报，更是为生态位。模型能力一旦能够嵌入云服务、开发工具、搜索、办公、语音助手或企业解决方案，投资人获得的是一整套产品线的能力增强。对这类投资者而言，持股只是合作的锚，真正重要的是API、分发入口、企业客户触达和联合销售机会。它们需要的是“可合作、可接入、可优先”，而不是“可控制”。</p>
+<p>也正因为如此，创始人如果足够强势，完全可以在谈判中坚持一个底线：商业合作可以给、经济权利可以给，但治理权只能有限给，甚至不给。战略投资者愿意接受，并不表示它们不重视控制权，而是说明在具体交易中，控制权不是它们的最优目标函数。只要产业协同的总收益大于缺失表决权带来的损失，这笔交易就成立。</p>
+<p>这背后还有一个经常被忽略的现实：真正优质的硬科技标的，在谈判桌上并不是单向被选择。假设一家具备稀缺底层技术、已经形成行业话语权的模型公司同时需要资金、算力和分发渠道，那么它并不是在出售“公司的一部分控制权”，而是在组织不同资源方围绕自己搭建生态。谁能接受创始团队的控制权安排，谁才有资格参与这场合作。无表决权股份在这里不是弱势让步，而可能恰恰是强势创始人对交易边界的明示。</p>
+<p>但这套安排并非没有代价。对战略投资者而言，没有表决权意味着其风险控制主要依赖合同，而不是公司法意义上的治理权。因此，商业合作协议、技术服务协议、信息权安排、特定事项同意权、持股上限、转换机制、终止条款等，会比普通财务投资更复杂。创始人如果不让渡股东治理权，就必须在交易文件中提供足够的商业可预期性。否则，投资人很难仅凭“未来协同”买单。</p>
+<p>对中国创始人的启发非常直接：引入战略投资者时，先问清楚对方到底买什么。若对方买的是董事会控制、重大事项否决和长期主导权，那本质上接近控制型投资；若对方买的是产能锁定、渠道绑定、技术接入和生态合作，那么完全可以把股权投资设计成经济权利工具，而把核心控制权留在创始团队手中。能否做到，不取决于口号，而取决于两点：第一，你的技术是否足够稀缺；第二，你是否能把协同收益通过合同结构讲清楚、锁定住。</p>
+<p>所以，Amazon和Google愿意拿无表决权股份，关键不在于它们“放弃了权力”，而在于它们换取的是另一种更符合自身利益的权力——对算力需求的承接权、对产品生态的嵌入权、对未来商业合作的优先参与权。对硬科技创始人来说，这比“谁投了钱”更重要。真正决定交易结构的，从来不是出资额本身，而是谁掌握不可替代的资源，以及这些资源能否在法律上被拆分、定价并分别配置。</p>
+<h2>中国创始人真正能学的，不是照抄结构，而是先分清三种权力</h2>
+<p>Anthropic最值得中国创始人学习的，不是哪一种“神奇股权”，而是它把原本混在一起的三种权力拆开了：<strong>经济权利、股东会层面的表决权、董事会层面的人事控制权</strong>。很多融资失控，恰恰不是因为创始人股比降了，而是因为这三种权力在交易文件里被同时让渡，最后形成“股比还在、控制已失”的局面。</p>
+<p>在中国法语境下，第一步不是问“我能不能做出一股50.1%表决权的金股”，而是先问清楚：你到底要保住哪一种权力。</p>
+<p><strong>如果你要保的是股东会表决权</strong>，可用工具主要是特别表决权安排、投票权委托、一致行动协议、有限合伙或公司制持股平台的集中持股。已上市或拟上市企业还要区分板块规则：并不是所有市场都接受同样的特别表决权设计，能否采用、采用到什么程度，要看企业类型、上市地和监管口径。未上市阶段，协议性工具更常见，但也更依赖各方持续履行。投票权委托的优势是灵活，适合在多轮融资中快速归集票权；短板是稳定性弱，常见退出、违约、死亡、婚变、债务执行等情形都会影响效果。一致行动协议的优势是形式清晰，投资人也熟悉；短板是它本质上仍然是“合意维持控制”，不是天然不可动摇的物权式安排，一旦同盟关系变化，控制力会迅速下降。</p>
+<p><strong>如果你要保的是董事会控制权</strong>，重点就不在股比，而在提名权、委派权、董事会席位结构和保留事项。中国创始人最容易忽视这一层。很多公司表面上创始人仍是第一大股东，但董事会已被融资条款切碎：这一轮给一个席位，下一轮再给一个观察员，若干重大事项再叠加投资人否决权，最后日常经营虽然还由创始团队执行，真正的结构性决策已经离不开外部同意。与其幻想用单一股权工具解决全部问题，不如在公司章程、股东协议和董事会议事规则里同步设计：谁提名多数董事，哪些事项由董事会决，哪些事项保留给股东会，哪些事项需要创始人同意。对硬科技企业而言，研发路线、核心知识产权处置、关键数据合作、重大算力采购、核心高管任免，往往比一般财务事项更值得纳入控制清单。</p>
+<p><strong>如果你要保的是经济利益</strong>，那又是另一套逻辑。很多创始人把“控制权”与“收益权”混为一谈，结果谈判时样样都想保，反而样样都保不住。中国实践里完全可以接受某些主体多拿经济权利、少拿治理权，或者相反。员工持股平台尤其如此：员工激励的核心通常是收益共享和退出预期，不必天然对应完整治理权。战略投资人也一样，如果对方真正看重的是供应链、技术合作、渠道入口或联合研发，完全可能接受较弱的表决安排，而把精力放在商业协议、排他边界、优先合作、知识产权归属和数据使用范围上。</p>
+<p>这里的关键判断是：<strong>中国创始人可以借鉴“分权设计”的思路，但不能误以为中国法下存在一把万能钥匙。</strong> Anthropic式结构之所以成立，依赖的是公司章程自治空间、特定公司法环境、上市规则容忍度以及一整套配套文件共同运作。中国法下并非不能做控制权强化，但更多是“组合拳”，而不是单点突破。常见组合包括：创始人持股平台集中持有核心股权，联合创始人之间签一致行动，部分老股东出具投票权委托，董事会席位与提名权做前置锁定，重大事项设置分层清单，员工激励尽量通过平台承接而非分散到自然人名下。每一种工具都能增强控制，但每一种都有边界。</p>
+<p>这些边界至少有四个。第一，<strong>监管边界</strong>。拟上市路径不同，可接受的权利安排差异很大，红筹、境内上市、境外上市不能混为一谈。第二，<strong>公司法边界</strong>。有些权利可以通过章程固定，有些更依赖合同安排；章程对内稳定，合同对外执行仍可能受限。第三，<strong>交易对手边界</strong>。越早期越容易谈控制，越后期、越依赖外部资金时，投资人越会要求治理参与。第四，<strong>治理成本边界</strong>。控制权不是越强越好。结构越复杂，后续融资、员工理解、审计披露、争议解决的成本越高，甚至会反过来压低公司可融资性。</p>
+<p>所以，真正成熟的创始人，不会把问题表述成“我要不要学Anthropic”，而会表述成：<strong>哪些权力必须由我掌握，哪些权力可以分享，哪些权力应当用商业合作来交换，而不是用公司控制权来交换。</strong> 先把这三张清单列清，再选AB股、委托投票、一致行动、持股平台还是董事会分层安排，顺序就不会错。对中国硬科技公司而言，控制权设计从来不是做一道“股权题”，而是在融资、治理、上市和产业合作之间做一套可执行的法律工程。</p></article>
+<section class="author-card" data-author-card>
+<div class="ac-title">关于作者</div>
+<div class="ac-head"><img class="ac-avatar" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/avatars/306ba99b-c7d6-4a11-9628-a532fa300a25/21c0b740-f8be-44f7-9e8c-b971afc94d28.jpg" alt="黄梦奇"><div class="ac-name"><a href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">黄梦奇</a> · <span>律师</span> · <span class="ac-verified">Rukik Verified Professional</span></div></div>
+<div class="ac-bio" data-i18n-skip>金融衍生品全产业链专业</div>
+</section>
+<a class="author-cta" data-author-cta href="https://rukik.com/p/8e03ae15-7dd2-4d58-b22c-5f24ef2e9bee">点击联系专家了解更多</a>
+<section class="invite-card" data-invite-card>
+<img class="ic-seal" src="https://yzgzgtrqrmarfjftgbwt.supabase.co/storage/v1/object/public/share-images/brand/rukik-seal.png" alt="Rukik">
+<div class="ic-slogan">AI懂很多，Rukik更懂您。</div>
+<div class="ic-divider"><span></span><i></i><span></span></div>
+<div class="ic-headline">遇见 RUKIK，遇见更好的您。</div>
+<p class="ic-poem">一花一世界，一叶一菩提。<br>每一场相遇，都自有因缘。</p>
+<p class="ic-value">为您打造专属 AI 智能体，懂您的需求，记得重要的事，提前想到下一步。</p>
+<div class="ic-tags"><span>专属 AI 智能体</span><span>千人千面的智慧资讯</span><span>重要事项主动关怀</span><span>专业知识与资源连接</span></div>
+<div class="ic-codezone"><div class="ic-codelabel">您的专属邀请码</div><div class="ic-code">35C5Q4KKS8</div></div>
+<div class="ic-btns"><button type="button" class="ic-btn-primary" id="icCopyBtn">复制邀请码</button><a class="ic-btn-ghost" href="https://rukik.com/invite/?c=35C5Q4KKS8">分享给朋友</a></div>
+<script>(function(){var b=document.getElementById('icCopyBtn');if(!b)return;var code="35C5Q4KKS8";b.addEventListener('click',function(){function done(){b.textContent='已复制';setTimeout(function(){b.textContent='复制邀请码';},2000);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done).catch(function(){});}else{var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(t);}});})();</script>
+</section>
+<footer>本文来自 Rukik 专业知识网络：专业人士在「我的专业团队」公开发布，RUKIK 全平台检索引用时注明作者及来源。文中观点为作者专业见解，不构成正式法律/专业意见。<div class="brandline">RUKIK · <span class="slogan">AI懂很多，Rukik更懂您。</span></div></footer>
+</div><script src="/assets/i18n/rukik-i18n.js?v=20261115b"></script></body></html>
